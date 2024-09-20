@@ -90,7 +90,8 @@ initApp()
 ```javascript
 import axios from 'axios'
 
-axios.defaults.baseURL = import.meta.env.VITE_GLOBAL_API_URL // 通过 .env配置全局接口, 也可以自行配置公共接口文件, 但要保证baseURL的配置, 因为组件内部会使用 axios
+// 通过 .env配置全局接口, 也可以自行配置公共接口文件, 但要保证baseURL的配置, 因为组件内部会使用 axios
+axios.defaults.baseURL = import.meta.env.VITE_GLOBAL_API_URL
 axios.defaults.headers['Content-Type'] = 'application/json'
 axios.defaults.timeout = Number(import.meta.env.VITE_PORT) * 1000 // 通过 .env 超时
 

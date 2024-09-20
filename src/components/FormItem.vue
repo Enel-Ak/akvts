@@ -1,6 +1,6 @@
 <script setup>
 import {ref, watch, computed, onMounted, nextTick} from 'vue'
-// import defHttp from '@/api/axios'
+import axios from 'axios'
 import {ElMessage} from 'element-plus'
 
 const emits = defineEmits(['change', 'changeFile', 'initRemoteComplete', 'update:modelValue'])
@@ -69,7 +69,7 @@ const initRemoteValueById = (query, item) => {
 
 	item.beforeInitRemote && item.beforeInitRemote(query, remoteParams, item)
 
-	defHttp
+	axios
 		.request({
 			url: item.useBaseUrl ? item.remoteUrl : `${baseUrl}/${query}`,
 			method: 'get',
@@ -109,7 +109,7 @@ const remoteMethod = (query, item, callback) => {
 		clearTimeout(remoteTimer)
 
 		remoteTimer = setTimeout(() => {
-			defHttp
+			axios
 				.request({
 					url: item.remoteUrl,
 					method: item.remoteMethod || 'get',
