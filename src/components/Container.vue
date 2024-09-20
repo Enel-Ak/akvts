@@ -1,6 +1,7 @@
 <script setup>
 import {ref} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
+const emits = defineEmits(['collapse'])
 const props = defineProps({
 	model: {
 		type: String,
@@ -15,6 +16,8 @@ const props = defineProps({
 const isExpand = ref(true)
 const onExpand = () => {
 	isExpand.value = !isExpand.value
+	console.log('container isExpand', isExpand.value)
+	emits('collapse', isExpand.value)
 }
 </script>
 <template>
