@@ -73,7 +73,13 @@ $szie170: 170px;
 
 	.header {
 		align-items: center;
-		background: var(--z-theme);
+
+		background-color: rgba($color: var(--z-bg-rgb), $alpha: 0.2);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border-bottom: 1px solid var(--z-line);
+		color: var(--z-font-color);
+
 		display: flex;
 		flex-wrap: nowrap;
 		height: torem(40px);
