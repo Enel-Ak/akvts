@@ -48,6 +48,7 @@ export default defineConfig({
 
 ```javascript
 import {createApp} from 'vue'
+import './api/axios' // 引入全局axios配置
 import App from './App.vue'
 import router from './router'
 import akvts from 'akvts' // 引入 akvts
@@ -82,4 +83,29 @@ async function initApp() {
 }
 
 initApp()
+```
+
+## axios.js 配置
+
+```javascript
+import axios from 'axios'
+
+axios.defaults.baseURL = import.meta.env.VITE_GLOBAL_API_URL // 通过 .env配置全局接口, 也可以自行配置公共接口文件, 但要保证baseURL的配置, 因为组件内部会使用 axios
+axios.defaults.headers['Content-Type'] = 'application/json'
+axios.defaults.timeout = Number(import.meta.env.VITE_PORT) * 1000 // 通过 .env 超时
+
+axios.interceptors.request.use((config) => {
+	return config
+})
+
+axios.interceptors.response.use(
+	(response) => {
+		return response
+	},
+	(error) => {
+		return Promise.reject(error)
+	}
+)
+
+export default axios
 ```
