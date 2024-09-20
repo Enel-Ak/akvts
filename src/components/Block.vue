@@ -32,7 +32,7 @@ const props = defineProps({
 	enableFullScreen: {type: Boolean, default: true}, // 全屏
 
 	delay: {type: Number, default: 1}, // 延迟执行高度计算
-	offset: {type: Array, default: () => [190, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
+	offset: {type: Array, default: () => [165, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
 })
 
 const router = useRouter()
@@ -97,7 +97,7 @@ const initObserver = () => {
 			observer = new ResizeObserver((entries) => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
-					const bodyHeight = document.body._offsetHeight - _offset[0] // Block title  and padding and header height
+					const bodyHeight = document.body.offsetHeight - _offset[0] // Block title  and padding and header height
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
 						if (expendContentOpen.value) {
@@ -107,7 +107,7 @@ const initObserver = () => {
 							now = bodyHeight
 						}
 						if (isFullScreen.value) {
-							now = document.body._offsetHeight - _offset[1] // Block title height and padding
+							now = document.body.offsetHeight - _offset[1] // Block title height and padding
 						}
 						contextHeight.value = now
 						console.log('Block resize observer is running', contextHeight.value)
@@ -159,7 +159,7 @@ const onResize = () => {
 	if (props.enableFixedHeight && expandBlock.value) {
 		clearTimeout(resieTimer)
 		// resieTimer = setTimeout(() => {
-		contextHeight.value = document.body._offsetHeight - _offset[0]
+		contextHeight.value = document.body.offsetHeight - _offset[0]
 		emits('heightChanged', contextHeight.value - expendContentHeight.value)
 		// }, 128)
 	}

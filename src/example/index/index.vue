@@ -5,7 +5,7 @@
 			<div>Header</div>
 		</template>
 		<template #aside> Aside </template>
-		Body
+		<Block title="测试组件" :enableFixedHeight="true">123</Block>
 		<template #footer> Footer</template>
 	</Container>
 </template>
