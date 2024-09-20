@@ -1,0 +1,190 @@
+<script setup>
+import {computed} from 'vue'
+
+const props = defineProps({
+	title: {
+		type: String,
+		default: '操作记录',
+	},
+	sort: {
+		type: String,
+		default: 'desc', // desc or asc
+	},
+	data: {
+		type: Array,
+		default: () => [],
+	},
+	bgColor: {
+		type: String,
+		default: 'transparent',
+	},
+	width: {
+		type: String,
+		default: '100%',
+	},
+})
+
+const icons = {
+	default: 'i-ic-baseline-more-horiz',
+	success: 'i-ic-outline-check',
+	warning: 'i-ic-sharp-warning',
+	error: 'i-ic-twotone-close',
+	danger: 'i-ic-twotone-close',
+}
+
+const list = computed(() =>
+	props.data.sort((a, b) =>
+		props.sort === 'desc'
+			? new Date(b.time) - new Date(a.time)
+			: props.sort === 'asc'
+			? new Date(a.time) - new Date(b.time)
+			: 0
+	)
+)
+</script>
+<template>
+	<div class="record-component">
+		<div v-show="title" class="title">
+			<slot name="title">
+				<span>{{ title }} </span>
+			</slot>
+		</div>
+		<div class="item" v-for="(item, index) of list" :class="[item.type || '']">
+			<div class="label">
+				<slot name="label" :item="item">{{ item.label }}</slot>
+			</div>
+			<div class="text">
+				<slot name="text" :item="item">
+					<span>{{ item.text }}</span>
+				</slot>
+			</div>
+			<div class="other">
+				<slot name="other" :item="item">
+					<span>{{ item.time }}</span>
+					<span>{{ item.user }}</span>
+				</slot>
+			</div>
+			<i v-if="index < 1" class="icon" :class="[icons.default]"></i>
+			<i v-else class="icon" :class="[icons[item.type]]"></i>
+		</div>
+	</div>
+</template>
+<style scoped lang="scss">
+.record-component {
+	width: v-bind(width);
+
+	.title {
+		border-radius: torem(5px) torem(5px) 0 0;
+		border-bottom: 1px solid var(--z-theme);
+		color: rgba(var(--z-font-color-rgb), 1);
+		font-size: torem(16px);
+		margin-bottom: 20px;
+
+		span {
+			border-bottom: 1px solid rgba(var(--z-bg-secondary-rgb), 1);
+			font-weight: 500;
+			padding: torem(10px);
+			width: 100%;
+		}
+	}
+
+	.item {
+		background-color: v-bind(bgColor);
+		border-left: 3px solid var(--z-nav-hover);
+		margin-left: torem(10px);
+		margin-bottom: torem(4px);
+		opacity: 0.5;
+		position: relative;
+		padding: 0 torem(20px) torem(20px) torem(20px);
+
+		.icon {
+			color: var(--z-bg);
+			left: torem(-10.5px);
+			position: absolute;
+			top: torem(-2.5px);
+			transform: scale(0.5);
+			z-index: 1;
+		}
+
+		&.success {
+			border-left-color: var(--z-success);
+			&::after {
+				background-color: var(--z-success);
+			}
+		}
+
+		&.warning {
+			border-left-color: var(--z-warning);
+			&::after {
+				background-color: var(--z-warning);
+			}
+		}
+
+		&.error {
+			border-left-color: var(--z-error);
+			&::after {
+				background-color: var(--z-error);
+			}
+		}
+
+		&.danger {
+			border-left-color: var(--z-danger);
+			&::after {
+				background-color: var(--z-danger);
+			}
+		}
+
+		&::after {
+			content: '';
+			border-radius: 100%;
+			position: absolute;
+			top: 0;
+			left: -8px;
+			width: 13px;
+			height: 13px;
+			background-color: var(--z-nav-hover);
+		}
+
+		&::before {
+			content: '';
+			border-radius: 100%;
+			position: absolute;
+			top: torem(-4px);
+			left: -12px;
+			width: 21px;
+			height: 21px;
+			background: inherit;
+		}
+
+		&:nth-child(2) {
+			opacity: 1;
+		}
+
+		@for $i from 3 through 7 {
+			&:nth-child(#{$i}) {
+				opacity: 1.2 - 0.1 * $i;
+			}
+		}
+
+		.label {
+			color: var(--z-font-color);
+			font-size: torem(14px);
+			font-weight: 500;
+		}
+
+		.text {
+			color: rgba(var(--z-font-color-rgb), 0.6);
+			line-height: 1.5;
+			padding: torem(20px) 0;
+			text-align: justify;
+		}
+
+		.other {
+			color: rgba(var(--z-font-color-rgb), 0.3);
+			span {
+				margin-right: torem(20px);
+			}
+		}
+	}
+}
+</style>

@@ -48,6 +48,7 @@ export default defineConfig({
 
 ```javascript
 import {createApp} from 'vue'
+import {createPinia} from 'pinia' // 引入Pinia
 import './api/axios' // 引入全局axios配置
 import App from './App.vue'
 import router from './router'
@@ -55,6 +56,7 @@ import akvts from 'akvts' // 引入 akvts
 import 'virtual:uno.css' // 引入 uno.css
 
 const app = createApp(App)
+const pinia = createPinia()
 
 async function initApp() {
 	const [ElementPlus, zhCn, ElementPlusIconsVue, Directive] = await Promise.all([
@@ -75,6 +77,7 @@ async function initApp() {
 	}
 
 	Directive.directives(app) // 使用框架指令
+	app.use(pinia)
 	app.use(router)
 	app.use(akvts) // 使用框架
 	app.mount('#app')
