@@ -1,8 +1,12 @@
 <script setup>
 import {ref} from 'vue'
-import {DownloadAttachment} from '@/api/GlobalApi'
+import axios from 'axios'
 
 const props = defineProps({
+	url: {
+		type: String,
+		default: '',
+	},
 	items: {
 		type: Array,
 		default: () => [],
@@ -14,7 +18,7 @@ const currentAttachment = ref(null)
 const onClickItem = (item) => {
 	currentAttachment.value = item
 	if (item.suffix !== '.png' && item.suffix !== '.jpg' && item.suffix !== '.jpeg') {
-		DownloadAttachment(item.id).then((res) => {
+		axios.get(props.url).then((res) => {
 			const a = document.createElement('a')
 			const url = window.URL.createObjectURL(new Blob([res.data]))
 			a.href = url

@@ -7,7 +7,7 @@ import {
 	getBezierPath,
 	getSmoothStepPath,
 } from '@vue-flow/core'
-import {FlowNodeTypes} from '@/data/useFlow'
+import {FlowNodeTypes} from '@/enum/useFlowEnum'
 import CustomEdge from './CustomEdge.vue'
 
 const emits = defineEmits(['addNode', 'removeEdge'])

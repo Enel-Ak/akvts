@@ -1,6 +1,6 @@
 <script setup>
 import {ref, watch} from 'vue'
-import defHttp from '@/api/axios'
+import axios from 'axios'
 import {ElMessage} from 'element-plus'
 import {useGlobal} from '@/store/useGlobal'
 
@@ -36,7 +36,7 @@ const baseUrl = import.meta.env.VITE_GLOBAL_API_URL
 
 const onDownloadTemplate = () => {
 	console.log('ImportDialogDownloadTemplate')
-	defHttp
+	axios
 		.request({
 			url: props.templateDownloadUrl,
 			method: 'GET',
@@ -104,7 +104,7 @@ const onUploadFile = () => {
 			:multiple="multiple"
 			:accept="accept"
 			:headers="{
-				Authorization: `Bearer ${global.GetToken}`,
+				Authorization: `Bearer ${global?.GetToken}`,
 			}"
 		>
 			<el-icon class="el-icon--upload"><upload-filled /></el-icon>

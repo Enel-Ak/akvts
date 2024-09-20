@@ -1,6 +1,6 @@
 <script setup>
 import {computed} from 'vue'
-import {FlowNodeTypes} from '@/data/useFlow'
+import {FlowNodeTypes} from '@/enum/useFlowEnum'
 
 const props = defineProps({
 	id: String,

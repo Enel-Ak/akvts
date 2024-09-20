@@ -1,6 +1,6 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue'
-import defHttp from '@/api/axios'
+import axios from 'axios'
 
 const emits = defineEmits(['update:modelValue', 'nodeClick'])
 const props = defineProps({
@@ -41,7 +41,7 @@ const GetList = (isLeaf = false, fn) => {
 	if (_loading.value) return
 	_loading.value = true
 
-	defHttp
+	axios
 		.request({
 			url: props.url,
 			method: props.method,

@@ -1,6 +1,6 @@
 <script setup>
 import {computed, nextTick, onMounted, ref, watch} from 'vue'
-import {FlowNodeTypes, FlowNodeTypeNames} from '@/data/useFlow'
+import {FlowNodeTypes, FlowNodeTypeNames} from '@/enum/useFlowEnum'
 import {VueFlow, useVueFlow, MarkerType, Position, Handle} from '@vue-flow/core'
 import {Background} from '@vue-flow/background'
 import {Controls} from '@vue-flow/controls'
