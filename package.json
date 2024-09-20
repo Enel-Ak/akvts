@@ -8,6 +8,7 @@
 		"dist",
 		"src/styles",
 		"src/directive",
+		"APP_CONFIG.js",
 		"README.md"
 	],
 	"scripts": {
@@ -29,8 +30,6 @@
 		"@vue-flow/core": "^1.41.2",
 		"@vue-flow/minimap": "^1.5.0",
 		"dagre": "^0.8.5",
-		"axios": "^1.7.7",
-		"pinia": "^2.2.2",
 		"echarts": "^5.5.1",
 		"element-plus": "^2.8.3",
 		"sass": "^1.79.1",
@@ -41,6 +40,8 @@
 	},
 	"peerDependencies": {
 		"vue": "^3.5.0",
+		"axios": "^1.7.7",
+		"pinia": "^2.2.2",
 		"vue-router": "^4.4.5"
 	},
 	"devDependencies": {
