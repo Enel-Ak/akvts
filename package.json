@@ -12,7 +12,7 @@
 	],
 	"scripts": {
 		"dev": "vite",
-		"build": "npm version patch && vite build",
+		"build": "npm version patch && vite build && npm publish",
 		"preview": "vite preview"
 	},
 	"dependencies": {
