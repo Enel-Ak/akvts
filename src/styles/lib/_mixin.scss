@@ -1,0 +1,20 @@
+$html-font-size: 16px !default;
+$default-font-size: 13px !default;
+
+@function torem($px) {
+	$rem: calc($px / $html-font-size);
+	@return #{$rem}rem;
+}
+
+@mixin image($url, $type: 'png') {
+	background-image: url($url + '.' + $type);
+	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+		background-image: url($url + '@2x.' + $type);
+	}
+	@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 288dpi) {
+		background-image: url($url + '@3x.' + $type);
+	}
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}

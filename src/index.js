@@ -1,7 +1,13 @@
-import Test from './components/Test.vue';
+import Container from './components/Container.vue'
+import Block from './components/Block.vue'
+
+const components = {Container, Block}
+
 export default {
-  install(app) {
-    app.component('Test', Test);
-  }
+	install(app) {
+		Object.entries(components).forEach(([name, component]) => {
+			app.component(name, component)
+		})
+	},
 }
-export { Test };
+export {Container, Block}

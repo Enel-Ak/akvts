@@ -1,22 +1,80 @@
-import { defineConfig } from 'vite'
+import {defineConfig, loadEnv} from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path';
+import pages from 'vite-plugin-pages'
+import path from 'path'
+import UnoCSS from 'unocss/vite'
+import presetIcons from '@unocss/preset-icons'
+import ElementPlus from 'unplugin-element-plus/vite'
 
-export default defineConfig({
-  plugins: [vue()],
-  build: {
-    lib: {
-      entry: path.resolve(__dirname, 'src/index.js'), // 组件入口
-      name: 'AkvtsUi',                     // 库名称
-      fileName: (format) => `akvtsui.${format}.js`, // 打包后的文件名
-    },
-    rollupOptions: {
-      external: ['vue'],
-      output: {
-        globals: {
-          vue: 'Vue'
-        }
-      }
-    }
-  }
-})
+export default ({mode}) => {
+	const env = loadEnv(mode, process.cwd())
+	return defineConfig({
+		base: env.VITE_PUBLIC_PATH,
+		define: {
+			'process.env': env,
+		},
+		resolve: {
+			alias: {
+				'@': path.resolve(__dirname, './src'),
+			},
+		},
+		css: {
+			preprocessorOptions: {
+				scss: {
+					additionalData: `
+						@use '@/styles/lib/_mixin.scss' as *;
+					`,
+				},
+			},
+		},
+		server: {
+			host: '0.0.0.0',
+			port: Number(env.VITE_PORT),
+		},
+		plugins: [
+			vue(),
+			UnoCSS({
+				presets: [
+					presetIcons({
+						extraProperties: {
+							display: 'inline-block',
+							'vertical-align': 'middle',
+							// ...
+						},
+					}),
+				],
+			}),
+			ElementPlus({
+				useSource: true,
+			}),
+			pages({
+				dirs: 'src/example',
+				exclude: ['**/components/*.vue'],
+			}),
+		],
+		build: {
+			lib: {
+				entry: path.resolve(__dirname, 'src/index.js'), // 组件入口
+				name: 'akvts', // 库名称
+				fileName: (format) => `akvts.${format}.js`, // 打包后的文件名
+			},
+			rollupOptions: {
+				external: ['vue', 'vue-router'],
+				output: {
+					globals: {
+						vue: 'Vue',
+						'vue-router': 'VueRouter',
+					},
+					exports: 'named',
+				},
+			},
+			terserOptions: {
+				compress: {
+					//生产环境时移除console
+					drop_console: true,
+					drop_debugger: true,
+				},
+			},
+		},
+	})
+}
