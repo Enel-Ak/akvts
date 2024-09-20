@@ -59,12 +59,13 @@ export default ({mode}) => {
 				fileName: (format) => `akvts.${format}.js`, // 打包后的文件名
 			},
 			rollupOptions: {
-				external: ['vue', 'vue-router', 'axios'],
+				external: ['vue', 'vue-router', 'axios', 'pinia'],
 				output: {
 					globals: {
 						vue: 'Vue',
 						'vue-router': 'VueRouter',
 						axios: 'axios',
+						pinia: 'Pinia',
 					},
 					exports: 'named',
 				},
