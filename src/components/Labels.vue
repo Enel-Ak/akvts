@@ -193,7 +193,7 @@ onMounted(() => {
 
 		justify-content: center;
 		line-height: torem(30px);
-		margin-right: torem(20px);
+		// margin-right: torem(20px);
 		height: torem(40px);
 		// min-height: torem(30px);
 		// min-width: torem(80px);
@@ -218,18 +218,18 @@ onMounted(() => {
 			background-color: var(--z-nav-hover);
 		}
 
-		&:not(:last-child)::after {
-			content: '';
-			border-left: 1px solid var(--z-bg);
-			border-right: 1px solid var(--z-line);
-			height: torem(15px);
-			line-height: 1;
-			opacity: 1;
-			position: absolute;
-			right: torem(-11px);
-			top: calc(50% - torem(7.5px));
-			width: 0;
-		}
+		// &:not(:last-child)::after {
+		// 	content: '';
+		// 	border-left: 1px solid var(--z-bg);
+		// 	border-right: 1px solid var(--z-line);
+		// 	height: torem(15px);
+		// 	line-height: 1;
+		// 	opacity: 1;
+		// 	position: absolute;
+		// 	right: torem(-11px);
+		// 	top: calc(50% - torem(7.5px));
+		// 	width: 0;
+		// }
 
 		span {
 			overflow: hidden;
