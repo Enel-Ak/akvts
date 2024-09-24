@@ -73,9 +73,7 @@ $szie170: 170px;
 
 	> .header {
 		align-items: center;
-		background-color: rgba($color: var(--z-bg-rgb), $alpha: 0.2);
-		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
+		background-color: var(--z-theme);
 		border-bottom: 1px solid var(--z-line);
 		color: var(--z-font-color);
 
@@ -90,6 +88,7 @@ $szie170: 170px;
 
 		.expand {
 			align-items: center;
+
 			cursor: pointer;
 			display: flex;
 			flex-direction: column;
