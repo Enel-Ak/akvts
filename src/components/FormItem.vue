@@ -31,6 +31,7 @@ const currentActiveNames = ref([])
 const loading = ref(false)
 const count = ref(props.columnCount)
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
+const pb = computed(() => (props.columnCount > 1 ? '0px' : '20px'))
 const uploadFileNames = ref([])
 
 let remoteTimer = null
@@ -856,6 +857,10 @@ defineExpose({
 
 	:deep(.el-collapse-item__content) {
 		padding: torem(10px) torem(10px) torem(20px) torem(10px);
+	}
+
+	.group :deep(.el-collapse-item__content) {
+		padding-bottom: v-bind(pb);
 	}
 }
 
