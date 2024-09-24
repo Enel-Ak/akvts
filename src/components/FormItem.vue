@@ -858,10 +858,6 @@ defineExpose({
 	:deep(.el-collapse-item__content) {
 		padding: torem(10px) torem(10px) torem(20px) torem(10px);
 	}
-
-	.group :deep(.el-collapse-item__content) {
-		// padding-bottom: v-bind(pb);
-	}
 }
 
 .row-edit {
