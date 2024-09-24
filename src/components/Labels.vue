@@ -257,8 +257,8 @@ onMounted(() => {
 	}
 
 	.more {
-		height: torem(30px);
-		line-height: torem(30px);
+		height: torem(40px);
+		line-height: torem(40px);
 
 		.el-icon--right {
 			position: relative;

@@ -347,6 +347,7 @@ defineExpose({
 							<el-input
 								v-if="!item.inputType"
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								type="text"
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item.label}`"
@@ -357,6 +358,7 @@ defineExpose({
 							<el-input-number
 								v-else-if="item.inputType === 'number'"
 								v-model.number="form[item.prop]"
+								v-bind="item.attrs"
 								type="number"
 								:min="item.min || 0"
 								:max="item.max || 100000000"
@@ -397,6 +399,7 @@ defineExpose({
 						<template v-else>
 							<el-input
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								type="password"
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item.label}`"
@@ -431,6 +434,7 @@ defineExpose({
 						<template v-else>
 							<el-select
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								:disabled="item.disabled"
 								:placeholder="item.placeholder || `请选择${item.label}`"
 								:filterable="item.filterable"
@@ -475,6 +479,7 @@ defineExpose({
 						<template class="form-item" v-else>
 							<el-select
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								reserve-keyword
 								filterable
 								clearable
@@ -532,6 +537,7 @@ defineExpose({
 						<template v-else>
 							<el-date-picker
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								:readonly="item.readonly"
 								:disabled="item.disabled"
 								:disabled-date="item.disabledDate"
@@ -574,7 +580,11 @@ defineExpose({
 							{{ form[item.prop] || '-' }}
 						</template>
 						<template v-else>
-							<el-checkbox-group v-model="form[item.prop]" @change="onChange($event, item)">
+							<el-checkbox-group
+								v-model="form[item.prop]"
+								v-bind="item.attrs"
+								@change="onChange($event, item)"
+							>
 								<el-checkbox
 									v-for="option of item.options"
 									:value="option.value"
@@ -610,7 +620,11 @@ defineExpose({
 							{{ form[item.prop] || '-' }}
 						</template>
 						<template v-else>
-							<el-radio-group v-model="form[item.prop]" @change="onChange($event, item)">
+							<el-radio-group
+								v-model="form[item.prop]"
+								v-bind="item.attrs"
+								@change="onChange($event, item)"
+							>
 								<el-radio
 									v-for="(option, index) of item.options"
 									:value="option.value"
@@ -647,6 +661,7 @@ defineExpose({
 						<template v-else>
 							<el-input
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								type="textarea"
 								resize="none"
 								:rows="6"
@@ -679,6 +694,7 @@ defineExpose({
 					<slot :name="`form-${item.prop}`" :item="item">
 						<el-switch
 							v-model="form[item.prop]"
+							v-bind="item.attrs"
 							:disabled="item.disabled"
 							:active-text="item.activeText"
 							:inactive-text="item.inactiveText"
@@ -737,6 +753,7 @@ defineExpose({
 						<template v-else>
 							<el-tree-select
 								v-model="form[item.prop]"
+								v-bind="item.attrs"
 								:data="item.options"
 								:render-after-expand="false"
 								:multiple="item.multiple"
