@@ -20,9 +20,24 @@
 								children: [
 									{prop: 'defba', label: 'defba', type: 'text'},
 									{prop: 'defbb', label: 'defbb', type: 'text'},
-									{prop: 'defbc', label: 'defbc', type: 'text'},
+									{
+										prop: 'defbcf',
+										label: 'defbcf',
+										type: 'text',
+										children: [
+											{prop: 'defbaf', label: 'defba', type: 'text'},
+											{prop: 'defbbf', label: 'defbb', type: 'text'},
+											{prop: 'defbcf', label: 'defbc', type: 'text'},
+										],
+									},
+									{prop: 'defbcff', label: 'defc', type: 'text'},
+									{prop: 'defbcffe', label: 'defc', type: 'text'},
+									{prop: 'defbcfff', label: 'defc', type: 'text'},
 								],
 							},
+							{prop: 'defc', label: 'defc', type: 'text'},
+							{prop: 'defd', label: 'defc', type: 'text'},
+							{prop: 'defe', label: 'defc', type: 'text'},
 						],
 					},
 				]"

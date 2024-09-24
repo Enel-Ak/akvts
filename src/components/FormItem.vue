@@ -197,8 +197,7 @@ const onCheckIsLastItem = (item, index) => {
 	return (
 		(Math.floor((props.items.length - 1) / props.columnCount) * props.columnCount <= index &&
 			!item.full) ||
-		index === props.items.length - 1 ||
-		(props.items.length === props.columnCount && index < props.columnCount)
+		index === props.items.length - 1
 	)
 }
 
@@ -861,7 +860,7 @@ defineExpose({
 	}
 
 	.group :deep(.el-collapse-item__content) {
-		padding-bottom: v-bind(pb);
+		// padding-bottom: v-bind(pb);
 	}
 }
 
