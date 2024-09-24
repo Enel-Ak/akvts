@@ -106,6 +106,7 @@ $szie170: 170px;
 	}
 
 	.aside {
+		border-right: 1px solid var(--z-line);
 		background: var(--z-main);
 		overflow: auto;
 		width: torem($szie170);

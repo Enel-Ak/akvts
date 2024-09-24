@@ -21,6 +21,16 @@ export default defineConfig({
       '@': path.resolve(\_\_dirname, './src'),
     },
   },
+	css: {
+		preprocessorOptions: {
+			scss: {
+				// 必要配置
+				additionalData: `
+					@use 'akvts/src/styles/lib/_mixin.scss' as *;
+				`,
+			},
+		},
+	},
   plugins: [
     vue(),
     // UnoCss 必要配置
@@ -30,7 +40,8 @@ export default defineConfig({
       ],
       include: [
         // 默认扫描 src 目录
-        /\.js$/, // 扫描 .js 文件
+        /\.js$/, // 扫描 .js 文件, 必要配置
+				/\.vue$/, // 扫描 .vue 文件
       ],
     }),
     ElementPlus({

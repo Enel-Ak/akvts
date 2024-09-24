@@ -155,7 +155,7 @@ onMounted(() => {
 				></el-icon>
 			</button>
 		</template>
-		<span class="bar"></span>
+		<!-- <span class="bar"></span> -->
 
 		<el-dropdown v-if="items.length > $props.max" :hide-on-click="false" class="more">
 			<span class="el-dropdown-link">
@@ -186,7 +186,7 @@ onMounted(() => {
 	width: 100%;
 	button {
 		align-items: center;
-		border-radius: torem(4px);
+		// border-radius: torem(0);
 		background-color: transparent;
 		color: var(--z-font-color);
 		display: flex;
@@ -194,7 +194,8 @@ onMounted(() => {
 		justify-content: center;
 		line-height: torem(30px);
 		margin-right: torem(20px);
-		min-height: torem(30px);
+		height: torem(40px);
+		// min-height: torem(30px);
 		// min-width: torem(80px);
 		padding: 0 torem(25px);
 		position: relative;
@@ -204,7 +205,7 @@ onMounted(() => {
 
 		&.active,
 		&:hover {
-			background-color: var(--z-nav-hover);
+			background-color: rgba(var(--z-nav-hover-rgb), 0.8);
 			color: var(--z-nav-font-color);
 			font-weight: 500;
 
@@ -240,15 +241,15 @@ onMounted(() => {
 			opacity: 0;
 			position: absolute;
 			right: torem(6px);
-			top: torem(8px);
+			top: torem(14px);
 			transition: all 0.15s 0.1s ease-in-out;
 		}
 	}
 
 	.bar {
 		border-radius: torem(5px);
-		bottom: torem(-8px);
-		background-color: var(--z-nav-hover);
+		bottom: torem(0px);
+		background-color: var(--z-theme);
 		height: torem(5px);
 		position: absolute;
 		transition: all 0.15s ease-in-out;
