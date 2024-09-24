@@ -71,9 +71,8 @@ $szie170: 170px;
 	height: inherit;
 	position: relative;
 
-	.header {
+	> .header {
 		align-items: center;
-
 		background-color: rgba($color: var(--z-bg-rgb), $alpha: 0.2);
 		backdrop-filter: blur(10px);
 		-webkit-backdrop-filter: blur(10px);
