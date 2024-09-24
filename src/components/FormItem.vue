@@ -197,7 +197,8 @@ const onCheckIsLastItem = (item, index) => {
 	return (
 		(Math.floor((props.items.length - 1) / props.columnCount) * props.columnCount <= index &&
 			!item.full) ||
-		index === props.items.length - 1
+		index === props.items.length - 1 ||
+		props.items.length <= props.columnCount
 	)
 }
 
