@@ -404,7 +404,12 @@ const onDblClickNode = (info) => {
 }
 
 const onNodeMouseEnter = (event) => {
-	if (event.node.type === FlowNodeTypes.Input || event.node.type === FlowNodeTypes.Output) return
+	if (
+		event.node.type === FlowNodeTypes.Input ||
+		event.node.type === FlowNodeTypes.Output ||
+		event.node.type === FlowNodeTypes.Gateway
+	)
+		return
 	console.log('Flow node mouse enter: ', event)
 	clearTimeout(nodeInfoLeaveTimer)
 	isMouseEnter.value = true
