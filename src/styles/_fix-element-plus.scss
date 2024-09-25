@@ -334,6 +334,18 @@
 	}
 }
 
+.tabs-ui {
+	.el-tabs__header {
+		margin: 0;
+	}
+	.el-tabs__nav-wrap::after {
+		height: 0;
+	}
+	.el-tabs__item {
+		height: 38px;
+	}
+}
+
 body.light {
 	.el-popconfirm__action {
 		button:nth-child(2) {
