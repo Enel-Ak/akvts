@@ -282,8 +282,8 @@ onMounted(() => {
 	}
 
 	.more {
-		height: torem(v-bind(h));
-		line-height: torem(v-bind(h));
+		height: v-bind(h);
+		line-height: v-bind(h);
 		margin: 0 torem(5px);
 
 		.el-icon--right {

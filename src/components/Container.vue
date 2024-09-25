@@ -98,7 +98,7 @@ $szie170: 170px;
 
 		display: flex;
 		flex-wrap: nowrap;
-		height: torem(40px);
+		height: v-bind(offset);
 		left: 0;
 		overflow: hidden;
 		position: fixed;
