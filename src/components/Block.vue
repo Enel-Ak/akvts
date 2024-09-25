@@ -16,7 +16,7 @@ const props = defineProps({
 	expand: {type: Boolean, default: true}, // 默认展开
 	borderRadius: {type: [Number, String], default: 0},
 	enableExpand: {type: Boolean, default: false}, // 启用展开/收起
-	enableExpandButton: {type: Boolean, default: true}, // 启用展开/收起按钮, 最右侧图标
+	enableExpandButton: {type: Boolean, default: false}, // 启用展开/收起按钮, 最右侧图标
 
 	enableBackButton: {type: Boolean, default: true}, // 启用返回按钮
 
