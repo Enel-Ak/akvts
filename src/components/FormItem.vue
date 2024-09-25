@@ -254,7 +254,11 @@ watch(
 	(val) => {
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
 		if (props.items.length === 1) {
-			Object.assign(props.form, {[props.items[0].prop]: val})
+			if (props.items[0].remoteInit && props.items[0].remoteUrl && val) {
+				remoteMethod(val, props.items[0], () => {
+					Object.assign(props.form, {[props.items[0].prop]: val})
+				})
+			}
 		}
 	},
 	{deep: true}
