@@ -20,8 +20,8 @@ const props = defineProps({
 
 	enableBackButton: {type: Boolean, default: true}, // 启用返回按钮
 
-	expandContent: {type: Boolean, default: false}, // 默认展开/收起内容块
-	enableExpandContent: {type: Boolean, default: true}, // 启用展开/收起内容块按钮
+	expandContent: {type: Boolean, default: true}, // 默认展开/收起内容块
+	enableExpandContent: {type: Boolean, default: false}, // 启用展开/收起内容块按钮
 	expandContentHeight: {type: [Number, String], default: 250}, // 默认展开/收起内容块高度
 	expandContentText: {type: String, default: '展开搜索'},
 	collapseContentText: {type: String, default: '收起搜索'},

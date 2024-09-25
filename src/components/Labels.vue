@@ -4,6 +4,10 @@ import {useRouter} from 'vue-router'
 
 const emits = defineEmits(['clickItem', 'cancelItem'])
 const props = defineProps({
+	key: {
+		type: String,
+		default: 'index',
+	},
 	max: {
 		type: Number,
 		default: 5,
@@ -75,7 +79,7 @@ const saveHistory = () => {
 
 defineExpose({
 	add: (item) => {
-		if (item.index === current.value?.index || (item.children && !item.path)) {
+		if (item[props.key] === current.value?.[props.key] || (item.children && !item.path)) {
 			return
 		}
 		console.log('Labels Add:', item)
@@ -83,7 +87,7 @@ defineExpose({
 		current.value = item
 
 		const enable = item.hasOwnProperty('enable') ? item.enable : true
-		const index = items.value.findIndex((i) => i.index === item.index)
+		const index = items.value.findIndex((i) => i[props.key] === item[props.key])
 
 		if (enable) {
 			if (index === -1) {
