@@ -83,6 +83,7 @@ const saveHistory = () => {
 
 defineExpose({
 	add: (item) => {
+		debugger
 		if (
 			item[props.key] === current.value?.[props.key] ||
 			(item.children && item.children.length !== 0)

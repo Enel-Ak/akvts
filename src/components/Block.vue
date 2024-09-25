@@ -15,7 +15,7 @@ const props = defineProps({
 
 	expand: {type: Boolean, default: true}, // 默认展开
 	borderRadius: {type: [Number, String], default: 0},
-	enableExpand: {type: Boolean, default: true}, // 启用展开/收起
+	enableExpand: {type: Boolean, default: false}, // 启用展开/收起
 	enableExpandButton: {type: Boolean, default: true}, // 启用展开/收起按钮, 最右侧图标
 
 	enableBackButton: {type: Boolean, default: true}, // 启用返回按钮
@@ -29,7 +29,7 @@ const props = defineProps({
 	enableObserver: {type: Boolean, default: true}, // 启用 resize observer 监听高度
 	enableFixedHeight: {type: Boolean, default: false}, // 启用固定高度, 默认启用 onResize
 
-	enableFullScreen: {type: Boolean, default: true}, // 全屏
+	enableFullScreen: {type: Boolean, default: false}, // 全屏
 
 	delay: {type: Number, default: 1}, // 延迟执行高度计算
 	offset: {type: Array, default: () => [165, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
