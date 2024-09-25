@@ -46,7 +46,7 @@ const onExpand = () => {
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="aside container">
+			<div class="aside">
 				<slot name="aside"></slot>
 			</div>
 			<div class="body">
@@ -165,8 +165,8 @@ $szie170: 170px;
 			width: 100%;
 		}
 		.aside {
-			height: calc(100% - torem(v-bind(offset)));
-			margin-top: torem(v-bind(offset));
+			height: calc(100% - v-bind(offset));
+			margin-top: v-bind(offset);
 		}
 
 		.body {
