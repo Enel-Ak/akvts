@@ -21,7 +21,7 @@ const prev = ref(null)
 const buttonWidth = computed(() => `${100 / (props.max + 1)}%`)
 
 const onClickLabel = (item, isDropdown = false, isPush = true) => {
-	const index = items.value.findIndex((i) => i.index === item.index)
+	const index = items.value.findIndex((i) => i[props.key] === item[props.key])
 	prev.value = toRaw(current.value)
 	current.value = item
 
@@ -43,10 +43,10 @@ const onClickLabel = (item, isDropdown = false, isPush = true) => {
 }
 
 const onCancelItem = (item) => {
-	const index = items.value.findIndex((i) => i.index === item.index)
+	const index = items.value.findIndex((i) => i[props.key] === item[props.key])
 	items.value.splice(index, 1)
 	nextTick(() => {
-		if (current.value.index === item.index) {
+		if (current.value[props.key] === item[props.key]) {
 			const nextItem = items.value[index] || items.value[index - 1]
 			prev.value = toRaw(current.value)
 			current.value = nextItem
@@ -146,8 +146,8 @@ onMounted(() => {
 				type="button"
 				:title="item.title"
 				:class="{
-					active: current?.index === item.index,
-					'shadow-1': current?.index === item.index,
+					active: current?.[key] === item[key],
+					'shadow-1': current?.[key] === item[key],
 				}"
 				@click="onClickLabel(item)"
 			>
