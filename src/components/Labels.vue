@@ -87,6 +87,8 @@ defineExpose({
 			item[props.key] === current.value?.[props.key] ||
 			(item.children && item.children.length !== 0)
 		) {
+			console.log('Labels Add Return Item:', item)
+			console.log('Labels Add Current:', current.value)
 			return
 		}
 
