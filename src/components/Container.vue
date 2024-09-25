@@ -7,6 +7,15 @@ const props = defineProps({
 		type: String,
 		default: useContainerEnum.HABF, //AHBF, HABF
 	},
+	expand: {
+		type: Boolean,
+		default: true,
+	},
+
+	enableExpand: {
+		type: Boolean,
+		default: true,
+	},
 	enableFooter: {
 		type: Boolean,
 		default: true,
@@ -29,12 +38,20 @@ const bodyHeight = computed(
 	() => `calc(100% - ${offset.value} - ${props.enableFooter ? '70px' : '0'})`
 )
 
-const isExpand = ref(true)
+const isExpand = ref(props.expand)
 const onExpand = () => {
 	isExpand.value = !isExpand.value
 	console.log('container isExpand', isExpand.value)
 	emits('collapse', isExpand.value)
 }
+
+watch(
+	() => props.expand,
+	(newVal) => {
+		isExpand.value = newVal
+	},
+	{immediate: true}
+)
 </script>
 <template>
 	<div
@@ -43,7 +60,7 @@ const onExpand = () => {
 	>
 		<template v-if="model === 'habf'">
 			<div class="header">
-				<div class="expand" @click="onExpand">
+				<div v-if="enableExpand" class="expand" @click="onExpand">
 					<i class="i-ic-baseline-expand-less"></i>
 				</div>
 				<slot name="header"></slot>
