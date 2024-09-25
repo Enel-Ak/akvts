@@ -4,13 +4,9 @@ import {useRouter} from 'vue-router'
 
 const emits = defineEmits(['clickItem', 'cancelItem'])
 const props = defineProps({
-	key: {
-		type: String,
-		default: 'index',
-	},
-	val: {
-		type: String,
-		default: 'title',
+	keys: {
+		type: Array,
+		default: () => ['index', 'title'],
 	},
 	max: {
 		type: Number,
@@ -25,7 +21,7 @@ const prev = ref(null)
 const buttonWidth = computed(() => `${100 / (props.max + 1)}%`)
 
 const onClickLabel = (item, isDropdown = false, isPush = true) => {
-	const index = items.value.findIndex((i) => i[props.key] === item[props.key])
+	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 	prev.value = toRaw(current.value)
 	current.value = item
 
@@ -47,10 +43,10 @@ const onClickLabel = (item, isDropdown = false, isPush = true) => {
 }
 
 const onCancelItem = (item) => {
-	const index = items.value.findIndex((i) => i[props.key] === item[props.key])
+	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 	items.value.splice(index, 1)
 	nextTick(() => {
-		if (current.value[props.key] === item[props.key]) {
+		if (current.value[props.keys[0]] === item[props.keys[0]]) {
 			const nextItem = items.value[index] || items.value[index - 1]
 			prev.value = toRaw(current.value)
 			current.value = nextItem
@@ -85,9 +81,9 @@ defineExpose({
 	add: (item) => {
 		console.log('Labels Props:', props)
 
-		if (item[props.key] === current.value[props.key]) {
-			console.log('Labels Add Return Item:', item, props.key)
-			console.log('Labels Add Return Current:', current.value, props.key)
+		if (item[props.keys[0]] === current.value[props.keys[0]]) {
+			console.log('Labels Add Return Item:', item, props.keys[0])
+			console.log('Labels Add Return Current:', current.value, props.keys[0])
 			return
 		}
 
@@ -95,7 +91,7 @@ defineExpose({
 		current.value = item
 
 		const enable = item.hasOwnProperty('enable') ? item.enable : true
-		const index = items.value.findIndex((i) => i[props.key] === item[props.key])
+		const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 
 		if (enable) {
 			if (index === -1) {
@@ -156,14 +152,14 @@ onMounted(() => {
 			<button
 				v-if="index < $props.max"
 				type="button"
-				:title="item[val]"
+				:title="item[keys[1]]"
 				:class="{
-					active: current?.[key] === item[key],
-					'shadow-1': current?.[key] === item[key],
+					active: current?.[keys[0]] === item[keys[0]],
+					'shadow-1': current?.[keys[0]] === item[keys[0]],
 				}"
 				@click="onClickLabel(item)"
 			>
-				<span>{{ item[val] }}</span>
+				<span>{{ item[keys[1]] }}</span>
 				<el-icon
 					v-if="index > 0"
 					class="i-ic-round-cancel"
@@ -181,8 +177,10 @@ onMounted(() => {
 				<el-dropdown-menu>
 					<template v-for="(item, index) of items">
 						<el-dropdown-item v-if="index >= $props.max" @click="onClickLabel(item, true)">
-							<div class="labels-component-more" :title="item[val]">
-								{{ item[val].length > 2 ? item[val].substring(0, 2) + '...' : item[val] }}
+							<div class="labels-component-more" :title="item[keys[1]]">
+								{{
+									item[keys[1]].length > 2 ? item[keys[1]].substring(0, 2) + '...' : item[keys[1]]
+								}}
 								<span class="labels-component-close" @click.stop="onCancelItem(item)">
 									&times;
 								</span>
