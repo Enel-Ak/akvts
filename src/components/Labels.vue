@@ -8,6 +8,10 @@ const props = defineProps({
 		type: String,
 		default: 'index',
 	},
+	val: {
+		type: Object,
+		default: 'title',
+	},
 	max: {
 		type: Number,
 		default: 5,
@@ -147,14 +151,14 @@ onMounted(() => {
 			<button
 				v-if="index < $props.max"
 				type="button"
-				:title="item.title"
+				:title="item[val]"
 				:class="{
 					active: current?.[key] === item[key],
 					'shadow-1': current?.[key] === item[key],
 				}"
 				@click="onClickLabel(item)"
 			>
-				<span>{{ item.title }}</span>
+				<span>{{ item[val] }}</span>
 				<el-icon
 					v-if="index > 0"
 					class="i-ic-round-cancel"
@@ -172,8 +176,8 @@ onMounted(() => {
 				<el-dropdown-menu>
 					<template v-for="(item, index) of items">
 						<el-dropdown-item v-if="index >= $props.max" @click="onClickLabel(item, true)">
-							<div class="labels-component-more" :title="item.title">
-								{{ item.title.length > 2 ? item.title.substring(0, 2) + '...' : item.title }}
+							<div class="labels-component-more" :title="item[val]">
+								{{ item[val].length > 2 ? item[val].substring(0, 2) + '...' : item[val] }}
 								<span class="labels-component-close" @click.stop="onCancelItem(item)">
 									&times;
 								</span>
