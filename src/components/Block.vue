@@ -232,7 +232,7 @@ defineExpose({
 				<slot name="topRight"> </slot>
 			</div>
 
-			<el-button v-if="enableExpandContent" size="small" @click.stop="onExpendContent" ml-10px>
+			<el-button v-if="enableExpandContent" size="small" @click.stop="onExpendContent">
 				{{ expendContentOpen ? collapseContentText : expandContentText }}
 				<i
 					class="icon i-ic-baseline-expand-more"
@@ -240,18 +240,11 @@ defineExpose({
 				></i>
 			</el-button>
 
-			<el-button v-if="enableFullScreen" size="small" ml-10px @click.stop="onFullScreen">
+			<el-button v-if="enableFullScreen" size="small" @click.stop="onFullScreen">
 				{{ isFullScreen ? '还原' : '全屏' }}
 			</el-button>
 
-			<el-button
-				v-if="enableBackButton"
-				@click.stop="onBack"
-				size="small"
-				:class="{'ml-10px': !enableExpandContent}"
-			>
-				返回
-			</el-button>
+			<el-button v-if="enableBackButton" @click.stop="onBack" size="small"> 返回 </el-button>
 
 			<el-button
 				link
@@ -274,7 +267,7 @@ defineExpose({
 				:style="{height: expendContentHeight + 'px'}"
 			>
 				<el-scrollbar :height="expendContentHeight" :always="true">
-					<slot name="expand"></slot>
+					<slot nae="expand"></slot>
 				</el-scrollbar>
 			</div>
 
@@ -338,6 +331,10 @@ defineExpose({
 		height: torem(40px);
 		padding: torem(10px);
 		white-space: nowrap;
+
+		button {
+			margin-left: 10px !important;
+		}
 
 		span {
 			align-items: center;
