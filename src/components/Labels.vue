@@ -266,7 +266,7 @@ onMounted(() => {
 			opacity: 0;
 			position: absolute;
 			right: torem(6px);
-			top: torem(7px);
+			top: torem(8px);
 			transition: all 0.15s 0.1s ease-in-out;
 		}
 	}
