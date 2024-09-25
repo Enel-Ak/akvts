@@ -11,10 +11,7 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
-	enableTop: {
-		type: Boolean,
-		default: true,
-	},
+
 	offsetTop: {
 		type: [Number, String],
 		default: '40px',
@@ -51,12 +48,12 @@ const onExpand = () => {
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="aside container tyuijkl;l;' -scroll">
+			<div class="aside container">
 				<slot name="aside"></slot>
 			</div>
 			<div class="body">
-				<div v-if="enableTop" class="container-body-sub">
-					<slot name="top">123</slot>
+				<div class="container-body-sub">
+					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="footer">
@@ -75,6 +72,9 @@ const onExpand = () => {
 				<slot name="header"></slot>
 			</div>
 			<div class="body">
+				<div class="container-body-sub">
+					<slot name="top"></slot>
+				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="footer">
 					<slot name="footer"></slot>
@@ -143,9 +143,12 @@ $szie170: 170px;
 			background-color: var(--z-theme);
 			border-bottom: 1px solid var(--z-line);
 
-			height: v-bind(offsetTop);
+			height: calc(v-bind(offsetTop) - 10px);
+			position: fixed;
+			top: calc(v-bind(offsetTop) + 20px);
 			transform: translate(-20px, -20px);
 			width: calc(100% + 40px);
+			z-index: 4;
 		}
 	}
 
@@ -169,7 +172,7 @@ $szie170: 170px;
 		}
 
 		.body {
-			margin-top: calc(v-bind(offset));
+			margin-top: calc(v-bind(offset) + 30px);
 			width: calc(100% - torem($szie170));
 		}
 	}
@@ -185,7 +188,7 @@ $szie170: 170px;
 		}
 
 		.body {
-			margin-top: calc(v-bind(offset));
+			margin-top: calc(v-bind(offset) + 30px);
 			width: calc(100% - torem($szie170));
 		}
 	}
