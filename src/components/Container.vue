@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue'
+import {computed, ref, watch} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
 const emits = defineEmits(['collapse'])
 const props = defineProps({
