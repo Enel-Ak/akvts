@@ -83,10 +83,7 @@ const saveHistory = () => {
 
 defineExpose({
 	add: (item) => {
-		if (
-			item[props.key] === current.value?.[props.key] ||
-			(item.children && item.children.length !== 0)
-		) {
+		if (item[props.key] === current.value?.[props.key]) {
 			console.log('Labels Add Return Item:', item)
 			console.log('Labels Add Current:', current.value)
 			return
