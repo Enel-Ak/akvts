@@ -9,7 +9,7 @@ const props = defineProps({
 		default: 'index',
 	},
 	val: {
-		type: Object,
+		type: String,
 		default: 'title',
 	},
 	max: {
