@@ -90,7 +90,7 @@ const saveHistory = () => {
 
 defineExpose({
 	add: (item) => {
-		console.log('Labels Props:', props)
+		console.log('Labels Props:', props, item)
 
 		if (item[props.keys[0]] === current.value[props.keys[0]]) {
 			console.log('Labels Add Return Item:', item, props.keys[0])
@@ -266,7 +266,7 @@ onMounted(() => {
 			opacity: 0;
 			position: absolute;
 			right: torem(6px);
-			top: torem(14px);
+			top: torem(7px);
 			transition: all 0.15s 0.1s ease-in-out;
 		}
 	}
