@@ -143,7 +143,7 @@ $szie170: 170px;
 
 			height: 30px;
 			position: fixed;
-			top: calc(v-bind(offsetTop) + 20px);
+			top: calc(v-bind(offset) + 20px);
 			transform: translate(-20px, -20px);
 			width: calc(100% + 40px);
 			z-index: 4;
