@@ -26,7 +26,7 @@ const offset = computed(() =>
 )
 
 const bodyHeight = computed(
-	() => `calc(100% - ${offset.value}) - ${props.enableFooter ? '40px' : '0'}`
+	() => `calc(100% - ${offset.value} - ${props.enableFooter ? '40px' : '0'})`
 )
 
 const isExpand = ref(true)
