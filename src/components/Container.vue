@@ -141,7 +141,7 @@ $szie170: 170px;
 			background-color: var(--z-theme);
 			border-bottom: 1px solid var(--z-line);
 
-			height: calc(v-bind(offsetTop) - 10px);
+			height: 30px;
 			position: fixed;
 			top: calc(v-bind(offsetTop) + 20px);
 			transform: translate(-20px, -20px);
