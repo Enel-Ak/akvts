@@ -79,7 +79,10 @@ const saveHistory = () => {
 
 defineExpose({
 	add: (item) => {
-		if (item[props.key] === current.value?.[props.key] || (item.children && !item.path)) {
+		if (
+			item[props.key] === current.value?.[props.key] ||
+			(item.children && item.children.length !== 0)
+		) {
 			return
 		}
 		console.log('Labels Add:', item)
