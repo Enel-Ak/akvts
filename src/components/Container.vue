@@ -1,17 +1,36 @@
 <script setup>
-import {ref} from 'vue'
+import {computed, ref} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
 const emits = defineEmits(['collapse'])
 const props = defineProps({
 	model: {
 		type: String,
-		default: useContainerEnum.AHBF, //AHBF, HABF
+		default: useContainerEnum.HABF, //AHBF, HABF
 	},
 	enableFooter: {
 		type: Boolean,
 		default: true,
 	},
+	enableTop: {
+		type: Boolean,
+		default: true,
+	},
+	offsetTop: {
+		type: [Number, String],
+		default: '40px',
+	},
 })
+
+const offset = computed(() =>
+	typeof props.offsetTop === 'number' ||
+	(typeof props.offsetTop === 'string' && props.offsetTop.indexOf('px') === -1)
+		? `${props.offsetTop}px`
+		: props.offsetTop
+)
+
+const bodyHeight = computed(
+	() => `calc(100% - ${offset.value} * 2 - ${props.enableTop ? '0px' : '0px'})`
+)
 
 const isExpand = ref(true)
 const onExpand = () => {
@@ -36,6 +55,9 @@ const onExpand = () => {
 				<slot name="aside"></slot>
 			</div>
 			<div class="body">
+				<div v-if="enableTop" class="container-body-sub">
+					<slot name="top">123</slot>
+				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="footer">
 					<slot name="footer"></slot>
@@ -62,7 +84,6 @@ const onExpand = () => {
 	</div>
 </template>
 <style scoped lang="scss">
-$top40: 40px;
 $szie170: 170px;
 
 .container-component {
@@ -112,11 +133,20 @@ $szie170: 170px;
 
 	.body {
 		background: var(--z-bg);
-		height: calc(100% - torem($top40) * 2);
+		height: v-bind(bodyHeight);
 		padding: torem(20px);
 		margin-bottom: torem(60px);
 		position: relative;
 		overflow: auto;
+
+		.container-body-sub {
+			background-color: var(--z-theme);
+			border-bottom: 1px solid var(--z-line);
+
+			height: v-bind(offsetTop);
+			transform: translate(-20px, -20px);
+			width: calc(100% + 40px);
+		}
 	}
 
 	.footer {
@@ -134,12 +164,12 @@ $szie170: 170px;
 			width: 100%;
 		}
 		.aside {
-			height: calc(100% - torem($top40));
-			margin-top: torem($top40);
+			height: calc(100% - torem(v-bind(offset)));
+			margin-top: torem(v-bind(offset));
 		}
 
 		.body {
-			margin-top: calc($top40);
+			margin-top: calc(v-bind(offset));
 			width: calc(100% - torem($szie170));
 		}
 	}
@@ -155,7 +185,7 @@ $szie170: 170px;
 		}
 
 		.body {
-			margin-top: calc($top40);
+			margin-top: calc(v-bind(offset));
 			width: calc(100% - torem($szie170));
 		}
 	}
@@ -195,7 +225,7 @@ $szie170: 170px;
 
 	&.no-footer {
 		.body {
-			height: calc(100% - torem($top40));
+			height: calc(100% - torem(v-bind(offset)));
 			margin-bottom: 0;
 		}
 	}

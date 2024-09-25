@@ -8,6 +8,10 @@ const props = defineProps({
 		type: Array,
 		default: () => ['index', 'title'],
 	},
+	height: {
+		type: [Number, String],
+		default: 40,
+	},
 	max: {
 		type: Number,
 		default: 5,
@@ -19,6 +23,13 @@ const items = ref([])
 const current = ref(null)
 const prev = ref(null)
 const buttonWidth = computed(() => `${100 / (props.max + 1)}%`)
+const h = computed(() => {
+	let _h = props.height
+	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {
+		_h = _h + 'px'
+	}
+	return _h
+})
 
 const onClickLabel = (item, isDropdown = false, isPush = true) => {
 	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
@@ -208,7 +219,7 @@ onMounted(() => {
 		justify-content: center;
 		line-height: torem(30px);
 		// margin-right: torem(20px);
-		height: torem(40px);
+		height: torem(v-bind(h));
 		// min-height: torem(30px);
 		// min-width: torem(80px);
 		padding: 0 torem(25px);
@@ -271,8 +282,8 @@ onMounted(() => {
 	}
 
 	.more {
-		height: torem(40px);
-		line-height: torem(40px);
+		height: torem(v-bind(h));
+		line-height: torem(v-bind(h));
 		margin: 0 torem(5px);
 
 		.el-icon--right {
