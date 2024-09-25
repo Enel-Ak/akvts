@@ -83,15 +83,13 @@ const saveHistory = () => {
 
 defineExpose({
 	add: (item) => {
-		console.log('Labels Add:', item, current.value)
-
 		if (
 			item[props.key] === current.value?.[props.key] ||
 			(item.children && item.children.length !== 0)
 		) {
 			return
 		}
-		console.log('Labels Add:', item)
+
 		prev.value = toRaw(current.value)
 		current.value = item
 
@@ -108,6 +106,10 @@ defineExpose({
 				items.value.splice(1, 0, item)
 			}
 		}
+
+		console.log('Labels Add Prev:', prev.value)
+		console.log('Labels Add Current:', current.value)
+		console.log('Labels Add Items:', items.value)
 
 		saveHistory()
 		nextTick(() => setBar())
