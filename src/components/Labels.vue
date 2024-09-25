@@ -217,9 +217,9 @@ onMounted(() => {
 		display: flex;
 
 		justify-content: center;
-		line-height: torem(v-bind(h));
+		line-height: v-bind(h);
 		// margin-right: torem(20px);
-		height: torem(v-bind(h));
+		height: v-bind(h);
 		// min-height: torem(30px);
 		// min-width: torem(80px);
 		padding: 0 torem(25px);
