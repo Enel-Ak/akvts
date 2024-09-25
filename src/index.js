@@ -20,7 +20,7 @@ import SelectTree from './components/SelectTree.vue'
 import Toolbar from './components/Toolbar.vue'
 import Transfer from './components/Transfer.vue'
 import ViewImage from './components/ViewImage.vue'
-import VirtualizedTree from './components/VirtualizedTree.vue'
+import TreeV2 from './components/TreeV2.vue'
 import Watermark from './components/Watermark.vue'
 
 const components = {
@@ -46,7 +46,7 @@ const components = {
 	Toolbar,
 	Transfer,
 	ViewImage,
-	VirtualizedTree,
+	TreeV2,
 	Watermark,
 }
 
@@ -80,6 +80,6 @@ export {
 	Toolbar,
 	Transfer,
 	ViewImage,
-	VirtualizedTree,
+	TreeV2,
 	Watermark,
 }
