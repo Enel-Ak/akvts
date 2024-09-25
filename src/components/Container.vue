@@ -135,7 +135,6 @@ $szie170: 170px;
 		background: var(--z-bg);
 		height: v-bind(bodyHeight);
 		padding: torem(20px);
-		margin-bottom: torem(60px);
 		position: relative;
 		overflow: auto;
 
