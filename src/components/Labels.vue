@@ -92,7 +92,7 @@ defineExpose({
 	add: (item) => {
 		console.log('Labels Props:', props, item)
 
-		if (item[props.keys[0]] === current.value[props.keys[0]]) {
+		if (item[props.keys[0]] === current.value?.[props.keys[0]]) {
 			console.log('Labels Add Return Item:', item, props.keys[0])
 			console.log('Labels Add Return Current:', current.value, props.keys[0])
 			return
