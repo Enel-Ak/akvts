@@ -145,6 +145,7 @@ $szie170: 170px;
 		border-right: 1px solid var(--z-line);
 		background: var(--z-main);
 		overflow: auto;
+		overflow-x: hidden;
 		width: torem($szie170);
 	}
 
@@ -154,6 +155,7 @@ $szie170: 170px;
 		padding: torem(20px);
 		position: relative;
 		overflow: auto;
+		overflow-x: hidden;
 
 		.container-body-sub {
 			background-color: var(--z-theme);
