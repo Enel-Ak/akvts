@@ -5,7 +5,9 @@
 		<template #aside> aside </template>
 		<template #top> top </template>
 		<Block title="测试组件" :enableFixedHeight="true">
-			<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
+			<template #expand>
+				<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
+			</template>
 			<TableV2
 				:form-column-count="2"
 				:columns="[

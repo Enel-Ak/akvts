@@ -21,6 +21,7 @@ export default ({mode}) => {
 		css: {
 			preprocessorOptions: {
 				scss: {
+					api: 'modern-compiler', // or 'modern'
 					additionalData: `
 						@use '@/styles/lib/_mixin.scss' as *;
 					`,
