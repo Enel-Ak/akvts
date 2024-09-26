@@ -350,6 +350,22 @@ body {
 	justify-content: center;
 }
 
+.w-full {
+	width: 100%;
+}
+
+.h-full {
+	height: 100%;
+}
+
+.fb-1 {
+	font-weight: 500;
+}
+
+.fb-2 {
+	font-weight: bold;
+}
+
 @for $i from 1 through 10 {
 	.pd-#{$i * 5} {
 		padding: torem($i * 5px);
