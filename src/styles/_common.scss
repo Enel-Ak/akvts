@@ -329,43 +329,43 @@ body {
 }
 
 @for $i from 1 through 10 {
-	.pd-#{$i} {
+	.pd-#{$i * 5} {
 		padding: torem($i * 5px);
 	}
 
-	.pd-top-#{$i} {
+	.pd-top-#{$i * 5} {
 		padding-top: torem($i * 5px);
 	}
 
-	.pd-right-#{$i} {
+	.pd-right-#{$i * 5} {
 		padding-right: torem($i * 5px);
 	}
 
-	.pd-bottom-#{$i} {
+	.pd-bottom-#{$i * 5} {
 		padding-bottom: torem($i * 5px);
 	}
 
-	.pd-left-#{$i} {
+	.pd-left-#{$i * 5} {
 		padding-left: torem($i * 5px);
 	}
 
-	.mg-#{$i} {
+	.mg-#{$i * 5} {
 		margin: torem($i * 5px);
 	}
 
-	.mg-top-#{$i} {
+	.mg-top-#{$i * 5} {
 		margin-top: torem($i * 5px);
 	}
 
-	.mg-right-#{$i} {
+	.mg-right-#{$i * 5} {
 		margin-right: torem($i * 5px);
 	}
 
-	.mg-bottom-#{$i} {
+	.mg-bottom-#{$i * 5} {
 		margin-bottom: torem($i * 5px);
 	}
 
-	.mg-left-#{$i} {
+	.mg-left-#{$i * 5} {
 		margin-left: torem($i * 5px);
 	}
 }
