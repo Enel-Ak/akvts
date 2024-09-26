@@ -48,7 +48,7 @@ const GetList = (isLeaf = false, fn) => {
 			params: _reqParams.value,
 		})
 		.then((res) => {
-			const {value, label, children} = props.props
+			const {value, label, children, grade} = props.props
 			const items = res.data.items.map((item) => ({
 				[value]: item[value],
 				[label]: item[label],
