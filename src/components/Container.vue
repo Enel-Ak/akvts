@@ -74,7 +74,9 @@ watch(
 				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="container-footer">
-					<slot name="footer">@CopyRight 2024 by Akvts.net</slot>
+					<slot name="footer">
+						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
+					</slot>
 				</div>
 			</div>
 		</template>
@@ -94,7 +96,9 @@ watch(
 				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="container-footer">
-					<slot name="footer">@CopyRight 2024 by Akvts.net</slot>
+					<slot name="footer">
+						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
+					</slot>
 				</div>
 			</div>
 		</template>
@@ -176,9 +180,9 @@ $szie170: 170px;
 		background: var(--z-bg-secondary);
 		display: flex;
 		height: torem(40px);
-		justify-content: center;
 		left: torem($szie170);
 		position: fixed;
+		padding: 0 torem(20px);
 		width: calc(100% - torem($szie170));
 		z-index: 1;
 	}

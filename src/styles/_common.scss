@@ -366,6 +366,10 @@ body {
 	font-weight: bold;
 }
 
+.tac {
+	text-align: center;
+}
+
 @for $i from 1 through 10 {
 	.pd-#{$i * 5} {
 		padding: torem($i * 5px);
