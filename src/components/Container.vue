@@ -74,7 +74,7 @@ watch(
 				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="footer">
-					<slot name="footer"></slot>
+					<slot name="footer">@CopyRight 2024 by Akvts.net</slot>
 				</div>
 			</div>
 		</template>
@@ -94,7 +94,7 @@ watch(
 				</div>
 				<slot name="default"></slot>
 				<div v-if="enableFooter" class="footer">
-					<slot name="footer"></slot>
+					<slot name="footer">@CopyRight 2024 by Akvts.net</slot>
 				</div>
 			</div>
 		</template>
@@ -169,9 +169,12 @@ $szie170: 170px;
 	}
 
 	.footer {
+		align-items: center;
 		bottom: 0;
 		background: var(--z-bg-secondary);
+		display: flex;
 		height: torem(40px);
+		justify-content: center;
 		left: torem($szie170);
 		position: fixed;
 		width: calc(100% - torem($szie170));

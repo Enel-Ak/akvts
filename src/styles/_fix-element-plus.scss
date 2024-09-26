@@ -12,13 +12,22 @@
 .el-sub-menu__title:hover {
 	background-color: rgba($color: var(--z-nav-hover-rgb), $alpha: 0.2);
 }
+
 .el-menu-item,
 .el-sub-menu {
-	border-left: 3px solid transparent;
+	position: relative;
+	&:after {
+		content: '';
+		border-left: 3px solid transparent;
+		position: absolute;
+	}
 }
 .el-menu-item.is-active {
-	border-left: 3px solid #fff;
 	background-color: rgba($color: var(--z-nav-hover-rgb), $alpha: 0.6);
+	&:after {
+		content: '';
+		border-left: 3px solid #fff;
+	}
 }
 .el-sub-menu {
 	li {
