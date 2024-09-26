@@ -45,6 +45,10 @@ const onExpand = () => {
 	emits('collapse', isExpand.value)
 }
 
+const onScroll = (e) => {
+	console.log('container scroll', e)
+}
+
 watch(
 	() => props.expand,
 	(newVal) => {
@@ -90,7 +94,7 @@ watch(
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="container-body">
+			<div class="container-body" @scroll="onScroll">
 				<div class="container-body-sub">
 					<slot name="top"></slot>
 				</div>
