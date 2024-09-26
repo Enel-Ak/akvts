@@ -327,3 +327,45 @@ body {
 		background-color: var(--z-theme);
 	}
 }
+
+@for $i from 1 through 10 {
+	.pd-#{$i} {
+		padding: torem($i * 5px);
+	}
+
+	.pd-top-#{$i} {
+		padding-top: torem($i * 5px);
+	}
+
+	.pd-right-#{$i} {
+		padding-right: torem($i * 5px);
+	}
+
+	.pd-bottom-#{$i} {
+		padding-bottom: torem($i * 5px);
+	}
+
+	.pd-left-#{$i} {
+		padding-left: torem($i * 5px);
+	}
+
+	.mg-#{$i} {
+		margin: torem($i * 5px);
+	}
+
+	.mg-top-#{$i} {
+		margin-top: torem($i * 5px);
+	}
+
+	.mg-right-#{$i} {
+		margin-right: torem($i * 5px);
+	}
+
+	.mg-bottom-#{$i} {
+		margin-bottom: torem($i * 5px);
+	}
+
+	.mg-left-#{$i} {
+		margin-left: torem($i * 5px);
+	}
+}
