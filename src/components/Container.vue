@@ -59,41 +59,41 @@ watch(
 		:class="[model, isExpand ? '' : 'unexpand', enableFooter ? '' : 'no-footer']"
 	>
 		<template v-if="model === 'habf'">
-			<div class="header">
+			<div class="container-header">
 				<div v-if="enableExpand" class="expand" @click="onExpand">
 					<i class="i-ic-baseline-expand-less"></i>
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="aside">
+			<div class="container-aside">
 				<slot name="aside"></slot>
 			</div>
-			<div class="body">
+			<div class="container-body">
 				<div class="container-body-sub">
 					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
-				<div v-if="enableFooter" class="footer">
+				<div v-if="enableFooter" class="container-footer">
 					<slot name="footer">@CopyRight 2024 by Akvts.net</slot>
 				</div>
 			</div>
 		</template>
 		<template v-else-if="model === 'ahbf'">
-			<div class="aside">
+			<div class="container-aside">
 				<slot name="aside"></slot>
 			</div>
-			<div class="header">
+			<div class="container-header">
 				<div class="expand" @click="onExpand">
 					<i class="i-ic-baseline-expand-less"></i>
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="body">
+			<div class="container-body">
 				<div class="container-body-sub">
 					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
-				<div v-if="enableFooter" class="footer">
+				<div v-if="enableFooter" class="container-footer">
 					<slot name="footer">@CopyRight 2024 by Akvts.net</slot>
 				</div>
 			</div>
@@ -109,7 +109,7 @@ $szie170: 170px;
 	height: inherit;
 	position: relative;
 
-	> .header {
+	> .container-header {
 		align-items: center;
 		background-color: var(--z-theme);
 		border-bottom: 1px solid var(--z-line);
@@ -141,14 +141,14 @@ $szie170: 170px;
 		}
 	}
 
-	.aside {
+	.container-aside {
 		border-right: 1px solid var(--z-line);
 		background: var(--z-main);
 		overflow: auto;
 		width: torem($szie170);
 	}
 
-	.body {
+	.container-body {
 		background: var(--z-bg);
 		height: v-bind(bodyHeight);
 		padding: torem(20px);
@@ -168,7 +168,7 @@ $szie170: 170px;
 		}
 	}
 
-	.footer {
+	.container-footer {
 		align-items: center;
 		bottom: 0;
 		background: var(--z-bg-secondary);
@@ -182,15 +182,15 @@ $szie170: 170px;
 	}
 
 	&.habf {
-		.header {
+		.container-header {
 			width: 100%;
 		}
-		.aside {
+		.container-aside {
 			height: calc(100% - v-bind(offset));
 			margin-top: v-bind(offset);
 		}
 
-		.body {
+		.container-body {
 			margin-top: calc(v-bind(offset) + 30px);
 			width: calc(100% - torem($szie170));
 		}
@@ -213,40 +213,40 @@ $szie170: 170px;
 	}
 
 	&.unexpand {
-		.header {
+		.container-header {
 			i {
 				transform: rotate(90deg);
 			}
 		}
-		.aside {
+		.container-aside {
 			width: torem(60px);
 		}
 
 		&.habf {
-			.body,
-			.footer {
+			.container-body,
+			.container-footer {
 				width: calc(100% - torem(60px));
 			}
-			.footer {
+			.container-footer {
 				left: torem(60px);
 			}
 		}
 
 		&.ahbf {
-			.header,
-			.body,
-			.footer {
+			.container-header,
+			.container-body,
+			.container-footer {
 				left: torem(60px);
 				width: calc(100% - torem(60px));
 			}
-			.body {
+			.container-body {
 				left: 0;
 			}
 		}
 	}
 
 	&.no-footer {
-		.body {
+		.container-body {
 			height: calc(100% - torem(v-bind(offset)));
 			margin-bottom: 0;
 		}
