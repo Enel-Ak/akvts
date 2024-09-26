@@ -1,4 +1,26 @@
-<script setup></script>
+<script setup>
+import {ref} from 'vue'
+const flowRef = ref()
+const flowConfig = ref({
+	id: 'abc',
+	label: '发起人',
+	type: 'input',
+	childNode: [
+		{
+			id: 'def',
+			label: '填报',
+			type: 'report',
+			childNode: [
+				{
+					id: 'ghi',
+					label: '审核',
+					type: 'review',
+				},
+			],
+		},
+	],
+})
+</script>
 <template>
 	<Container>
 		<template #header> header</template>
@@ -45,6 +67,7 @@
 					},
 				]"
 			></TableV2>
+			<Flow ref="flowRef" v-model="flowConfig"</Flow>
 		</Block>
 	</Container>
 </template>

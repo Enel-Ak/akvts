@@ -2,7 +2,7 @@ export const FlowNodeTypes = {
 	Input: 'input',
 	Output: 'output',
 	Report: 'report',
-	Review: 'Review',
+	Review: 'review',
 	Gateway: 'gateway',
 	Condition: 'condition',
 }

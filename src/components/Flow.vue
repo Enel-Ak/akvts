@@ -527,6 +527,8 @@ const output = () => {
 watch(
 	() => props.modelValue,
 	(val) => {
+		console.log('Flow modelValue changed: ', val)
+
 		if (JSON.stringify(val) !== JSON.stringify(nodeConfig.value) && !props.templateCode) {
 			console.log('Flow modelValue changed: ', val)
 			nodes.value = [JSON.parse(JSON.stringify(nodeEnd))]
@@ -534,7 +536,8 @@ watch(
 			nodeConfig.value = val
 			init()
 		}
-	}
+	},
+	{immediate: true}
 )
 
 watch(
