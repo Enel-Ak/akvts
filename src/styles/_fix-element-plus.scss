@@ -19,6 +19,8 @@
 	&:after {
 		content: '';
 		border-left: 3px solid transparent;
+		height: 100%;
+		left: 0;
 		position: absolute;
 	}
 }
@@ -31,7 +33,7 @@
 }
 .el-sub-menu {
 	li {
-		margin-left: -3px;
+		// margin-left: -3px;
 	}
 }
 
