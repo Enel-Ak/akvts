@@ -22,7 +22,7 @@ const router = useRouter()
 const items = ref([])
 const current = ref(null)
 const prev = ref(null)
-const buttonWidth = computed(() => `${100 / props.max - 30 / props.max}%`)
+const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2}%`)
 const h = computed(() => {
 	let _h = props.height
 	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {
@@ -283,7 +283,7 @@ onMounted(() => {
 
 	.more {
 		height: v-bind(h);
-		line-height: calc(v-bind(h) - 4);
+		line-height: calc(v-bind(h) - 4px);
 		margin: 0 torem(5px);
 		width: 30px;
 		.el-icon--right {
