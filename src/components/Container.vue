@@ -1,7 +1,7 @@
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue'
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
-const emits = defineEmits(['collapse'])
+const emits = defineEmits(['collapse', 'scroll'])
 const props = defineProps({
 	model: {
 		type: String,
@@ -47,7 +47,11 @@ const onExpand = () => {
 }
 
 const onScroll = (e) => {
-	console.log('container scroll', e)
+	const target = e.target
+	emits('scroll', {
+		target,
+		scrollTop: target.scrollTop,
+	})
 }
 
 watch(
@@ -59,9 +63,11 @@ watch(
 )
 
 onMounted(() => {
-	console.log('containerRef', containerRef.value)
-
 	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
+})
+
+onUnmounted(() => {
+	containerRef.value?.querySelector('.container-body').removeEventListener('scroll', onScroll)
 })
 </script>
 <template>
