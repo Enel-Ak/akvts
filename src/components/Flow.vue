@@ -158,17 +158,18 @@ const nodeConfigToFlow = (node, parentNode, depth = 0) => {
 			]
 		)
 
-		edges.value.push(
-			...[
-				{
-					id: useGuid(),
-					source: parentNode?.id,
-					target: node.id,
-					type: 'with-button',
-					markerEnd: MarkerType.ArrowClosed,
-				},
-			]
-		)
+		parentNode &&
+			edges.value.push(
+				...[
+					{
+						id: useGuid(),
+						source: parentNode?.id,
+						target: node.id,
+						type: 'with-button',
+						markerEnd: MarkerType.ArrowClosed,
+					},
+				]
+			)
 
 		if (node.conditionNodes && node.conditionNodes.length > 0) {
 			// 网关分支节点
