@@ -328,6 +328,28 @@ body {
 	}
 }
 
+.df {
+	display: flex;
+}
+
+.dfr {
+	display: flex;
+	flex-direction: row;
+}
+
+.dfc {
+	display: flex;
+	flex-direction: column;
+}
+
+.aic {
+	align-items: center;
+}
+
+.jcc {
+	justify-content: center;
+}
+
 @for $i from 1 through 10 {
 	.pd-#{$i * 5} {
 		padding: torem($i * 5px);
