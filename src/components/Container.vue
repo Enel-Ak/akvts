@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
 const emits = defineEmits(['collapse'])
 const props = defineProps({
@@ -38,6 +38,7 @@ const bodyHeight = computed(
 	() => `calc(100% - ${offset.value} - ${props.enableFooter ? '70px' : '0'})`
 )
 
+const containerRef = ref()
 const isExpand = ref(props.expand)
 const onExpand = () => {
 	isExpand.value = !isExpand.value
@@ -56,9 +57,16 @@ watch(
 	},
 	{immediate: true}
 )
+
+onMounted(() => {
+	console.log('containerRef', containerRef.value)
+
+	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
+})
 </script>
 <template>
 	<div
+		ref="containerRef"
 		class="container-component"
 		:class="[model, isExpand ? '' : 'unexpand', enableFooter ? '' : 'no-footer']"
 	>
