@@ -374,6 +374,30 @@ body {
 	text-align: center;
 }
 
+.relative {
+	position: relative;
+}
+
+.absolute {
+	position: absolute;
+}
+
+.fixed {
+	position: fixed;
+}
+
+.hidden {
+	display: none;
+}
+
+.block {
+	display: block;
+}
+
+.inline-block {
+	display: inline-block;
+}
+
 @for $i from 1 through 10 {
 	.pd-#{$i * 5} {
 		padding: torem($i * 5px);
