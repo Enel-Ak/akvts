@@ -33,13 +33,15 @@ const icons = {
 }
 
 const list = computed(() =>
-	props.data.sort((a, b) =>
-		props.sort === 'desc'
-			? new Date(b.time) - new Date(a.time)
-			: props.sort === 'asc'
-			? new Date(a.time) - new Date(b.time)
-			: 0
-	)
+	props.data.sort((a, b) => {
+		if (props.sort === 'desc') {
+			return new Date(b.time) - new Date(a.time)
+		} else if (props.sort === 'asc') {
+			return new Date(a.time) - new Date(b.time)
+		} else {
+			return 0
+		}
+	})
 )
 </script>
 <template>

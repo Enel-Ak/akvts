@@ -370,11 +370,8 @@ defineExpose({
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item.label}`"
 								:size="size"
-								clearable
 								:style="{width: columnCount > 1 ? '100%' : '50%'}"
-								:precision="item.precision || 0"
-								:controls="item.controls"
-								:controls-position="item.controlsPosition || ''"
+								clearable
 								@change="onChange($event, item)"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
