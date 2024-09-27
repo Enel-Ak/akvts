@@ -184,6 +184,8 @@ const getList = () => {
 	}
 	let isEvent = false
 	let timer = null
+
+	loading.value = true
 	axios
 		.request({
 			url: props.url,
@@ -197,6 +199,7 @@ const getList = () => {
 			const _next = (calldata) => {
 				tableData.value = calldata ?? items
 				total.value = totalCount
+				loading.value = false
 				emits('completed', 'get')
 				nextTick(() => setFnWidth(true))
 			}
