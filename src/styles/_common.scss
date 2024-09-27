@@ -328,6 +328,10 @@ body {
 	}
 }
 
+cursor-pointer {
+	cursor: pointer;
+}
+
 .df {
 	display: flex;
 }
@@ -344,6 +348,11 @@ body {
 .dfc {
 	display: flex;
 	flex-direction: column;
+}
+
+.dfw {
+	display: flex;
+	flex-wrap: wrap;
 }
 
 .aic {

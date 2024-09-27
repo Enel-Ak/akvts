@@ -4,7 +4,7 @@ import {computed} from 'vue'
 const props = defineProps({
 	title: {
 		type: String,
-		default: '操作记录',
+		default: '',
 	},
 	sort: {
 		type: String,
