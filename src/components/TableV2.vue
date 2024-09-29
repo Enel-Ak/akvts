@@ -598,7 +598,11 @@ const setFnWidth = (again = false) => {
 	__fnWidth.value = width
 }
 
-const setEval = (str, row) => eval(str)
+const setEval = (str, row) => {
+	console.log('setEval', str, row)
+
+	return eval(str)
+}
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
 	for (const item of arr) {
