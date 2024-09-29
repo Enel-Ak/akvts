@@ -599,7 +599,13 @@ const setFnWidth = (again = false) => {
 }
 
 const setEval = (str, row) => {
-	return eval(str)
+	try {
+		const func = new Function('row', `return ${str}`)
+		return func(row)
+	} catch (e) {
+		console.error('Error: BasicTabel Component setEval', e)
+	}
+	// return eval(str)
 }
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
