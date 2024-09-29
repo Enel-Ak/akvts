@@ -599,11 +599,14 @@ const setFnWidth = (again = false) => {
 }
 
 const setEval = (str, row) => {
+	if (!str || !row) {
+		return true
+	}
 	try {
 		const func = new Function('row', `return ${str}`)
 		return func(row)
 	} catch (e) {
-		console.error('Error: BasicTabel Component setEval', e)
+		console.error('Error: TableV2 Component setEval', e)
 	}
 	// return eval(str)
 }
