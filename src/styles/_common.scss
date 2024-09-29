@@ -18,6 +18,30 @@ body {
 	overflow: hidden;
 }
 
+/* 滚动条整体 */
+::-webkit-scrollbar {
+	width: 10px; /* 设置滚动条宽度 */
+	height: 10px; /* 横向滚动条的高度 */
+}
+
+/* 滚动条轨道 */
+::-webkit-scrollbar-track {
+	background-color: transparent; /* 滚动条轨道背景色 */
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+	background-color: #cbcbcb; /* 滑块的背景色 */
+	border-radius: 10px; /* 滑块圆角 */
+	border: 3px solid transparent; /* 透明边框，用于给滑块周围留空间 */
+	background-clip: content-box; /* 限制背景颜色只显示在内容区域 */
+}
+
+/* 滑块在 hover 时的样式 */
+::-webkit-scrollbar-thumb:hover {
+	background-color: #cbcbcb; /* 滑块 hover 状态下的背景色 */
+}
+
 #app {
 	background: var(--z-bg);
 	height: 100%;
