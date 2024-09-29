@@ -597,7 +597,7 @@ const setFnWidth = (again = false) => {
 	__fnWidth.value = width
 }
 
-const setEval = (str, row) => eval(str)
+const setEval = (str, row) => nextTick(() => eval(str))
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
 	for (const item of arr) {
@@ -859,6 +859,7 @@ defineExpose({
 								<i v-if="btn.icon" :class="['icon', btn.icon]"></i>
 								{{ btn.label }}
 							</el-button>
+
 							<el-popconfirm
 								v-else-if="btn.popconfirm"
 								:title="btn.popconfirm"
