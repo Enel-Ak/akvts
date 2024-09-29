@@ -599,8 +599,6 @@ const setFnWidth = (again = false) => {
 }
 
 const setEval = (str, row) => {
-	console.log('setEval', str, row)
-
 	return eval(str)
 }
 
