@@ -129,11 +129,11 @@ watch(
 			newVal.length === oldVal?.length &&
 			newVal.every((item, index) => item.prop === oldVal[index].prop)
 		) {
-			console.log('BasicTable Component columns not changed')
+			console.log('TableV2 Component columns not changed')
 			return
 		}
 
-		console.log('BasicTable Component columns changed')
+		console.log('TableV2 Component columns changed')
 		const arr = []
 		const loops = (cols) => {
 			for (const col of cols) {
@@ -201,6 +201,7 @@ const getList = () => {
 				tableData.value = calldata ?? items
 				total.value = totalCount
 				loading.value = false
+				console.log('TableV2 Component Next Finish', tableData.value)
 				emits('completed', 'get')
 				nextTick(() => setFnWidth(true))
 			}
@@ -210,7 +211,7 @@ const getList = () => {
 				next: (calldata) => {
 					clearTimeout(timer)
 					// 如果有数据修改父组件需要调用 next(data),并把data传递进来
-					console.log('BasicTable beforeComplete Next')
+					console.log('TableV2 beforeComplete Next', calldata)
 					isEvent = true
 					_next(calldata)
 				},
@@ -218,7 +219,7 @@ const getList = () => {
 
 			timer = setTimeout(() => {
 				if (!isEvent) {
-					console.log('BasicTable beforeComplete')
+					console.log('TableV2 beforeComplete', items)
 					_next()
 				}
 			}, 256)
@@ -394,7 +395,7 @@ const onClickButton = (btn, row, index) => {
 }
 
 const onDoubleClickRow = (row, column, cell) => {
-	console.log('BasicTable Component Double Click Row', row)
+	console.log('TableV2 Component Double Click Row', row)
 	if (props.enableRowEdit) {
 		row.__enableEdit = true
 		currentEditRow.value = row
@@ -620,7 +621,7 @@ const init = () => {
 	}
 	initializing.value = true
 	nextTick(() => {
-		console.log('BasicTable Component mounted')
+		console.log('TableV2 Component mounted')
 		setTableHeight()
 		// setFnWidth()
 
@@ -646,7 +647,7 @@ onDeactivated(() => {
 })
 
 onUnmounted(() => {
-	console.log('BasicTable Component unmounted')
+	console.log('TableV2 Component unmounted')
 	window.removeEventListener('resize', setTableHeight)
 })
 
