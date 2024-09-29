@@ -5,6 +5,7 @@ import path from 'path'
 import UnoCSS from 'unocss/vite'
 import presetIcons from '@unocss/preset-icons'
 import ElementPlus from 'unplugin-element-plus/vite'
+import viteCompression from 'vite-plugin-compression'
 
 export default ({mode}) => {
 	const env = loadEnv(mode, process.cwd())
@@ -48,6 +49,13 @@ export default ({mode}) => {
 			ElementPlus({
 				useSource: true,
 			}),
+			viteCompression({
+				verbose: true,
+				disable: false,
+				threshold: 10240,
+				algorithm: 'gzip',
+				ext: '.gz',
+			}),
 			pages({
 				dirs: 'src/example',
 				exclude: ['**/components/*.vue'],
@@ -74,8 +82,8 @@ export default ({mode}) => {
 			terserOptions: {
 				compress: {
 					//生产环境时移除console
-					drop_console: false,
-					drop_debugger: false,
+					drop_console: true,
+					drop_debugger: true,
 				},
 			},
 		},
