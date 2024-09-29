@@ -38,11 +38,15 @@ export default defineConfig({
       presets: [
       presetIcons(),
       ],
-      include: [
-        // 默认扫描 src 目录
-        /\.js$/, // 扫描 .js 文件, 必要配置
-				/\.vue$/, // 扫描 .vue 文件
-      ],
+      content: {
+				pipeline: {
+					include: [
+						// 默认扫描 src 目录
+						/\.js$/, // 扫描 .js 文件, 必要配置
+						/\.vue$/, // 扫描 .vue 文件
+					],
+				},
+				},
     }),
     ElementPlus({
       useSource: true,

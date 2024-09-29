@@ -166,7 +166,6 @@ onMounted(() => {
 				:title="item[keys[1]]"
 				:class="{
 					active: current?.[keys[0]] === item[keys[0]],
-					'shadow-1': current?.[keys[0]] === item[keys[0]],
 				}"
 				@click="onClickLabel(item)"
 			>
