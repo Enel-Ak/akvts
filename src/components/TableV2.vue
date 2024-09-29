@@ -72,6 +72,7 @@ const props = defineProps({
 	createHideColunms: {type: Array, default: () => []},
 	updateHideColunms: {type: Array, default: () => []},
 
+	numberText: {type: String, default: '序号'},
 	createText: {type: String, default: '新增'},
 	editText: {type: String, default: '编辑'},
 	deleteText: {type: String, default: '删除'},
@@ -790,7 +791,7 @@ defineExpose({
 				type="index"
 				:width="pagination.page < 100 ? 60 : pagination.page < 10000 ? 80 : 100"
 				align="center"
-				label="序号"
+				:label="numberText"
 				fixed="left"
 			>
 				<template #default="scope">
@@ -847,7 +848,7 @@ defineExpose({
 				<template #="{row, column, $index}">
 					<slot name="buttons" :row="row"></slot>
 					<template v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))">
-						<template v-if="btn.hasOwnProperty('show') ? setEval(btn.show, row) : true">
+						<template v-if="row && btn.hasOwnProperty('show') ? setEval(btn.show, row) : true">
 							<el-button
 								v-if="!btn.popconfirm"
 								:type="btn.type"
@@ -858,7 +859,6 @@ defineExpose({
 								<i v-if="btn.icon" :class="['icon', btn.icon]"></i>
 								{{ btn.label }}
 							</el-button>
-
 							<el-popconfirm
 								v-else-if="btn.popconfirm"
 								:title="btn.popconfirm"

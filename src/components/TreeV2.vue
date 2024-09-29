@@ -24,6 +24,8 @@ const props = defineProps({
 
 	beforeLazyLoad: {type: Function, default: () => {}},
 	grade: {type: [Number, String], default: 0},
+
+	tips: {type: String, default: ''}, // 显示在节点后面的提示信息
 })
 
 const treeRef = ref()
@@ -201,7 +203,10 @@ defineExpose({
 					>
 						<Loading />
 					</el-icon>
-					<span :title="node.label" class="value">{{ node.label }}</span>
+					<span :title="node.label" class="value">
+						{{ node.label }}
+						<template v-if="tips">{{ tips }}</template>
+					</span>
 				</slot>
 			</template>
 		</el-tree-v2>
