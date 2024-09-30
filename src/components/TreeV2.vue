@@ -48,11 +48,12 @@ const GetList = (isLeaf = false, fn) => {
 			params: _reqParams.value,
 		})
 		.then((res) => {
+			const {value, label, children} = props.props
 			const items = res.data.items.map((item) => ({
-				[props.value]: item[props.value],
-				[props.label]: item[props.label],
-				[props.children]: item[props.children] || [],
-				[props.grade]: item[props.grade],
+				[value]: item[value],
+				[label]: item[label],
+				[children]: item[children] || [],
+				[props.props.grade]: item[props.props.grade],
 				raw: JSON.parse(JSON.stringify(item)),
 			}))
 
