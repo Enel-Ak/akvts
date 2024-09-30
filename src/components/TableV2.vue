@@ -201,7 +201,7 @@ const getList = () => {
 				tableData.value = calldata ?? items
 				total.value = totalCount
 				loading.value = false
-				console.log('TableV2 Component Next Finish', tableData.value)
+				console.log('TableV2 Component Next Finish', tableData.value, total.value)
 				emits('completed', 'get')
 				nextTick(() => setFnWidth(true))
 			}
