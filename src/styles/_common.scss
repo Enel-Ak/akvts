@@ -352,7 +352,7 @@ body {
 	}
 }
 
-cursor-pointer {
+.cursor-pointer {
 	cursor: pointer;
 }
 
@@ -423,7 +423,8 @@ cursor-pointer {
 	display: none;
 }
 
-.block {
+.block,
+.db {
 	display: block;
 }
 
