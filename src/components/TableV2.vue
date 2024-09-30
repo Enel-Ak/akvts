@@ -849,7 +849,8 @@ defineExpose({
 			<el-table-column
 				v-if="
 					((enableEdit || enableDelete || buttons.length > 0) && !disableTable) ||
-					buttons.some((f) => f.important)
+					buttons.some((f) => f.important) ||
+					$slots.buttons
 				"
 				label="操作"
 				align="center"
