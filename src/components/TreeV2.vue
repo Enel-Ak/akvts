@@ -203,7 +203,7 @@ defineExpose({
 					</el-icon>
 					<span :title="node.label" class="value">
 						{{ node.label }}
-						<template v-if="tips">{{ node.tips }}</template>
+						<template v-if="tips">{{ node?.data?.tips }}</template>
 					</span>
 				</slot>
 			</template>
