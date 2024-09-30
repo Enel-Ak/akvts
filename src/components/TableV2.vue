@@ -15,6 +15,7 @@ import axios from 'axios'
 import TableColumn from './TableColumn.vue'
 import {ElMessage} from 'element-plus'
 import FormItem from './FormItem.vue'
+import {useGuid} from '@/hooks'
 
 const global = useGlobal()
 const emits = defineEmits([
