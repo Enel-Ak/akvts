@@ -136,12 +136,15 @@ const onCheck = (data, info) => {
 	treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
-const onNodeExpand = (node, data) => {
+const onNodeExpand = (node) => {
+	console.log('TreeV2 onNodeExpand', node)
+
 	currExpandNodeIds.push(node.id)
 	treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
-const onNodeCollapse = (node, data) => {
+const onNodeCollapse = (node) => {
+	console.log('TreeV2 onNodeCollapse', node)
 	currExpandNodeIds = currExpandNodeIds.filter((x) => x !== node.id)
 	treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
