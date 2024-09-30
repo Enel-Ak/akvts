@@ -103,7 +103,6 @@ const onCheck = (data, info) => {
 	const check = info.checkedKeys.some((x) => x === data.id)
 	if (check) {
 		currClickNode = data
-		// onNodeExpand(data)
 
 		if (!props.multiple) {
 			treeRef.value.setCheckedKeys(check ? [data.id] : [])
@@ -128,11 +127,8 @@ const onCheck = (data, info) => {
 		}
 	} else {
 		currClickNode = null
-		// onNodeCollapse(data)
 		emits('nodeClick', null, info)
 	}
-
-	// treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
 const onNodeExpand = (node) => {
@@ -140,13 +136,13 @@ const onNodeExpand = (node) => {
 		currExpandNodeIds.push(node.id)
 	}
 	console.log('TreeV2 onNodeExpand', node, currExpandNodeIds)
-	treeRef.value.setExpandedKeys(currExpandNodeIds)
+	// treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
 const onNodeCollapse = (node) => {
 	currExpandNodeIds = Array.from(new Set(currExpandNodeIds.filter((x) => x !== node.id)))
 	console.log('TreeV2 onNodeCollapse', node, currExpandNodeIds)
-	treeRef.value.setExpandedKeys(currExpandNodeIds)
+	// treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
 watch(
