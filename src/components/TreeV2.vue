@@ -126,10 +126,10 @@ const onCheck = (data, info) => {
 			emits('nodeClick', data, info)
 		}
 
-		onNodeExpand(data)
+		nextTick(() => onNodeExpand(data))
 	} else {
 		currClickNode = null
-		onNodeCollapse(data)
+		nextTick(() => onNodeCollapse(data))
 		emits('nodeClick', null, info)
 	}
 
