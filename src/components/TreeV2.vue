@@ -103,6 +103,7 @@ const onCheck = (data, info) => {
 	const check = info.checkedKeys.some((x) => x === data.id)
 	if (check) {
 		currClickNode = data
+		onNodeExpand(data)
 
 		if (!props.multiple) {
 			treeRef.value.setCheckedKeys(check ? [data.id] : [])
@@ -125,15 +126,13 @@ const onCheck = (data, info) => {
 		} else {
 			emits('nodeClick', data, info)
 		}
-
-		nextTick(() => onNodeExpand(data))
 	} else {
 		currClickNode = null
-		nextTick(() => onNodeCollapse(data))
+		onNodeCollapse(data)
 		emits('nodeClick', null, info)
 	}
 
-	treeRef.value.setExpandedKeys(currExpandNodeIds)
+	// treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
 const onNodeExpand = (node) => {
