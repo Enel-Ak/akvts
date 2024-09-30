@@ -68,6 +68,11 @@
 .el-button {
 	@extend .shadow-1;
 }
+
+.el-dialog.is-fullscreen {
+	overflow: hidden;
+}
+
 .el-dialog__header {
 	@extend .shadow-2;
 }
