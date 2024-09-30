@@ -87,7 +87,7 @@ const onQuery = () => treeRef.value.filter(query.value)
 const onFilter = (query, node) => node[props.props.label].includes(query)
 
 const onClickTreeNode = (data, node, e) => {
-	if (props.checkOnClickNode) {
+	if (!props.checkOnClickNode) {
 		console.log('TreeV2 onClickTreeNode', data, node, e)
 
 		currClickNode = data
