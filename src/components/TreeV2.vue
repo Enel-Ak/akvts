@@ -125,12 +125,14 @@ const onCheck = (data, info) => {
 		} else {
 			emits('nodeClick', data, info)
 		}
+
+		onNodeExpand(data)
 	} else {
 		currClickNode = null
+		onNodeCollapse(data)
 		emits('nodeClick', null, info)
 	}
 
-	currExpandNodeIds.push(data.id)
 	treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
