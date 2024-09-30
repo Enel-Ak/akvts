@@ -370,7 +370,7 @@ defineExpose({
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item.label}`"
 								:size="size"
-								:style="{width: columnCount > 1 ? '100%' : '50%'}"
+								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
 								@change="onChange($event, item)"
 							/>
