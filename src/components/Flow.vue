@@ -7,10 +7,8 @@ import {Controls} from '@vue-flow/controls'
 import {MiniMap} from '@vue-flow/minimap'
 
 import {ElMessage} from 'element-plus'
-import {useGuid} from '@/hooks/useGuid'
+import {useGuid, useLayout, useString} from '@/hooks'
 import EdgeWithButton from './EdgeWithButton.vue'
-import {useLayout} from '@/hooks/useFlowLayout'
-import {useStringLength, useSubstring} from '@/hooks/useStringLength'
 
 const emits = defineEmits([
 	'nodeClick',
@@ -90,7 +88,7 @@ const setContainerSize = () => {
 	if (flow) {
 		const vh = document.body.offsetHeight
 		const vw = document.body.offsetWidth
-		const aw = document.querySelector('.el-aside.aside')?.offsetWidth ?? 0
+		const aw = document.querySelector('.container-component .container-aside')?.offsetWidth ?? 0
 		const pw = props.width
 		const ph = props.height
 
@@ -103,11 +101,12 @@ const setContainerSize = () => {
 		if (props.width) {
 			flow.style.width = typeof pw === 'number' ? pw + 'px' : props.width
 		} else {
-			flow.style.width = `${vw - aw - 40}px`
+			flow.style.width = `${vw - aw - 72}px`
 		}
 	}
 
 	completed.value = true
+
 	setTimeout(() => {
 		flowInstance.value?.fitView()
 	}, 16.7)
@@ -490,13 +489,13 @@ const setCaretAt = (node, element, position = 'end') => {
 		clickTimer = null
 		let str = element.innerText.replace(/\s/g, '')
 
-		if (useStringLength(str) === 0) {
+		if (useString.getStringLength(str) === 0) {
 			ElMessage.warning('请输入标签')
 			element.focus()
 			return
-		} else if (useStringLength(str) > 20) {
+		} else if (useString.getStringLength(str) > 20) {
 			ElMessage.warning('最大长度限制中文10个, 英文20个, 总体不超过20个字符')
-			str = useSubstring(str, 20)
+			str = useString.setSubstring(str, 20)
 		}
 
 		node.data.label = str

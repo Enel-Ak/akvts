@@ -8,7 +8,6 @@
 		"dist",
 		"src/styles",
 		"src/directive",
-		"src/hooks",
 		"APP_CONFIG.js",
 		"README.md"
 	],

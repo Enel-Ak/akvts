@@ -1,4 +1,4 @@
-const useStringLength = (input) => {
+const getStringLength = (input) => {
 	let totalLength = 0
 	let str = input.replace(/\s/g, '')
 	for (let i = 0; i < str.length; i++) {
@@ -13,7 +13,7 @@ const useStringLength = (input) => {
 	return totalLength
 }
 
-const useSubstring = (input, length) => {
+const setSubstring = (input, length) => {
 	let totalLength = 0
 	let str = input.replace(/\s/g, '')
 	let result = ''
@@ -32,4 +32,4 @@ const useSubstring = (input, length) => {
 	return result
 }
 
-export {useStringLength, useSubstring}
+export default {getStringLength, setSubstring}

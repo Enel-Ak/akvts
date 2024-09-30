@@ -67,7 +67,8 @@ const flowConfig = ref({
 					},
 				]"
 			></TableV2>
-			<Flow ref="flowRef" v-model="flowConfig"</Flow>
+
+			<Flow ref="flowRef" v-model="flowConfig"></Flow>
 		</Block>
 	</Container>
 </template>

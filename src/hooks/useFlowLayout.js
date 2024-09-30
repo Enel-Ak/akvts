@@ -2,7 +2,7 @@ import {Position, useVueFlow} from '@vue-flow/core'
 import dagre from '@dagrejs/dagre'
 import {ref} from 'vue'
 
-export function useLayout() {
+export default function useLayout() {
 	const {findNode} = useVueFlow()
 
 	const graph = ref(new dagre.graphlib.Graph())

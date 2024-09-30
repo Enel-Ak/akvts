@@ -1,4 +1,4 @@
-export const useGeneratePassword = () => {
+export default function useGeneratePassword() {
 	const specialChars = '!@#$%^&*_+<>'
 	const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 	const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz'

@@ -1,6 +1,6 @@
-import useFlowLayout from './useFlowLayout'
+import useLayout from './useFlowLayout'
 import useGeneratePassword from './useGeneratePassword'
 import useGuid from './useGuid'
-import useStringLength from './useStringLength'
+import useString from './useStringLength'
 
-export {useFlowLayout, useGeneratePassword, useGuid, useStringLength}
+export {useLayout, useGeneratePassword, useGuid, useString}
