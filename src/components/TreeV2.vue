@@ -20,6 +20,7 @@ const props = defineProps({
 
 	filterPlaceholder: {type: String, default: '请输入关键字筛选部门'},
 
+	expandOnClickNode: {type: Boolean, default: true}, // 点击节点即展开
 	checkOnClickNode: {type: Boolean, default: false}, // 点击节点即选中
 
 	beforeLazyLoad: {type: Function, default: () => {}},
