@@ -30,7 +30,10 @@ const props = defineProps({
 		type: String,
 		default: `${FlowNodeTypes.Condition},${FlowNodeTypes.Report},${FlowNodeTypes.Review}`,
 	},
+
 	templateCode: {type: String, default: ''},
+	getWorkflowByCode: {type: [Function, null], default: null},
+
 	disabled: {type: Boolean, default: false},
 	nodeInfoSize: {type: Array, default: () => ['20%', 'auto']},
 	showNodeInfo: {type: Boolean, default: true},
@@ -550,16 +553,16 @@ watch(
 	() => props.templateCode,
 	(val) => {
 		console.log('Flow template Code changed: ', val)
-		if (val) {
-			// GetWorkflowByCode(val).then((res) => {
-			// 	const {extend} = res.data.scheme
-			// 	if (extend) {
-			// 	nodes.value = [JSON.parse(JSON.stringify(nodeEnd))]
-			// 		edges.value = []
-			// 		nodeConfig.value = JSON.parse(extend)
-			// 		init()
-			// 	}
-			// })
+		if (val && props.getWorkflowByCode && typeof props.getWorkflowByCode === 'function') {
+			props.getWorkflowByCode(val).then((res) => {
+				const {extend} = res.data.scheme
+				if (extend) {
+					nodes.value = [JSON.parse(JSON.stringify(nodeEnd))]
+					edges.value = []
+					nodeConfig.value = JSON.parse(extend)
+					init()
+				}
+			})
 		}
 	},
 	{immediate: true}
