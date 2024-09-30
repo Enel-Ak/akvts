@@ -87,11 +87,13 @@ const onQuery = () => treeRef.value.filter(query.value)
 const onFilter = (query, node) => node[props.props.label].includes(query)
 
 const onClickTreeNode = (data, node, e) => {
-	console.log('TreeV2 onClickTreeNode', data, node, e)
+	if (props.checkOnClickNode) {
+		console.log('TreeV2 onClickTreeNode', data, node, e)
 
-	currClickNode = data
-	if (!props.multiple) {
-		emits('nodeClick', data, node, e)
+		currClickNode = data
+		if (!props.multiple) {
+			emits('nodeClick', data, node, e)
+		}
 	}
 }
 
@@ -203,7 +205,7 @@ defineExpose({
 					</el-icon>
 					<span :title="node.label" class="value">
 						{{ node.label }}
-						<template v-if="tips">{{ node?.data?.tips }}</template>
+						<template v-if="node?.data?.tips">{{ node?.data?.tips }}</template>
 					</span>
 				</slot>
 			</template>
