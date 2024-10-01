@@ -236,6 +236,10 @@ watch(
 		}
 	}
 )
+
+defineExpose({
+	setValue: (key, value) => (form.value[key] = value),
+})
 </script>
 <template>
 	<div class="cascade-component" :class="{vertical}">
