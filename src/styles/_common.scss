@@ -387,8 +387,20 @@ body {
 	align-items: center;
 }
 
+.jcs {
+	justify-content: flex-start;
+}
+
 .jcc {
 	justify-content: center;
+}
+
+.jcb {
+	justify-content: space-between;
+}
+
+.jce {
+	justify-content: flex-end;
 }
 
 .w-full {
