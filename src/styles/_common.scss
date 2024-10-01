@@ -352,6 +352,10 @@ body {
 	}
 }
 
+.red {
+	color: red;
+}
+
 .cursor-pointer {
 	cursor: pointer;
 }
@@ -432,7 +436,7 @@ body {
 	display: inline-block;
 }
 
-@for $i from 1 through 10 {
+@for $i from 1 through 20 {
 	.pd-#{$i * 5} {
 		padding: torem($i * 5px);
 	}
@@ -474,7 +478,7 @@ body {
 	}
 }
 
-@for $i from 12 through 36 {
+@for $i from 12 through 48 {
 	.fs-#{$i} {
 		font-size: torem($i * 1px);
 	}
