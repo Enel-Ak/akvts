@@ -258,6 +258,8 @@ watch(
 				remoteMethod(val, props.items[0], () => {
 					Object.assign(props.form, {[props.items[0].prop]: val})
 				})
+			} else if (!val) {
+				Object.assign(props.form, {[props.items[0].prop]: val})
 			}
 		}
 	},
