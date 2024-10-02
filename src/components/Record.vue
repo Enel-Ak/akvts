@@ -55,12 +55,12 @@ const list = computed(() =>
 			<div class="label">
 				<slot name="label" :item="item">{{ item.label }}</slot>
 			</div>
-			<div class="text">
+			<div class="text" v-if="item.text">
 				<slot name="text" :item="item">
 					<span>{{ item.text }}</span>
 				</slot>
 			</div>
-			<div class="other">
+			<div class="other" :class="{'no-text': !item.text}">
 				<slot name="other" :item="item">
 					<span v-if="item.time">{{ item.time }}</span>
 					<span v-if="item.user" :title="item.user">{{ item.user }}</span>
@@ -186,6 +186,7 @@ const list = computed(() =>
 			color: rgba(var(--z-font-color-rgb), 0.3);
 			display: flex;
 			justify-content: space-between;
+
 			span {
 				white-space: nowrap;
 
@@ -194,6 +195,10 @@ const list = computed(() =>
 					overflow: hidden;
 					text-overflow: ellipsis;
 				}
+			}
+
+			&.no-text {
+				padding-top: 20px;
 			}
 		}
 	}
