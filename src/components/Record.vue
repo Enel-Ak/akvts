@@ -63,7 +63,7 @@ const list = computed(() =>
 			<div class="other">
 				<slot name="other" :item="item">
 					<span v-if="item.time">{{ item.time }}</span>
-					<span v-if="item.user">{{ item.user }}</span>
+					<span v-if="item.user" :title="item.user">{{ item.user }}</span>
 				</slot>
 			</div>
 			<i v-if="index < 1" class="icon" :class="[icons.default]"></i>
@@ -94,7 +94,7 @@ const list = computed(() =>
 		background-color: v-bind(bgColor);
 		border-left: 3px solid var(--z-nav-hover);
 		margin-left: torem(10px);
-		margin-bottom: torem(4px);
+		// margin-bottom: torem(4px);
 		opacity: 0.5;
 		position: relative;
 		padding: 0 torem(20px) torem(20px) torem(20px);
@@ -182,9 +182,18 @@ const list = computed(() =>
 		}
 
 		.other {
+			align-items: center;
 			color: rgba(var(--z-font-color-rgb), 0.3);
+			display: flex;
+			justify-content: space-between;
 			span {
-				margin-right: torem(20px);
+				white-space: nowrap;
+
+				&:nth-child(2) {
+					max-width: 30%;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
 			}
 		}
 	}
