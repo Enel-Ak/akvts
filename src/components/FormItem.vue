@@ -452,7 +452,7 @@ defineExpose({
 							>
 								<el-option
 									v-for="option of item.options"
-									:label="option.label"
+									:label="option.otherLabel || option.label"
 									:value="option.value"
 								/>
 							</el-select>
@@ -498,7 +498,7 @@ defineExpose({
 							>
 								<el-option
 									v-for="option of item?.options"
-									:label="option.label"
+									:label="option.otherLabel || option.label"
 									:value="option.value"
 								/>
 							</el-select>
