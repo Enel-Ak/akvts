@@ -60,7 +60,7 @@ const list = computed(() =>
 					<span>{{ item.text }}</span>
 				</slot>
 			</div>
-			<div class="other">
+			<div class="other" v-if="item.itme && item.user">
 				<slot name="other" :item="item">
 					<span>{{ item.time }}</span>
 					<span>{{ item.user }}</span>
