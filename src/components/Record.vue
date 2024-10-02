@@ -60,10 +60,10 @@ const list = computed(() =>
 					<span>{{ item.text }}</span>
 				</slot>
 			</div>
-			<div class="other" v-if="item.itme && item.user">
+			<div class="other">
 				<slot name="other" :item="item">
-					<span>{{ item.time }}</span>
-					<span>{{ item.user }}</span>
+					<span v-if="item.time">{{ item.time }}</span>
+					<span v-if="item.user">{{ item.user }}</span>
 				</slot>
 			</div>
 			<i v-if="index < 1" class="icon" :class="[icons.default]"></i>
