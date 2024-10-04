@@ -57,7 +57,7 @@ const list = computed(() =>
 			</div>
 			<div class="text" v-if="item.text">
 				<slot name="text" :item="item">
-					<span>{{ item.text }}</span>
+					<span v-html="item.text"></span>
 				</slot>
 			</div>
 			<div class="other" :class="{'no-text': !item.text}">
