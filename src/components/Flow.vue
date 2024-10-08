@@ -89,6 +89,7 @@ const setContainerSize = () => {
 	const flow = flowComponentRef.value
 
 	if (flow) {
+		const ft = document.querySelector('.container-component .container-body .container-footer')
 		const vh = document.body.offsetHeight
 		const vw = document.body.offsetWidth
 		const aw = document.querySelector('.container-component .container-aside')?.offsetWidth ?? 0
@@ -99,6 +100,10 @@ const setContainerSize = () => {
 			flow.style.height = typeof ph === 'number' ? ph + 'px' : ph
 		} else {
 			flow.style.height = `${vh - 142}px`
+		}
+
+		if (ft) {
+			flow.style.height = `${vh - 162 - ft.offsetHeight}px`
 		}
 
 		if (props.width) {
