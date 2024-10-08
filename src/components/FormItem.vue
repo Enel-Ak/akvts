@@ -729,7 +729,13 @@ defineExpose({
 							:grid="grid"
 							:form-data="form"
 							:isClear="isClear"
+							:keys="item.cascadekeys"
+							:maxLevel="item.cascadeMaxLevel"
 							:options="item.cascadeItems"
+							:static="item.cascadeStatic"
+							:vertical="item.cascadeVertical"
+							:oneSelect="item.cascadeOneSelect"
+							:oneSelectProps="item.cascadeOneSelectProps"
 							@change="onChange($event, item)"
 						></Cascade>
 						<slot :name="`form-${item.prop}-right`"></slot>
