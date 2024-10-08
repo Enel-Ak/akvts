@@ -26,11 +26,11 @@ const flowConfig = ref({
 		<template #header> header</template>
 		<template #aside> aside </template>
 		<template #top> top </template>
-		<Block title="测试组件" :enableFixedHeight="true">
+		<!-- <Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
 			</template>
-			<!-- <TableV2
+			<TableV2
 				:form-column-count="2"
 				:columns="[
 					{prop: 'abc', label: '测试', type: 'text'},
@@ -66,9 +66,10 @@ const flowConfig = ref({
 						],
 					},
 				]"
-			></TableV2> -->
+			></TableV2>
 			<Flow ref="flowRef" v-model="flowConfig"></Flow>
-		</Block>
+		</Block> -->
+		<Flow ref="flowRef" v-model="flowConfig"></Flow>
 	</Container>
 </template>
 <style scoped lang="scss"></style>

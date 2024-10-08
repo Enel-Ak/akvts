@@ -103,13 +103,14 @@ const setOffsetHeight = (flow) => {
 		flow.style.height = typeof ph === 'number' ? ph + 'px' : ph
 	} else {
 		let parent = flow.parentElement
-		while (parent && parent.tagName !== 'HTML') {
+		while (parent && parent.tagName !== 'HTML' && !parent.classList.contains('container-body')) {
 			if (parent.style.height) {
 				break
 			}
 			parent = parent.parentElement
 		}
-		flow.style.height = `${parent.offsetHeight - 30}px`
+		const cb = parent?.classList.contains('container-body')
+		flow.style.height = `${parent.offsetHeight - (cb ? 40 : 30)}px`
 	}
 
 	if (props.width) {
