@@ -30,7 +30,7 @@ const flowConfig = ref({
 			<template #expand>
 				<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
 			</template>
-			<TableV2
+			<!-- <TableV2
 				:form-column-count="2"
 				:columns="[
 					{prop: 'abc', label: '测试', type: 'text'},
@@ -66,8 +66,7 @@ const flowConfig = ref({
 						],
 					},
 				]"
-			></TableV2>
-
+			></TableV2> -->
 			<Flow ref="flowRef" v-model="flowConfig"></Flow>
 		</Block>
 	</Container>

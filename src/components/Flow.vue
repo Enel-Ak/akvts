@@ -89,31 +89,34 @@ const setContainerSize = () => {
 	const flow = flowComponentRef.value
 
 	if (flow) {
-		const ft = document.querySelector('.container-component .container-body .container-footer')
-		const vh = document.body.offsetHeight
-		const vw = document.body.offsetWidth
-		const aw = document.querySelector('.container-component .container-aside')?.offsetWidth ?? 0
-		const pw = props.width
-		const ph = props.height
-
-		if (props.height) {
-			flow.style.height = typeof ph === 'number' ? ph + 'px' : ph
-		} else {
-			flow.style.height = `${vh - 142}px`
-		}
-
-		if (ft) {
-			flow.style.height = `${vh - 162 - ft.offsetHeight}px`
-		}
-
-		if (props.width) {
-			flow.style.width = typeof pw === 'number' ? pw + 'px' : props.width
-		} else {
-			flow.style.width = `${vw - aw - 72}px`
-		}
+		setTimeout(() => setOffsetHeight(flow), 200)
 	}
 
 	completed.value = true
+}
+
+const setOffsetHeight = (flow) => {
+	const pw = props.width
+	const ph = props.height
+
+	if (props.height) {
+		flow.style.height = typeof ph === 'number' ? ph + 'px' : ph
+	} else {
+		let parent = flow.parentElement
+		while (parent && parent.tagName !== 'HTML') {
+			if (parent.style.height) {
+				break
+			}
+			parent = parent.parentElement
+		}
+		flow.style.height = `${parent.offsetHeight - 30}px`
+	}
+
+	if (props.width) {
+		flow.style.width = typeof pw === 'number' ? pw + 'px' : props.width
+	} else {
+		flow.style.width = `100%`
+	}
 
 	setTimeout(() => {
 		flowInstance.value?.fitView()
@@ -289,9 +292,11 @@ const getNodeConfigById = (node, sourceId, parentNode = null, parentNodes = []) 
 }
 
 const init = () => {
-	completed.value = false
-	setContainerSize()
-	setDefalutNodes()
+	setTimeout(() => {
+		completed.value = false
+		setContainerSize()
+		setDefalutNodes()
+	}, 64)
 }
 
 const onAddConditionByGateway = (props) => {
