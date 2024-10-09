@@ -53,9 +53,9 @@ const path = computed(() => {
 	const targetPosition = target.position
 	const sourcePosition = source.position
 
-	const sx = sourcePosition.x + props.snapGrid[0] / 2.66
+	const sx = sourcePosition.x + props.snapGrid[0] / 2.663
 	const sy = sourcePosition.y
-	const tx = targetPosition.x + props.snapGrid[0] / 2.66
+	const tx = targetPosition.x + props.snapGrid[0] / 2.663
 	const ty = targetPosition.y
 
 	// 计算路径是否为水平或垂直直线
