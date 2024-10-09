@@ -29,6 +29,7 @@ const props = defineProps({
 	edge: Object,
 	showButton: String,
 	disabled: Boolean,
+	snapGrid: Array,
 })
 
 const path = computed(() => getSmoothStepPath(props))
@@ -69,6 +70,7 @@ const handleAddNode = (str) => {
 		:target-y="targetY"
 		:source-position="sourcePosition"
 		:target-position="targetPosition"
+		:snapGrid="snapGrid"
 	></CustomEdge>
 	<EdgeLabelRenderer v-if="!disabled">
 		<div

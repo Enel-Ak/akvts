@@ -45,7 +45,10 @@ export default function useLayout() {
 					targetPosition: isHorizontal ? Position.Left : Position.Top,
 					sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
 					// position: {x: nodeWithPosition.x, y: nodeWithPosition.y},
-					position: {x: nodeWithPosition.x, y: node.data.depth * 150},
+					position: {
+						x: Math.floor(nodeWithPosition.x),
+						y: Math.floor(node.data.depth * 150),
+					},
 				}
 				return data
 			})

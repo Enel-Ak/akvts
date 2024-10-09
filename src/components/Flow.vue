@@ -307,7 +307,7 @@ const onAddConditionByGateway = (props) => {
 		node.conditionNodes.push({
 			id: useGuid(),
 			type: FlowNodeTypes.Condition,
-			label: `条件${conditionCount + 1}`,
+			label: `条件`, // ${conditionCount +1}
 			childNode: [],
 		})
 		resetNode()
@@ -328,14 +328,14 @@ const onAddCondition = (edgeProps) => {
 				{
 					id: useGuid(),
 					type: FlowNodeTypes.Condition,
-					label: `条件${conditionCount + 1}`,
+					label: `条件`, // ${conditionCount +1}
 					childNode: node.childNode,
 					data: {},
 				},
 				{
 					id: useGuid(),
 					type: FlowNodeTypes.Condition,
-					label: `条件${conditionCount + 2}`,
+					label: `条件`, // ${conditionCount +2}
 					childNode: [],
 					data: {},
 				},
@@ -353,7 +353,7 @@ const onAddNodeDefault = (type, edgeProps) => {
 		const newNode = {
 			id: useGuid(),
 			type: type,
-			label: `${FlowNodeTypeNames[type]}${nodeTypeCount + 1}`,
+			label: `${FlowNodeTypeNames[type]}`, // ${nodeTypeCount +1}
 			childNode: node.childNode && node.childNode.length > 0 ? node.childNode : null,
 			data: {},
 		}
@@ -592,11 +592,7 @@ defineExpose({
 </script>
 <template>
 	<div ref="flowComponentRef" class="flow-component" v-resize="setContainerSize">
-		<div
-			v-if="showNodeInfo"
-			class="node-info"
-			:class="{'shadow-24': isMouseEnter, on: isMouseEnter}"
-		>
+		<div v-if="showNodeInfo" class="node-info" :class="{on: isMouseEnter}">
 			<div class="node-info-box">
 				<slot name="node-info">节点信息</slot>
 			</div>
@@ -847,6 +843,7 @@ defineExpose({
 						:style="edgeProps.style"
 						:showButton="showButton"
 						:disabled="disabled"
+						:snapGrid="snapGrid"
 						@add-node="onAddNode($event, edgeProps)"
 						@remove-edge="removeEdges(edgeProps.id)"
 					/>
@@ -864,6 +861,7 @@ defineExpose({
 	width: 100%;
 
 	.node-info {
+		border: 1px solid var(--z-line);
 		background-color: var(--z-theme);
 		border-radius: torem(5px);
 		opacity: 0;
