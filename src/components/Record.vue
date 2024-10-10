@@ -58,7 +58,7 @@ const list = computed(() =>
 		<div
 			class="item"
 			v-for="(item, index) of list"
-			:class="[item.type || '', !fadeOut ? 'no-fedeout' : '']"
+			:class="[item.type || '', !fadeOut ? 'no-fadeout' : '']"
 		>
 			<div class="label">
 				<slot name="label" :item="item">{{ item.label }}</slot>
@@ -176,7 +176,7 @@ const list = computed(() =>
 			}
 		}
 
-		&.no-fedeout {
+		&.no-fadeout {
 			opacity: 1 !important;
 		}
 
