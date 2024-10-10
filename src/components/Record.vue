@@ -74,7 +74,7 @@ const list = computed(() =>
 					<span v-if="item.user" :title="item.user">{{ item.user }}</span>
 				</slot>
 			</div>
-			<i v-if="index < 1" class="icon" :class="[icons.default]"></i>
+			<i v-if="!item.type" class="icon" :class="[icons.default]"></i>
 			<i v-else class="icon" :class="[icons[item.type]]"></i>
 		</div>
 	</div>
