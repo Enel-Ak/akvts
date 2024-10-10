@@ -22,6 +22,10 @@ const props = defineProps({
 		type: String,
 		default: '100%',
 	},
+	fadeOut: {
+		type: Boolean,
+		default: true,
+	},
 })
 
 const icons = {
@@ -51,7 +55,11 @@ const list = computed(() =>
 				<span>{{ title }} </span>
 			</slot>
 		</div>
-		<div class="item" v-for="(item, index) of list" :class="[item.type || '']">
+		<div
+			class="item"
+			v-for="(item, index) of list"
+			:class="[item.type || '', !fadeOut ? 'no-fedeout' : '']"
+		>
 			<div class="label">
 				<slot name="label" :item="item">{{ item.label }}</slot>
 			</div>
@@ -166,6 +174,10 @@ const list = computed(() =>
 			&:nth-child(#{$i}) {
 				opacity: 1.2 - 0.1 * $i;
 			}
+		}
+
+		&.no-fedeout {
+			opacity: 1 !important;
 		}
 
 		.label {
