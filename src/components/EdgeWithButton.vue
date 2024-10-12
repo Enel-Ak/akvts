@@ -34,6 +34,7 @@ const props = defineProps({
 
 const path = computed(() => getSmoothStepPath(props))
 const show = ref(false)
+let showTimer = null
 
 const resetLabelZIndex = (arr, target) => {
 	arr.forEach((label) => {
@@ -42,12 +43,15 @@ const resetLabelZIndex = (arr, target) => {
 }
 
 const onMouseEnter = (event) => {
-	show.value = true
-	const labels = Array.from(event.target.parentNode.children)
-	resetLabelZIndex(labels, event.target)
+	showTimer = setTimeout(() => {
+		show.value = true
+		const labels = Array.from(event.target.parentNode.children)
+		resetLabelZIndex(labels, event.target)
+	}, 250)
 }
 
 const onMouseLeave = () => {
+	clearTimeout(showTimer)
 	show.value = false
 }
 
