@@ -64,6 +64,7 @@ const defaultNodeLabel = '点击配置'
 const isMouseEnter = ref(false)
 const nodeInfoWidth = computed(() => styleValueTypeVerify(props.nodeInfoSize[0]))
 const nodeInfoHeight = computed(() => styleValueTypeVerify(props.nodeInfoSize[1]))
+let nodeInfoEnterTimer = null
 let nodeInfoLeaveTimer = null
 let clickTimer = null
 let clickDelay = 250
@@ -424,17 +425,20 @@ const onNodeMouseEnter = (event) => {
 		event.node.type === FlowNodeTypes.Gateway
 	)
 		return
-	console.log('Flow node mouse enter: ', event)
 	clearTimeout(nodeInfoLeaveTimer)
-	isMouseEnter.value = true
-	getNodeConfigById(nodeConfig.value, event.node.id).then((currentNode) => {
-		emits('nodeMouseEnter', event, currentNode)
-	})
+	nodeInfoEnterTimer = setTimeout(() => {
+		console.log('Flow node mouse enter: ', event)
+		isMouseEnter.value = true
+		getNodeConfigById(nodeConfig.value, event.node.id).then((currentNode) => {
+			emits('nodeMouseEnter', event, currentNode)
+		})
+	}, clickDelay)
 }
 
 const onNodeMouseLeave = (event) => {
 	if (event.node.type === FlowNodeTypes.Input || event.node.type === FlowNodeTypes.Output) return
 
+	clearTimeout(nodeInfoEnterTimer)
 	nodeInfoLeaveTimer = setTimeout(() => {
 		console.log('Flow node mouse leave: ', event)
 		isMouseEnter.value = false
