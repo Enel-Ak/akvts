@@ -26,6 +26,10 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
+	lastLine: {
+		type: Boolean,
+		default: true,
+	},
 })
 
 const icons = {
@@ -58,7 +62,7 @@ const list = computed(() =>
 		<div
 			class="item"
 			v-for="(item, index) of list"
-			:class="[item.type || '', !fadeOut ? 'no-fadeout' : '']"
+			:class="[item.type || '', !fadeOut ? 'no-fadeout' : '', !lastLine ? 'no-last-line' : '']"
 		>
 			<div class="label">
 				<slot name="label" :item="item">{{ item.label }}</slot>
@@ -168,6 +172,10 @@ const list = computed(() =>
 
 		&:nth-child(2) {
 			opacity: 1;
+		}
+
+		&.no-last-line {
+			border-color: transparent;
 		}
 
 		@for $i from 3 through 7 {
