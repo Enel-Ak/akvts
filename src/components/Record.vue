@@ -62,7 +62,11 @@ const list = computed(() =>
 		<div
 			class="item"
 			v-for="(item, index) of list"
-			:class="[item.type || '', !fadeOut ? 'no-fadeout' : '', !lastLine ? 'no-last-line' : '']"
+			:class="[
+				item.type || '',
+				!fadeOut ? 'no-fadeout' : '',
+				!lastLine && index === list.length - 1 ? 'no-last-line' : '',
+			]"
 		>
 			<div class="label">
 				<slot name="label" :item="item">{{ item.label }}</slot>
