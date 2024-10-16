@@ -31,10 +31,10 @@ const onClickCollapseItem = (item) => {
 	<el-scrollbar
 		always
 		:height="height"
-		class="collapse-component"
 		:class="{shadow: enableTopShadow}"
+		class="collapse-component"
 	>
-		<el-collapse v-model="collapseActive" class="collapse">
+		<el-collapse v-model="collapseActive" v-bind="$attrs" class="collapse">
 			<el-collapse-item :name="item.name" v-for="item of data">
 				<template #title>
 					<slot :name="item.name">

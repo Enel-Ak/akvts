@@ -253,10 +253,12 @@ watch(
 	() => props.modelValue,
 	(val) => {
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
+		console.log('Form Item modelValue Change: ', val)
 		if (props.items.length === 1) {
 			if (props.items[0].remoteInit && props.items[0].remoteUrl && val) {
 				remoteMethod(val, props.items[0], () => {
 					Object.assign(props.form, {[props.items[0].prop]: val})
+					console.log('Form Item modelValue Remote Init Complete: ', props.form, val)
 				})
 			} else if (!val) {
 				Object.assign(props.form, {[props.items[0].prop]: val})
