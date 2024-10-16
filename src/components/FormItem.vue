@@ -119,7 +119,7 @@ const remoteMethod = (query, item, callback) => {
 				})
 				.then((res) => {
 					loading.value = false
-					remoteCompleted(query, item, res)
+					remoteCompleted(query, item, res, callback)
 				})
 				.finally(() => {
 					loading.value = false
