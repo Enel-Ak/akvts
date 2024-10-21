@@ -27,7 +27,9 @@ const emits = defineEmits([
 	'updated',
 	'beforeDelete',
 	'deleted',
+	'clickRow',
 	'clickButton',
+	'selectionChange',
 	'formReset',
 	'formClear',
 	'formChanged',
@@ -395,6 +397,19 @@ const onClickButton = (btn, row, index) => {
 	emits('clickButton', {row, btn, index})
 }
 
+const onClickRow = (row, column) => {
+	console.log('TableV2 Component Click Row', row, column)
+	if (disableTable.value) {
+		return
+	}
+
+	if (props.enableSelection) {
+		tableComponentRef.value.toggleRowSelection(row)
+	}
+
+	emits('clickRow', {row, column})
+}
+
 const onDoubleClickRow = (row, column, cell) => {
 	console.log('TableV2 Component Double Click Row', row)
 	if (props.enableRowEdit) {
@@ -403,6 +418,10 @@ const onDoubleClickRow = (row, column, cell) => {
 		currentCell.value = cell
 		setGroupWidth()
 	}
+}
+
+const onSelectionChange = (val) => {
+	emits('selectionChange', val)
 }
 
 const onFormChanged = (val, item) => {
@@ -788,7 +807,9 @@ defineExpose({
 			:scrollbar-always-on="scrollbarAlways"
 			border
 			stripe
+			@row-click="onClickRow"
 			@row-dblclick="onDoubleClickRow"
+			@selection-change="onSelectionChange"
 		>
 			<el-table-column
 				v-if="enableSelection && !disableTable"
