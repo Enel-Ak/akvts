@@ -227,9 +227,12 @@ const getList = () => {
 				}
 			}, 256)
 		})
-		.catch((err) => {})
+		.catch((err) => {
+			console.log('TableV2 Component getList Error', err)
+		})
 		.finally(() => {
 			setTimeout(() => {
+				console.log('TableV2 Component getList Finally')
 				if (!isEvent) {
 					__requestTimer = null
 					emits('completed', 'get')
