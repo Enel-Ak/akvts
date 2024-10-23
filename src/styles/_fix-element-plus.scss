@@ -42,7 +42,7 @@
 .el-sub-menu__title,
 .el-sub-menu .el-icon,
 .el-menu-item [class^='el-icon'] {
-	color: var(--z-nav-font-color);
+	color: var(--z-nav-font-color) !important;
 	font-size: torem(14px);
 }
 
