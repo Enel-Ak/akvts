@@ -67,7 +67,12 @@ import {createPinia} from 'pinia' // 引入Pinia
 import './api/axios' // 引入全局axios配置
 import App from './App.vue'
 import router from './router'
+
 import akvts from 'akvts' // 引入 akvts
+import 'akvts/src/styles/main.scss'
+import 'akvts/dist/style.css'
+import 'akvts/src/styles/element/index.scss'
+
 import 'virtual:uno.css' // 引入 uno.css
 
 const app = createApp(App)
@@ -79,8 +84,6 @@ async function initApp() {
 		import('element-plus/dist/locale/zh-cn.mjs'),
 		import('@element-plus/icons-vue'),
 		import('akvts/src/directive'), // 引入框架指令, 框架组件内部使用了一些指令
-		import('akvts/src/styles/main.scss'), // 引入框架全局样式
-		import('akvts/dist/style.css'), // 引入组件样式
 	])
 
 	app.use(ElementPlus, {
