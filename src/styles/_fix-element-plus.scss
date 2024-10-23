@@ -10,7 +10,7 @@
 
 .el-menu-item:hover,
 .el-sub-menu__title:hover {
-	background-color: rgba($color: var(--z-nav-hover-rgb), $alpha: 0.2);
+	background-color: rgba($color: var(--z-nav-hover-rgb), $alpha: 0.2) !important;
 }
 
 .el-menu-item,
