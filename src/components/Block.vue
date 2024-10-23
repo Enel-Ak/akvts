@@ -2,7 +2,13 @@
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick} from 'vue'
 import {useRouter} from 'vue-router'
 
-const emits = defineEmits(['contentExpand', 'heightChanged', 'fullScreenChanged', 'clickBack'])
+const emits = defineEmits([
+	'contentExpand',
+	'heightChanged',
+	'fullScreenChanged',
+	'clickBack',
+	'backMethod',
+])
 const props = defineProps({
 	title: {type: String, default: ''},
 
@@ -33,6 +39,8 @@ const props = defineProps({
 
 	delay: {type: Number, default: 1}, // 延迟执行高度计算
 	offset: {type: Array, default: () => [211, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
+
+	isBack: {type: Boolean, default: false},
 })
 
 const router = useRouter()
@@ -83,8 +91,11 @@ const onBack = () => {
 	console.log('Block back button is clicked')
 
 	emits('clickBack')
+
 	if (props.backUrl) {
 		router.push({path: props.backUrl, query: props.backQuery})
+	} else if (props.isBack) {
+		emits('backMethod')
 	} else {
 		router.go(-1)
 	}
