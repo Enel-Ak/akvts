@@ -119,12 +119,12 @@
 
 .el-dropdown-menu,
 .el-popper.is-light {
-	border-color: var(--z-line);
+	border-color: var(--z-line) !important;
 	background-color: var(--z-theme) !important;
 
 	span,
 	li {
-		color: var(--z-font-color);
+		color: var(--z-font-color) !important;
 
 		&.is-selected > * {
 			color: var(--z-nav-hover);
@@ -145,8 +145,8 @@
 }
 
 .el-popper.is-light .el-popper__arrow::before {
-	border-color: var(--z-line);
-	background-color: var(--z-theme);
+	border-color: var(--z-line) !important;
+	background-color: var(--z-theme) !important;
 }
 
 .el-picker-panel {
