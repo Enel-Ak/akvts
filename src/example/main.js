@@ -23,7 +23,8 @@ async function initApp() {
 		import('@element-plus/icons-vue'),
 	])
 	// 默认主题
-	// await import('element-plus/dist/index.css')
+	await import('element-plus/dist/index.css')
+	await import('@/styles/element/index.scss')
 	app.use(ElementPlus, {
 		locale: zhCn.default,
 	})
