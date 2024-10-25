@@ -940,7 +940,7 @@ defineExpose({
 						@confirm.stop="onDelete({row: toRaw(row), column, $index})"
 					>
 						<template #reference>
-							<el-button size="small" type="danger">
+							<el-button size="small" type="danger" @click.stop>
 								<i class="icon i-ic-baseline-delete-forever"></i>
 								{{ props.deleteText }}
 							</el-button>

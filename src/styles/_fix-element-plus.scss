@@ -368,7 +368,7 @@ body.light {
 		button:nth-child(2) {
 			background-color: var(--z-main);
 			span {
-				color: var(--z-theme);
+				color: var(--z-theme) !important;
 			}
 		}
 	}

@@ -31,8 +31,10 @@ const flowConfig = ref({
 				<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
 			</template>
 			<TableV2
+				:enableSelection="true"
 				:auto-height="true"
 				:form-column-count="2"
+				:default-table-data="[{defbcff: 'defbcff'}]"
 				:columns="[
 					{prop: 'abc', label: '测试', type: 'text'},
 					{
