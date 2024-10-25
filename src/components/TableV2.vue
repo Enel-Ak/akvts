@@ -39,6 +39,7 @@ const emits = defineEmits([
 	'dialogClose',
 	'dialogClosed',
 	'dialogOpened',
+	'loading',
 ])
 const props = defineProps({
 	rowKey: {type: String, default: 'id'},
@@ -190,6 +191,7 @@ const getList = () => {
 	let timer = null
 
 	loading.value = true
+	emits('loading', loading.value)
 	axios
 		.request({
 			url: props.url,
@@ -205,6 +207,7 @@ const getList = () => {
 				total.value = totalCount
 				loading.value = false
 				console.log('TableV2 Component Next Finish', tableData.value, total.value)
+				emits('loading', loading.value)
 				emits('completed', 'get')
 				nextTick(() => setFnWidth(true))
 			}
