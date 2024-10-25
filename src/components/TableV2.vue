@@ -895,7 +895,7 @@ defineExpose({
 								:type="btn.type"
 								:disabled="btn.hasOwnProperty('disabled') ? setEval(btn.disabled, row) : false"
 								size="small"
-								@click="onClickButton(btn, row, $index)"
+								@click.stop="onClickButton(btn, row, $index)"
 							>
 								<i v-if="btn.icon" :class="['icon', btn.icon]"></i>
 								{{ btn.label }}
@@ -906,7 +906,7 @@ defineExpose({
 								:title="btn.popconfirm"
 								confirm-button-text="确定"
 								cancel-button-text="取消"
-								@confirm="onClickButton(btn, row, $index)"
+								@confirm.stop="onClickButton(btn, row, $index)"
 							>
 								<template #reference>
 									<el-button
@@ -926,7 +926,7 @@ defineExpose({
 						v-if="enableEdit && !disableTable"
 						type="primary"
 						size="small"
-						@click="onDialog('edit', {row, column, $index})"
+						@click.stop="onDialog('edit', {row, column, $index})"
 					>
 						<i class="icon i-ic-baseline-edit-note"></i>
 						{{ props.editText }}
@@ -937,7 +937,7 @@ defineExpose({
 						title="确认删除?"
 						confirm-button-text="确定"
 						cancel-button-text="取消"
-						@confirm="onDelete({row: toRaw(row), column, $index})"
+						@confirm.stop="onDelete({row: toRaw(row), column, $index})"
 					>
 						<template #reference>
 							<el-button size="small" type="danger">
