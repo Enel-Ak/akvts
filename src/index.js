@@ -22,6 +22,7 @@ import Transfer from './components/Transfer.vue'
 import ViewImage from './components/ViewImage.vue'
 import TreeV2 from './components/TreeV2.vue'
 import Watermark from './components/Watermark.vue'
+import Refresh from './components/Refresh.vue'
 
 const components = {
 	Container,
@@ -48,6 +49,7 @@ const components = {
 	ViewImage,
 	TreeV2,
 	Watermark,
+	Refresh,
 }
 
 export default {
@@ -82,4 +84,5 @@ export {
 	ViewImage,
 	TreeV2,
 	Watermark,
+	Refresh,
 }
