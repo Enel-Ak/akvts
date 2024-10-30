@@ -741,7 +741,8 @@ defineExpose({
 	getFormValue: (key) => formRef.value?.getValue(key),
 	getSelectionRows: () => tableComponentRef.value?.getSelectionRows(),
 	clearSelection: () => tableElRef.value?.clearSelection(),
-
+	toggleRowSelection: (row, bool) => tableComponentRef.value?.toggleRowSelection(row, bool),
+	toggleAllSelection: () => tableComponentRef.value?.toggleAllSelection(),
 	setRowEditData: (val, data, formItem) => {
 		// 外部自定义插槽编辑行的时候设置当前编辑行数据
 		if (data.__enableEdit && props.enableRowEdit) {
