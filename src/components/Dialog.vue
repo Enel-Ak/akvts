@@ -32,6 +32,10 @@ const onClickClose = () => {
 }
 
 const onClickConfirm = () => {
+	if (props.loading) {
+		console.log('Dialog is loading')
+		return
+	}
 	emits('clickConfirm')
 }
 
