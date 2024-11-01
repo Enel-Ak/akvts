@@ -33,7 +33,6 @@ const onClickClose = () => {
 
 const onClickConfirm = () => {
 	if (props.loading) {
-		console.log('Dialog is loading')
 		return
 	}
 	emits('clickConfirm')
@@ -150,7 +149,7 @@ onMounted(() => {
 				<template v-if="enablePopconfirm">
 					<el-popconfirm :title="popconfirmText" @confirm="onClickConfirm">
 						<template #reference>
-							<el-button v-if="enableConfirm" type="primary">
+							<el-button v-if="enableConfirm" type="primary" :loading="loading">
 								<i class="icon i-ic-round-task-alt"></i>
 								{{ confirmText }}
 							</el-button>
