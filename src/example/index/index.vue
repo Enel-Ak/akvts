@@ -34,6 +34,7 @@ const flowConfig = ref({
 				:enableSelection="true"
 				:auto-height="true"
 				:form-column-count="2"
+				:enableLatestData="false"
 				:default-table-data="[{defbcff: 'defbcff'}]"
 				:columns="[
 					{prop: 'abc', label: '测试', type: 'text'},
@@ -58,9 +59,9 @@ const flowConfig = ref({
 											{prop: 'defbcf', label: 'defbc', type: 'text'},
 										],
 									},
-									{prop: 'defbcff', label: 'defc', type: 'text'},
-									{prop: 'defbcffe', label: 'defc', type: 'text'},
-									{prop: 'defbcfff', label: 'defc', type: 'text'},
+									{prop: 'defbcff', label: 'defbcff', type: 'text'},
+									{prop: 'defbcffe', label: 'defbcffe', type: 'text'},
+									{prop: 'defbcfff', label: 'defbcfff', type: 'text'},
 								],
 							},
 							{prop: 'defc', label: 'defc', type: 'text'},
