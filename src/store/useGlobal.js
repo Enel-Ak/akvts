@@ -16,7 +16,6 @@ export const useGlobal = defineStore('useGlobal', {
 				res: 0,
 				err: 0,
 			},
-			frame: null,
 		}
 	},
 	getters: {
@@ -37,7 +36,6 @@ export const useGlobal = defineStore('useGlobal', {
 		getIsNoPage: (state) => state.isNoPage,
 		getTheme: (state) => state.theme,
 		getPermissions: (state) => state.permissions,
-		getContainerFrame: (state) => state.frame,
 	},
 	actions: {
 		cancelAbort() {
@@ -69,9 +67,6 @@ export const useGlobal = defineStore('useGlobal', {
 			this.theme = theme
 			document.body.setAttribute('class', theme)
 			localStorage.setItem('theme', theme)
-		},
-		setContainerFrame(frame) {
-			this.frame = frame
 		},
 	},
 })

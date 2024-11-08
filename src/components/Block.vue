@@ -1,7 +1,7 @@
 <script setup>
+import {tr} from 'element-plus/es/locale/index.mjs'
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
-import {useGlobal} from '@/store/useGlobal'
 
 const emits = defineEmits([
 	'contentExpand',
@@ -53,6 +53,7 @@ const expendContentOpen = ref(props.expandContent)
 const expendContentHeight = ref(0)
 const br = ref(props.borderRadius + 'px')
 const mb = ref(props.enableFixedHeight ? '0' : '20px')
+const frame = ref(JSON.parse(localStorage.getItem('containerFrame') || '[]'))
 
 let observer = null
 let observerTimer = null
@@ -65,11 +66,11 @@ const isFullScreen = ref(false)
 const _offset = computed(() => {
 	let first = 85
 
-	if (useGlobal().getContainerFrame?.includes('header')) {
+	if (frame.value?.includes('header')) {
 		first = first + 86
 	}
 
-	if (useGlobal().getContainerFrame?.includes('footer')) {
+	if (frame.value?.includes('footer')) {
 		first = first + 40
 	}
 
@@ -152,6 +153,7 @@ const init = () => {
 	}
 	if (props.expandContent) {
 		setTimeout(() => {
+			frame.value = JSON.parse(localStorage.getItem('containerFrame') || '[]')
 			onExpendContent(false)
 			nextTick(() => (isExpand = false))
 		}, 16.7)

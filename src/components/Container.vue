@@ -1,7 +1,7 @@
 <script setup>
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
-import {useGlobal} from '@/store/useGlobal'
+
 const emits = defineEmits(['collapse', 'scroll'])
 const props = defineProps({
 	model: {
@@ -75,7 +75,7 @@ watch(
 )
 
 onMounted(() => {
-	useGlobal().setContainerFrame(props.frame)
+	localStorage.setItem('containerFrame', JSON.stringify(props.frame))
 	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
 })
 
