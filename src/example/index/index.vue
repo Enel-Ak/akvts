@@ -22,7 +22,7 @@ const flowConfig = ref({
 })
 </script>
 <template>
-	<Container>
+	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
 		<template #aside> aside </template>
 		<template #top> top </template>

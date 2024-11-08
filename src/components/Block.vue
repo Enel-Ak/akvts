@@ -1,6 +1,7 @@
 <script setup>
-import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick} from 'vue'
+import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
+import {useGlobal} from '@/store/useGlobal'
 
 const emits = defineEmits([
 	'contentExpand',
@@ -61,7 +62,19 @@ let isExpand = false
 const historyParnetNode = ref(null)
 const historyNodeIndex = ref(0)
 const isFullScreen = ref(false)
-const _offset = [props.enableFixedHeight ? props.offset[0] : props.offset[0] - 20, props.offset[1]]
+const _offset = computed(() => {
+	let first = 85
+
+	if (useGlobal().getContainerFrame?.includes('header')) {
+		first = first + 86
+	}
+
+	if (useGlobal().getContainerFrame?.includes('footer')) {
+		first = first + 40
+	}
+
+	return [props.enableFixedHeight ? first : props.offset[0] - 20, props.offset[1]]
+})
 
 const onExpand = () => {
 	if (!props.enableExpand) return
@@ -108,7 +121,7 @@ const initObserver = () => {
 			observer = new ResizeObserver((entries) => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
-					const bodyHeight = document.body.offsetHeight - _offset[0] // Block title  and padding and header height
+					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
 						if (expendContentOpen.value) {
@@ -118,7 +131,7 @@ const initObserver = () => {
 							now = bodyHeight
 						}
 						if (isFullScreen.value) {
-							now = document.body.offsetHeight - _offset[1] // Block title height and padding
+							now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
 						}
 						contextHeight.value = now
 						console.log('Block resize observer is running', contextHeight.value)
@@ -170,7 +183,7 @@ const onResize = () => {
 	if (props.enableFixedHeight && expandBlock.value) {
 		clearTimeout(resieTimer)
 		// resieTimer = setTimeout(() => {
-		contextHeight.value = document.body.offsetHeight - _offset[0]
+		contextHeight.value = document.body.offsetHeight - _offset.value[0]
 		emits('heightChanged', contextHeight.value - expendContentHeight.value)
 		// }, 128)
 	}

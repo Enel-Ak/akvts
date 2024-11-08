@@ -1,6 +1,7 @@
 <script setup>
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
+import {useGlobal} from '@/store/useGlobal'
 const emits = defineEmits(['collapse', 'scroll'])
 const props = defineProps({
 	model: {
@@ -25,17 +26,28 @@ const props = defineProps({
 		type: [Number, String],
 		default: '56px',
 	},
+
+	frame: {
+		type: Array,
+		default: () => ['header', 'aside', 'default', 'footer'],
+	},
 })
 
-const offset = computed(() =>
-	typeof props.offsetTop === 'number' ||
-	(typeof props.offsetTop === 'string' && props.offsetTop.indexOf('px') === -1)
+const offset = computed(() => {
+	if (!props.frame.includes('header')) {
+		return 0
+	}
+	return typeof props.offsetTop === 'number' ||
+		(typeof props.offsetTop === 'string' && props.offsetTop.indexOf('px') === -1)
 		? `${props.offsetTop}px`
 		: props.offsetTop
-)
+})
 
 const bodyHeight = computed(
-	() => `calc(100% - ${offset.value} - ${props.enableFooter ? '70px' : '0'})`
+	() =>
+		`calc(100% - ${props.frame.includes('header') ? offset.value : 0} - ${
+			props.enableFooter && props.frame.includes('footer') ? '70px' : '0'
+		})`
 )
 
 const containerRef = ref()
@@ -63,6 +75,7 @@ watch(
 )
 
 onMounted(() => {
+	useGlobal().setContainerFrame(props.frame)
 	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
 })
 
@@ -77,21 +90,29 @@ onUnmounted(() => {
 		:class="[model, isExpand ? '' : 'unexpand', enableFooter ? '' : 'no-footer']"
 	>
 		<template v-if="model === 'habf'">
-			<div class="container-header">
+			<div class="container-header" v-if="frame.includes('header')">
 				<div v-if="enableExpand" class="expand" @click="onExpand">
 					<i class="i-ic-baseline-expand-less"></i>
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="container-aside">
+			<div class="container-aside" v-if="frame.includes('aside')">
 				<slot name="aside"></slot>
 			</div>
-			<div class="container-body">
-				<div class="container-body-sub">
+			<div
+				class="container-body"
+				v-if="frame.includes('default')"
+				:class="{'no-aside': !frame.includes('aside')}"
+			>
+				<div class="container-body-sub" v-if="frame.includes('header')">
 					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
-				<div v-if="enableFooter" class="container-footer">
+				<div
+					v-if="enableFooter && frame.includes('footer')"
+					class="container-footer"
+					:class="{'no-aside': !frame.includes('aside')}"
+				>
 					<slot name="footer">
 						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
 					</slot>
@@ -99,21 +120,30 @@ onUnmounted(() => {
 			</div>
 		</template>
 		<template v-else-if="model === 'ahbf'">
-			<div class="container-aside">
+			<div class="container-aside" v-if="frame.includes('aside')">
 				<slot name="aside"></slot>
 			</div>
-			<div class="container-header">
+			<div class="container-header" v-if="frame.includes('header')">
 				<div class="expand" @click="onExpand">
 					<i class="i-ic-baseline-expand-less"></i>
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="container-body" @scroll="onScroll">
-				<div class="container-body-sub">
+			<div
+				class="container-body"
+				@scroll="onScroll"
+				v-if="frame.includes('default')"
+				:class="{'no-aside': !frame.includes('aside')}"
+			>
+				<div class="container-body-sub" v-if="frame.includes('header')">
 					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
-				<div v-if="enableFooter" class="container-footer">
+				<div
+					v-if="enableFooter && frame.includes('footer')"
+					class="container-footer"
+					:class="{'no-aside': !frame.includes('aside')}"
+				>
 					<slot name="footer">
 						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
 					</slot>
@@ -190,6 +220,10 @@ $szie170: 170px;
 			width: calc(100% + 40px);
 			z-index: 4;
 		}
+
+		&.no-aside {
+			width: 100% !important;
+		}
 	}
 
 	.container-footer {
@@ -203,6 +237,11 @@ $szie170: 170px;
 		padding: 0 torem(20px);
 		width: calc(100% - torem($szie170));
 		z-index: 1;
+
+		&.no-aside {
+			left: 0;
+			width: 100%;
+		}
 	}
 
 	&.habf {
