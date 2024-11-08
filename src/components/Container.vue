@@ -45,8 +45,8 @@ const offset = computed(() => {
 
 const bodyHeight = computed(
 	() =>
-		`calc(100% - ${props.frame.includes('header') ? offset.value : 0} - ${
-			props.enableFooter && props.frame.includes('footer') ? '70px' : '0'
+		`calc(100% - ${props.frame.includes('header') ? offset.value : '0px'} - ${
+			props.enableFooter && props.frame.includes('footer') ? '70px' : '0px'
 		})`
 )
 
