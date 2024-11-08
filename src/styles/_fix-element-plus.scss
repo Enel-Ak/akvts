@@ -175,7 +175,7 @@
 			background-color: var(--z-bg-secondary) !important;
 		}
 		span {
-			color: var(--z-font-color);
+			color: var(--z-font-color) !important;
 		}
 
 		&:nth-child(2) {
@@ -185,7 +185,7 @@
 				background-color: var(--z-main) !important;
 			}
 			span {
-				color: var(--z-nav-font-color);
+				color: var(--z-nav-font-color) !important;
 			}
 		}
 	}
