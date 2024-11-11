@@ -170,18 +170,14 @@ onMounted(() => {
 				@click="onClickLabel(item)"
 			>
 				<span>{{ item[keys[1]] }}</span>
-				<el-icon
-					v-if="index > 0"
-					class="i-ic-round-cancel"
-					@click.stop="onCancelItem(item)"
-				></el-icon>
+				<Icons v-if="index > 0" icon-name="Cancel" @click.stop="onCancelItem(item)"></Icons>
 			</button>
 		</template>
 		<!-- <span class="bar"></span> -->
 
 		<el-dropdown v-if="items.length > $props.max" :hide-on-click="false" class="more">
 			<span class="el-dropdown-link">
-				<el-icon class="icon el-icon--right i-ic-baseline-more-horiz"></el-icon>
+				<Icons icon-name="More"></Icons>
 			</span>
 			<template #dropdown>
 				<el-dropdown-menu>
