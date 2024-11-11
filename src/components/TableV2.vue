@@ -123,10 +123,9 @@ watch(
 		if (!props.enableRequestParamsLoad) return
 		if (__requestTimer) {
 			console.log('TableV2 Component Request Params Changed Clear Timer')
-
 			clearTimeout(__requestTimer)
 		}
-		__requestTimer = setTimeout(() => getList(), 256)
+		__requestTimer = setTimeout(() => getList(), 16.7)
 	},
 	{deep: true}
 )
@@ -157,7 +156,9 @@ watch(
 
 		tableData.value = []
 		customSlots.value = arr
-		nextTick(() => (tableColumns.value = newVal))
+		nextTick(() => {
+			tableColumns.value = JSON.parse(JSON.stringify(newVal))
+		})
 	},
 	{deep: true, immediate: true}
 )
