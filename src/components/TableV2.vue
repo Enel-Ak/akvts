@@ -192,6 +192,7 @@ const getList = () => {
 	let timer = null
 
 	loading.value = true
+	tableData.value = []
 	emits('loading', loading.value)
 	axios
 		.request({
@@ -204,10 +205,10 @@ const getList = () => {
 			const items = res.data.items || res.data
 			const totalCount = res.data.totalCount || items.length
 			const _next = (calldata) => {
-				tableData.value = calldata ?? items
+				tableData.value = calldata || items
 				total.value = totalCount
 				loading.value = false
-				console.log('TableV2 Component Next Finish', tableData.value, total.value)
+				console.log('TableV2 Component Next Finish2', tableData.value, total.value)
 				emits('loading', loading.value)
 				emits('completed', 'get')
 				nextTick(() => setFnWidth(true))
@@ -217,10 +218,11 @@ const getList = () => {
 				items,
 				next: (calldata) => {
 					clearTimeout(timer)
-					// 如果有数据修改父组件需要调用 next(data),并把data传递进来
-					console.log('TableV2 beforeComplete Next', calldata)
+					const currentData = calldata
 					isEvent = true
-					_next(calldata)
+					// 如果有数据修改父组件需要调用 next(data),并把data传递进来
+					console.log('TableV2 beforeComplete Next', currentData)
+					_next(currentData)
 				},
 			})
 
