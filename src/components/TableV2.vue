@@ -201,39 +201,35 @@ const getList = () => {
 			headers: props.headers,
 		})
 		.then((res) => {
-			try {
-				const items = res.data.items || res.data
-				const totalCount = res.data.totalCount || items.length
-				const _next = (calldata) => {
-					tableData.value = calldata ?? items
-					total.value = totalCount
-					loading.value = false
-					console.log('TableV2 Component Next Finish', tableData.value, total.value)
-					emits('loading', loading.value)
-					emits('completed', 'get')
-					nextTick(() => setFnWidth(true))
-				}
-
-				emits('beforeComplete', {
-					items,
-					next: (calldata) => {
-						clearTimeout(timer)
-						// 如果有数据修改父组件需要调用 next(data),并把data传递进来
-						console.log('TableV2 beforeComplete Next', calldata)
-						isEvent = true
-						_next(calldata)
-					},
-				})
-
-				timer = setTimeout(() => {
-					if (!isEvent) {
-						console.log('TableV2 beforeComplete', items)
-						_next()
-					}
-				}, 256)
-			} catch (e) {
-				console.log('TableV2 Component getList Error', e)
+			const items = res.data.items || res.data
+			const totalCount = res.data.totalCount || items.length
+			const _next = (calldata) => {
+				tableData.value = calldata ?? items
+				total.value = totalCount
+				loading.value = false
+				console.log('TableV2 Component Next Finish', tableData.value, total.value)
+				emits('loading', loading.value)
+				emits('completed', 'get')
+				// nextTick(() => setFnWidth(true))
 			}
+
+			emits('beforeComplete', {
+				items,
+				next: (calldata) => {
+					clearTimeout(timer)
+					// 如果有数据修改父组件需要调用 next(data),并把data传递进来
+					console.log('TableV2 beforeComplete Next', calldata)
+					isEvent = true
+					_next(calldata)
+				},
+			})
+
+			timer = setTimeout(() => {
+				if (!isEvent) {
+					console.log('TableV2 beforeComplete', items)
+					_next()
+				}
+			}, 256)
 		})
 		.catch((err) => {
 			console.log('TableV2 Component getList Error', err)
