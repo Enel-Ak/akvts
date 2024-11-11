@@ -12,7 +12,7 @@ const props = defineProps({
 </template>
 <style scoped lang="scss">
 .akvts-icons {
-	display: inline-block;
+	display: flex;
 	:deep(svg) {
 		font-size: 20px;
 		height: 1em !important;
