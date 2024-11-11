@@ -140,26 +140,25 @@ watch(
 			console.log('TableV2 Component columns not changed')
 			return
 		}
-		setTimeout(() => {
-			console.log('TableV2 Component columns changed')
-			const arr = []
-			const loops = (cols) => {
-				for (const col of cols) {
-					if (col.children) {
-						loops(col.children)
-					} else {
-						arr.push(col.prop)
-					}
+
+		console.log('TableV2 Component columns changed')
+		const arr = []
+		const loops = (cols) => {
+			for (const col of cols) {
+				if (col.children) {
+					loops(col.children)
+				} else {
+					arr.push(col.prop)
 				}
 			}
-			loops(newVal)
+		}
+		loops(newVal)
 
-			tableData.value = []
-			customSlots.value = arr
-			nextTick(() => {
-				tableColumns.value = JSON.parse(JSON.stringify(newVal))
-			})
-		}, 1000)
+		tableData.value = []
+		customSlots.value = arr
+		nextTick(() => {
+			tableColumns.value = JSON.parse(JSON.stringify(newVal))
+		})
 	},
 	{deep: true, immediate: true}
 )
