@@ -170,7 +170,13 @@ onMounted(() => {
 				@click="onClickLabel(item)"
 			>
 				<span>{{ item[keys[1]] }}</span>
-				<Icons v-if="index > 0" icon-name="Cancel" @click.stop="onCancelItem(item)"></Icons>
+				<Icons
+					v-if="index > 0"
+					icon-name="Cancel"
+					color="var(--z-nav-font-active)"
+					size="15px"
+					@click.stop="onCancelItem(item)"
+				></Icons>
 			</button>
 		</template>
 		<!-- <span class="bar"></span> -->
