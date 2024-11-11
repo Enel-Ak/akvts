@@ -182,7 +182,7 @@ onMounted(() => {
 		<!-- <span class="bar"></span> -->
 
 		<el-dropdown v-if="items.length > $props.max" :hide-on-click="false" class="more">
-			<span class="el-dropdown-link">
+			<span class="el-dropdown-link df aic">
 				<Icons icon-name="More"></Icons>
 			</span>
 			<template #dropdown>
