@@ -154,11 +154,11 @@ watch(
 		}
 		loops(newVal)
 
-		tableData.value = []
+		// tableData.value = []
 		customSlots.value = arr
-		setTimeout(() => {
+		nextTick(() => {
 			tableColumns.value = JSON.parse(JSON.stringify(newVal))
-		}, 200)
+		})
 	},
 	{deep: true, immediate: true}
 )
