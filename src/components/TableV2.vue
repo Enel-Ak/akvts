@@ -137,7 +137,7 @@ watch(
 			(newVal.length === oldVal?.length &&
 				newVal.every((item, index) => item.prop === oldVal[index].prop)) ||
 			(props.columns.length === newVal.length &&
-				newVal.every((item, index) => item.prop === tableColumns.value[index].prop))
+				newVal.every((item, index) => item.prop === tableColumns.value[index]))
 		) {
 			console.log('TableV2 Component columns not changed')
 			return
