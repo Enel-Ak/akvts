@@ -214,15 +214,13 @@ const getList = () => {
 			const items = res.data.items || res.data
 			const totalCount = res.data.totalCount || items.length
 			const _next = (calldata) => {
-				setTimeout(() => {
-					tableData.value = calldata || items
-					total.value = totalCount
-					loading.value = false
-					emits('loading', loading.value)
-					emits('completed', 'get')
-					nextTick(() => setFnWidth(true))
-					console.log('TableV2 Component Next Finish', tableData.value, total.value)
-				}, 1000)
+				tableData.value = calldata || items
+				total.value = totalCount
+				loading.value = false
+				emits('loading', loading.value)
+				emits('completed', 'get')
+				nextTick(() => setFnWidth(true))
+				console.log('TableV2 Component Next Finish', tableData.value, total.value)
 			}
 
 			emits('beforeComplete', {
