@@ -188,6 +188,11 @@ const getList = () => {
 		setFnWidth() // 没接口或者不自动加载时也需要默认重新计算操作列宽度
 		return
 	}
+
+	if (loading.value) {
+		return
+	}
+
 	let isEvent = false
 	let timer = null
 
@@ -204,13 +209,13 @@ const getList = () => {
 			const items = res.data.items || res.data
 			const totalCount = res.data.totalCount || items.length
 			const _next = (calldata) => {
-				tableData.value = JSON.parse(JSON.stringify(calldata || items))
+				tableData.value = calldata || items
 				total.value = totalCount
 				loading.value = false
-				console.log('TableV2 Component Next Finish', tableData.value, total.value)
 				emits('loading', loading.value)
 				emits('completed', 'get')
 				nextTick(() => setFnWidth(true))
+				console.log('TableV2 Component Next Finish', tableData.value, total.value)
 			}
 
 			emits('beforeComplete', {
