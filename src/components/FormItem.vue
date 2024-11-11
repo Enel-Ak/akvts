@@ -285,7 +285,12 @@ defineExpose({
 			<el-collapse-item :name="item.prop">
 				<template #title>
 					<div class="group-title">
-						<i class="icon i-ic-baseline-subdirectory-arrow-right" style="scale: 0.8"></i>
+						<Icons
+							icon-name="ArrowRight2"
+							color="var(--z-font-color)"
+							size="15px"
+							class="mg-right-5"
+						></Icons>
 						{{ item.label }}
 					</div>
 				</template>
