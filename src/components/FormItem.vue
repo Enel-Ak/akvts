@@ -355,7 +355,7 @@ defineExpose({
 						<template v-else>
 							<el-input
 								v-if="!item.inputType"
-								v-model="form[item.prop]"
+								v-model.trim="form[item.prop]"
 								v-bind="item.attrs"
 								type="text"
 								:readonly="item.disabled"
@@ -404,7 +404,7 @@ defineExpose({
 						</template>
 						<template v-else>
 							<el-input
-								v-model="form[item.prop]"
+								v-model.trim="form[item.prop]"
 								v-bind="item.attrs"
 								type="password"
 								:readonly="item.disabled"
@@ -666,7 +666,7 @@ defineExpose({
 						</template>
 						<template v-else>
 							<el-input
-								v-model="form[item.prop]"
+								v-model.trim="form[item.prop]"
 								v-bind="item.attrs"
 								type="textarea"
 								resize="none"
