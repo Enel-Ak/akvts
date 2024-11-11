@@ -343,16 +343,16 @@ defineExpose({
 				v-if="buttonVertical === 'top' && enableButton && !formDisabled && !grid"
 			>
 				<el-button v-if="enableReset" @click="onResetFields">
-					<i class="icon i-ic-baseline-wifi-protected-setup"></i>
+					<Icons icon-name="Reset" class="mg-right-5"></Icons>
 					重置
 				</el-button>
 				<el-button v-if="enableClear" @click="onClear">
-					<i class="icon i-ic-baseline-cleaning-services"></i>
+					<Icons icon-name="Clear" class="mg-right-5"></Icons>
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
 				<el-button :loading="isLoading" type="primary" @click="onSubmit">
-					<i v-if="!isLoading" class="icon i-ic-baseline-send"></i>
+					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 					{{ $props.confirmText }}
 				</el-button>
 			</el-form-item>
@@ -394,16 +394,16 @@ defineExpose({
 					v-if="buttonVertical === 'flowing' && enableButton && !formDisabled && !grid"
 				>
 					<el-button v-if="enableReset" @click="onResetFields">
-						<i class="icon i-ic-baseline-wifi-protected-setup"></i>
+						<Icons icon-name="Reset" class="mg-right-5"></Icons>
 						重置
 					</el-button>
 					<el-button v-if="enableClear" @click="onClear">
-						<i class="icon i-ic-baseline-cleaning-services"></i>
+						<Icons icon-name="Clear" class="mg-right-5"></Icons>
 						清空
 					</el-button>
 					<slot name="buttons"></slot>
 					<el-button v-enter="onSubmit" :loading="isLoading" type="primary" @click="onSubmit">
-						<i v-if="!isLoading" class="icon i-ic-baseline-send"></i>
+						<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 						{{ $props.confirmText }}
 					</el-button>
 				</el-form-item>
@@ -414,16 +414,17 @@ defineExpose({
 				v-if="buttonVertical === 'bottom' && enableButton && !formDisabled && !grid"
 			>
 				<el-button v-if="enableReset" @click="onResetFields">
-					<i class="icon i-ic-baseline-wifi-protected-setup"></i>
+					<Icons icon-name="Reset" class="mg-right-5"></Icons>
 					重置
 				</el-button>
 				<el-button v-if="enableClear" @click="onClear">
 					<i class="icon i-ic-baseline-cleaning-services"></i>
+					<Icons icon-name="Clear" class="mg-right-5"></Icons>
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
 				<el-button v-enter="onSubmit" :loading="isLoading" type="primary" @click="onSubmit">
-					<i v-if="!isLoading" class="icon i-ic-baseline-send"></i>
+					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 					{{ $props.confirmText }}
 				</el-button>
 			</el-form-item>

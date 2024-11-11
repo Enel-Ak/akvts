@@ -260,10 +260,11 @@ defineExpose({
 
 			<el-button v-if="enableExpandContent" size="small" @click.stop="onExpendContent">
 				{{ expendContentOpen ? collapseContentText : expandContentText }}
-				<i
+				<!-- <i
 					class="icon i-ic-baseline-expand-more"
 					:style="{rotate: expendContentOpen ? '180deg' : '0deg'}"
-				></i>
+				></i> -->
+				<Icons icon-name="Expand" :style="{rotate: expendContentOpen ? '180deg' : '0deg'}"></Icons>
 			</el-button>
 
 			<el-button v-if="enableFullScreen" size="small" @click.stop="onFullScreen">
