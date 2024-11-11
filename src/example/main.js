@@ -5,7 +5,7 @@ import {directives} from '@/directive/index'
 
 import App from './App.vue'
 import akvts from '../index.js'
-import 'virtual:uno.css'
+// import 'virtual:uno.css'
 
 const app = createApp(App)
 const pinia = createPinia()
