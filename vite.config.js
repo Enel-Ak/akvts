@@ -2,8 +2,8 @@ import {defineConfig, loadEnv} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import pages from 'vite-plugin-pages'
 import path from 'path'
-import UnoCSS from 'unocss/vite'
-import presetIcons from '@unocss/preset-icons'
+// import UnoCSS from 'unocss/vite'
+// import presetIcons from '@unocss/preset-icons'
 import ElementPlus from 'unplugin-element-plus/vite'
 import viteCompression from 'vite-plugin-compression'
 
@@ -35,17 +35,17 @@ export default ({mode}) => {
 		},
 		plugins: [
 			vue(),
-			UnoCSS({
-				presets: [
-					presetIcons({
-						extraProperties: {
-							display: 'inline-block',
-							'vertical-align': 'middle',
-							// ...
-						},
-					}),
-				],
-			}),
+			// UnoCSS({
+			// 	presets: [
+			// 		presetIcons({
+			// 			extraProperties: {
+			// 				display: 'inline-block',
+			// 				'vertical-align': 'middle',
+			// 				// ...
+			// 			},
+			// 		}),
+			// 	],
+			// }),
 			ElementPlus({
 				useSource: true,
 			}),
