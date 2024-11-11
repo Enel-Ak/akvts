@@ -118,11 +118,15 @@ let isCreate = false
 watch(
 	() => [props.url, props.reqParams, props.reqData],
 	(newVal) => {
+		console.log('TableV2 Component Request Params Changed', newVal)
+
 		if (!props.enableRequestParamsLoad) return
 		if (__requestTimer) {
+			console.log('TableV2 Component Request Params Changed Clear Timer')
+
 			clearTimeout(__requestTimer)
 		}
-		__requestTimer = setTimeout(() => getList(), 16.7)
+		__requestTimer = setTimeout(() => getList(), 256)
 	},
 	{deep: true}
 )
