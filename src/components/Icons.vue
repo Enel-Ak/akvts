@@ -13,5 +13,10 @@ const props = defineProps({
 <style scoped lang="scss">
 .akvts-icons {
 	display: inline-block;
+	:deep(svg) {
+		font-size: 20px;
+		height: 1em !important;
+		width: 1em !important;
+	}
 }
 </style>
