@@ -204,7 +204,7 @@ const getList = () => {
 			const items = res.data.items || res.data
 			const totalCount = res.data.totalCount || items.length
 			const _next = (calldata) => {
-				// tableData.value = calldata || items
+				tableData.value = JSON.parse(JSON.stringify(calldata || items))
 				total.value = totalCount
 				loading.value = false
 				console.log('TableV2 Component Next Finish', tableData.value, total.value)
