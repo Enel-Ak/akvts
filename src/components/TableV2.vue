@@ -134,8 +134,10 @@ watch(
 	() => props.columns,
 	(newVal, oldVal) => {
 		if (
-			newVal.length === oldVal?.length &&
-			newVal.every((item, index) => item.prop === oldVal[index].prop)
+			(newVal.length === oldVal?.length &&
+				newVal.every((item, index) => item.prop === oldVal[index].prop)) ||
+			(props.columns.length === newVal.length &&
+				newVal.every((item, index) => item.prop === tableColumns.value[index].prop))
 		) {
 			console.log('TableV2 Component columns not changed')
 			return
@@ -157,7 +159,7 @@ watch(
 		tableData.value = []
 		customSlots.value = arr
 		nextTick(() => {
-			// tableColumns.value = JSON.parse(JSON.stringify(newVal))
+			tableColumns.value = JSON.parse(JSON.stringify(newVal))
 		})
 	},
 	{deep: true, immediate: true}
