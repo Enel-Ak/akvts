@@ -32,7 +32,7 @@ const flowConfig = ref({
 			</template>
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
-				<Icons icon-name="Setting"></Icons>
+				<Icons icon-name="Setting" size="16px"></Icons>
 				<Icons icon-name="Create"></Icons>
 				<Icons icon-name="Edit"></Icons>
 				<Icons icon-name="Delete"></Icons>
