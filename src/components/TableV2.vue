@@ -210,7 +210,7 @@ const getList = () => {
 				console.log('TableV2 Component Next Finish', tableData.value, total.value)
 				emits('loading', loading.value)
 				emits('completed', 'get')
-				// nextTick(() => setFnWidth(true))
+				nextTick(() => setFnWidth(true))
 			}
 
 			emits('beforeComplete', {
@@ -587,6 +587,7 @@ const setFnWidth = (again = false) => {
 		let btns = el.querySelector('.table-component-btns')?.children
 
 		if (again) {
+			console.log('TableV2 Component setFnWidth', 'Again')
 			el.querySelectorAll('.el-table__body tbody tr').forEach((tr) => {
 				const buttons = tr.querySelector('td:last-child .cell')?.children
 				if (buttons?.length > btns?.length) {
@@ -608,6 +609,7 @@ const setFnWidth = (again = false) => {
 		}
 
 		if (btns?.length === 0) {
+			console.log('TableV2 Component setFnWidth', 'No Buttons')
 			width = 142
 			setTimeout(() => setFnWidth(true), 1)
 		}
