@@ -90,7 +90,6 @@ const initializing = ref(false)
 const tableComponentRef = ref()
 const total = ref(0)
 const tableData = ref([])
-const tableColumns = ref([])
 const customSlots = ref([])
 
 const formRef = ref()
@@ -128,39 +127,6 @@ watch(
 		__requestTimer = setTimeout(() => getList(), 16.7)
 	},
 	{deep: true}
-)
-
-watch(
-	() => props.columns,
-	(newVal, oldVal) => {
-		if (
-			newVal.length === oldVal?.length &&
-			newVal.every((item, index) => item.prop === oldVal[index].prop)
-		) {
-			console.log('TableV2 Component columns not changed')
-			return
-		}
-
-		console.log('TableV2 Component columns changed')
-		const arr = []
-		const loops = (cols) => {
-			for (const col of cols) {
-				if (col.children) {
-					loops(col.children)
-				} else {
-					arr.push(col.prop)
-				}
-			}
-		}
-		loops(newVal)
-
-		tableData.value = []
-		customSlots.value = arr
-		nextTick(() => {
-			tableColumns.value = JSON.parse(JSON.stringify(newVal))
-		})
-	},
-	{deep: true, immediate: true}
 )
 
 watch(
@@ -698,6 +664,23 @@ onDeactivated(() => {
 onUnmounted(() => {
 	console.log('TableV2 Component unmounted')
 	window.removeEventListener('resize', setTableHeight)
+})
+
+const tableColumns = computed(() => {
+	const newVal = props.columns || []
+	const arr = []
+	const loops = (cols) => {
+		for (const col of cols) {
+			if (col.children) {
+				loops(col.children)
+			} else {
+				arr.push(col.prop)
+			}
+		}
+	}
+	loops(newVal)
+	customSlots.value = arr
+	return newVal
 })
 
 defineExpose({
