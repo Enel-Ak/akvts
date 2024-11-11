@@ -31,7 +31,7 @@ const flowConfig = ref({
 				<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
 			</template>
 			<div class="df aic">
-				<Icons icon-name="Home"></Icons>
+				<Icons icon-name="Home" color="#f00"></Icons>
 				<Icons icon-name="Setting"></Icons>
 				<Icons icon-name="Create"></Icons>
 				<Icons icon-name="Edit"></Icons>
