@@ -1,6 +1,7 @@
 <script setup>
 import {ref} from 'vue'
 import Record from '../../components/Record.vue'
+import Toolbar from '../../components/Toolbar.vue'
 const flowRef = ref()
 const flowConfig = ref({
 	id: 'abc',
@@ -46,10 +47,14 @@ const recordData = ref([
 	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
 		<template #aside> aside </template>
-		<template #top> top </template>
+		<template #top> </template>
+		<Toolbar></Toolbar>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
-				<Form :props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"></Form>
+				<Form
+					:props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"
+					class="pd-5"
+				></Form>
 			</template>
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
@@ -79,6 +84,7 @@ const recordData = ref([
 				<Icons icon-name="Appendix"></Icons>
 				<Icons icon-name="Notifications"></Icons>
 				<Icons icon-name="Done"></Icons>
+				<Icons icon-name="Back"></Icons>
 			</div>
 			<Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>

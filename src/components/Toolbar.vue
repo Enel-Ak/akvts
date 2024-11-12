@@ -33,7 +33,7 @@ const onBack = () => {
 			@click="onBack"
 			link
 		>
-			<el-icon class="i-ic-baseline-arrow-back-ios"></el-icon>
+			<Icons icon-name="Back" size="11" color="var(--z-font-color)" class="mg-right-5"></Icons>
 			返回
 		</el-button>
 		<div class="left"><slot name="left"></slot></div>
