@@ -1,5 +1,6 @@
 <script setup>
 import {ref} from 'vue'
+import Record from '../../components/Record.vue'
 const flowRef = ref()
 const flowConfig = ref({
 	id: 'abc',
@@ -20,6 +21,26 @@ const flowConfig = ref({
 		},
 	],
 })
+const recordData = ref([
+	{label: '关联项目', time: '2021-08-06 12:20:00', user: '张三', text: '正常'},
+	{
+		label: '关联项目',
+		time: '2021-08-07 12:20:00',
+		user: '张三',
+		text: '成功',
+		type: 'success',
+	},
+	{label: '关联项目', time: '2021-08-08 12:20:00', user: '张三', text: '错误', type: 'error'},
+	{
+		label: '关联项目',
+		time: '2021-08-09 12:20:00',
+		user: '张三',
+		text: '警告',
+		type: 'warning',
+	},
+	{label: '关联项目', time: '2021-08-10 12:20:00', user: '张三', text: '危险', type: 'danger'},
+	{label: '关联项目', time: '2021-08-11 12:20:00', user: '张三', text: '正在进行'},
+])
 </script>
 <template>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
@@ -40,6 +61,7 @@ const flowConfig = ref({
 				<Icons icon-name="Cancel"></Icons>
 				<Icons icon-name="Reset"></Icons>
 				<Icons icon-name="Clear"></Icons>
+				<Icons icon-name="Clear2"></Icons>
 				<Icons icon-name="Eye"></Icons>
 				<Icons icon-name="Lock"></Icons>
 				<Icons icon-name="Unlock"></Icons>
@@ -56,7 +78,11 @@ const flowConfig = ref({
 				<Icons icon-name="Download"></Icons>
 				<Icons icon-name="Appendix"></Icons>
 				<Icons icon-name="Notifications"></Icons>
+				<Icons icon-name="Done"></Icons>
 			</div>
+			<Record title="历史记录" :data="recordData">
+				<template #label="scoped">{{ scoped.item.label }}</template>
+			</Record>
 			<TableV2
 				:enableSelection="true"
 				:auto-height="true"

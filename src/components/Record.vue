@@ -33,11 +33,11 @@ const props = defineProps({
 })
 
 const icons = {
-	default: 'i-ic-baseline-more-horiz',
-	success: 'i-ic-outline-check',
-	warning: 'i-ic-sharp-warning',
-	error: 'i-ic-twotone-close',
-	danger: 'i-ic-twotone-close',
+	default: 'More',
+	success: 'Done',
+	warning: 'Warning',
+	error: 'Clear2',
+	danger: 'Clear2',
 }
 
 const list = computed(() =>
@@ -82,8 +82,11 @@ const list = computed(() =>
 					<span v-if="item.user" :title="item.user">{{ item.user }}</span>
 				</slot>
 			</div>
-			<i v-if="!item.type" class="icon" :class="[icons.default]"></i>
-			<i v-else class="icon" :class="[icons[item.type]]"></i>
+			<Icons
+				:icon-name="icons[item.type] || icons.default"
+				class="icon"
+				color="var(--z-nav-font-color)"
+			></Icons>
 		</div>
 	</div>
 </template>
@@ -117,7 +120,7 @@ const list = computed(() =>
 
 		.icon {
 			color: var(--z-bg);
-			left: torem(-10.5px);
+			left: torem(-10.515px);
 			position: absolute;
 			top: torem(-2.5px);
 			transform: scale(0.5);

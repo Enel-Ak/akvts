@@ -31,7 +31,7 @@ body {
 
 /* 滚动条滑块 */
 ::-webkit-scrollbar-thumb {
-	background-color: #cbcbcb; /* 滑块的背景色 */
+	background-color: rgba(203, 203, 203, 0.5); /* 滑块的背景色 */
 	border-radius: 10px; /* 滑块圆角 */
 	border: 3px solid transparent; /* 透明边框，用于给滑块周围留空间 */
 	background-clip: content-box; /* 限制背景颜色只显示在内容区域 */
@@ -39,7 +39,16 @@ body {
 
 /* 滑块在 hover 时的样式 */
 ::-webkit-scrollbar-thumb:hover {
-	background-color: #cbcbcb; /* 滑块 hover 状态下的背景色 */
+	background-color: rgba(203, 203, 203, 1); /* 滑块 hover 状态下的背景色 */
+}
+
+body.dark {
+	::-webkit-scrollbar-thumb {
+		background-color: rgba(144, 147, 153, 0.5);
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(144, 147, 153, 1);
+	}
 }
 
 #app {
