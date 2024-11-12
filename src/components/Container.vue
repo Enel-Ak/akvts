@@ -92,7 +92,7 @@ onUnmounted(() => {
 		<template v-if="model === 'habf'">
 			<div class="container-header" v-if="frame.includes('header')">
 				<div v-if="enableExpand" class="expand" @click="onExpand">
-					<i class="i-ic-baseline-expand-less"></i>
+					<Icons icon-name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
 				<slot name="header"></slot>
 			</div>
@@ -186,10 +186,6 @@ $szie170: 170px;
 			height: 100%;
 			justify-content: center;
 			width: 30px;
-
-			i {
-				transform: rotate(-90deg);
-			}
 		}
 	}
 
@@ -278,7 +274,7 @@ $szie170: 170px;
 	&.unexpand {
 		.container-header {
 			i {
-				transform: rotate(90deg);
+				transform: rotate(-180deg);
 			}
 		}
 		.container-aside {
