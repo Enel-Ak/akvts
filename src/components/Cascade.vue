@@ -2,7 +2,7 @@
 import {ref, watch, toRaw, onMounted} from 'vue'
 import axios from 'axios'
 
-const emits = defineEmits(['change', 'elChange', 'update:modelValue'])
+const emits = defineEmits(['change', 'elChange', 'update:modelValue', 'focus', 'blur'])
 const props = defineProps({
 	modelValue: {type: Object, default: () => ({})}, // v-model
 	grid: {type: Boolean, default: false},
@@ -156,6 +156,14 @@ const oneSelectLazyLoad = (node, resolve) => {
 		.finally(() => resolve([]))
 }
 
+const onFocus = () => {
+	emits('focus')
+}
+
+const onBlur = () => {
+	emits('blur')
+}
+
 const initOptions = (item, level = 0) => {
 	if (!item.casecadeUrl) {
 		return
@@ -260,6 +268,8 @@ defineExpose({
 			clearable
 			filterable
 			@change="onElCascaderChange"
+			@focus="onFocus"
+			@blur="onBlur"
 		>
 			<template #default="{node, data}">
 				<slot name="default" :node="node" :data="data">
@@ -273,6 +283,8 @@ defineExpose({
 			:form="form"
 			v-for="(item, index) of options"
 			@change="(val, item) => onFormItemChange(val, item, index)"
+			@focus="onFocus"
+			@blur="onBlur"
 		></FormItem>
 	</div>
 </template>

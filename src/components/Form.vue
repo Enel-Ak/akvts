@@ -8,6 +8,8 @@ const emits = defineEmits([
 	'clear',
 	'reset',
 	'change',
+	'focus',
+	'blur',
 	'initRemoteComplete',
 	'update:modelValue',
 ])
@@ -30,6 +32,7 @@ const props = defineProps({
 	enableButton: {type: Boolean, default: true},
 	enableReset: {type: Boolean, default: true},
 	enableClear: {type: Boolean, default: true},
+	enableEnterPush: {type: Boolean, default: true},
 
 	columnCount: {type: [Number, String], default: 1},
 	size: {type: String, default: 'default'},
@@ -98,6 +101,7 @@ watch(
 )
 
 const isLoading = computed(() => props.loading)
+const isFocus = ref(false)
 const formRef = ref()
 const formItemRef = ref()
 const form = ref(props.modelValue)
@@ -156,6 +160,13 @@ const onSubmit = () => {
 			emits('submit', timeRangeToString(form.value))
 		}
 	})
+}
+
+const onEnterSubmit = () => {
+	if (props.enableEnterPush && isFocus.value) {
+		console.log('Form Enter Submit', isFocus.value)
+		onSubmit()
+	}
 }
 
 const onResetFields = () => {
@@ -277,6 +288,18 @@ const onFormChange = (val, item) => {
 	emits('change', val, item)
 }
 
+const onFocus = () => {
+	isFocus.value = true
+	console.log('Form Focus', isFocus.value)
+	emits('focus')
+}
+
+const onBlur = () => {
+	isFocus.value = false
+	console.log('Form Blur', isFocus.value)
+	emits('blur')
+}
+
 onMounted(() => {
 	console.log('Form Mounted')
 	nextTick(() => setDefault())
@@ -351,7 +374,7 @@ defineExpose({
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
-				<el-button :loading="isLoading" type="primary" @click="onSubmit">
+				<el-button v-enter="onEnterSubmit" :loading="isLoading" type="primary" @click="onSubmit">
 					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 					{{ $props.confirmText }}
 				</el-button>
@@ -373,6 +396,8 @@ defineExpose({
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
 					@changeFile="onFormChange"
+					@focus="onFocus"
+					@blur="onBlur"
 				>
 					<template v-for="item of formItems" #[`form-${item.prop}`]="scope">
 						<!-- row: 表格内, value: 普通表单 -->
@@ -402,7 +427,7 @@ defineExpose({
 						清空
 					</el-button>
 					<slot name="buttons"></slot>
-					<el-button v-enter="onSubmit" :loading="isLoading" type="primary" @click="onSubmit">
+					<el-button v-enter="onEnterSubmit" :loading="isLoading" type="primary" @click="onSubmit">
 						<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 						{{ $props.confirmText }}
 					</el-button>
@@ -423,7 +448,7 @@ defineExpose({
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
-				<el-button v-enter="onSubmit" :loading="isLoading" type="primary" @click="onSubmit">
+				<el-button v-enter="onEnterSubmit" :loading="isLoading" type="primary" @click="onSubmit">
 					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 					{{ $props.confirmText }}
 				</el-button>

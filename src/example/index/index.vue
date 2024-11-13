@@ -42,6 +42,13 @@ const recordData = ref([
 	{label: '关联项目', time: '2021-08-10 12:20:00', user: '张三', text: '危险', type: 'danger'},
 	{label: '关联项目', time: '2021-08-11 12:20:00', user: '张三', text: '正在进行'},
 ])
+
+const loaidng = ref(false)
+const onSubmit = (data) => {
+	loaidng.value = true
+	console.log(data)
+	setTimeout(() => (loaidng.value = false), 3000)
+}
 </script>
 <template>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
@@ -52,7 +59,22 @@ const recordData = ref([
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form
-					:props="[{prop: 'abc', label: '测试', dataUrl: '/abc', type: 'text'}]"
+					:props="[
+						{prop: 'abc', label: '测试', type: 'text'},
+						{
+							prop: 'abc2',
+							label: '测试2',
+							type: 'select',
+							options: [
+								{label: '测试', value: '1'},
+								{label: '测试2', value: '2'},
+								{label: '测试3', value: '3'},
+							],
+							attrs: {filterable: false, multiple: true, multipleLimit: 2},
+						},
+					]"
+					:loading="loaidng"
+					@submit="onSubmit"
 					class="pd-5"
 				></Form>
 			</template>

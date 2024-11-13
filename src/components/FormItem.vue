@@ -3,7 +3,14 @@ import {ref, watch, computed, onMounted} from 'vue'
 import axios from 'axios'
 import {ElMessage} from 'element-plus'
 
-const emits = defineEmits(['change', 'changeFile', 'initRemoteComplete', 'update:modelValue'])
+const emits = defineEmits([
+	'change',
+	'changeFile',
+	'initRemoteComplete',
+	'update:modelValue',
+	'focus',
+	'blur',
+])
 const props = defineProps({
 	modelValue: {type: [String, Number, Array], default: () => ''},
 	items: {type: Object, default: () => []}, // 表单项配置
@@ -33,6 +40,7 @@ const count = ref(props.columnCount)
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
 const pb = computed(() => (props.columnCount > 1 ? '0px' : '20px'))
 const uploadFileNames = ref([])
+const isDropdownVisible = ref(false)
 
 let remoteTimer = null
 
@@ -201,6 +209,14 @@ const onCheckIsLastItem = (item, index) => {
 	)
 }
 
+const onFocus = () => {
+	emits('focus')
+}
+
+const onBlur = () => {
+	emits('blur')
+}
+
 watch(
 	() => props._expandIndex,
 	(val) => {
@@ -305,6 +321,8 @@ defineExpose({
 						:_expandIndex="_expandIndex + 1"
 						@change="onChange"
 						@changeFile="onChange"
+						@focus="onFocus"
+						@blur="onBlur"
 					>
 						<template v-for="child of formItems" #[`form-${child.prop}`]="scope">
 							<slot :name="`form-${child.prop}`" v-bind="scope" :form="form" :row="formData"></slot>
@@ -368,6 +386,8 @@ defineExpose({
 								:size="size"
 								clearable
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 							/>
 							<el-input-number
 								v-else-if="item.inputType === 'number'"
@@ -382,6 +402,8 @@ defineExpose({
 								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -417,6 +439,8 @@ defineExpose({
 								:size="size"
 								clearable
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -448,14 +472,20 @@ defineExpose({
 								v-bind="item.attrs"
 								:disabled="item.disabled"
 								:placeholder="item.placeholder || `请选择${item.label}`"
-								:filterable="item.filterable"
-								:multiple="item.multiple"
-								:multiple-limit="item.multipleLimit ? item.multipleLimit : 0"
-								:collapse-tags="item.collapseTags"
+								:filterable="item.attrs?.filterable || item.filterable"
+								:multiple="item.attrs?.multiple || item.multiple"
+								:multiple-limit="
+									item.attrs?.multipleLimit || item.multipleLimit
+										? item.attrs?.multipleLimit || item.multipleLimit
+										: 0
+								"
+								:collapse-tags="item.attrs?.collapseTags || item.collapseTags"
 								:size="size"
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 							>
 								<el-option
 									v-for="option of item.options"
@@ -501,6 +531,8 @@ defineExpose({
 								:loading="loading"
 								:size="size"
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 								style="flex: 1"
 							>
 								<el-option
@@ -565,6 +597,8 @@ defineExpose({
 								start-placeholder="开始时间"
 								end-placeholder="结束时间"
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -681,6 +715,8 @@ defineExpose({
 								:size="size"
 								:maxlength="item.maxlength || 1000"
 								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -744,6 +780,8 @@ defineExpose({
 							:oneSelect="item.cascadeOneSelect"
 							:oneSelectProps="item.cascadeOneSelectProps"
 							@change="onChange($event, item)"
+							@focus="onFocus"
+							@blur="onBlur"
 						></Cascade>
 						<slot :name="`form-${item.prop}-right`"></slot>
 					</slot>
