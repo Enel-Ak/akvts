@@ -164,9 +164,12 @@ const onSubmit = () => {
 }
 
 const onEnterSubmit = () => {
-	console.log('Form Enter Submit', isFocus.value)
 	if (props.enableEnterPush && isFocus.value && !isLoading.value) {
-		onSubmit()
+		// 在 form change 之后执行
+		setTimeout(() => {
+			console.log('Form Enter Submit', isFocus.value)
+			onSubmit()
+		}, 16.7)
 	}
 }
 

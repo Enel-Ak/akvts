@@ -45,6 +45,8 @@ const recordData = ref([
 
 const loaidng = ref(false)
 const onSubmit = (data) => {
+	console.log('onSubmit', data)
+
 	loaidng.value = true
 	setTimeout(() => (loaidng.value = false), 3000)
 }
