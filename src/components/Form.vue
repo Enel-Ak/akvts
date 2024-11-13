@@ -157,14 +157,15 @@ const onSubmit = () => {
 	formRef.value.validate((valid) => {
 		if (valid) {
 			console.log('submit validate!', valid, toRaw(form.value))
-			emits('submit', timeRangeToString(form.value))
+			const formValue = JSON.parse(JSON.stringify(form.value))
+			emits('submit', timeRangeToString(formValue))
 		}
 	})
 }
 
 const onEnterSubmit = () => {
-	if (props.enableEnterPush && isFocus.value) {
-		console.log('Form Enter Submit', isFocus.value)
+	console.log('Form Enter Submit', isFocus.value)
+	if (props.enableEnterPush && isFocus.value && !isLoading.value) {
 		onSubmit()
 	}
 }
@@ -288,9 +289,12 @@ const onFormChange = (val, item) => {
 	emits('change', val, item)
 }
 
-const onFocus = () => {
+const onFocus = (isFocusEnter = false) => {
 	isFocus.value = true
 	console.log('Form Focus', isFocus.value)
+	if (isFocusEnter) {
+		onEnterSubmit()
+	}
 	emits('focus')
 }
 
@@ -351,6 +355,7 @@ defineExpose({
 <template>
 	<div
 		class="form-component"
+		v-enter="onEnterSubmit"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
 	>
 		<el-form
@@ -374,7 +379,7 @@ defineExpose({
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
-				<el-button v-enter="onEnterSubmit" :loading="isLoading" type="primary" @click="onSubmit">
+				<el-button :loading="isLoading" type="primary" @click="onSubmit">
 					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 					{{ $props.confirmText }}
 				</el-button>
@@ -427,7 +432,7 @@ defineExpose({
 						清空
 					</el-button>
 					<slot name="buttons"></slot>
-					<el-button v-enter="onEnterSubmit" :loading="isLoading" type="primary" @click="onSubmit">
+					<el-button :loading="isLoading" type="primary" @click="onSubmit">
 						<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 						{{ $props.confirmText }}
 					</el-button>
@@ -448,7 +453,7 @@ defineExpose({
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
-				<el-button v-enter="onEnterSubmit" :loading="isLoading" type="primary" @click="onSubmit">
+				<el-button :loading="isLoading" type="primary" @click="onSubmit">
 					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
 					{{ $props.confirmText }}
 				</el-button>

@@ -46,7 +46,6 @@ const recordData = ref([
 const loaidng = ref(false)
 const onSubmit = (data) => {
 	loaidng.value = true
-	console.log(data)
 	setTimeout(() => (loaidng.value = false), 3000)
 }
 </script>
@@ -61,6 +60,7 @@ const onSubmit = (data) => {
 				<Form
 					:props="[
 						{prop: 'abc', label: '测试', type: 'text'},
+						{prop: 'abc3', label: '测试', type: 'datetimerange'},
 						{
 							prop: 'abc2',
 							label: '测试2',
@@ -70,9 +70,10 @@ const onSubmit = (data) => {
 								{label: '测试2', value: '2'},
 								{label: '测试3', value: '3'},
 							],
-							attrs: {filterable: false, multiple: true, multipleLimit: 2},
+							attrs: {filterable: false, multiple: false, multipleLimit: 2},
 						},
 					]"
+					:enableEnterPush="true"
 					:loading="loaidng"
 					@submit="onSubmit"
 					class="pd-5"

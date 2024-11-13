@@ -40,7 +40,6 @@ const count = ref(props.columnCount)
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
 const pb = computed(() => (props.columnCount > 1 ? '0px' : '20px'))
 const uploadFileNames = ref([])
-const isDropdownVisible = ref(false)
 
 let remoteTimer = null
 
@@ -209,11 +208,15 @@ const onCheckIsLastItem = (item, index) => {
 	)
 }
 
-const onFocus = () => {
-	emits('focus')
+const onFocus = (e) => {
+	setTimeout(() => {
+		console.log('Form Item Focus', e)
+		emits('focus')
+	}, 16.7)
 }
 
 const onBlur = () => {
+	console.log('Form Item Blur')
 	emits('blur')
 }
 
@@ -486,6 +489,7 @@ defineExpose({
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
+								@keyup.native.enter="emits('focus', true)"
 							>
 								<el-option
 									v-for="option of item.options"
@@ -582,8 +586,8 @@ defineExpose({
 								v-model="form[item.prop]"
 								v-bind="item.attrs"
 								:readonly="item.readonly"
-								:disabled="item.disabled"
-								:disabled-date="item.disabledDate"
+								:disabled="item.attrs?.disabled || item.disabled"
+								:disabled-date="item.attrs?.disabledDate || item.disabledDate"
 								:type="item.type"
 								:placeholder="item.placeholder || `请选择${item.label}`"
 								:value-format="
@@ -599,6 +603,7 @@ defineExpose({
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
+								@keydown.native.enter="emits('focus', true)"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>

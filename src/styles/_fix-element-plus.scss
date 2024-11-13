@@ -124,7 +124,7 @@
 
 	span,
 	li {
-		color: var(--z-font-color) !important;
+		color: var(--z-font-color);
 
 		&.is-selected > * {
 			color: var(--z-nav-hover) !important;
@@ -180,7 +180,7 @@
 
 		&:nth-child(2) {
 			border: 1px solid var(--z-main) !important;
-			background-color: var(--z-main);
+			background-color: var(--z-main) !important;
 			&:hover {
 				background-color: var(--z-main) !important;
 			}
@@ -231,7 +231,7 @@
 
 	td.start-date .el-date-table-cell__text,
 	td.end-date .el-date-table-cell__text {
-		color: var(--z-nav-font-color) !important;
+		color: var(--z-nav-font-color);
 	}
 }
 
