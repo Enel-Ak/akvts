@@ -111,9 +111,9 @@ const onSubmit = (data) => {
 				<Icons icon-name="Done"></Icons>
 				<Icons icon-name="Back"></Icons>
 			</div>
-			<Record title="历史记录" :data="recordData">
+			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
-			</Record>
+			</Record> -->
 			<TableV2
 				:enableSelection="true"
 				:auto-height="true"
@@ -156,7 +156,7 @@ const onSubmit = (data) => {
 				]"
 			></TableV2>
 		</Block>
-		<Flow ref="flowRef" v-model="flowConfig"></Flow>
+		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
 	</Container>
 </template>
 <style scoped lang="scss"></style>

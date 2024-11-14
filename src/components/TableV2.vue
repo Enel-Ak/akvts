@@ -910,7 +910,12 @@ defineExpose({
 								size="small"
 								@click.stop="onClickButton(btn, row, $index)"
 							>
-								<i v-if="btn.icon" :class="['icon', btn.icon]"></i>
+								<Icons
+									v-if="btn.icon"
+									:icon-name="btn.icon"
+									:size="btn.iconSize || 14"
+									:color="btn.iconColor || 'var(--z-nav-font-color)'"
+								/>
 								{{ btn.label }}
 							</el-button>
 
@@ -927,7 +932,12 @@ defineExpose({
 										:disabled="btn.hasOwnProperty('disabled') ? setEval(btn.disabled, row) : false"
 										size="small"
 									>
-										<i v-if="btn.icon" :class="['icon', btn.icon]"></i>
+										<Icons
+											v-if="btn.icon"
+											:icon-name="btn.icon"
+											:size="btn.iconSize || 14"
+											:color="btn.iconColor || 'var(--z-nav-font-color)'"
+										/>
 										{{ btn.label }}
 									</el-button>
 								</template>
@@ -941,7 +951,7 @@ defineExpose({
 						size="small"
 						@click.stop="onDialog('edit', {row, column, $index})"
 					>
-						<i class="icon i-ic-baseline-edit-note"></i>
+						<Icons icon-name="Edit" color="var(--z-nav-font-color)" size="16" />
 						{{ props.editText }}
 					</el-button>
 
@@ -954,7 +964,7 @@ defineExpose({
 					>
 						<template #reference>
 							<el-button size="small" type="danger" @click.stop>
-								<i class="icon i-ic-baseline-delete-forever"></i>
+								<Icons icon-name="Delete" color="var(--z-nav-font-color)" size="14" />
 								{{ props.deleteText }}
 							</el-button>
 						</template>
