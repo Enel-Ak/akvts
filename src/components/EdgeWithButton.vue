@@ -87,7 +87,7 @@ const handleAddNode = (str) => {
 			@mouseleave="onMouseLeave"
 		>
 			<div class="add-nodes">
-				<i class="icon i-ic-round-plus"></i>
+				<Icons icon-name="Create" color="var(--z-font-color)"></Icons>
 			</div>
 
 			<div class="settings shadow-4" v-if="show">
