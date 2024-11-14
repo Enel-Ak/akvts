@@ -97,9 +97,9 @@
 .el-select {
 	.el-select__wrapper {
 		background-color: var(--z-theme) !important;
-		box-shadow: 0 0 0 1px var(--z-line) inset;
+		box-shadow: 0 0 0 1px var(--z-line) inset !important;
 		&.is-hovering {
-			box-shadow: 0 0 0 1px var(--z-nav-hover) inset;
+			box-shadow: 0 0 0 1px var(--z-nav-hover) inset !important;
 		}
 	}
 
