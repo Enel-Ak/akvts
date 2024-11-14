@@ -802,7 +802,7 @@ defineExpose({
 				</el-button>
 
 				<el-button v-if="enableCreate" type="primary" size="small" @click="onDialog('create')">
-					<i class="icon i-ic-baseline-library-add"></i>
+					<Icons icon-name="Create" color="var(--z-nav-font-color)" size="16" />
 					{{ props.createText }}
 				</el-button>
 				<slot name="toolbarLeft"> </slot>
