@@ -307,6 +307,16 @@ const onBlur = () => {
 	emits('blur')
 }
 
+const getIconSize = () => {
+	let size = 16
+	if (props.size === 'large') {
+		size = 20
+	} else if (props.size === 'small') {
+		size = 14
+	}
+	return size
+}
+
 onMounted(() => {
 	console.log('Form Mounted')
 	nextTick(() => setDefault())
@@ -368,22 +378,29 @@ defineExpose({
 			:rules="rules"
 			:label-width="labelWidth"
 			:class="{'not-label': labelWidth === 0 || labelWidth === '0'}"
+			:size="size"
 		>
 			<el-form-item
 				class="btns top"
 				v-if="buttonVertical === 'top' && enableButton && !formDisabled && !grid"
 			>
-				<el-button v-if="enableReset" @click="onResetFields">
-					<Icons icon-name="Reset" class="mg-right-5"></Icons>
+				<el-button v-if="enableReset" @click="onResetFields" :size="size">
+					<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
 					重置
 				</el-button>
-				<el-button v-if="enableClear" @click="onClear">
-					<Icons icon-name="Clear" class="mg-right-5"></Icons>
+				<el-button v-if="enableClear" @click="onClear" :size="size">
+					<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
-				<el-button :loading="isLoading" type="primary" @click="onSubmit">
-					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
+				<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
+					<Icons
+						v-if="!isLoading"
+						icon-name="Send"
+						color="#fff"
+						class="mg-right-5"
+						:size="getIconSize()"
+					></Icons>
 					{{ $props.confirmText }}
 				</el-button>
 			</el-form-item>
@@ -426,17 +443,23 @@ defineExpose({
 					class="btns flowing"
 					v-if="buttonVertical === 'flowing' && enableButton && !formDisabled && !grid"
 				>
-					<el-button v-if="enableReset" @click="onResetFields">
-						<Icons icon-name="Reset" class="mg-right-5"></Icons>
+					<el-button v-if="enableReset" @click="onResetFields" :size="size">
+						<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
 						重置
 					</el-button>
-					<el-button v-if="enableClear" @click="onClear">
-						<Icons icon-name="Clear" class="mg-right-5"></Icons>
+					<el-button v-if="enableClear" @click="onClear" :size="size">
+						<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
 						清空
 					</el-button>
 					<slot name="buttons"></slot>
-					<el-button :loading="isLoading" type="primary" @click="onSubmit">
-						<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
+					<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
+						<Icons
+							v-if="!isLoading"
+							icon-name="Send"
+							color="#fff"
+							class="mg-right-5"
+							:size="getIconSize()"
+						></Icons>
 						{{ $props.confirmText }}
 					</el-button>
 				</el-form-item>
@@ -446,18 +469,23 @@ defineExpose({
 				class="btns bottom"
 				v-if="buttonVertical === 'bottom' && enableButton && !formDisabled && !grid"
 			>
-				<el-button v-if="enableReset" @click="onResetFields">
-					<Icons icon-name="Reset" class="mg-right-5"></Icons>
+				<el-button v-if="enableReset" @click="onResetFields" :size="size">
+					<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
 					重置
 				</el-button>
-				<el-button v-if="enableClear" @click="onClear">
-					<i class="icon i-ic-baseline-cleaning-services"></i>
-					<Icons icon-name="Clear" class="mg-right-5"></Icons>
+				<el-button v-if="enableClear" @click="onClear" :size="size">
+					<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
-				<el-button :loading="isLoading" type="primary" @click="onSubmit">
-					<Icons v-if="!isLoading" icon-name="Send" color="#fff" class="mg-right-5"></Icons>
+				<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
+					<Icons
+						v-if="!isLoading"
+						icon-name="Send"
+						color="#fff"
+						class="mg-right-5"
+						:size="getIconSize()"
+					></Icons>
 					{{ $props.confirmText }}
 				</el-button>
 			</el-form-item>
