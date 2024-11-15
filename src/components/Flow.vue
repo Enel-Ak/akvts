@@ -723,11 +723,14 @@ defineExpose({
 								</g>
 							</svg>
 							<span>{{ props.label ?? '-' }}</span>
-							<i
+							<Icons
 								v-if="props.data.canDelete && !disabled"
-								class="icon i-ic-twotone-close close-node"
+								icon-name="Clear2"
+								size="12"
+								color="var(--z-nav-font-color)"
 								@click.stop="onRemoveNode(props.id, props)"
-							></i>
+								class="close-node"
+							></Icons>
 						</div>
 						<div class="flow-setting">
 							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
@@ -764,11 +767,14 @@ defineExpose({
 								</g>
 							</svg>
 							<span>{{ props.label ?? '-' }}</span>
-							<i
+							<Icons
 								v-if="!disabled"
-								class="icon i-ic-twotone-close close-node"
+								icon-name="Clear2"
+								size="12"
+								color="var(--z-nav-font-color)"
 								@click.stop="onRemoveNode(props.id, props)"
-							></i>
+								class="close-node"
+							></Icons>
 						</div>
 						<div class="flow-setting">
 							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
@@ -805,11 +811,14 @@ defineExpose({
 								</g>
 							</svg>
 							<span>{{ props.label ?? '-' }}</span>
-							<i
-								v-if="!disabled"
-								class="icon i-ic-twotone-close close-node"
+
+							<Icons
+								icon-name="Clear2"
+								size="12"
+								color="var(--z-nav-font-color)"
 								@click.stop="onRemoveNode(props.id, props)"
-							></i>
+								class="close-node"
+							></Icons>
 						</div>
 						<div class="flow-setting">
 							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
@@ -956,7 +965,7 @@ defineExpose({
 			}
 		}
 		span {
-			padding: 0 15px;
+			padding: 8px 15px;
 		}
 	}
 
