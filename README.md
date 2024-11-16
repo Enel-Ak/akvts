@@ -11,8 +11,6 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import pages from 'vite-plugin-pages'
 import path from 'path'
-import UnoCSS from 'unocss/vite' // 必要配置
-import presetIcons from '@unocss/preset-icons' // 必要配置
 import ElementPlus from 'unplugin-element-plus/vite'
 
 export default defineConfig({
@@ -33,21 +31,6 @@ export default defineConfig({
 	},
   plugins: [
     vue(),
-    // UnoCss 必要配置
-    UnoCSS({
-      presets: [
-      presetIcons(),
-      ],
-      content: {
-				pipeline: {
-					include: [
-						// 默认扫描 src 目录
-						/\.js$/, // 扫描 .js 文件, 必要配置
-						/\.vue$/, // 扫描 .vue 文件
-					],
-				},
-				},
-    }),
     ElementPlus({
       useSource: true,
     }),
