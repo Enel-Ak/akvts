@@ -55,7 +55,7 @@ const col = props.col
 		:sortable="col.sortable"
 		:type="col.expand ? 'expand' : 'default'"
 		:show-overflow-tooltip="!enableRowEdit"
-		min-width="150"
+		min-width="120"
 		ellipsis
 	>
 		<TableColumn v-for="t in col.children" :key="t.label" :col="t" :customSlots="customSlots">

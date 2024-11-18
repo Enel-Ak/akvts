@@ -1070,6 +1070,18 @@ defineExpose({
 		}
 	}
 
+	:deep(.el-table__header) {
+		thead th .cell {
+			> * {
+				display: inline-block;
+			}
+
+			.caret-wrapper {
+				transform: translateY(-1px);
+			}
+		}
+	}
+
 	:deep(.el-table td.el-table__cell),
 	:deep(.el-table--border th.el-table__cell) {
 		border-color: var(--z-line) !important;
