@@ -1,5 +1,4 @@
-$html-font-size: 16px !default;
-$default-font-size: 13px !default;
+@use './lib/mixin';
 
 :root {
 	--el-font-size-base: var(--z-font-size-base);
@@ -46,11 +45,11 @@ $default-font-size: 13px !default;
 .el-sub-menu .el-icon,
 .el-menu-item [class^='el-icon'] {
 	color: var(--z-nav-font-color) !important;
-	font-size: torem(14px);
+	font-size: mixin.torem(14px);
 }
 
 .el-menu-item-group__title {
-	font-size: torem($default-font-size);
+	font-size: mixin.torem(mixin.$default-font-size);
 }
 
 .el-dropdown:focus-within,
@@ -61,11 +60,11 @@ $default-font-size: 13px !default;
 }
 
 .el-radio__label {
-	font-size: torem(14px);
+	font-size: mixin.torem(14px);
 }
 
 .el-footer {
-	height: torem(46px);
+	height: mixin.torem(46px);
 }
 
 .el-button {
@@ -81,9 +80,9 @@ $default-font-size: 13px !default;
 }
 
 .el-button--small {
-	padding: torem(5px) !important;
+	padding: mixin.torem(5px) !important;
 	.icon {
-		font-size: torem(14px);
+		font-size: mixin.torem(14px);
 		margin-right: 0;
 	}
 }
@@ -107,7 +106,7 @@ $default-font-size: 13px !default;
 	}
 
 	.el-select__placeholder {
-		font-size: torem(13px);
+		font-size: mixin.torem(13px);
 	}
 	.el-select__placeholder:not(.is-transparent) {
 		color: var(--z-font-color) !important;
@@ -163,7 +162,7 @@ $default-font-size: 13px !default;
 	.el-icon svg {
 		color: var(--z-font-color) !important;
 		position: relative;
-		top: torem(3px);
+		top: mixin.torem(3px);
 	}
 
 	.is-left {
@@ -321,13 +320,13 @@ $default-font-size: 13px !default;
 
 .el-message-box {
 	.el-message-box__title {
-		font-size: torem(16px);
+		font-size: mixin.torem(16px);
 	}
 	.el-message-box__content {
-		font-size: $default-font-size;
+		font-size: mixin.$default-font-size;
 	}
 	.el-icon svg {
-		width: torem(18px);
+		width: mixin.torem(18px);
 	}
 }
 

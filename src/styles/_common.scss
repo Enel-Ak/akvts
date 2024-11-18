@@ -1,8 +1,7 @@
-$html-font-size: 16px !default;
-$default-font-size: 13px !default;
+@use './lib/mixin';
 
 html {
-	font-size: $html-font-size;
+	font-size: mixin.$html-font-size;
 }
 
 body {
@@ -10,8 +9,8 @@ body {
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
 		'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
 		'Noto Color Emoji';
-	font-size: torem($default-font-size);
-	line-height: torem($default-font-size);
+	font-size: mixin.torem(mixin.$default-font-size);
+	line-height: mixin.torem(mixin.$default-font-size);
 	// user-select: none;
 }
 
@@ -52,8 +51,8 @@ body {
 }
 
 .icon {
-	font-size: torem(18px);
-	margin-right: torem(5px);
+	font-size: mixin.torem(18px);
+	margin-right: mixin.torem(5px);
 	text-align: center;
 	vertical-align: middle;
 	// width: var(--el-menu-icon-width);
@@ -70,7 +69,7 @@ body {
 .fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
-	transform: translate3d(0, torem(20px), 0);
+	transform: translate3d(0, mixin.torem(20px), 0);
 	transform-origin: left center;
 }
 
@@ -84,7 +83,7 @@ body {
 .slide-fade-enter-from,
 .slide-fade-leave-to {
 	opacity: 0;
-	transform: translate3d(torem(100px), 0, 0);
+	transform: translate3d(mixin.torem(100px), 0, 0);
 	position: absolute;
 	width: 100%;
 }
@@ -308,7 +307,7 @@ body {
 
 	> div {
 		&:nth-child(1) {
-			margin-bottom: torem(20px);
+			margin-bottom: mixin.torem(20px);
 		}
 
 		table {
@@ -453,48 +452,48 @@ body {
 
 @for $i from 1 through 20 {
 	.pd-#{$i * 5} {
-		padding: torem($i * 5px);
+		padding: mixin.torem($i * 5px);
 	}
 
 	.pd-top-#{$i * 5} {
-		padding-top: torem($i * 5px);
+		padding-top: mixin.torem($i * 5px);
 	}
 
 	.pd-right-#{$i * 5} {
-		padding-right: torem($i * 5px);
+		padding-right: mixin.torem($i * 5px);
 	}
 
 	.pd-bottom-#{$i * 5} {
-		padding-bottom: torem($i * 5px);
+		padding-bottom: mixin.torem($i * 5px);
 	}
 
 	.pd-left-#{$i * 5} {
-		padding-left: torem($i * 5px);
+		padding-left: mixin.torem($i * 5px);
 	}
 
 	.mg-#{$i * 5} {
-		margin: torem($i * 5px);
+		margin: mixin.torem($i * 5px);
 	}
 
 	.mg-top-#{$i * 5} {
-		margin-top: torem($i * 5px);
+		margin-top: mixin.torem($i * 5px);
 	}
 
 	.mg-right-#{$i * 5} {
-		margin-right: torem($i * 5px);
+		margin-right: mixin.torem($i * 5px);
 	}
 
 	.mg-bottom-#{$i * 5} {
-		margin-bottom: torem($i * 5px);
+		margin-bottom: mixin.torem($i * 5px);
 	}
 
 	.mg-left-#{$i * 5} {
-		margin-left: torem($i * 5px);
+		margin-left: mixin.torem($i * 5px);
 	}
 }
 
 @for $i from 12 through 48 {
 	.fs-#{$i} {
-		font-size: torem($i * 1px);
+		font-size: mixin.torem($i * 1px);
 	}
 }
