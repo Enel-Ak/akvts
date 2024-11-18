@@ -121,7 +121,7 @@ const onSubmit = (data) => {
 				:enableLatestData="false"
 				:default-table-data="[{defbcff: 'defbcff'}]"
 				:columns="[
-					{prop: 'abc', label: '测试', type: 'text'},
+					{prop: 'abc', label: '测试', type: 'text', sortable: true},
 					{
 						prop: 'def',
 						label: '测试2',

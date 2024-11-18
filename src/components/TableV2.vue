@@ -31,6 +31,7 @@ const emits = defineEmits([
 	'clickRow',
 	'clickButton',
 	'selectionChange',
+	'sortChange',
 	'formReset',
 	'formClear',
 	'formChanged',
@@ -440,6 +441,11 @@ const onSelectionChange = (val) => {
 	emits('selectionChange', val)
 }
 
+const onSortChange = (val) => {
+	console.log('TableV2 Component Sort Change', val)
+	emits('sortChange', val)
+}
+
 const onFormChanged = (val, item) => {
 	emits('formChanged', {value: val, item, tableFormRef: formRef.value})
 }
@@ -829,6 +835,7 @@ defineExpose({
 			@row-click="onClickRow"
 			@row-dblclick="onDoubleClickRow"
 			@selection-change="onSelectionChange"
+			@sort-change="onSortChange"
 		>
 			<el-table-column
 				v-if="enableSelection && !disableTable"
