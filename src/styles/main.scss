@@ -1,5 +1,6 @@
+@use './lib//mixin';
 @use './lib/variables.scss' as *;
 
-@import 'reset.scss';
-@import 'common.scss';
-@import 'fix-element-plus.scss';
+@use 'reset';
+@use 'common';
+@use 'fix-element-plus';

@@ -1,3 +1,6 @@
+$html-font-size: 16px !default;
+$default-font-size: 13px !default;
+
 :root {
 	--el-font-size-base: var(--z-font-size-base);
 }
@@ -66,7 +69,7 @@
 }
 
 .el-button {
-	@extend .shadow-1;
+	@extend .shadow-1 !optional;
 }
 
 .el-dialog.is-fullscreen {
@@ -74,7 +77,7 @@
 }
 
 .el-dialog__header {
-	@extend .shadow-2;
+	@extend .shadow-2 !optional;
 }
 
 .el-button--small {
@@ -91,7 +94,7 @@
 .el-select-dropdown,
 .el-dropdown-menu {
 	border: 1px solid var(--z-line) !important;
-	@extend .shadow-2;
+	@extend .shadow-2 !optional;
 }
 
 .el-select {
