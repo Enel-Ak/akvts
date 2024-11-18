@@ -58,7 +58,7 @@ export const directives = (app) => {
 		mounted(el, binding) {
 			const handler = (e) => {
 				if (typeof binding.value === 'function') {
-					const items = e.clipboardData && e.clipboardData.items
+					const items = e.clipboardData?.items
 					const files = []
 					for (const item of items || []) {
 						files.push(item.getAsFile())
