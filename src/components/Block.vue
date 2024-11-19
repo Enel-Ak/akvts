@@ -40,6 +40,7 @@ const props = defineProps({
 
 	delay: {type: Number, default: 1}, // 延迟执行高度计算
 	offset: {type: Array, default: () => [211, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
+	fixedOffset: {type: Number, default: 0}, // 固定高度偏移量
 
 	isBack: {type: Boolean, default: false},
 })
@@ -74,7 +75,10 @@ const _offset = computed(() => {
 		first = first + 40
 	}
 
-	return [props.enableFixedHeight ? first : props.offset[0] - 20, props.offset[1]]
+	return [
+		props.enableFixedHeight ? first + props.fixedOffset : props.offset[0] - 20,
+		props.offset[1],
+	]
 })
 
 const onExpand = () => {
