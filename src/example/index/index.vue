@@ -50,6 +50,9 @@ const onSubmit = (data) => {
 	loaidng.value = true
 	setTimeout(() => (loaidng.value = false), 3000)
 }
+const formTest = ref({})
+const formItemTest = ref('')
+const formItemTest2 = ref('')
 </script>
 <template>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
@@ -59,7 +62,9 @@ const onSubmit = (data) => {
 		<Toolbar></Toolbar>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
+				{{ formTest }}
 				<Form
+					v-model="formTest"
 					:props="[
 						{prop: 'abc', label: '测试', type: 'text'},
 						{prop: 'abc3', label: '测试', type: 'datetimerange'},
@@ -81,6 +86,18 @@ const onSubmit = (data) => {
 					class="pd-5"
 				></Form>
 			</template>
+			{{ formItemTest }}
+			<FormItem
+				v-model="formItemTest"
+				:items="[{prop: 'formItemTest', type: 'text', label: '测试'}]"
+			></FormItem>
+			{{ formItemTest2 }}
+			<FormItem
+				v-model="formItemTest2"
+				:items="[
+					{prop: 'formItemTest2', type: 'select', label: '下拉', options: [{label: 'a', value: 1}]},
+				]"
+			></FormItem>
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
 				<Icons icon-name="Setting" size="16px"></Icons>

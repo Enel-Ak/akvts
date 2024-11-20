@@ -33,6 +33,7 @@ const props = defineProps({
 	_expandIndex: {type: Number, default: 0},
 })
 
+const _form = ref(props.form)
 const activeNames = ref(props._expandArray)
 const currentActiveNames = ref([])
 const loading = ref(false)
@@ -175,11 +176,11 @@ const onFileChange = (e, item) => {
 	reader.onload = (re) => {
 		// 转 ArrayBuffer 二进制
 		// let arrayBuffer = reader.result
-		// props.form[item.prop] = toBufferString(arrayBuffer)
+		// props._form[item.prop] = toBufferString(arrayBuffer)
 
 		//  转 base64
 		let base64String = re.target.result
-		props.form[item.prop] = base64String.replace('data:application/pdf;base64,', '')
+		props._form[item.prop] = base64String.replace('data:application/pdf;base64,', '')
 
 		// 下载
 		// let a = document.createElement('a')
@@ -276,11 +277,11 @@ watch(
 		if (props.items.length === 1) {
 			if (props.items[0].remoteInit && props.items[0].remoteUrl && val) {
 				remoteMethod(val, props.items[0], () => {
-					Object.assign(props.form, {[props.items[0].prop]: val})
-					console.log('Form Item modelValue Remote Init Complete: ', props.form, val)
+					Object.assign(_form.value, {[props.items[0].prop]: val})
+					console.log('Form Item modelValue Remote Init Complete: ', _form.value, val)
 				})
 			} else if (!val) {
-				Object.assign(props.form, {[props.items[0].prop]: val})
+				Object.assign(_form.value, {[props.items[0].prop]: val})
 			}
 		}
 	},
@@ -316,6 +317,7 @@ defineExpose({
 				<div class="form-items">
 					<FormItem
 						:form="form"
+						:formData="formData"
 						:items="item.children"
 						:formItems="formItems"
 						:isRowEdit="isRowEdit"
@@ -351,7 +353,7 @@ defineExpose({
 			>
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
-						<template v-if="grid">{{ form[item.prop] || '-' }}</template>
+						<template v-if="grid">{{ _form[item.prop] || '-' }}</template>
 						<template v-else>
 							-
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -376,25 +378,26 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-input
 								v-if="!item.inputType"
-								v-model.trim="form[item.prop]"
+								v-model.trim="_form[item.prop]"
 								v-bind="item.attrs"
 								type="text"
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item.label}`"
 								:size="size"
 								clearable
+								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
 							/>
 							<el-input-number
 								v-else-if="item.inputType === 'number'"
-								v-model.number="form[item.prop]"
+								v-model.number="_form[item.prop]"
 								v-bind="item.attrs"
 								type="number"
 								:min="item.min || 0"
@@ -404,6 +407,7 @@ defineExpose({
 								:size="size"
 								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
+								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
@@ -430,17 +434,18 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-input
-								v-model.trim="form[item.prop]"
+								v-model.trim="_form[item.prop]"
 								v-bind="item.attrs"
 								type="password"
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item.label}`"
 								:size="size"
 								clearable
+								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
@@ -467,11 +472,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-select
-								v-model="form[item.prop]"
+								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								:disabled="item.disabled"
 								:placeholder="item.placeholder || `请选择${item.label}`"
@@ -519,11 +524,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ item?.options?.find((f) => f.value === form[item.prop])?.label || '-' }}
+							{{ item?.options?.find((f) => f.value === _form[item.prop])?.label || '-' }}
 						</template>
 						<template class="form-item" v-else>
 							<el-select
-								v-model="form[item.prop]"
+								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								reserve-keyword
 								filterable
@@ -579,11 +584,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-date-picker
-								v-model="form[item.prop]"
+								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								:readonly="item.readonly"
 								:disabled="item.attrs?.disabled || item.disabled"
@@ -627,11 +632,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-checkbox-group
-								v-model="form[item.prop]"
+								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								@change="onChange($event, item)"
 							>
@@ -667,11 +672,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-radio-group
-								v-model="form[item.prop]"
+								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								@change="onChange($event, item)"
 							>
@@ -706,11 +711,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-input
-								v-model.trim="form[item.prop]"
+								v-model.trim="_form[item.prop]"
 								v-bind="item.attrs"
 								type="textarea"
 								resize="none"
@@ -719,6 +724,7 @@ defineExpose({
 								:placeholder="item.placeholder || `请输入${item.label}`"
 								:size="size"
 								:maxlength="item.maxlength || 1000"
+								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
@@ -745,7 +751,7 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<el-switch
-							v-model="form[item.prop]"
+							v-model="_form[item.prop]"
 							v-bind="item.attrs"
 							:disabled="item.disabled"
 							:active-text="item.activeText"
@@ -808,11 +814,11 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ form[item.prop] || '-' }}
+							{{ _form[item.prop] || '-' }}
 						</template>
 						<template v-else>
 							<el-tree-select
-								v-model="form[item.prop]"
+								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								:data="item.options"
 								:render-after-expand="false"
