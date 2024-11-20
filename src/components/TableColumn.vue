@@ -17,13 +17,14 @@ const col = props.col
 <template>
 	<el-table-column
 		v-if="!col.children"
+		v-bind="col.attrs"
 		:prop="col.prop"
 		:label="col.label"
-		:align="col.align || 'left'"
-		:fixed="col.fixed"
-		:width="col.width || 'auto'"
-		:sortable="col.sortable"
-		:type="col.expand ? 'expand' : 'default'"
+		:align="col?.attrs.align || col.align || 'left'"
+		:fixed="col?.attrs.fixed || col.fixed"
+		:width="col?.attrs.align.width || col.width || 'auto'"
+		:sortable="col?.attrs.sortable || col.sortable"
+		:type="col?.attrs.expand || col.expand ? 'expand' : 'default'"
 		:show-overflow-tooltip="!enableRowEdit"
 		max-width="120"
 		ellipsis
@@ -47,13 +48,14 @@ const col = props.col
 
 	<el-table-column
 		v-else
+		v-bind="col.attrs"
 		:prop="col.prop"
 		:label="col.label"
-		:align="col.align || 'center'"
-		:fixed="col.fixed"
-		:width="col.width || 'auto'"
-		:sortable="col.sortable"
-		:type="col.expand ? 'expand' : 'default'"
+		:align="col?.attrs.align || col.align || 'center'"
+		:fixed="col?.attrs.fixed || col.fixed"
+		:width="col?.attrs.align.width || col.width || 'auto'"
+		:sortable="col?.attrs.sortable || col.sortable"
+		:type="col?.attrs.expand || col.expand ? 'expand' : 'default'"
 		:show-overflow-tooltip="!enableRowEdit"
 		min-width="120"
 		ellipsis
