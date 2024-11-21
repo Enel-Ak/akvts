@@ -711,6 +711,7 @@ onDeactivated(() => {
 
 onUnmounted(() => {
 	console.log('TableV2 Component unmounted')
+	clearTimeout(__requestTimer)
 	window.removeEventListener('resize', setTableHeight)
 })
 
