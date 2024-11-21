@@ -711,9 +711,11 @@ onDeactivated(() => {
 })
 
 onBeforeUnmount(() => {
-	console.log('TableV2 Component beforeUnmount')
-	clearTimeout(__requestTimer)
-	window.removeEventListener('resize', setTableHeight)
+	nextTick(() => {
+		console.log('TableV2 Component beforeUnmount')
+		clearTimeout(__requestTimer)
+		window.removeEventListener('resize', setTableHeight)
+	})
 })
 
 onUnmounted(() => {
