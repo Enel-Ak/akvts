@@ -67,6 +67,7 @@ const props = defineProps({
 	dialogFullScreen: {type: Boolean, default: false},
 
 	enableRequestParamsLoad: {type: Boolean, default: true}, // 参数修改时发起请求
+	enableOwnButton: {type: Boolean, default: true}, // 启用全部自带按钮, 新增, 编辑, 删除, 优先级高于enableCreate, enableEdit, enableDelete
 	enableToolbar: {type: Boolean, default: true},
 	enableDelete: {type: Boolean, default: true},
 	enableCreate: {type: Boolean, default: true},
@@ -609,7 +610,8 @@ const setFnWidth = (again = false) => {
 				if (buttons?.length > btns?.length) {
 					btns = buttons
 				} else {
-					const totalWidth = (arr) => Array.from(arr || []).reduce((a, b) => a + b.offsetWidth, 0)
+					const totalWidth = (arr) =>
+						Array.from(arr || []).reduce((a, b) => a + b.offsetWidth, 0)
 					if (totalWidth(buttons) > totalWidth(btns)) {
 						btns = buttons
 					}
@@ -808,7 +810,12 @@ defineExpose({
 					取消
 				</el-button>
 
-				<el-button v-if="enableCreate" type="primary" size="small" @click="onDialog('create')">
+				<el-button
+					v-if="enableOwnButton && enableCreate && !disableTable"
+					type="primary"
+					size="small"
+					@click="onDialog('create')"
+				>
 					<Icons icon-name="Create" color="var(--z-nav-font-color)" size="16" />
 					{{ props.createText }}
 				</el-button>
@@ -879,7 +886,8 @@ defineExpose({
 									:is-row-edit="true"
 									:class="{
 										'has-changed': currentEditColumns.some(
-											(item) => item.rid === scope.row.id && item.prop === slot
+											(item) =>
+												item.rid === scope.row.id && item.prop === slot
 										),
 									}"
 									@change="onTableFormRowEditChange"
@@ -909,12 +917,20 @@ defineExpose({
 			>
 				<template #="{row, column, $index}">
 					<slot name="buttons" :row="row"></slot>
-					<template v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))">
-						<template v-if="row && btn.hasOwnProperty('show') ? setEval(btn.show, row) : true">
+					<template
+						v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))"
+					>
+						<template
+							v-if="row && btn.hasOwnProperty('show') ? setEval(btn.show, row) : true"
+						>
 							<el-button
 								v-if="!btn.popconfirm"
 								:type="btn.type"
-								:disabled="btn.hasOwnProperty('disabled') ? setEval(btn.disabled, row) : false"
+								:disabled="
+									btn.hasOwnProperty('disabled')
+										? setEval(btn.disabled, row)
+										: false
+								"
 								size="small"
 								@click.stop="onClickButton(btn, row, $index)"
 							>
@@ -937,7 +953,11 @@ defineExpose({
 								<template #reference>
 									<el-button
 										:type="btn.type"
-										:disabled="btn.hasOwnProperty('disabled') ? setEval(btn.disabled, row) : false"
+										:disabled="
+											btn.hasOwnProperty('disabled')
+												? setEval(btn.disabled, row)
+												: false
+										"
 										size="small"
 									>
 										<Icons
@@ -954,7 +974,7 @@ defineExpose({
 					</template>
 
 					<el-button
-						v-if="enableEdit && !disableTable"
+						v-if="enableOwnButton && enableEdit && !disableTable"
 						type="primary"
 						size="small"
 						@click.stop="onDialog('edit', {row, column, $index})"
@@ -964,7 +984,7 @@ defineExpose({
 					</el-button>
 
 					<el-popconfirm
-						v-if="enableDelete && !disableTable"
+						v-if="enableOwnButton && enableDelete && !disableTable"
 						title="确认删除?"
 						confirm-button-text="确定"
 						cancel-button-text="取消"
@@ -972,7 +992,11 @@ defineExpose({
 					>
 						<template #reference>
 							<el-button size="small" type="danger" @click.stop>
-								<Icons icon-name="Delete" color="var(--z-nav-font-color)" size="14" />
+								<Icons
+									icon-name="Delete"
+									color="var(--z-nav-font-color)"
+									size="14"
+								/>
 								{{ props.deleteText }}
 							</el-button>
 						</template>
