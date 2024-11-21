@@ -9,6 +9,7 @@ import {
 	watch,
 	onDeactivated,
 	computed,
+	onBeforeUnmount,
 } from 'vue'
 import {useGlobal} from '@/store/useGlobal'
 import axios from 'axios'
@@ -709,10 +710,14 @@ onDeactivated(() => {
 	initializing.value = false
 })
 
-onUnmounted(() => {
-	console.log('TableV2 Component unmounted')
+onBeforeUnmount(() => {
+	console.log('TableV2 Component beforeUnmount')
 	clearTimeout(__requestTimer)
 	window.removeEventListener('resize', setTableHeight)
+})
+
+onUnmounted(() => {
+	console.log('TableV2 Component unmounted')
 })
 
 defineExpose({
