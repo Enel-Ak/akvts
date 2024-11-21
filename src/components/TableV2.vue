@@ -62,6 +62,7 @@ const props = defineProps({
 	autoHeight: {type: Boolean, default: false},
 	height: {type: [Number, String], default: 0},
 	disabled: {type: Boolean, default: false},
+	lastColumnAlign: {type: String, default: 'center'},
 	scrollbarAlways: {type: Boolean, default: false},
 	dialogFullScreen: {type: Boolean, default: false},
 
@@ -106,7 +107,7 @@ const currentEditColumns = ref([])
 const currentEidtEls = ref(null)
 
 const disableTable = ref(props.disabled)
-const disabledLastTdAlign = ref(props?.disabled ? 'flex-start' : 'center')
+const lastAlign = ref(props.lastColumnAlign)
 const showStripe = ref(props.stripe ? 'var(--z-table-even-bg)' : 'transparent')
 
 const loading = ref(false)
@@ -1102,7 +1103,7 @@ defineExpose({
 			display: flex;
 			flex-wrap: nowrap;
 			height: torem(30px);
-			justify-content: v-bind(disabledLastTdAlign);
+			justify-content: v-bind(lastAlign);
 		}
 	}
 

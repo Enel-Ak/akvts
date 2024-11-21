@@ -137,8 +137,9 @@ const formItemTest2 = ref('')
 				:form-column-count="2"
 				:enableLatestData="false"
 				:default-table-data="[{defbcff: 'defbcff'}]"
+				:default-sort="{prop: 'abc', order: 'descending'}"
 				:columns="[
-					{prop: 'abc', label: '测试', type: 'text', sortable: true},
+					{prop: 'abc', label: '测试', type: 'text', sortable: true, attrs: {width: 400}},
 					{
 						prop: 'def',
 						label: '测试2',
