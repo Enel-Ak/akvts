@@ -124,11 +124,11 @@ watch(
 		console.log('TableV2 Component Request Params Changed', newVal)
 
 		if (!props.enableRequestParamsLoad) return
-		if (__requestTimer) {
-			console.log('TableV2 Component Request Params Changed Clear Timer')
-			clearTimeout(__requestTimer)
-		}
-		__requestTimer = setTimeout(() => getList(), 256)
+		// if (__requestTimer) {
+		// 	console.log('TableV2 Component Request Params Changed Clear Timer')
+		// 	clearTimeout(__requestTimer)
+		// }
+		getList()
 	},
 	{deep: true}
 )
@@ -191,70 +191,71 @@ watch(
 )
 
 const getList = () => {
-	if (!props.url && props.autoLoad) {
-		console.log('Error: BasicTabel Component url is required')
-		setFnWidth() // 没接口或者不自动加载时也需要默认重新计算操作列宽度
-		return
-	}
+	clearTimeout(__requestTimer)
+	__requestTimer = setTimeout(() => {
+		if (!props.url && props.autoLoad) {
+			console.log('Error: BasicTabel Component url is required')
+			setFnWidth() // 没接口或者不自动加载时也需要默认重新计算操作列宽度
+			return
+		}
 
-	if (loading.value) {
-		return
-	}
+		if (loading.value) {
+			return
+		}
 
-	let isEvent = false
-	let timer = null
+		let isEvent = false
+		let timer = null
 
-	loading.value = true
-	emits('loading', loading.value)
-	axios
-		.request({
-			url: props.url,
-			method: 'GET',
-			params: props.reqParams,
-			headers: props.headers,
-		})
-		.then((res) => {
-			const items = res.data.items || res.data
-			const totalCount = res.data.totalCount || items.length
-			const _next = (calldata) => {
-				tableData.value = calldata || items
-				total.value = totalCount
-				loading.value = false
-				emits('loading', loading.value)
-				emits('completed', 'get')
-				nextTick(() => setFnWidth(true))
-				console.log('TableV2 Component Next Finish', tableData.value, total.value)
-			}
-
-			emits('beforeComplete', {
-				items,
-				next: (calldata) => {
-					clearTimeout(timer)
-					isEvent = true
-					// 如果有数据修改父组件需要调用 next(data),并把data传递进来
-					_next(calldata)
-				},
+		loading.value = true
+		emits('loading', loading.value)
+		axios
+			.request({
+				url: props.url,
+				method: 'GET',
+				params: props.reqParams,
+				headers: props.headers,
 			})
-
-			timer = setTimeout(() => {
-				if (!isEvent) {
-					console.log('TableV2 beforeComplete', items)
-					_next()
+			.then((res) => {
+				const items = res.data.items || res.data
+				const totalCount = res.data.totalCount || items.length
+				const _next = (calldata) => {
+					tableData.value = calldata || items
+					total.value = totalCount
+					loading.value = false
+					emits('loading', loading.value)
+					emits('completed', 'get')
+					nextTick(() => setFnWidth(true))
+					console.log('TableV2 Component Next Finish', tableData.value, total.value)
 				}
-			}, 256)
-		})
-		.catch((err) => {
-			console.log('TableV2 Component getList Error', err)
-		})
-		.finally(() => {
-			setTimeout(() => {
+
+				emits('beforeComplete', {
+					items,
+					next: (calldata) => {
+						clearTimeout(timer)
+						isEvent = true
+						// 如果有数据修改父组件需要调用 next(data),并把data传递进来
+						_next(calldata)
+					},
+				})
+
+				timer = setTimeout(() => {
+					if (!isEvent) {
+						console.log('TableV2 beforeComplete', items)
+						_next()
+					}
+				}, 256)
+			})
+			.catch((err) => {
+				console.log('TableV2 Component getList Error', err)
+			})
+			.finally(() => {
+				loading.value = false
 				console.log('TableV2 Component getList Finally')
 				if (!isEvent) {
-					__requestTimer = null
 					emits('completed', 'get')
 				}
-			}, 256)
-		})
+			})
+	}, 256)
 }
 
 const onCreate = (data) => {
