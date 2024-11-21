@@ -94,7 +94,11 @@ const setDefaultData = async (val) => {
 			if (item.hasOwnProperty('casecadeUrl')) {
 				// val[i].options = []
 
-				if ((isAllEmpty && i === 0 && !val[i].options.length) || item.value || val[i - 1]?.value) {
+				if (
+					(isAllEmpty && i === 0 && !val[i].options.length) ||
+					item.value ||
+					val[i - 1]?.value
+				) {
 					await initOptions(val[i], i)
 				}
 			}
@@ -140,9 +144,12 @@ const oneSelectLazyLoad = (node, resolve) => {
 			data: requestData,
 		})
 		.then((res) => {
+			if (res.data.includes('<!DOCTYPE html>')) {
+				return
+			}
 			setTimeout(() => {
 				// 根据后端数据修改
-				const data = res.data.items || res.data
+				const data = res.data.items || res.data || []
 				const nodes = data.map((item) => ({
 					label: item[props.keys[0]],
 					value: item[props.keys[1]],
@@ -279,9 +286,9 @@ defineExpose({
 		</el-cascader>
 		<FormItem
 			v-else
+			v-for="(item, index) of options"
 			:items="[item]"
 			:form="form"
-			v-for="(item, index) of options"
 			@change="(val, item) => onFormItemChange(val, item, index)"
 			@focus="onFocus"
 			@blur="onBlur"

@@ -288,6 +288,15 @@ watch(
 	{deep: true}
 )
 
+watch(
+	() => props.form,
+	(val) => {
+		_form.value = val
+		emits('update:modelValue', _form.value)
+	},
+	{deep: true}
+)
+
 onMounted(() => {})
 
 defineExpose({
@@ -330,7 +339,12 @@ defineExpose({
 						@blur="onBlur"
 					>
 						<template v-for="child of formItems" #[`form-${child.prop}`]="scope">
-							<slot :name="`form-${child.prop}`" v-bind="scope" :form="form" :row="formData"></slot>
+							<slot
+								:name="`form-${child.prop}`"
+								v-bind="scope"
+								:form="form"
+								:row="formData"
+							></slot>
 						</template>
 					</FormItem>
 				</div>
@@ -524,7 +538,10 @@ defineExpose({
 				<div class="form-item">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ item?.options?.find((f) => f.value === _form[item.prop])?.label || '-' }}
+							{{
+								item?.options?.find((f) => f.value === _form[item.prop])?.label ||
+								'-'
+							}}
 						</template>
 						<template class="form-item" v-else>
 							<el-select
@@ -857,7 +874,9 @@ defineExpose({
 							<span class="filename">
 								{{
 									uploadFileNames.join(',') ||
-									`只支持格式 ${item.accept} 文件, 且文件大小不超过${item.size || 2}M`
+									`只支持格式 ${item.accept} 文件, 且文件大小不超过${
+										item.size || 2
+									}M`
 								}}
 							</span>
 							<input
