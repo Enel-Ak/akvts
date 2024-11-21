@@ -191,6 +191,7 @@ watch(
 )
 
 const getList = () => {
+	console.log('TableV2 Component getList')
 	clearTimeout(__requestTimer)
 	__requestTimer = setTimeout(() => {
 		if (!props.url && props.autoLoad) {
@@ -691,6 +692,7 @@ const init = () => {
 		}
 
 		if (props.autoLoad) {
+			console.log('TableV2 Component Auto Load')
 			getList()
 		}
 
