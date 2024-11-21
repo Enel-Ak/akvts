@@ -634,11 +634,11 @@ const setFnWidth = (again = false) => {
 	}
 
 	if (!again) {
-		if (props.enableEdit) {
+		if (props.enableOwnButton && props.enableEdit) {
 			width += 70
 		}
 
-		if (props.enableDelete) {
+		if (props.enableOwnButton && props.enableDelete) {
 			width += 70
 		}
 	}
