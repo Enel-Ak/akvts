@@ -124,10 +124,10 @@ watch(
 		console.log('TableV2 Component Request Params Changed', newVal)
 
 		if (!props.enableRequestParamsLoad) return
-		if (__requestTimer) {
-			console.log('TableV2 Component Request Params Changed Clear Timer')
-			clearTimeout(__requestTimer)
-		}
+		// if (__requestTimer) {
+		// 	console.log('TableV2 Component Request Params Changed Clear Timer')
+		// 	clearTimeout(__requestTimer)
+		// }
 		getList()
 	},
 	{deep: true}
@@ -191,6 +191,7 @@ watch(
 )
 
 const getList = () => {
+	clearTimeout(__requestTimer)
 	__requestTimer = setTimeout(() => {
 		if (!props.url && props.autoLoad) {
 			console.log('Error: BasicTabel Component url is required')
