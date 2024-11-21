@@ -682,6 +682,7 @@ const init = () => {
 	if (initializing.value) {
 		return
 	}
+	console.log('TableV2 Component mounted')
 
 	initializing.value = true
 
@@ -693,8 +694,8 @@ const init = () => {
 		console.log('TableV2 Component Auto Load')
 		getList()
 	}
+
 	nextTick(() => {
-		console.log('TableV2 Component mounted')
 		setTableHeight()
 		// setFnWidth()
 		window.addEventListener('resize', setTableHeight)
