@@ -682,21 +682,21 @@ const init = () => {
 	if (initializing.value) {
 		return
 	}
+
 	initializing.value = true
+
+	if (props.defaultTableData.length > 0) {
+		tableData.value = props.defaultTableData
+	}
+
+	if (props.autoLoad) {
+		console.log('TableV2 Component Auto Load')
+		getList()
+	}
 	nextTick(() => {
 		console.log('TableV2 Component mounted')
 		setTableHeight()
 		// setFnWidth()
-
-		if (props.defaultTableData.length > 0) {
-			tableData.value = props.defaultTableData
-		}
-
-		if (props.autoLoad) {
-			console.log('TableV2 Component Auto Load')
-			getList()
-		}
-
 		window.addEventListener('resize', setTableHeight)
 		initializing.value = false
 	})
@@ -711,11 +711,9 @@ onDeactivated(() => {
 })
 
 onBeforeUnmount(() => {
-	nextTick(() => {
-		console.log('TableV2 Component beforeUnmount')
-		clearTimeout(__requestTimer)
-		window.removeEventListener('resize', setTableHeight)
-	})
+	console.log('TableV2 Component beforeUnmount')
+	clearTimeout(__requestTimer)
+	window.removeEventListener('resize', setTableHeight)
 })
 
 onUnmounted(() => {
