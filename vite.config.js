@@ -66,6 +66,7 @@ export default ({mode}) => {
 					exports: 'named',
 				},
 			},
+			minify: 'terser',
 			terserOptions: {
 				format: {
 					beautify: false, // 不美化输出
