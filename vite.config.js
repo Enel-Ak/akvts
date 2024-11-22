@@ -78,6 +78,9 @@ export default ({mode}) => {
 					drop_debugger: true,
 				},
 			},
+			esbuild: {
+				drop: ['console', 'debugger'],
+			},
 		},
 	})
 }
