@@ -69,14 +69,15 @@ export default ({mode}) => {
 			minify: 'terser',
 			terserOptions: {
 				format: {
-					beautify: true, // 不美化输出
-					comments: true, // 移除注释
+					beautify: false, // 不美化输出
+					comments: false, // 移除注释
 				},
 				compress: {
 					//生产环境时移除console
 					drop_console: true,
 					drop_debugger: true,
 				},
+				mangle: true, // 添加此行以启用代码混淆
 			},
 		},
 	})
