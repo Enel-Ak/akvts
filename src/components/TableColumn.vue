@@ -41,7 +41,11 @@ const col = props.col
 		</template>
 		<template #default="scope">
 			<slot :name="col.prop" :row="scope.row" :index="scope.$index">
-				{{ scope.row[col.prop] || '-' }}
+				{{
+					typeof scope.row[col.prop] === 'number'
+						? typeof scope.row[col.prop]
+						: typeof scope.row[col.prop] || '-'
+				}}
 			</slot>
 		</template>
 	</el-table-column>

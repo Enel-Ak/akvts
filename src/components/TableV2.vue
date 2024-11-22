@@ -193,9 +193,6 @@ watch(
 
 const getList = () => {
 	console.log('TableV2 Component getList')
-	if (__requestTimer) {
-		console.log('TableV2 Component getList Clear Timer')
-	}
 	clearTimeout(__requestTimer)
 	__requestTimer = setTimeout(() => {
 		if (!props.url && props.autoLoad) {
