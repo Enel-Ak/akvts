@@ -1022,7 +1022,10 @@ defineExpose({
 
 			<template #empty>
 				<slot name="empty">
-					<el-empty :image-size="autoHeight ? 100 : 200" description="暂无数据" />
+					<el-empty
+						:image-size="autoHeight ? 100 : 150"
+						:description="loading ? '正在获取...' : '暂无数据'"
+					/>
 				</slot>
 			</template>
 		</el-table>
