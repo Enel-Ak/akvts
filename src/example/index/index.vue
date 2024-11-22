@@ -95,7 +95,12 @@ const formItemTest2 = ref('')
 			<FormItem
 				v-model="formItemTest2"
 				:items="[
-					{prop: 'formItemTest2', type: 'select', label: '下拉', options: [{label: 'a', value: 1}]},
+					{
+						prop: 'formItemTest2',
+						type: 'select',
+						label: '下拉',
+						options: [{label: 'a', value: 1}],
+					},
 				]"
 			></FormItem>
 			<div class="df aic">
@@ -136,7 +141,7 @@ const formItemTest2 = ref('')
 				:auto-height="true"
 				:form-column-count="2"
 				:enableLatestData="false"
-				:default-table-data="[{defbcff: 'defbcff'}]"
+				:default-table-data="[{defbcff: 0}]"
 				:default-sort="{prop: 'abc', order: 'descending'}"
 				:columns="[
 					{prop: 'abc', label: '测试', type: 'text', sortable: true, attrs: {width: 400}},

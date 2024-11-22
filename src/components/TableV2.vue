@@ -907,7 +907,11 @@ defineExpose({
 								></FormItem>
 							</template>
 							<template v-else>
-								{{ scope.row[slot] || '-' }}
+								{{
+									typeof scope.row[slot] === 'number'
+										? scope.row[slot]
+										: scope.row[slot] || '-'
+								}}
 							</template>
 						</slot>
 					</template>
