@@ -144,9 +144,6 @@ const oneSelectLazyLoad = (node, resolve) => {
 			data: requestData,
 		})
 		.then((res) => {
-			if (res.data?.includes('<!DOCTYPE html>')) {
-				return
-			}
 			setTimeout(() => {
 				// 根据后端数据修改
 				const data = res.data.items || res.data || []
