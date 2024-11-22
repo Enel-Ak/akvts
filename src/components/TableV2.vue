@@ -8,18 +8,15 @@ import {
 	toRaw,
 	watch,
 	onDeactivated,
-	computed,
 	onBeforeUnmount,
 } from 'vue'
-import {useGlobal} from '@/store/useGlobal'
+
 import axios from 'axios'
 import TableColumn from './TableColumn.vue'
 import {ElMessage} from 'element-plus'
 import FormItem from './FormItem.vue'
 import {useGuid} from '@/hooks'
-import {ca} from 'element-plus/es/locale/index.mjs'
 
-const global = useGlobal()
 const emits = defineEmits([
 	'beforeComplete',
 	'completed',
@@ -1022,10 +1019,7 @@ defineExpose({
 
 			<template #empty>
 				<slot name="empty">
-					<el-empty
-						:image-size="autoHeight ? 100 : 150"
-						:description="loading ? '正在获取...' : '暂无数据'"
-					/>
+					<el-empty :image-size="autoHeight ? 100 : 150" description="暂无数据" />
 				</slot>
 			</template>
 		</el-table>
@@ -1046,7 +1040,7 @@ defineExpose({
 					ref="formRef"
 					button-align="flex-end"
 					:rules="formRules"
-					:loading="!global?.getLoadEnd"
+					:loading="loading"
 					:data="
 						tableColumns.filter((col) =>
 							dialogTitle === props.editText
