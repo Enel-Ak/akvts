@@ -1162,6 +1162,12 @@ defineExpose({
 	:deep(.el-table thead.is-group th.el-table__cell) {
 		background-color: rgba($color: var(--z-bg-secondary-rgb), $alpha: 1);
 		font-size: torem(13px);
+		.el-tooltip__trigger {
+			display: inline;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
 	}
 
 	:deep(.el-table.is-scrolling-right .el-table-fixed-column--left.is-last-column::before),

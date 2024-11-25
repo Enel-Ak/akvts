@@ -62,7 +62,6 @@ const formItemTest2 = ref('')
 		<Toolbar></Toolbar>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
-				{{ formTest }}
 				<Form
 					v-model="formTest"
 					:props="[
@@ -86,12 +85,10 @@ const formItemTest2 = ref('')
 					class="pd-5"
 				></Form>
 			</template>
-			{{ formItemTest }}
 			<FormItem
 				v-model="formItemTest"
 				:items="[{prop: 'formItemTest', type: 'text', label: '测试'}]"
 			></FormItem>
-			{{ formItemTest2 }}
 			<FormItem
 				v-model="formItemTest2"
 				:items="[
@@ -144,10 +141,18 @@ const formItemTest2 = ref('')
 				:default-table-data="[{defbcff: 0}]"
 				:default-sort="{prop: 'abc', order: 'descending'}"
 				:columns="[
-					{prop: 'abc', label: '测试', type: 'text', sortable: true, attrs: {width: 400}},
+					{
+						prop: 'abc',
+						label: '测试',
+						type: 'text',
+						sortable: true,
+						attrs: {width: 400},
+						tooltip: true,
+					},
 					{
 						prop: 'def',
 						label: '测试2',
+
 						children: [
 							{prop: 'defa', label: 'defa', type: 'text'},
 							{

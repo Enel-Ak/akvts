@@ -32,11 +32,11 @@ const col = props.col
 		<template #header>
 			<slot :name="'header-' + col.prop" :row="col">
 				<template v-if="col.tooltip">
-					<el-tooltip :content="col.label" placement="top">
-						<div>{{ col.label }}</div>
+					<el-tooltip :content="col.label" placement="top-start">
+						{{ col.label }}
 					</el-tooltip>
 				</template>
-				<div v-else>{{ col.label }}</div>
+				<template v-else>{{ col.label }}</template>
 			</slot>
 		</template>
 		<template #default="scope">
