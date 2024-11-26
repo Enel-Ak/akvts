@@ -138,7 +138,11 @@ const formItemTest2 = ref('')
 				:auto-height="true"
 				:form-column-count="2"
 				:enableLatestData="false"
-				:default-table-data="[{defbcff: 0}]"
+				:enable-row-edit="true"
+				:default-table-data="[
+					{id: 'test1', defbcff: 0},
+					{id: 'test2', defbcff: 1},
+				]"
 				:default-sort="{prop: 'abc', order: 'descending'}"
 				:columns="[
 					{
@@ -184,7 +188,7 @@ const formItemTest2 = ref('')
 				]"
 			></TableV2>
 		</Block>
-		<Flow ref="flowRef" v-model="flowConfig"></Flow>
+		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
 	</Container>
 </template>
 <style scoped lang="scss"></style>

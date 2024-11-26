@@ -99,7 +99,6 @@ const dialogTitle = ref('')
 const dialogVisible = ref(false)
 const defaultData = ref(null)
 
-const currentCell = ref(null)
 const currentEditRow = ref(null)
 const currentEditRows = ref([])
 const currentEditColumns = ref([])
@@ -114,6 +113,7 @@ const loading = ref(false)
 const __height = ref(0)
 const __fnWidth = ref(142)
 let __requestTimer = null
+let clickTimer = null
 let isCreate = false
 
 watch(
@@ -419,24 +419,27 @@ const onClickButton = (btn, row, index) => {
 }
 
 const onClickRow = (row, column) => {
-	console.log('TableV2 Component Click Row', row, column)
-	if (disableTable.value) {
-		return
-	}
+	clickTimer && clearTimeout(clickTimer)
+	clickTimer = setTimeout(() => {
+		console.log('TableV2 Component Click Row', row, column)
+		if (disableTable.value) {
+			return
+		}
 
-	if (props.enableSelection) {
-		tableComponentRef.value.toggleRowSelection(row)
-	}
+		if (props.enableSelection) {
+			tableComponentRef.value.toggleRowSelection(row)
+		}
 
-	emits('clickRow', {row, column})
+		emits('clickRow', {row, column})
+	}, 256)
 }
 
-const onDoubleClickRow = (row, column, cell) => {
-	console.log('TableV2 Component Double Click Row', row)
+const onDoubleClickRow = (row, column, event) => {
 	if (props.enableRowEdit) {
+		console.log('TableV2 Component Double Click Row', row, column, event)
+		clickTimer && clearTimeout(clickTimer)
 		row.__enableEdit = true
 		currentEditRow.value = row
-		currentCell.value = cell
 		setGroupWidth()
 	}
 }
@@ -452,6 +455,26 @@ const onSortChange = (val) => {
 
 const onFormChanged = (val, item) => {
 	emits('formChanged', {value: val, item, tableFormRef: formRef.value})
+}
+
+const onTableFormItemFocus = (row) => {
+	if (props.enableRowEdit) {
+		row.__enableEdit = true
+		currentEditRow.value = row
+		setTimeout(() => {
+			console.log('TableV2 Component Table Form Item Focus', row)
+			clickTimer && clearTimeout(clickTimer)
+		}, 257) // 256ms 为单击事件的延迟
+	}
+}
+
+const onTableFormItemBlur = (row) => {
+	if (props.enableRowEdit) {
+		setTimeout(() => {
+			console.log('TableV2 Component Table Form Item Blur', row)
+			clickTimer && clearTimeout(clickTimer)
+		}, 257) // 256ms 为单击事件的延迟
+	}
 }
 
 const onTableFormRowEditChange = (val, item) => {
@@ -510,6 +533,8 @@ const onTableRowEditSaveAll = () => {
 		return
 	}
 
+	console.log('TableV2 Component onTableRowEditSaveAll', currentEditRows.value)
+
 	const temp = []
 	currentEditRows.value.forEach((item) => temp.push(onUpdate(item, true)))
 
@@ -517,14 +542,14 @@ const onTableRowEditSaveAll = () => {
 	res.then(() => {
 		ElMessage.success('全部更新成功')
 		currentEditRow.value = null
-		currentEditRows.value = []
+		currentEditRows.value.length = 0
 		currentEidtEls.value.forEach((el) => {
 			const td = el.closest('td')
 			if (td) {
 				td.classList.remove('has-changed')
 			}
 		})
-		currentEditColumns.value = []
+		currentEditColumns.value.length = 0
 		getList()
 	})
 }
@@ -559,10 +584,6 @@ const setGroupWidth = (isReset = false) => {
 			})
 
 		loops(tableColumns.value)
-
-		if (isReset) {
-			currentCell.value = null
-		}
 	})
 }
 
@@ -662,7 +683,7 @@ const setEval = (str, row) => {
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
 	for (const item of arr) {
-		if (item.prop === prop) {
+		if (item.prop === prop && !item.children) {
 			return item
 		}
 		if (item.children) {
@@ -803,10 +824,7 @@ defineExpose({
 					@confirm="onTableRowEditSaveAll"
 				>
 					<template #reference>
-						<el-button type="primary" size="small">
-							<i class="icon i-ic-baseline-save-all"></i>
-							批量保存
-						</el-button>
+						<el-button type="primary" size="small"> 批量保存 </el-button>
 					</template>
 				</el-popconfirm>
 				<el-button
@@ -815,7 +833,6 @@ defineExpose({
 					v-escape="onTableRowEditCancel"
 					@click="onTableRowEditCancel"
 				>
-					<i class="icon i-ic-outline-cancel"></i>
 					取消
 				</el-button>
 
@@ -900,6 +917,8 @@ defineExpose({
 										),
 									}"
 									@change="onTableFormRowEditChange"
+									@focus="onTableFormItemFocus(scope.row)"
+									@blur="onTableFormItemBlur(scope.row)"
 									size="small"
 								></FormItem>
 							</template>
