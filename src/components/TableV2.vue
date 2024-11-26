@@ -770,7 +770,7 @@ defineExpose({
 	getFormData: () => formRef.value?.getData(),
 	getFormValue: (key) => formRef.value?.getValue(key),
 	getSelectionRows: () => tableComponentRef.value?.getSelectionRows(),
-	clearSelection: () => tableElRef.value?.clearSelection(),
+	clearSelection: () => tableComponentRef.value?.clearSelection(),
 	toggleRowSelection: (row, bool) => tableComponentRef.value?.toggleRowSelection(row, bool),
 	toggleAllSelection: () => tableComponentRef.value?.toggleAllSelection(),
 	setRowEditData: (val, data, formItem) => {
