@@ -70,7 +70,7 @@ export default ({mode}) => {
 			terserOptions: {
 				format: {
 					beautify: false, // 不美化输出
-					comments: false, // 移除注释
+					comments: true, // 移除注释
 				},
 				compress: {
 					//生产环境时移除console

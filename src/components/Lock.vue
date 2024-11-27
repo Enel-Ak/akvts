@@ -1,10 +1,10 @@
 <script setup>
 import {ref} from 'vue'
 
+const _0x1A2B = (() => Date['now']())()
 const loadWasm = async () => {
-	const dn = Date.now()
-	const ms = 1000
 	try {
+		const _0x3C4D = 0x3e8
 		const response = await fetch('/akvts.wasm')
 		if (!response.ok) {
 			throw new Error('LoadWasm response was not ok')
@@ -15,25 +15,26 @@ const loadWasm = async () => {
 		const validate = instance.exports.validate
 		const memory = instance.exports.memory
 
-		const validateInput = (input, currentTime) => {
+		const validateInput = (input, ct) => {
 			const encoder = new TextEncoder()
 			const inputBytes = encoder.encode(input)
 			const inputPtr = 100 // 确保与 WAT 中的比较逻辑一致
 			const memoryView = new Uint8Array(memory.buffer)
-			const currentTimeBigInt = BigInt(currentTime)
+			const ctBigInt = BigInt(ct)
 
 			// 将输入字节写入内存的 inputPtr 位置
 			memoryView.set(inputBytes, inputPtr)
 
 			try {
-				return validate(inputPtr, currentTimeBigInt)
+				return validate(inputPtr, ctBigInt)
 			} catch (error) {
 				console.error('Error validating input:', error)
 				return false
 			}
 		}
 
-		const currentTime = Math.floor(dn / ms)
+		const _0x5E6F = Math['floor'](_0x1A2B / _0x3C4D)
+
 		const token = localStorage.getItem('AKVTS_TOKEN')
 
 		if (!token) {
@@ -41,7 +42,7 @@ const loadWasm = async () => {
 			return false
 		}
 
-		const result = validateInput(token, currentTime)
+		const result = validateInput(token, _0x5E6F)
 		console.log(result === 1 ? 'Valid' : 'Invalid', result)
 		return result
 	} catch (error) {
