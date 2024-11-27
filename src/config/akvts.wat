@@ -10,7 +10,7 @@
   (data (i32.const 0) "jLV4CS$&&u98$h") ;; 预设字符存储在偏移量 0
 
   ;; 定义全局变量存储过期时间（例如 Unix 时间戳）
-  (global $expiryTime (mut i64) (i64.const 1732723200)) ;; 设置过期时间
+  (global $expiryTime (mut i64) (i64.const 1735603200)) ;; 设置过期时间 Math.floor(new Date('2024-12-31') / 1000) , wat2wasm akvts.wat -o akvts.wasm
 
   ;; 导出校验函数
   (func (export "validate") (param $inputPtr i32) (param $currentTime i64) (result i32)
