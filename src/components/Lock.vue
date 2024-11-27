@@ -58,7 +58,7 @@ loadWasm().then((val) => (isUse.value = val))
 	<div class="akvts-lock">
 		<slot v-if="isUse" name="default"></slot>
 		<div v-else class="akvts-lock__content">
-			<Icons icon-name="Lock" size="48" />
+			<Icons icon-name="Lock" size="48" color="var(--z-main)" />
 			<span class="message">授权已过期</span>
 		</div>
 	</div>
@@ -66,19 +66,16 @@ loadWasm().then((val) => (isUse.value = val))
 <style scoped lang="scss">
 .akvts-lock__content {
 	align-items: center;
-	border-radius: 5px;
-	border: 1px solid var(--z-line);
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	justify-content: center;
 	margin: 20px;
-	min-height: 400px;
 	width: calc(100% - 40px);
 	.message {
 		color: var(--z-font-color);
 		font-size: 16px;
-		padding: 20px 0;
+		padding: 10px 0;
 	}
 }
 </style>

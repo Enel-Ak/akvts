@@ -1,5 +1,4 @@
 <script setup>
-import {tr} from 'element-plus/es/locale/index.mjs'
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
 
@@ -132,7 +131,10 @@ const initObserver = () => {
 						if (expendContentOpen.value) {
 							now += expendContentHeight.value
 						}
-						if ((now < bodyHeight && props.enableFixedHeight) || props.enableFixedHeight) {
+						if (
+							(now < bodyHeight && props.enableFixedHeight) ||
+							props.enableFixedHeight
+						) {
 							now = bodyHeight
 						}
 						if (isFullScreen.value) {
@@ -142,7 +144,8 @@ const initObserver = () => {
 						console.log('Block resize observer is running', contextHeight.value)
 					})
 
-					!isExpand && emits('heightChanged', contextHeight.value - expendContentHeight.value)
+					!isExpand &&
+						emits('heightChanged', contextHeight.value - expendContentHeight.value)
 					isExpand = false
 				}, props.delay)
 			})
@@ -198,7 +201,9 @@ const onResize = () => {
 const onFullScreen = () => {
 	isFullScreen.value = !isFullScreen.value
 	if (isFullScreen.value) {
-		historyNodeIndex.value = Array.from(blockRef.value.parentNode.children).indexOf(blockRef.value)
+		historyNodeIndex.value = Array.from(blockRef.value.parentNode.children).indexOf(
+			blockRef.value
+		)
 		historyParnetNode.value = blockRef.value.parentNode
 		document.body.appendChild(blockRef.value)
 	} else {
@@ -268,7 +273,10 @@ defineExpose({
 					class="icon i-ic-baseline-expand-more"
 					:style="{rotate: expendContentOpen ? '180deg' : '0deg'}"
 				></i> -->
-				<Icons icon-name="Expand" :style="{rotate: expendContentOpen ? '180deg' : '0deg'}"></Icons>
+				<Icons
+					icon-name="Expand"
+					:style="{rotate: expendContentOpen ? '180deg' : '0deg'}"
+				></Icons>
 			</el-button>
 
 			<el-button v-if="enableFullScreen" size="small" @click.stop="onFullScreen">
@@ -309,7 +317,11 @@ defineExpose({
 				:height="
 					height > 0
 						? `${height}px`
-						: `${expendContentOpen ? contextHeight - expendContentHeight : contextHeight}px`
+						: `${
+								expendContentOpen
+									? contextHeight - expendContentHeight
+									: contextHeight
+						  }px`
 				"
 				always
 			>
