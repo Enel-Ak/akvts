@@ -193,7 +193,7 @@ const getList = () => {
 	console.log('TableV2 Component getList')
 	clearTimeout(__requestTimer)
 	__requestTimer = setTimeout(() => {
-		if (!props.url && props.autoLoad) {
+		if (!props.url) {
 			console.log('Error: BasicTabel Component url is required')
 			setFnWidth() // 没接口或者不自动加载时也需要默认重新计算操作列宽度
 			return
