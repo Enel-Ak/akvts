@@ -70,7 +70,7 @@ loadWasm().then((val) => (isUse.value = val))
 	flex-direction: column;
 	height: 100%;
 	justify-content: center;
-	margin: 20px;
+	padding: 20px;
 	width: calc(100% - 40px);
 	.message {
 		color: var(--z-font-color);
