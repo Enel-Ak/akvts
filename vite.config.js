@@ -64,13 +64,17 @@ export default ({mode}) => {
 						pinia: 'Pinia',
 					},
 					exports: 'named',
+					// 强制压缩输出文件
+					entryFileNames: '[name]-[hash].js',
+					chunkFileNames: '[name]-[hash].js',
+					compact: true,
 				},
 			},
 			minify: 'terser',
 			terserOptions: {
 				format: {
 					beautify: false, // 不美化输出
-					comments: true, // 移除注释
+					comments: false, // 移除注释
 				},
 				compress: {
 					//生产环境时移除console
