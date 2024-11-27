@@ -1,5 +1,6 @@
 <script setup>
 import {onMounted, ref} from 'vue'
+import Lock from './Lock.vue'
 
 const emits = defineEmits(['clickClose', 'clickConfirm', 'update:modelValue', 'heightChanged'])
 const props = defineProps({
@@ -61,7 +62,9 @@ const initObserver = () => {
 				}, props.delay)
 			})
 
-			observer.observe(scrollRef.value.$el.querySelector('.el-scrollbar__wrap .el-scrollbar__view'))
+			observer.observe(
+				scrollRef.value.$el.querySelector('.el-scrollbar__wrap .el-scrollbar__view')
+			)
 		}
 	}
 }
@@ -128,15 +131,18 @@ onMounted(() => {
 				</slot>
 			</div>
 		</template>
-		<el-scrollbar
-			v-resize="onAutoHeight"
-			ref="scrollRef"
-			class="dialog-scrollbar"
-			:height="height"
-			always
-		>
-			<slot name="default"></slot>
-		</el-scrollbar>
+
+		<Lock>
+			<el-scrollbar
+				v-resize="onAutoHeight"
+				ref="scrollRef"
+				class="dialog-scrollbar"
+				:height="height"
+				always
+			>
+				<slot name="default"></slot>
+			</el-scrollbar>
+		</Lock>
 
 		<template #footer>
 			<slot name="footer-button"></slot>
@@ -157,7 +163,12 @@ onMounted(() => {
 					</el-popconfirm>
 				</template>
 				<template v-else>
-					<el-button v-if="enableConfirm" type="primary" @click="onClickConfirm" :loading="loading">
+					<el-button
+						v-if="enableConfirm"
+						type="primary"
+						@click="onClickConfirm"
+						:loading="loading"
+					>
 						<i class="icon i-ic-round-task-alt"></i>
 						{{ confirmText }}
 					</el-button>

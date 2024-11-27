@@ -1,6 +1,7 @@
 <script setup>
 import {computed, onMounted, ref, toRaw, watch, nextTick} from 'vue'
 import axios from 'axios'
+import Lock from './Lock.vue'
 
 const emits = defineEmits([
 	'beforeSubmit',
@@ -371,77 +372,19 @@ defineExpose({
 		v-enter="onEnterSubmit"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
 	>
-		<el-form
-			ref="formRef"
-			v-bind="$attrs"
-			:model="form"
-			:rules="rules"
-			:label-width="labelWidth"
-			:class="{'not-label': labelWidth === 0 || labelWidth === '0'}"
-			:size="size"
-		>
-			<el-form-item
-				class="btns top"
-				v-if="buttonVertical === 'top' && enableButton && !formDisabled && !grid"
+		<Lock>
+			<el-form
+				ref="formRef"
+				v-bind="$attrs"
+				:model="form"
+				:rules="rules"
+				:label-width="labelWidth"
+				:class="{'not-label': labelWidth === 0 || labelWidth === '0'}"
+				:size="size"
 			>
-				<el-button v-if="enableReset" @click="onResetFields" :size="size">
-					<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
-					重置
-				</el-button>
-				<el-button v-if="enableClear" @click="onClear" :size="size">
-					<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
-					清空
-				</el-button>
-				<slot name="buttons"></slot>
-				<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
-					<Icons
-						v-if="!isLoading"
-						icon-name="Send"
-						color="#fff"
-						class="mg-right-5"
-						:size="getIconSize()"
-					></Icons>
-					{{ $props.confirmText }}
-				</el-button>
-			</el-form-item>
-
-			<div class="form-items">
-				<FormItem
-					ref="formItemRef"
-					:grid="grid"
-					:size="size"
-					:form="form"
-					:formItems="formItems"
-					:formData="defaultData"
-					:items="formProps.filter((f) => (f.hasOwnProperty('formShow') ? f.formShow : true))"
-					:columnCount="columnCount"
-					:autoRemote="autoRemote"
-					:notInitRemoteKeys="notInitRemoteKeys"
-					:isClear="isClear"
-					@init-remote-complete="onInitRemoteComplete"
-					@change="onFormChange"
-					@changeFile="onFormChange"
-					@focus="onFocus"
-					@blur="onBlur"
-				>
-					<template v-for="item of formItems" #[`form-${item.prop}`]="scope">
-						<!-- row: 表格内, value: 普通表单 -->
-						<slot
-							v-bind="scope.item"
-							:name="`form-${scope.item.prop}`"
-							:row="scope.row"
-							:form="form"
-							:value="form[item.prop]"
-						></slot>
-					</template>
-					<template v-for="item of formItems" #[`form-${item.prop}-right`]="scope">
-						<slot :name="`form-${item.prop}-right`"></slot>
-					</template>
-				</FormItem>
-
 				<el-form-item
-					class="btns flowing"
-					v-if="buttonVertical === 'flowing' && enableButton && !formDisabled && !grid"
+					class="btns top"
+					v-if="buttonVertical === 'top' && enableButton && !formDisabled && !grid"
 				>
 					<el-button v-if="enableReset" @click="onResetFields" :size="size">
 						<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
@@ -463,33 +406,112 @@ defineExpose({
 						{{ $props.confirmText }}
 					</el-button>
 				</el-form-item>
-			</div>
 
-			<el-form-item
-				class="btns bottom"
-				v-if="buttonVertical === 'bottom' && enableButton && !formDisabled && !grid"
-			>
-				<el-button v-if="enableReset" @click="onResetFields" :size="size">
-					<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
-					重置
-				</el-button>
-				<el-button v-if="enableClear" @click="onClear" :size="size">
-					<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
-					清空
-				</el-button>
-				<slot name="buttons"></slot>
-				<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
-					<Icons
-						v-if="!isLoading"
-						icon-name="Send"
-						color="#fff"
-						class="mg-right-5"
-						:size="getIconSize()"
-					></Icons>
-					{{ $props.confirmText }}
-				</el-button>
-			</el-form-item>
-		</el-form>
+				<div class="form-items">
+					<FormItem
+						ref="formItemRef"
+						:grid="grid"
+						:size="size"
+						:form="form"
+						:formItems="formItems"
+						:formData="defaultData"
+						:items="
+							formProps.filter((f) =>
+								f.hasOwnProperty('formShow') ? f.formShow : true
+							)
+						"
+						:columnCount="columnCount"
+						:autoRemote="autoRemote"
+						:notInitRemoteKeys="notInitRemoteKeys"
+						:isClear="isClear"
+						@init-remote-complete="onInitRemoteComplete"
+						@change="onFormChange"
+						@changeFile="onFormChange"
+						@focus="onFocus"
+						@blur="onBlur"
+					>
+						<template v-for="item of formItems" #[`form-${item.prop}`]="scope">
+							<!-- row: 表格内, value: 普通表单 -->
+							<slot
+								v-bind="scope.item"
+								:name="`form-${scope.item.prop}`"
+								:row="scope.row"
+								:form="form"
+								:value="form[item.prop]"
+							></slot>
+						</template>
+						<template v-for="item of formItems" #[`form-${item.prop}-right`]="scope">
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</FormItem>
+
+					<el-form-item
+						class="btns flowing"
+						v-if="
+							buttonVertical === 'flowing' && enableButton && !formDisabled && !grid
+						"
+					>
+						<el-button v-if="enableReset" @click="onResetFields" :size="size">
+							<Icons
+								icon-name="Reset"
+								class="mg-right-5"
+								:size="getIconSize()"
+							></Icons>
+							重置
+						</el-button>
+						<el-button v-if="enableClear" @click="onClear" :size="size">
+							<Icons
+								icon-name="Clear"
+								class="mg-right-5"
+								:size="getIconSize()"
+							></Icons>
+							清空
+						</el-button>
+						<slot name="buttons"></slot>
+						<el-button
+							:loading="isLoading"
+							type="primary"
+							@click="onSubmit"
+							:size="size"
+						>
+							<Icons
+								v-if="!isLoading"
+								icon-name="Send"
+								color="#fff"
+								class="mg-right-5"
+								:size="getIconSize()"
+							></Icons>
+							{{ $props.confirmText }}
+						</el-button>
+					</el-form-item>
+				</div>
+
+				<el-form-item
+					class="btns bottom"
+					v-if="buttonVertical === 'bottom' && enableButton && !formDisabled && !grid"
+				>
+					<el-button v-if="enableReset" @click="onResetFields" :size="size">
+						<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
+						重置
+					</el-button>
+					<el-button v-if="enableClear" @click="onClear" :size="size">
+						<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
+						清空
+					</el-button>
+					<slot name="buttons"></slot>
+					<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
+						<Icons
+							v-if="!isLoading"
+							icon-name="Send"
+							color="#fff"
+							class="mg-right-5"
+							:size="getIconSize()"
+						></Icons>
+						{{ $props.confirmText }}
+					</el-button>
+				</el-form-item>
+			</el-form>
+		</Lock>
 	</div>
 </template>
 <style scoped lang="scss">

@@ -1,5 +1,6 @@
 <script setup>
 import {computed} from 'vue'
+import Lock from './Lock.vue'
 
 const props = defineProps({
 	title: {
@@ -54,40 +55,42 @@ const list = computed(() =>
 </script>
 <template>
 	<div class="record-component">
-		<div v-show="title" class="title">
-			<slot name="title">
-				<span>{{ title }} </span>
-			</slot>
-		</div>
-		<div
-			class="item"
-			v-for="(item, index) of list"
-			:class="[
-				item.type || '',
-				!fadeOut ? 'no-fadeout' : '',
-				!lastLine && index === list.length - 1 ? 'no-last-line' : '',
-			]"
-		>
-			<div class="label">
-				<slot name="label" :item="item">{{ item.label }}</slot>
-			</div>
-			<div class="text" v-if="item.text">
-				<slot name="text" :item="item">
-					<span v-html="item.text"></span>
+		<Lock>
+			<div v-show="title" class="title">
+				<slot name="title">
+					<span>{{ title }} </span>
 				</slot>
 			</div>
-			<div class="other" :class="{'no-text': !item.text}">
-				<slot name="other" :item="item">
-					<span v-if="item.time">{{ item.time }}</span>
-					<span v-if="item.user" :title="item.user">{{ item.user }}</span>
-				</slot>
+			<div
+				class="item"
+				v-for="(item, index) of list"
+				:class="[
+					item.type || '',
+					!fadeOut ? 'no-fadeout' : '',
+					!lastLine && index === list.length - 1 ? 'no-last-line' : '',
+				]"
+			>
+				<div class="label">
+					<slot name="label" :item="item">{{ item.label }}</slot>
+				</div>
+				<div class="text" v-if="item.text">
+					<slot name="text" :item="item">
+						<span v-html="item.text"></span>
+					</slot>
+				</div>
+				<div class="other" :class="{'no-text': !item.text}">
+					<slot name="other" :item="item">
+						<span v-if="item.time">{{ item.time }}</span>
+						<span v-if="item.user" :title="item.user">{{ item.user }}</span>
+					</slot>
+				</div>
+				<Icons
+					:icon-name="icons[item.type] || icons.default"
+					class="icon"
+					color="var(--z-nav-font-color)"
+				></Icons>
 			</div>
-			<Icons
-				:icon-name="icons[item.type] || icons.default"
-				class="icon"
-				color="var(--z-nav-font-color)"
-			></Icons>
-		</div>
+		</Lock>
 	</div>
 </template>
 <style scoped lang="scss">

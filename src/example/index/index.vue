@@ -53,6 +53,7 @@ const onSubmit = (data) => {
 const formTest = ref({})
 const formItemTest = ref('')
 const formItemTest2 = ref('')
+const dialog = ref(false)
 </script>
 <template>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
@@ -60,7 +61,8 @@ const formItemTest2 = ref('')
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
-		<Akvts code="8M4HpypBrgrIz2M38rT7/Q=="></Akvts>
+		<Akvts code="jLV4CS$&&u98$h"></Akvts>
+		<Dialog v-model="dialog"></Dialog>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form
@@ -131,9 +133,9 @@ const formItemTest2 = ref('')
 				<Icons icon-name="Done"></Icons>
 				<Icons icon-name="Back"></Icons>
 			</div>
-			<!-- <Record title="历史记录" :data="recordData">
+			<Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
-			</Record> -->
+			</Record>
 			<TableV2
 				:enableSelection="true"
 				:auto-height="true"
@@ -189,7 +191,7 @@ const formItemTest2 = ref('')
 				]"
 			></TableV2>
 		</Block>
-		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
+		<Flow ref="flowRef" v-model="flowConfig"></Flow>
 	</Container>
 </template>
 <style scoped lang="scss"></style>

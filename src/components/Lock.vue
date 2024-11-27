@@ -1,36 +1,61 @@
 <script setup>
-import {computed} from 'vue'
-import CryptoJS from 'crypto-js'
+import {ref} from 'vue'
 
-const akvtsCode = localStorage.getItem('AKVTS_CODE')
-const secret = import.meta.env.VITE_AKVTS_KEY
-const use = computed(() => akvtsCode && decrypt(akvtsCode) === import.meta.env.VITE_AKVTS_PASSWORD)
+const loadWasm = async () => {
+	const dn = Date.now()
+	const ms = 1000
+	try {
+		const response = await fetch('/akvts.wasm')
+		if (!response.ok) {
+			throw new Error('LoadWasm response was not ok')
+		}
 
-const encrypt = (text) => {
-	const key = CryptoJS.enc.Utf8.parse(secret)
-	const iv = CryptoJS.enc.Utf8.parse(secret)
-	const encrypted = CryptoJS.AES.encrypt(text, key, {
-		iv: iv,
-		mode: CryptoJS.mode.CBC,
-		padding: CryptoJS.pad.Pkcs7,
-	})
-	return encrypted.toString()
+		const wasmModule = await WebAssembly.instantiateStreaming(response)
+		const {instance} = wasmModule
+		const validate = instance.exports.validate
+		const memory = instance.exports.memory
+
+		const validateInput = (input, currentTime) => {
+			const encoder = new TextEncoder()
+			const inputBytes = encoder.encode(input)
+			const inputPtr = 100 // 确保与 WAT 中的比较逻辑一致
+			const memoryView = new Uint8Array(memory.buffer)
+			const currentTimeBigInt = BigInt(currentTime)
+
+			// 将输入字节写入内存的 inputPtr 位置
+			memoryView.set(inputBytes, inputPtr)
+
+			try {
+				return validate(inputPtr, currentTimeBigInt)
+			} catch (error) {
+				console.error('Error validating input:', error)
+				return false
+			}
+		}
+
+		const currentTime = Math.floor(dn / ms)
+		const token = localStorage.getItem('AKVTS_TOKEN')
+
+		if (!token) {
+			console.warn('AKVTS_TOKEN 不存在')
+			return false
+		}
+
+		const result = validateInput(token, currentTime)
+		console.log(result === 1 ? 'Valid' : 'Invalid', result)
+		return result
+	} catch (error) {
+		console.error('Error loading wasm:', error)
+		return false
+	}
 }
 
-const decrypt = (ciphertext) => {
-	const key = CryptoJS.enc.Utf8.parse(secret)
-	const iv = CryptoJS.enc.Utf8.parse(secret)
-	const decrypted = CryptoJS.AES.decrypt(ciphertext, key, {
-		iv: iv,
-		mode: CryptoJS.mode.CBC,
-		padding: CryptoJS.pad.Pkcs7,
-	})
-	return decrypted.toString(CryptoJS.enc.Utf8)
-}
+const isUse = ref(0)
+loadWasm().then((val) => (isUse.value = val))
 </script>
 <template>
 	<div class="akvts-lock">
-		<slot v-if="use" name="default"></slot>
+		<slot v-if="isUse" name="default"></slot>
 		<div v-else class="akvts-lock__content">
 			<Icons icon-name="Lock" size="48" />
 			<span class="message">授权已过期</span>
@@ -46,8 +71,9 @@ const decrypt = (ciphertext) => {
 	flex-direction: column;
 	height: 100%;
 	justify-content: center;
+	margin: 20px;
 	min-height: 400px;
-	width: 100%;
+	width: calc(100% - 40px);
 	.message {
 		color: var(--z-font-color);
 		font-size: 16px;
