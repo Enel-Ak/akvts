@@ -65,8 +65,8 @@ export default ({mode}) => {
 					},
 					exports: 'named',
 					// 强制压缩输出文件
-					entryFileNames: '[name]-[hash].js',
-					chunkFileNames: '[name]-[hash].js',
+					// entryFileNames: '[name]-[hash].js',
+					// chunkFileNames: '[name]-[hash].js',
 					compact: true,
 				},
 			},
