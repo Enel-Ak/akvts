@@ -191,10 +191,10 @@ const cleanUp = () => {
 const onResize = () => {
 	if (props.enableFixedHeight && expandBlock.value) {
 		clearTimeout(resieTimer)
-		// resieTimer = setTimeout(() => {
-		contextHeight.value = document.body.offsetHeight - _offset.value[0]
-		emits('heightChanged', contextHeight.value - expendContentHeight.value)
-		// }, 128)
+		setTimeout(() => {
+			contextHeight.value = document.body.offsetHeight - _offset.value[0]
+			emits('heightChanged', contextHeight.value - expendContentHeight.value)
+		}, 16.7)
 	}
 }
 
