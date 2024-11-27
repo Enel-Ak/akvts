@@ -1,3 +1,4 @@
+import Akvts from './components/Akvts.vue'
 import Container from './components/Container.vue'
 import Block from './components/Block.vue'
 import Form from './components/Form.vue'
@@ -26,6 +27,7 @@ import Refresh from './components/Refresh.vue'
 import Icons from './components/Icons.vue'
 
 const components = {
+	Akvts,
 	Container,
 	Block,
 	Form,
@@ -62,6 +64,7 @@ export default {
 	},
 }
 export {
+	Akvts,
 	Container,
 	Block,
 	Form,

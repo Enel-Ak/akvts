@@ -60,6 +60,7 @@ const formItemTest2 = ref('')
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
+		<Akvts code="8M4HpypBrgrIz2M38rT7/Q=="></Akvts>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form
