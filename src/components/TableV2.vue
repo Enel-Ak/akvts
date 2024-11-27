@@ -195,7 +195,7 @@ const getList = () => {
 	__requestTimer = setTimeout(() => {
 		if (!props.url) {
 			console.log('Error: BasicTabel Component url is required')
-			nextTick(() => setFnWidth(true)) // 没接口或者不自动加载时也需要默认重新计算操作列宽度
+			setTimeout(() => setFnWidth(true), 16.7) // 没接口或者不自动加载时也需要默认重新计算操作列宽度
 			return
 		}
 
