@@ -162,8 +162,10 @@ const init = () => {
 		setTimeout(() => {
 			frame.value = JSON.parse(localStorage.getItem('containerFrame') || '[]')
 			onExpendContent(false)
-			nextTick(() => (isExpand = false))
-		}, 16.7)
+			nextTick(() => {
+				isExpand = false
+			})
+		}, 32)
 	}
 }
 
@@ -191,10 +193,10 @@ const cleanUp = () => {
 const onResize = () => {
 	if (props.enableFixedHeight && expandBlock.value) {
 		clearTimeout(resieTimer)
-		setTimeout(() => {
-			contextHeight.value = document.body.offsetHeight - _offset.value[0]
-			emits('heightChanged', contextHeight.value - expendContentHeight.value)
-		}, 16.7)
+		// setTimeout(() => {
+		contextHeight.value = document.body.offsetHeight - _offset.value[0]
+		emits('heightChanged', contextHeight.value - expendContentHeight.value)
+		// }, 16.7)
 	}
 }
 
