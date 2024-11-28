@@ -29,10 +29,10 @@ const _0x6HJW = (_0xI9T6) => {
 		_0xAJBK: _0xAK97,
 	}
 }
+const _0xYZAB = localStorage.getItem('AKVTS_TOKEN')
 const _0x8QP = async () => {
 	const _0x2B3C = 0x3e8
 	try {
-		const _0xYZAB = localStorage.getItem('AKVTS_TOKEN')
 		const {instance} = await useWasm()
 
 		if (!_0xYZAB) {

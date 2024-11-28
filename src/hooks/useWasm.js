@@ -6,6 +6,7 @@ const useWasm = () => {
 	return new Promise((resolve) => {
 		const res = fetch('/akvts.wasm')
 		_0xW98S = WebAssembly.instantiateStreaming(res)
+		setTimeout(() => localStorage.removeItem('AKVTS_TOKEN'), 16.7)
 		resolve(_0xW98S)
 	})
 }

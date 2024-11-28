@@ -56,7 +56,7 @@ const formItemTest2 = ref('')
 const dialog = ref(false)
 </script>
 <template>
-	<Akvts code="jLV4CS$&&u98$h1"></Akvts>
+	<Akvts code="jLV4CS$&&u98$h"></Akvts>
 	<Watermark></Watermark>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
