@@ -16,6 +16,7 @@ const props = defineProps({
 	},
 })
 
+const _0x0Ol1 = ref(0)
 const _0xO0l1 = ref(0)
 const _0x1A2B = (() => Date['now']())()
 const _0x4V3E = (_0x1A2B, _0x2B3C) => Math['floor'](_0x1A2B / _0x2B3C)
@@ -27,6 +28,7 @@ const _0x6HJW = (_0xI9T6) => {
 	}
 }
 const _0x8QP = async () => {
+	_0x0Ol1.value = 1
 	const _0x2B3C = 0x3e8
 	try {
 		const _0xYZAB = localStorage.getItem('AKVTS_TOKEN')
@@ -54,19 +56,29 @@ const _0x8QP = async () => {
 		return 0
 	}
 }
-_0x8QP().then((val) => (_0xO0l1.value = val))
+_0x8QP().then((val) => {
+	_0xO0l1.value = val
+	_0x0Ol1.value = 0
+})
 </script>
 <template>
 	<div class="akvts-lock">
-		<slot v-if="_0xO0l1" name="default"></slot>
-		<div v-else class="akvts-lock__content">
-			<Icons icon-name="Lock" :size="size" color="var(--z-danger)" />
-			<span
-				v-if="label"
-				class="message"
-				:style="{'font-size': typeof fontSize === 'number' ? fontSize + 'px' : fontSize}"
-				>{{ label }}</span
-			>
+		<template v-if="!_0x0Ol1">
+			<slot v-if="_0xO0l1" name="default"></slot>
+			<div v-else class="akvts-lock__content">
+				<Icons icon-name="Lock" :size="size" color="var(--z-danger)" />
+				<span
+					v-if="label"
+					class="message"
+					:style="{
+						'font-size': typeof fontSize === 'number' ? fontSize + 'px' : fontSize,
+					}"
+					>{{ label }}</span
+				>
+			</div>
+		</template>
+		<div class="loader">
+			<Icons icon-name="More"></Icons>
 		</div>
 	</div>
 </template>
@@ -88,6 +100,13 @@ _0x8QP().then((val) => (_0xO0l1.value = val))
 			opacity: 0.8;
 			padding: 20px 0;
 		}
+	}
+	.loader {
+		align-items: center;
+		display: flex;
+		justify-content: center;
+		height: 100%;
+		width: 100%;
 	}
 }
 </style>
