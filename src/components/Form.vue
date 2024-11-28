@@ -120,6 +120,7 @@ const formItemsPadding = computed(() => {
 })
 const formDisabled = ref(props.disabled)
 const isClear = ref(false)
+const unLock = ref(0)
 
 const timeRangeToString = (output) => {
 	// 时间范围转换字符串
@@ -372,7 +373,7 @@ defineExpose({
 		v-enter="onEnterSubmit"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
 	>
-		<Lock>
+		<Lock v-model="unLock">
 			<el-form
 				ref="formRef"
 				v-bind="$attrs"

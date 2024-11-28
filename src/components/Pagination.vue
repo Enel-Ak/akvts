@@ -1,5 +1,6 @@
 <script setup>
 import {ref, watch} from 'vue'
+import Lock from './Lock.vue'
 
 const emits = defineEmits(['size-change', 'current-change'])
 const props = defineProps({
@@ -30,6 +31,8 @@ watch(
 	(val) => (__currentPage.value = val)
 )
 
+const unLock = ref(0)
+
 const __currentPage = ref(props.currentPage)
 const __pageSize = ref(props.pageSize)
 
@@ -43,20 +46,22 @@ const onCurrentChange = (val) => {
 </script>
 <template>
 	<div class="pageination-component" :style="{justifyContent: $props.justifyContent}">
-		<slot name="left"></slot>
-		<el-pagination
-			v-bind="$attrs"
-			v-model:current-page="__currentPage"
-			v-model:page-size="__pageSize"
-			:total="$props.total"
-			:page-sizes="$props.pageSizes"
-			background
-			small="small"
-			layout="total,sizes, prev, pager, next, jumper"
-			@size-change="onSizeChange"
-			@current-change="onCurrentChange"
-		/>
-		<slot name="right"></slot>
+		<Lock v-model="unLock">
+			<slot name="left"></slot>
+			<el-pagination
+				v-bind="$attrs"
+				v-model:current-page="__currentPage"
+				v-model:page-size="__pageSize"
+				:total="$props.total"
+				:page-sizes="$props.pageSizes"
+				background
+				small="small"
+				layout="total,sizes, prev, pager, next, jumper"
+				@size-change="onSizeChange"
+				@current-change="onCurrentChange"
+			/>
+			<slot name="right"></slot>
+		</Lock>
 	</div>
 </template>
 <style scoped lang="scss">

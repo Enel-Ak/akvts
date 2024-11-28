@@ -1,4 +1,5 @@
 <script setup>
+import Lock from './Lock.vue'
 const emits = defineEmits(['clickClose', 'clickConfirm'])
 const props = defineProps({
 	modal: {type: Boolean, default: true},
@@ -10,6 +11,8 @@ const props = defineProps({
 	size: {type: [String, Number], default: '30%'},
 })
 
+const unLock = ref(0)
+
 const onClickClose = () => {
 	emits('clickClose')
 }
@@ -20,38 +23,40 @@ const onClickConfirm = () => {
 </script>
 <template>
 	<div class="drawer-component">
-		<el-drawer
-			v-bind="$attrs"
-			:size="size"
-			:modal="modal"
-			:direction="direction"
-			:append-to-body="appendToBody"
-			:close-on-click-modal="closeOnClickModal"
-			:close-on-press-escape="closeOnPressEscape"
-			:destroy-on-close="destroyOnClose"
-			class="drawer-component"
-			@close="onClickClose"
-		>
-			<template #header>
-				<slot name="header"></slot>
-			</template>
-			<template #default>
-				<slot name="default"></slot>
-			</template>
-			<template #footer>
-				<slot name="footer">
-					<el-button @click="onClickClose">
-						<i class="icon i-ic-outline-cancel" mr-3px></i>
-						取消
-					</el-button>
-					<slot name="footer-botton"></slot>
-					<el-button type="primary" @click="onClickConfirm">
-						<i class="icon i-ic-round-task-alt" mr-3px></i>
-						确认
-					</el-button>
-				</slot>
-			</template>
-		</el-drawer>
+		<Lock v-model="unLock">
+			<el-drawer
+				v-bind="$attrs"
+				:size="size"
+				:modal="modal"
+				:direction="direction"
+				:append-to-body="appendToBody"
+				:close-on-click-modal="closeOnClickModal"
+				:close-on-press-escape="closeOnPressEscape"
+				:destroy-on-close="destroyOnClose"
+				class="drawer-component"
+				@close="onClickClose"
+			>
+				<template #header>
+					<slot name="header"></slot>
+				</template>
+				<template #default>
+					<slot name="default"></slot>
+				</template>
+				<template #footer>
+					<slot name="footer">
+						<el-button @click="onClickClose">
+							<i class="icon i-ic-outline-cancel" mr-3px></i>
+							取消
+						</el-button>
+						<slot name="footer-botton"></slot>
+						<el-button type="primary" @click="onClickConfirm">
+							<i class="icon i-ic-round-task-alt" mr-3px></i>
+							确认
+						</el-button>
+					</slot>
+				</template>
+			</el-drawer>
+		</Lock>
 	</div>
 </template>
 <style lang="scss">

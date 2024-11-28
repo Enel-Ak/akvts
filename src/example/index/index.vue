@@ -56,7 +56,8 @@ const formItemTest2 = ref('')
 const dialog = ref(false)
 </script>
 <template>
-	<Akvts code="jLV4CS$&&u98$h"></Akvts>
+	<Akvts code="jLV4CS$&&u98$h1"></Akvts>
+	<Watermark></Watermark>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
 		<template #aside> aside </template>
@@ -132,10 +133,11 @@ const dialog = ref(false)
 				<Icons icon-name="Notifications"></Icons>
 				<Icons icon-name="Done"></Icons>
 				<Icons icon-name="Back"></Icons>
+				<Icons icon-name="More"></Icons>
 			</div>
-			<Record title="历史记录" :data="recordData">
+			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
-			</Record>
+			</Record> -->
 			<TableV2
 				:enableSelection="true"
 				:auto-height="true"

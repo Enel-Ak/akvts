@@ -71,6 +71,8 @@ let nodeInfoLeaveTimer = null
 let clickTimer = null
 let clickDelay = 250
 
+const unLock = ref(0)
+
 const styleValueTypeVerify = (value) => {
 	const type = typeof value
 	const isPercent = value.includes('%')
@@ -611,7 +613,7 @@ defineExpose({
 </script>
 <template>
 	<div ref="flowComponentRef" class="flow-component" v-resize="setContainerSize">
-		<Lock>
+		<Lock v-model="unLock">
 			<div v-if="showNodeInfo" class="node-info" :class="{on: isMouseEnter}">
 				<div class="node-info-box">
 					<slot name="node-info">节点信息</slot>

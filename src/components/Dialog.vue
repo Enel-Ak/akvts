@@ -23,6 +23,7 @@ const props = defineProps({
 
 const scrollRef = ref()
 const height = ref(0)
+const unLock = ref(0)
 
 let observer = null
 let observerTimer = null
@@ -105,7 +106,7 @@ const onClosed = () => {
 }
 
 onMounted(() => {
-	onAutoHeight()
+	setTimeout(() => onAutoHeight(), 32)
 })
 </script>
 <template>
@@ -132,7 +133,7 @@ onMounted(() => {
 			</div>
 		</template>
 
-		<Lock>
+		<Lock v-model="unLock">
 			<el-scrollbar
 				v-resize="onAutoHeight"
 				ref="scrollRef"

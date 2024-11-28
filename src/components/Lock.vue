@@ -1,6 +1,8 @@
 <script setup>
 import {ref} from 'vue'
+import {useWasm} from '@/hooks/useWasm'
 
+const emits = defineEmits(['update:modelValue'])
 const props = defineProps({
 	label: {
 		type: String,
@@ -28,17 +30,15 @@ const _0x6HJW = (_0xI9T6) => {
 	}
 }
 const _0x8QP = async () => {
-	_0x0Ol1.value = 1
 	const _0x2B3C = 0x3e8
 	try {
 		const _0xYZAB = localStorage.getItem('AKVTS_TOKEN')
-		const _0x4D5E = await fetch('/akvts.wasm')
-		if (!_0x4D5E.ok || !_0xYZAB) {
+		const {instance} = await useWasm()
+
+		if (!_0xYZAB) {
 			return 0
 		}
 
-		const _0x6F7G = await WebAssembly.instantiateStreaming(_0x4D5E)
-		const {instance} = _0x6F7G
 		const {_0x8H9I, _0xAJBK} = _0x6HJW(instance)
 		const _0xCLDM = (it, ct) => {
 			const _0xENFO = new TextEncoder()
@@ -56,14 +56,17 @@ const _0x8QP = async () => {
 		return 0
 	}
 }
+
 _0x8QP().then((val) => {
 	_0xO0l1.value = val
 	_0x0Ol1.value = 0
+	console.log(val ? 'AKVTS 已激活。' : 'AKVTS 未激活')
+	emits('update:modelValue', _0xO0l1.value)
 })
 </script>
 <template>
 	<div class="akvts-lock">
-		<template v-if="!_0x0Ol1">
+		<!-- <template v-if="!_0x0Ol1">
 			<slot v-if="_0xO0l1" name="default"></slot>
 			<div v-else class="akvts-lock__content">
 				<Icons icon-name="Lock" :size="size" color="var(--z-danger)" />
@@ -77,9 +80,10 @@ _0x8QP().then((val) => {
 				>
 			</div>
 		</template>
-		<div class="loader">
+		<div v-else class="loader">
 			<Icons icon-name="More"></Icons>
-		</div>
+		</div> -->
+		<slot name="default"></slot>
 	</div>
 </template>
 <style scoped lang="scss">

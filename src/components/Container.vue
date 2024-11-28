@@ -53,6 +53,8 @@ const bodyHeight = computed(
 
 const containerRef = ref()
 const isExpand = ref(props.expand)
+const unLock = ref(0)
+
 const onExpand = () => {
 	isExpand.value = !isExpand.value
 	console.log('container isExpand', isExpand.value)
@@ -95,12 +97,12 @@ onUnmounted(() => {
 				<div v-if="enableExpand" class="expand" @click="onExpand">
 					<Icons icon-name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
-				<Lock>
+				<Lock v-model="unLock">
 					<slot name="header"></slot>
 				</Lock>
 			</div>
 			<div class="container-aside" v-if="frame.includes('aside')">
-				<Lock>
+				<Lock v-model="unLock">
 					<slot name="aside"></slot>
 				</Lock>
 			</div>
@@ -109,7 +111,7 @@ onUnmounted(() => {
 				v-if="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
 			>
-				<Lock label="授权已过期, 请联系管理员" size="48" fontSize="18px">
+				<Lock v-model="unLock">
 					<div class="container-body-sub" v-if="frame.includes('header')">
 						<slot name="top"></slot>
 					</div>
@@ -128,13 +130,17 @@ onUnmounted(() => {
 		</template>
 		<template v-else-if="model === 'ahbf'">
 			<div class="container-aside" v-if="frame.includes('aside')">
-				<slot name="aside"></slot>
+				<Lock v-model="unLock">
+					<slot name="aside"></slot>
+				</Lock>
 			</div>
 			<div class="container-header" v-if="frame.includes('header')">
 				<div class="expand" @click="onExpand">
 					<i class="i-ic-baseline-expand-less"></i>
 				</div>
-				<slot name="header"></slot>
+				<Lock v-model="unLock">
+					<slot name="header"></slot>
+				</Lock>
 			</div>
 			<div
 				class="container-body"
@@ -142,19 +148,21 @@ onUnmounted(() => {
 				v-if="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
 			>
-				<div class="container-body-sub" v-if="frame.includes('header')">
-					<slot name="top"></slot>
-				</div>
-				<slot name="default"></slot>
-				<div
-					v-if="enableFooter && frame.includes('footer')"
-					class="container-footer"
-					:class="{'no-aside': !frame.includes('aside')}"
-				>
-					<slot name="footer">
-						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
-					</slot>
-				</div>
+				<Lock v-model="unLock">
+					<div class="container-body-sub" v-if="frame.includes('header')">
+						<slot name="top"></slot>
+					</div>
+					<slot name="default"></slot>
+					<div
+						v-if="enableFooter && frame.includes('footer')"
+						class="container-footer"
+						:class="{'no-aside': !frame.includes('aside')}"
+					>
+						<slot name="footer">
+							<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
+						</slot>
+					</div>
+				</Lock>
 			</div>
 		</template>
 	</div>

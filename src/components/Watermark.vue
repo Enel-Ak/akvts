@@ -1,5 +1,6 @@
 <script setup>
-import {computed, onMounted, onUnmounted} from 'vue'
+import {computed, onMounted, onUnmounted, ref} from 'vue'
+import Lock from './Lock.vue'
 
 const props = defineProps({
 	visible: {
@@ -38,13 +39,21 @@ const props = defineProps({
 		type: Number,
 		default: 1000,
 	},
+	enableUnLock: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 let canvas = null
 let background = null
 let lastTime = Date.now()
 let isAnimating = false
-const watermarkText = computed(() => props.text)
+const unLock = ref(0)
+const watermarkText = computed(() => {
+	const un = unLock.value ? '' : '\n\n 未激活'
+	return props.text + `${props.enableUnLock ? un : ''}`
+})
 
 const init = () => {
 	if (props.visible) {
@@ -130,7 +139,9 @@ onUnmounted(() => {
 	console.log('Watermark unmounted', watermarkText.value)
 })
 </script>
-<template></template>
+<template>
+	<Lock v-model="unLock" class="watermark"></Lock>
+</template>
 <style lang="scss">
 .watermark {
 	height: 100%;

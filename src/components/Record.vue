@@ -41,6 +41,8 @@ const icons = {
 	danger: 'Clear2',
 }
 
+const unLock = ref(0)
+
 const list = computed(() =>
 	props.data.sort((a, b) => {
 		if (props.sort === 'desc') {
@@ -55,7 +57,7 @@ const list = computed(() =>
 </script>
 <template>
 	<div class="record-component">
-		<Lock>
+		<Lock v-model="unLock">
 			<div v-show="title" class="title">
 				<slot name="title">
 					<span>{{ title }} </span>

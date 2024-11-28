@@ -110,6 +110,7 @@ const lastAlign = ref(props.lastColumnAlign)
 const showStripe = ref(props.stripe ? 'var(--z-table-even-bg)' : 'transparent')
 
 const loading = ref(false)
+const unLock = ref(0)
 
 const __height = ref(0)
 const __fnWidth = ref(142)
@@ -814,7 +815,7 @@ defineExpose({
 </script>
 <template>
 	<div class="table-component">
-		<Lock>
+		<Lock v-model="unLock">
 			<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
 				<div class="left">
 					<slot name="toolbarBegin"> </slot>

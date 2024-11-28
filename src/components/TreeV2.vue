@@ -1,6 +1,7 @@
 <script setup>
 import {nextTick, onMounted, ref, watch} from 'vue'
 import axios from 'axios'
+import Lock from './Lock.vue'
 
 const emits = defineEmits(['update:modelValue', 'nodeClick'])
 const props = defineProps({
@@ -30,6 +31,7 @@ const props = defineProps({
 const treeRef = ref()
 const treeData = ref([])
 const query = ref('')
+const unLock = ref(0)
 const _reqParams = ref({})
 const _loading = ref(false)
 
@@ -177,41 +179,43 @@ defineExpose({
 </script>
 <template>
 	<div class="virtualized-tree-component">
-		<div v-if="enableFilter" class="filter">
-			<el-input v-model="query" :placeholder="filterPlaceholder" @input="onQuery" />
-		</div>
-		<el-tree-v2
-			ref="treeRef"
-			v-bind="$attrs"
-			:data="treeData"
-			:props="props.props"
-			:height="enableFilter ? height - 38 : height"
-			:filter-method="onFilter"
-			:check-on-click-node="checkOnClickNode"
-			@check="onCheck"
-			@node-click="onClickTreeNode"
-			@node-expand="onNodeExpand"
-			@node-collapse="onNodeCollapse"
-		>
-			<template #default="{node}">
-				<slot name="default" :node="node">
-					<el-icon
-						mr-3px
-						v-if="
-							(_loading && node.key === currClickNode?.id) ||
-							(loading && node.key === currClickNode?.id)
-						"
-						class="loading-animation"
-					>
-						<Loading />
-					</el-icon>
-					<span :title="node.label" class="value">
-						{{ node.label }}
-						<template v-if="node?.data?.tips">{{ node?.data?.tips }}</template>
-					</span>
-				</slot>
-			</template>
-		</el-tree-v2>
+		<Lock v-model="unLock">
+			<div v-if="enableFilter" class="filter">
+				<el-input v-model="query" :placeholder="filterPlaceholder" @input="onQuery" />
+			</div>
+			<el-tree-v2
+				ref="treeRef"
+				v-bind="$attrs"
+				:data="treeData"
+				:props="props.props"
+				:height="enableFilter ? height - 38 : height"
+				:filter-method="onFilter"
+				:check-on-click-node="checkOnClickNode"
+				@check="onCheck"
+				@node-click="onClickTreeNode"
+				@node-expand="onNodeExpand"
+				@node-collapse="onNodeCollapse"
+			>
+				<template #default="{node}">
+					<slot name="default" :node="node">
+						<el-icon
+							mr-3px
+							v-if="
+								(_loading && node.key === currClickNode?.id) ||
+								(loading && node.key === currClickNode?.id)
+							"
+							class="loading-animation"
+						>
+							<Loading />
+						</el-icon>
+						<span :title="node.label" class="value">
+							{{ node.label }}
+							<template v-if="node?.data?.tips">{{ node?.data?.tips }}</template>
+						</span>
+					</slot>
+				</template>
+			</el-tree-v2>
+		</Lock>
 	</div>
 </template>
 <style lang="scss" scoped>

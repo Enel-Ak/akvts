@@ -64,6 +64,8 @@ let isExpand = false
 const historyParnetNode = ref(null)
 const historyNodeIndex = ref(0)
 const isFullScreen = ref(false)
+const unLock = ref(0)
+
 const _offset = computed(() => {
 	let first = 85
 
@@ -329,7 +331,7 @@ defineExpose({
 				always
 			>
 				<div v-show="expandBlock" class="block-component-body">
-					<Lock>
+					<Lock v-model="unLock">
 						<slot name="default"></slot>
 					</Lock>
 				</div>
