@@ -88,8 +88,8 @@ _0x8QP().then((val) => {
 </template>
 <style scoped lang="scss">
 .akvts-lock {
-	height: 100%;
-	width: 100%;
+	// height: 100%;
+	// width: 100%;
 	.akvts-lock__content {
 		align-items: center;
 		display: flex;
