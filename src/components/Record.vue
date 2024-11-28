@@ -1,5 +1,5 @@
 <script setup>
-import {computed} from 'vue'
+import {ref, computed} from 'vue'
 import Lock from './Lock.vue'
 
 const props = defineProps({

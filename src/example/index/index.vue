@@ -63,7 +63,9 @@ const dialog = ref(false)
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
-		<Dialog v-model="dialog"></Dialog>
+		<Dialog v-model="dialog" :full-screen="true">
+			<div style="height: 9999px; border: 1px solid #f00"></div>
+		</Dialog>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form
