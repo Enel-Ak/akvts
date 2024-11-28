@@ -2,7 +2,6 @@
 import {ref, watch, computed, onMounted} from 'vue'
 import axios from 'axios'
 import {ElMessage} from 'element-plus'
-import Lock from './Lock.vue'
 
 const emits = defineEmits([
 	'change',
@@ -42,7 +41,6 @@ const count = ref(props.columnCount)
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
 const pb = computed(() => (props.columnCount > 1 ? '0px' : '20px'))
 const uploadFileNames = ref([])
-const unLock = ref(0)
 
 let remoteTimer = null
 
@@ -306,598 +304,594 @@ defineExpose({
 })
 </script>
 <template>
-	<Lock v-model="unLock">
-		<template v-for="(item, index) of items">
-			<el-collapse
-				v-if="item.children"
-				v-model="currentActiveNames"
-				class="group"
-				@change="onCollapseChange(item.prop, index)"
+	<template v-for="(item, index) of items">
+		<el-collapse
+			v-if="item.children"
+			v-model="currentActiveNames"
+			class="group"
+			@change="onCollapseChange(item.prop, index)"
+		>
+			<el-collapse-item :name="item.prop">
+				<template #title>
+					<div class="group-title">
+						<Icons
+							icon-name="ArrowRight2"
+							color="var(--z-font-color)"
+							size="15px"
+							class="mg-right-5"
+						></Icons>
+						{{ item.label }}
+					</div>
+				</template>
+				<div class="form-items">
+					<FormItem
+						:form="form"
+						:formData="formData"
+						:items="item.children"
+						:formItems="formItems"
+						:isRowEdit="isRowEdit"
+						:columnCount="count"
+						:_expandArray="activeNames"
+						:_expandIndex="_expandIndex + 1"
+						@change="onChange"
+						@changeFile="onChange"
+						@focus="onFocus"
+						@blur="onBlur"
+					>
+						<template v-for="child of formItems" #[`form-${child.prop}`]="scope">
+							<slot
+								:name="`form-${child.prop}`"
+								v-bind="scope"
+								:form="form"
+								:row="formData"
+							></slot>
+						</template>
+					</FormItem>
+				</div>
+			</el-collapse-item>
+		</el-collapse>
+
+		<!-- 无type时(插槽) -->
+		<template v-else>
+			<el-form-item
+				v-if="!item.type"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:label-width="item.labelWidth"
+				:prop="item.prop"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
 			>
-				<el-collapse-item :name="item.prop">
-					<template #title>
-						<div class="group-title">
-							<Icons
-								icon-name="ArrowRight2"
-								color="var(--z-font-color)"
-								size="15px"
-								class="mg-right-5"
-							></Icons>
-							{{ item.label }}
-						</div>
-					</template>
-					<div class="form-items">
-						<FormItem
-							:form="form"
-							:formData="formData"
-							:items="item.children"
-							:formItems="formItems"
-							:isRowEdit="isRowEdit"
-							:columnCount="count"
-							:_expandArray="activeNames"
-							:_expandIndex="_expandIndex + 1"
-							@change="onChange"
-							@changeFile="onChange"
-							@focus="onFocus"
-							@blur="onBlur"
-						>
-							<template v-for="child of formItems" #[`form-${child.prop}`]="scope">
-								<slot
-									:name="`form-${child.prop}`"
-									v-bind="scope"
-									:form="form"
-									:row="formData"
-								></slot>
-							</template>
-						</FormItem>
-					</div>
-				</el-collapse-item>
-			</el-collapse>
-
-			<!-- 无type时(插槽) -->
-			<template v-else>
-				<el-form-item
-					v-if="!item.type"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:label-width="item.labelWidth"
-					:prop="item.prop"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">{{ _form[item.prop] || '-' }}</template>
-							<template v-else>
-								-
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 文本框 -->
-				<el-form-item
-					v-if="item.type === 'text'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-input
-									v-if="!item.inputType"
-									v-model.trim="_form[item.prop]"
-									v-bind="item.attrs"
-									type="text"
-									:readonly="item.disabled"
-									:placeholder="item.placeholder || `请输入${item.label}`"
-									:size="size"
-									clearable
-									@input="emits('update:modelValue', $event)"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-								/>
-								<el-input-number
-									v-else-if="item.inputType === 'number'"
-									v-model.number="_form[item.prop]"
-									v-bind="item.attrs"
-									type="number"
-									:min="item.min || 0"
-									:max="item.max || 100000000"
-									:readonly="item.disabled"
-									:placeholder="item.placeholder || `请输入${item.label}`"
-									:size="size"
-									:style="{width: columnCount > 1 ? '100%' : '100%'}"
-									clearable
-									@input="emits('update:modelValue', $event)"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-								/>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 密码框 -->
-				<el-form-item
-					v-if="item.type === 'password'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-input
-									v-model.trim="_form[item.prop]"
-									v-bind="item.attrs"
-									type="password"
-									:readonly="item.disabled"
-									:placeholder="item.placeholder || `请输入${item.label}`"
-									:size="size"
-									clearable
-									@input="emits('update:modelValue', $event)"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-								/>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 下拉框 -->
-				<el-form-item
-					v-if="item.type === 'select'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-select
-									v-model="_form[item.prop]"
-									v-bind="item.attrs"
-									:disabled="item.disabled"
-									:placeholder="item.placeholder || `请选择${item.label}`"
-									:filterable="item.attrs?.filterable || item.filterable"
-									:multiple="item.attrs?.multiple || item.multiple"
-									:multiple-limit="
-										item.attrs?.multipleLimit || item.multipleLimit
-											? item.attrs?.multipleLimit || item.multipleLimit
-											: 0
-									"
-									:collapse-tags="item.attrs?.collapseTags || item.collapseTags"
-									:size="size"
-									clearable
-									style="flex: 1"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-									@keyup.native.enter="emits('focus', true)"
-								>
-									<el-option
-										v-for="option of item.options"
-										:label="option.otherLabel || option.label"
-										:value="option.value"
-									/>
-								</el-select>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 下拉远程搜索 -->
-				<el-form-item
-					v-if="item.type === 'selectRemote'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{
-									item?.options?.find((f) => f.value === _form[item.prop])
-										?.label || '-'
-								}}
-							</template>
-							<template class="form-item" v-else>
-								<el-select
-									v-model="_form[item.prop]"
-									v-bind="item.attrs"
-									reserve-keyword
-									filterable
-									clearable
-									remote
-									:placeholder="
-										item.placeholder || `请输入关键字搜索${item.label}`
-									"
-									:remote-method="(query) => remoteMethod(query, item)"
-									:disabled="item.disabled"
-									:loading="loading"
-									:size="size"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-									style="flex: 1"
-								>
-									<el-option
-										v-for="option of item?.options"
-										:label="option.otherLabel || option.label"
-										:value="option.value"
-									/>
-								</el-select>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 日期/时间选择器 -->
-				<el-form-item
-					v-if="
-						[
-							'date',
-							'year',
-							'month',
-							'week',
-							'datas',
-							'datetime',
-							'daterange',
-							'monthrange',
-							'datetimerange',
-						].includes(item.type)
-					"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-date-picker
-									v-model="_form[item.prop]"
-									v-bind="item.attrs"
-									:readonly="item.readonly"
-									:disabled="item.attrs?.disabled || item.disabled"
-									:disabled-date="item.attrs?.disabledDate || item.disabledDate"
-									:type="item.type"
-									:placeholder="item.placeholder || `请选择${item.label}`"
-									:value-format="
-										item.type === 'datetime' || item.type === 'datetimerange'
-											? 'YYYY-MM-DD HH:mm:ss'
-											: 'YYYY-MM-DD'
-									"
-									:size="size"
-									:style="{width: item.full ? '100%' : '100%'}"
-									range-separator="到"
-									start-placeholder="开始时间"
-									end-placeholder="结束时间"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-									@keydown.native.enter="emits('focus', true)"
-								/>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 多选 -->
-				<el-form-item
-					v-if="item.type === 'checkbox'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-checkbox-group
-									v-model="_form[item.prop]"
-									v-bind="item.attrs"
-									@change="onChange($event, item)"
-								>
-									<el-checkbox
-										v-for="option of item.options"
-										:value="option.value"
-										:name="option.name"
-										:disabled="option.disabled"
-										:size="size"
-									>
-										{{ option.label }}
-									</el-checkbox>
-								</el-checkbox-group>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 单选 -->
-				<el-form-item
-					v-if="item.type === 'radio'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-radio-group
-									v-model="_form[item.prop]"
-									v-bind="item.attrs"
-									@change="onChange($event, item)"
-								>
-									<el-radio
-										v-for="(option, index) of item.options"
-										:value="option.value"
-										:disabled="item.disabled"
-										:size="size"
-									>
-										{{ option.label }}
-									</el-radio>
-								</el-radio-group>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 文本域 -->
-				<el-form-item
-					v-if="item.type === 'textarea'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-input
-									v-model.trim="_form[item.prop]"
-									v-bind="item.attrs"
-									type="textarea"
-									resize="none"
-									:rows="6"
-									:readonly="item.disabled"
-									:placeholder="item.placeholder || `请输入${item.label}`"
-									:size="size"
-									:maxlength="item.maxlength || 1000"
-									@input="emits('update:modelValue', $event)"
-									@change="onChange($event, item)"
-									@focus="onFocus"
-									@blur="onBlur"
-								/>
-								<slot :name="`form-${item.prop}-right`"></slot>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 开关 -->
-				<el-form-item
-					v-if="item.type === 'switch'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<el-switch
-								v-model="_form[item.prop]"
-								v-bind="item.attrs"
-								:disabled="item.disabled"
-								:active-text="item.activeText"
-								:inactive-text="item.inactiveText"
-								:size="size"
-								@change="onChange($event, item)"
-							/>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">{{ _form[item.prop] || '-' }}</template>
+						<template v-else>
+							-
 							<slot :name="`form-${item.prop}-right`"></slot>
-						</slot>
-					</div>
-				</el-form-item>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
 
-				<!-- 下拉联动 -->
-				<el-form-item
-					v-if="item.type === 'cascade'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<Cascade
-								:grid="grid"
-								:form-data="form"
-								:isClear="isClear"
-								:keys="item.cascadekeys"
-								:maxLevel="item.cascadeMaxLevel"
-								:options="item.cascadeItems"
-								:static="item.cascadeStatic"
-								:vertical="item.cascadeVertical"
-								:oneSelect="item.cascadeOneSelect"
-								:oneSelectProps="item.cascadeOneSelectProps"
+			<!-- 文本框 -->
+			<el-form-item
+				v-if="item.type === 'text'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-input
+								v-if="!item.inputType"
+								v-model.trim="_form[item.prop]"
+								v-bind="item.attrs"
+								type="text"
+								:readonly="item.disabled"
+								:placeholder="item.placeholder || `请输入${item.label}`"
+								:size="size"
+								clearable
+								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus="onFocus"
 								@blur="onBlur"
-							></Cascade>
+							/>
+							<el-input-number
+								v-else-if="item.inputType === 'number'"
+								v-model.number="_form[item.prop]"
+								v-bind="item.attrs"
+								type="number"
+								:min="item.min || 0"
+								:max="item.max || 100000000"
+								:readonly="item.disabled"
+								:placeholder="item.placeholder || `请输入${item.label}`"
+								:size="size"
+								:style="{width: columnCount > 1 ? '100%' : '100%'}"
+								clearable
+								@input="emits('update:modelValue', $event)"
+								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
+							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
-						</slot>
-					</div>
-				</el-form-item>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
 
-				<!-- 下拉树 -->
-				<el-form-item
-					v-if="item.type === 'treeSelect'"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<template v-if="grid">
-								{{ _form[item.prop] || '-' }}
-							</template>
-							<template v-else>
-								<el-tree-select
-									v-model="_form[item.prop]"
-									v-bind="item.attrs"
-									:data="item.options"
-									:render-after-expand="false"
-									:multiple="item.multiple"
-									:placeholder="item.placeholder || `请选择${item.label}`"
-									:filterable="item.filterable"
-									:check-strictly="item.checkStrictly"
-									@change="onChange($event, item)"
-									style="width: 100%"
-								/>
-							</template>
-						</slot>
-					</div>
-				</el-form-item>
-
-				<!-- 上传: 返回base64, 非流直接上传 -->
-				<el-form-item
-					v-if="item.type === 'upload'"
-					v-bind="$attrs"
-					:label="!isRowEdit ? item.label : ''"
-					:prop="item.prop"
-					:label-width="item.labelWidth"
-					:class="{
-						full: item.full,
-						'row-edit': isRowEdit,
-						'last-item': onCheckIsLastItem(item, index),
-					}"
-				>
-					<div class="form-item">
-						<slot :name="`form-${item.prop}`" :item="item">
-							<div class="form-upload">
-								<el-button type="primary" size="small">
-									<i class="icon i-ic-round-upload-file"></i>
-									选择文件
-								</el-button>
-								<span class="filename">
-									{{
-										uploadFileNames.join(',') ||
-										`只支持格式 ${item.accept} 文件, 且文件大小不超过${
-											item.size || 2
-										}M`
-									}}
-								</span>
-								<input
-									type="file"
-									:accept="item.accept"
-									:multiple="item.multiple"
-									@change="onFileChange($event, item)"
-								/>
-							</div>
+			<!-- 密码框 -->
+			<el-form-item
+				v-if="item.type === 'password'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-input
+								v-model.trim="_form[item.prop]"
+								v-bind="item.attrs"
+								type="password"
+								:readonly="item.disabled"
+								:placeholder="item.placeholder || `请输入${item.label}`"
+								:size="size"
+								clearable
+								@input="emits('update:modelValue', $event)"
+								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
+							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
-						</slot>
-					</div>
-				</el-form-item>
-			</template>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 下拉框 -->
+			<el-form-item
+				v-if="item.type === 'select'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-select
+								v-model="_form[item.prop]"
+								v-bind="item.attrs"
+								:disabled="item.disabled"
+								:placeholder="item.placeholder || `请选择${item.label}`"
+								:filterable="item.attrs?.filterable || item.filterable"
+								:multiple="item.attrs?.multiple || item.multiple"
+								:multiple-limit="
+									item.attrs?.multipleLimit || item.multipleLimit
+										? item.attrs?.multipleLimit || item.multipleLimit
+										: 0
+								"
+								:collapse-tags="item.attrs?.collapseTags || item.collapseTags"
+								:size="size"
+								clearable
+								style="flex: 1"
+								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
+								@keyup.native.enter="emits('focus', true)"
+							>
+								<el-option
+									v-for="option of item.options"
+									:label="option.otherLabel || option.label"
+									:value="option.value"
+								/>
+							</el-select>
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 下拉远程搜索 -->
+			<el-form-item
+				v-if="item.type === 'selectRemote'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{
+								item?.options?.find((f) => f.value === _form[item.prop])?.label ||
+								'-'
+							}}
+						</template>
+						<template class="form-item" v-else>
+							<el-select
+								v-model="_form[item.prop]"
+								v-bind="item.attrs"
+								reserve-keyword
+								filterable
+								clearable
+								remote
+								:placeholder="item.placeholder || `请输入关键字搜索${item.label}`"
+								:remote-method="(query) => remoteMethod(query, item)"
+								:disabled="item.disabled"
+								:loading="loading"
+								:size="size"
+								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
+								style="flex: 1"
+							>
+								<el-option
+									v-for="option of item?.options"
+									:label="option.otherLabel || option.label"
+									:value="option.value"
+								/>
+							</el-select>
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 日期/时间选择器 -->
+			<el-form-item
+				v-if="
+					[
+						'date',
+						'year',
+						'month',
+						'week',
+						'datas',
+						'datetime',
+						'daterange',
+						'monthrange',
+						'datetimerange',
+					].includes(item.type)
+				"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-date-picker
+								v-model="_form[item.prop]"
+								v-bind="item.attrs"
+								:readonly="item.readonly"
+								:disabled="item.attrs?.disabled || item.disabled"
+								:disabled-date="item.attrs?.disabledDate || item.disabledDate"
+								:type="item.type"
+								:placeholder="item.placeholder || `请选择${item.label}`"
+								:value-format="
+									item.type === 'datetime' || item.type === 'datetimerange'
+										? 'YYYY-MM-DD HH:mm:ss'
+										: 'YYYY-MM-DD'
+								"
+								:size="size"
+								:style="{width: item.full ? '100%' : '100%'}"
+								range-separator="到"
+								start-placeholder="开始时间"
+								end-placeholder="结束时间"
+								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
+								@keydown.native.enter="emits('focus', true)"
+							/>
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 多选 -->
+			<el-form-item
+				v-if="item.type === 'checkbox'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-checkbox-group
+								v-model="_form[item.prop]"
+								v-bind="item.attrs"
+								@change="onChange($event, item)"
+							>
+								<el-checkbox
+									v-for="option of item.options"
+									:value="option.value"
+									:name="option.name"
+									:disabled="option.disabled"
+									:size="size"
+								>
+									{{ option.label }}
+								</el-checkbox>
+							</el-checkbox-group>
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 单选 -->
+			<el-form-item
+				v-if="item.type === 'radio'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-radio-group
+								v-model="_form[item.prop]"
+								v-bind="item.attrs"
+								@change="onChange($event, item)"
+							>
+								<el-radio
+									v-for="(option, index) of item.options"
+									:value="option.value"
+									:disabled="item.disabled"
+									:size="size"
+								>
+									{{ option.label }}
+								</el-radio>
+							</el-radio-group>
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 文本域 -->
+			<el-form-item
+				v-if="item.type === 'textarea'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-input
+								v-model.trim="_form[item.prop]"
+								v-bind="item.attrs"
+								type="textarea"
+								resize="none"
+								:rows="6"
+								:readonly="item.disabled"
+								:placeholder="item.placeholder || `请输入${item.label}`"
+								:size="size"
+								:maxlength="item.maxlength || 1000"
+								@input="emits('update:modelValue', $event)"
+								@change="onChange($event, item)"
+								@focus="onFocus"
+								@blur="onBlur"
+							/>
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 开关 -->
+			<el-form-item
+				v-if="item.type === 'switch'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<el-switch
+							v-model="_form[item.prop]"
+							v-bind="item.attrs"
+							:disabled="item.disabled"
+							:active-text="item.activeText"
+							:inactive-text="item.inactiveText"
+							:size="size"
+							@change="onChange($event, item)"
+						/>
+						<slot :name="`form-${item.prop}-right`"></slot>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 下拉联动 -->
+			<el-form-item
+				v-if="item.type === 'cascade'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<Cascade
+							:grid="grid"
+							:form-data="form"
+							:isClear="isClear"
+							:keys="item.cascadekeys"
+							:maxLevel="item.cascadeMaxLevel"
+							:options="item.cascadeItems"
+							:static="item.cascadeStatic"
+							:vertical="item.cascadeVertical"
+							:oneSelect="item.cascadeOneSelect"
+							:oneSelectProps="item.cascadeOneSelectProps"
+							@change="onChange($event, item)"
+							@focus="onFocus"
+							@blur="onBlur"
+						></Cascade>
+						<slot :name="`form-${item.prop}-right`"></slot>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 下拉树 -->
+			<el-form-item
+				v-if="item.type === 'treeSelect'"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">
+							{{ _form[item.prop] || '-' }}
+						</template>
+						<template v-else>
+							<el-tree-select
+								v-model="_form[item.prop]"
+								v-bind="item.attrs"
+								:data="item.options"
+								:render-after-expand="false"
+								:multiple="item.multiple"
+								:placeholder="item.placeholder || `请选择${item.label}`"
+								:filterable="item.filterable"
+								:check-strictly="item.checkStrictly"
+								@change="onChange($event, item)"
+								style="width: 100%"
+							/>
+						</template>
+					</slot>
+				</div>
+			</el-form-item>
+
+			<!-- 上传: 返回base64, 非流直接上传 -->
+			<el-form-item
+				v-if="item.type === 'upload'"
+				v-bind="$attrs"
+				:label="!isRowEdit ? item.label : ''"
+				:prop="item.prop"
+				:label-width="item.labelWidth"
+				:class="{
+					full: item.full,
+					'row-edit': isRowEdit,
+					'last-item': onCheckIsLastItem(item, index),
+				}"
+			>
+				<div class="form-item">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<div class="form-upload">
+							<el-button type="primary" size="small">
+								<i class="icon i-ic-round-upload-file"></i>
+								选择文件
+							</el-button>
+							<span class="filename">
+								{{
+									uploadFileNames.join(',') ||
+									`只支持格式 ${item.accept} 文件, 且文件大小不超过${
+										item.size || 2
+									}M`
+								}}
+							</span>
+							<input
+								type="file"
+								:accept="item.accept"
+								:multiple="item.multiple"
+								@change="onFileChange($event, item)"
+							/>
+						</div>
+						<slot :name="`form-${item.prop}-right`"></slot>
+					</slot>
+				</div>
+			</el-form-item>
 		</template>
-	</Lock>
+	</template>
 </template>
 <style scoped lang="scss">
 .middle {
