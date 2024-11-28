@@ -179,43 +179,42 @@ defineExpose({
 </script>
 <template>
 	<div class="virtualized-tree-component">
-		<Lock v-model="unLock">
-			<div v-if="enableFilter" class="filter">
-				<el-input v-model="query" :placeholder="filterPlaceholder" @input="onQuery" />
-			</div>
-			<el-tree-v2
-				ref="treeRef"
-				v-bind="$attrs"
-				:data="treeData"
-				:props="props.props"
-				:height="enableFilter ? height - 38 : height"
-				:filter-method="onFilter"
-				:check-on-click-node="checkOnClickNode"
-				@check="onCheck"
-				@node-click="onClickTreeNode"
-				@node-expand="onNodeExpand"
-				@node-collapse="onNodeCollapse"
-			>
-				<template #default="{node}">
-					<slot name="default" :node="node">
-						<el-icon
-							mr-3px
-							v-if="
-								(_loading && node.key === currClickNode?.id) ||
-								(loading && node.key === currClickNode?.id)
-							"
-							class="loading-animation"
-						>
-							<Loading />
-						</el-icon>
-						<span :title="node.label" class="value">
-							{{ node.label }}
-							<template v-if="node?.data?.tips">{{ node?.data?.tips }}</template>
-						</span>
-					</slot>
-				</template>
-			</el-tree-v2>
-		</Lock>
+		<div v-if="enableFilter" class="filter">
+			<el-input v-model="query" :placeholder="filterPlaceholder" @input="onQuery" />
+		</div>
+		<el-tree-v2
+			ref="treeRef"
+			v-bind="$attrs"
+			:data="treeData"
+			:props="props.props"
+			:height="enableFilter ? height - 38 : height"
+			:filter-method="onFilter"
+			:check-on-click-node="checkOnClickNode"
+			@check="onCheck"
+			@node-click="onClickTreeNode"
+			@node-expand="onNodeExpand"
+			@node-collapse="onNodeCollapse"
+		>
+			<template #default="{node}">
+				<slot name="default" :node="node">
+					<el-icon
+						mr-3px
+						v-if="
+							(_loading && node.key === currClickNode?.id) ||
+							(loading && node.key === currClickNode?.id)
+						"
+						class="loading-animation"
+					>
+						<Loading />
+					</el-icon>
+					<span :title="node.label" class="value">
+						{{ node.label }}
+						<template v-if="node?.data?.tips">{{ node?.data?.tips }}</template>
+					</span>
+				</slot>
+			</template>
+		</el-tree-v2>
+		<Lock v-model="unLock"></Lock>
 	</div>
 </template>
 <style lang="scss" scoped>

@@ -815,285 +815,280 @@ defineExpose({
 </script>
 <template>
 	<div class="table-component">
-		<Lock v-model="unLock">
-			<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
-				<div class="left">
-					<slot name="toolbarBegin"> </slot>
-					<el-popconfirm
-						v-if="currentEditRows.length > 0 && currentEidtEls?.length > 0"
-						title="确认保存修改?"
-						confirm-button-text="确定"
-						cancel-button-text="取消"
-						@confirm="onTableRowEditSaveAll"
+		<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
+			<div class="left">
+				<slot name="toolbarBegin"> </slot>
+				<el-popconfirm
+					v-if="currentEditRows.length > 0 && currentEidtEls?.length > 0"
+					title="确认保存修改?"
+					confirm-button-text="确定"
+					cancel-button-text="取消"
+					@confirm="onTableRowEditSaveAll"
+				>
+					<template #reference>
+						<el-button type="primary" size="small"> 批量保存 </el-button>
+					</template>
+				</el-popconfirm>
+				<el-button
+					v-if="currentEditRow"
+					size="small"
+					v-escape="onTableRowEditCancel"
+					@click="onTableRowEditCancel"
+				>
+					取消
+				</el-button>
+
+				<el-button
+					v-if="enableOwnButton && enableCreate && !disableTable"
+					type="primary"
+					size="small"
+					@click="onDialog('create')"
+				>
+					<Icons icon-name="Create" color="var(--z-nav-font-color)" size="16" />
+					{{ props.createText }}
+				</el-button>
+				<slot name="toolbarLeft"> </slot>
+			</div>
+			<div class="center">
+				<slot name="toolbarCenter"> </slot>
+			</div>
+			<div class="right">
+				<slot name="toolbarRight"> </slot>
+			</div>
+		</div>
+
+		<el-table
+			ref="tableComponentRef"
+			v-bind="$attrs"
+			v-loading="loading"
+			:row-key="rowKey"
+			:height="autoHeight ? (tableData.length === 0 ? 250 : 'auto') : __height"
+			:data="tableData"
+			:empty-text="emptyText"
+			:scrollbar-always-on="scrollbarAlways"
+			border
+			stripe
+			@row-click="onClickRow"
+			@row-dblclick="onDoubleClickRow"
+			@selection-change="onSelectionChange"
+			@sort-change="onSortChange"
+		>
+			<el-table-column
+				v-if="enableSelection && !disableTable"
+				:reserve-selection="true"
+				type="selection"
+				width="60"
+				align="center"
+				fixed="left"
+			/>
+
+			<el-table-column
+				v-if="enableIndex"
+				type="index"
+				:width="pagination.page < 100 ? 60 : pagination.page < 10000 ? 80 : 100"
+				align="center"
+				:label="numberText"
+				fixed="left"
+			>
+				<template #default="scope">
+					<span class="table-component-number">
+						{{ pagination.size * (pagination.page - 1) + scope.$index + 1 }}
+					</span>
+				</template>
+			</el-table-column>
+
+			<!-- 表头列表 -->
+			<template v-for="col of tableColumns" :key="col.prop">
+				<TableColumn
+					v-if="col.hasOwnProperty('tableShow') ? col.tableShow : true"
+					:col="col"
+					:customSlots="customSlots"
+					:enableRowEdit="currentEditRow !== null"
+				>
+					<template v-for="slot of customSlots" #[slot]="scope">
+						<slot :name="slot" v-bind="scope" :form-item="getFormItemByProp(slot)">
+							<template v-if="scope.row.__enableEdit && enableRowEdit">
+								<FormItem
+									:items="[getFormItemByProp(slot)]"
+									:form="scope.row"
+									:is-row-edit="true"
+									:class="{
+										'has-changed': currentEditColumns.some(
+											(item) =>
+												item.rid === scope.row.id && item.prop === slot
+										),
+									}"
+									@change="onTableFormRowEditChange"
+									@focus="onTableFormItemFocus(scope.row)"
+									@blur="onTableFormItemBlur(scope.row)"
+									size="small"
+								></FormItem>
+							</template>
+							<template v-else>
+								{{
+									typeof scope.row[slot] === 'number'
+										? scope.row[slot]
+										: scope.row[slot] || '-'
+								}}
+							</template>
+						</slot>
+					</template>
+				</TableColumn>
+			</template>
+
+			<!-- 操作列 -->
+			<el-table-column
+				v-if="
+					((enableEdit || enableDelete || buttons.length > 0) && !disableTable) ||
+					buttons.some((f) => f.important) ||
+					$slots.buttons
+				"
+				label="操作"
+				align="center"
+				fixed="right"
+				:width="__fnWidth"
+				class="table-component-btns"
+			>
+				<template #="{row, column, $index}">
+					<slot name="buttons" :row="row"></slot>
+					<template
+						v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))"
 					>
-						<template #reference>
-							<el-button type="primary" size="small"> 批量保存 </el-button>
+						<template
+							v-if="row && btn.hasOwnProperty('show') ? setEval(btn.show, row) : true"
+						>
+							<el-button
+								v-if="!btn.popconfirm"
+								:type="btn.type"
+								:disabled="
+									btn.hasOwnProperty('disabled')
+										? setEval(btn.disabled, row)
+										: false
+								"
+								size="small"
+								@click.stop="onClickButton(btn, row, $index)"
+							>
+								<Icons
+									v-if="btn.icon"
+									:icon-name="btn.icon"
+									:size="btn.iconSize || 14"
+									:color="btn.iconColor || 'var(--z-nav-font-color)'"
+								/>
+								{{ btn.label }}
+							</el-button>
+
+							<el-popconfirm
+								v-else-if="btn.popconfirm"
+								:title="btn.popconfirm"
+								confirm-button-text="确定"
+								cancel-button-text="取消"
+								@confirm.stop="onClickButton(btn, row, $index)"
+							>
+								<template #reference>
+									<el-button
+										:type="btn.type"
+										:disabled="
+											btn.hasOwnProperty('disabled')
+												? setEval(btn.disabled, row)
+												: false
+										"
+										size="small"
+									>
+										<Icons
+											v-if="btn.icon"
+											:icon-name="btn.icon"
+											:size="btn.iconSize || 14"
+											:color="btn.iconColor || 'var(--z-nav-font-color)'"
+										/>
+										{{ btn.label }}
+									</el-button>
+								</template>
+							</el-popconfirm>
 						</template>
-					</el-popconfirm>
-					<el-button
-						v-if="currentEditRow"
-						size="small"
-						v-escape="onTableRowEditCancel"
-						@click="onTableRowEditCancel"
-					>
-						取消
-					</el-button>
+					</template>
 
 					<el-button
-						v-if="enableOwnButton && enableCreate && !disableTable"
+						v-if="enableOwnButton && enableEdit && !disableTable"
 						type="primary"
 						size="small"
-						@click="onDialog('create')"
+						@click.stop="onDialog('edit', {row, column, $index})"
 					>
-						<Icons icon-name="Create" color="var(--z-nav-font-color)" size="16" />
-						{{ props.createText }}
+						<Icons icon-name="Edit" color="var(--z-nav-font-color)" size="16" />
+						{{ props.editText }}
 					</el-button>
-					<slot name="toolbarLeft"> </slot>
-				</div>
-				<div class="center">
-					<slot name="toolbarCenter"> </slot>
-				</div>
-				<div class="right">
-					<slot name="toolbarRight"> </slot>
-				</div>
-			</div>
 
-			<el-table
-				ref="tableComponentRef"
-				v-bind="$attrs"
-				v-loading="loading"
-				:row-key="rowKey"
-				:height="autoHeight ? (tableData.length === 0 ? 250 : 'auto') : __height"
-				:data="tableData"
-				:empty-text="emptyText"
-				:scrollbar-always-on="scrollbarAlways"
-				border
-				stripe
-				@row-click="onClickRow"
-				@row-dblclick="onDoubleClickRow"
-				@selection-change="onSelectionChange"
-				@sort-change="onSortChange"
-			>
-				<el-table-column
-					v-if="enableSelection && !disableTable"
-					:reserve-selection="true"
-					type="selection"
-					width="60"
-					align="center"
-					fixed="left"
-				/>
-
-				<el-table-column
-					v-if="enableIndex"
-					type="index"
-					:width="pagination.page < 100 ? 60 : pagination.page < 10000 ? 80 : 100"
-					align="center"
-					:label="numberText"
-					fixed="left"
-				>
-					<template #default="scope">
-						<span class="table-component-number">
-							{{ pagination.size * (pagination.page - 1) + scope.$index + 1 }}
-						</span>
-					</template>
-				</el-table-column>
-
-				<!-- 表头列表 -->
-				<template v-for="col of tableColumns" :key="col.prop">
-					<TableColumn
-						v-if="col.hasOwnProperty('tableShow') ? col.tableShow : true"
-						:col="col"
-						:customSlots="customSlots"
-						:enableRowEdit="currentEditRow !== null"
+					<el-popconfirm
+						v-if="enableOwnButton && enableDelete && !disableTable"
+						title="确认删除?"
+						confirm-button-text="确定"
+						cancel-button-text="取消"
+						@confirm.stop="onDelete({row: toRaw(row), column, $index})"
 					>
-						<template v-for="slot of customSlots" #[slot]="scope">
-							<slot :name="slot" v-bind="scope" :form-item="getFormItemByProp(slot)">
-								<template v-if="scope.row.__enableEdit && enableRowEdit">
-									<FormItem
-										:items="[getFormItemByProp(slot)]"
-										:form="scope.row"
-										:is-row-edit="true"
-										:class="{
-											'has-changed': currentEditColumns.some(
-												(item) =>
-													item.rid === scope.row.id && item.prop === slot
-											),
-										}"
-										@change="onTableFormRowEditChange"
-										@focus="onTableFormItemFocus(scope.row)"
-										@blur="onTableFormItemBlur(scope.row)"
-										size="small"
-									></FormItem>
-								</template>
-								<template v-else>
-									{{
-										typeof scope.row[slot] === 'number'
-											? scope.row[slot]
-											: scope.row[slot] || '-'
-									}}
-								</template>
-							</slot>
+						<template #reference>
+							<el-button size="small" type="danger" @click.stop>
+								<Icons
+									icon-name="Delete"
+									color="var(--z-nav-font-color)"
+									size="14"
+								/>
+								{{ props.deleteText }}
+							</el-button>
 						</template>
-					</TableColumn>
+					</el-popconfirm>
 				</template>
+			</el-table-column>
 
-				<!-- 操作列 -->
-				<el-table-column
-					v-if="
-						((enableEdit || enableDelete || buttons.length > 0) && !disableTable) ||
-						buttons.some((f) => f.important) ||
-						$slots.buttons
-					"
-					label="操作"
-					align="center"
-					fixed="right"
-					:width="__fnWidth"
-					class="table-component-btns"
-				>
-					<template #="{row, column, $index}">
-						<slot name="buttons" :row="row"></slot>
-						<template
-							v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))"
-						>
-							<template
-								v-if="
-									row && btn.hasOwnProperty('show')
-										? setEval(btn.show, row)
-										: true
-								"
-							>
-								<el-button
-									v-if="!btn.popconfirm"
-									:type="btn.type"
-									:disabled="
-										btn.hasOwnProperty('disabled')
-											? setEval(btn.disabled, row)
-											: false
-									"
-									size="small"
-									@click.stop="onClickButton(btn, row, $index)"
-								>
-									<Icons
-										v-if="btn.icon"
-										:icon-name="btn.icon"
-										:size="btn.iconSize || 14"
-										:color="btn.iconColor || 'var(--z-nav-font-color)'"
-									/>
-									{{ btn.label }}
-								</el-button>
-
-								<el-popconfirm
-									v-else-if="btn.popconfirm"
-									:title="btn.popconfirm"
-									confirm-button-text="确定"
-									cancel-button-text="取消"
-									@confirm.stop="onClickButton(btn, row, $index)"
-								>
-									<template #reference>
-										<el-button
-											:type="btn.type"
-											:disabled="
-												btn.hasOwnProperty('disabled')
-													? setEval(btn.disabled, row)
-													: false
-											"
-											size="small"
-										>
-											<Icons
-												v-if="btn.icon"
-												:icon-name="btn.icon"
-												:size="btn.iconSize || 14"
-												:color="btn.iconColor || 'var(--z-nav-font-color)'"
-											/>
-											{{ btn.label }}
-										</el-button>
-									</template>
-								</el-popconfirm>
-							</template>
-						</template>
-
-						<el-button
-							v-if="enableOwnButton && enableEdit && !disableTable"
-							type="primary"
-							size="small"
-							@click.stop="onDialog('edit', {row, column, $index})"
-						>
-							<Icons icon-name="Edit" color="var(--z-nav-font-color)" size="16" />
-							{{ props.editText }}
-						</el-button>
-
-						<el-popconfirm
-							v-if="enableOwnButton && enableDelete && !disableTable"
-							title="确认删除?"
-							confirm-button-text="确定"
-							cancel-button-text="取消"
-							@confirm.stop="onDelete({row: toRaw(row), column, $index})"
-						>
-							<template #reference>
-								<el-button size="small" type="danger" @click.stop>
-									<Icons
-										icon-name="Delete"
-										color="var(--z-nav-font-color)"
-										size="14"
-									/>
-									{{ props.deleteText }}
-								</el-button>
-							</template>
-						</el-popconfirm>
-					</template>
-				</el-table-column>
-
-				<template #empty>
-					<slot name="empty">
-						<el-empty :image-size="autoHeight ? 100 : 150" description="暂无数据" />
-					</slot>
-				</template>
-			</el-table>
-
-			<Dialog
-				v-model="dialogVisible"
-				:title="dialogTitle"
-				:enable-button="false"
-				:fullscreen="dialogFullScreen"
-				:destroy-on-close="true"
-				@open="onDialogOpen"
-				@close="onDialogClose"
-				@opened="onDialogOpened"
-				@closed="onDialogClosed"
-			>
-				<slot name="dialogForm" :row="defaultData">
-					<Form
-						ref="formRef"
-						button-align="flex-end"
-						:rules="formRules"
-						:loading="loading"
-						:data="
-							tableColumns.filter((col) =>
-								dialogTitle === props.editText
-									? !updateHideColunms.includes(col.prop)
-									: !createHideColunms.includes(col.prop)
-							)
-						"
-						:default-data="defaultData"
-						:label-width="formLabelWidth"
-						:column-count="formColumnCount"
-						@beforeSubmit="onFormBeforeSubmit"
-						@submit="onFormSubmit"
-						@reset="emits('formReset')"
-						@clear="emits('formClear')"
-						@change="onFormChanged"
-						@file-change="onFormChanged"
-					>
-						<template v-for="slot of customSlots" #[`form-${slot}`]="scope">
-							<slot :name="`form-${slot}`" v-bind="scope" :row="scope.row" />
-						</template>
-						<template #buttons>
-							<slot name="formButtons"></slot>
-						</template>
-					</Form>
+			<template #empty>
+				<slot name="empty">
+					<el-empty :image-size="autoHeight ? 100 : 150" description="暂无数据" />
 				</slot>
-			</Dialog>
-		</Lock>
+			</template>
+		</el-table>
+
+		<Dialog
+			v-model="dialogVisible"
+			:title="dialogTitle"
+			:enable-button="false"
+			:fullscreen="dialogFullScreen"
+			:destroy-on-close="true"
+			@open="onDialogOpen"
+			@close="onDialogClose"
+			@opened="onDialogOpened"
+			@closed="onDialogClosed"
+		>
+			<slot name="dialogForm" :row="defaultData">
+				<Form
+					ref="formRef"
+					button-align="flex-end"
+					:rules="formRules"
+					:loading="loading"
+					:data="
+						tableColumns.filter((col) =>
+							dialogTitle === props.editText
+								? !updateHideColunms.includes(col.prop)
+								: !createHideColunms.includes(col.prop)
+						)
+					"
+					:default-data="defaultData"
+					:label-width="formLabelWidth"
+					:column-count="formColumnCount"
+					@beforeSubmit="onFormBeforeSubmit"
+					@submit="onFormSubmit"
+					@reset="emits('formReset')"
+					@clear="emits('formClear')"
+					@change="onFormChanged"
+					@file-change="onFormChanged"
+				>
+					<template v-for="slot of customSlots" #[`form-${slot}`]="scope">
+						<slot :name="`form-${slot}`" v-bind="scope" :row="scope.row" />
+					</template>
+					<template #buttons>
+						<slot name="formButtons"></slot>
+					</template>
+				</Form>
+			</slot>
+		</Dialog>
+		<Lock v-model="unLock"></Lock>
 	</div>
 </template>
 <style lang="scss" scoped>

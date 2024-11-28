@@ -46,22 +46,21 @@ const onCurrentChange = (val) => {
 </script>
 <template>
 	<div class="pageination-component" :style="{justifyContent: $props.justifyContent}">
-		<Lock v-model="unLock">
-			<slot name="left"></slot>
-			<el-pagination
-				v-bind="$attrs"
-				v-model:current-page="__currentPage"
-				v-model:page-size="__pageSize"
-				:total="$props.total"
-				:page-sizes="$props.pageSizes"
-				background
-				small="small"
-				layout="total,sizes, prev, pager, next, jumper"
-				@size-change="onSizeChange"
-				@current-change="onCurrentChange"
-			/>
-			<slot name="right"></slot>
-		</Lock>
+		<slot name="left"></slot>
+		<el-pagination
+			v-bind="$attrs"
+			v-model:current-page="__currentPage"
+			v-model:page-size="__pageSize"
+			:total="$props.total"
+			:page-sizes="$props.pageSizes"
+			background
+			small="small"
+			layout="total,sizes, prev, pager, next, jumper"
+			@size-change="onSizeChange"
+			@current-change="onCurrentChange"
+		/>
+		<slot name="right"></slot>
+		<Lock v-model="unLock"></Lock>
 	</div>
 </template>
 <style scoped lang="scss">

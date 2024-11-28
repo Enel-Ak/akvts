@@ -57,42 +57,41 @@ const list = computed(() =>
 </script>
 <template>
 	<div class="record-component">
-		<Lock v-model="unLock">
-			<div v-show="title" class="title">
-				<slot name="title">
-					<span>{{ title }} </span>
+		<div v-show="title" class="title">
+			<slot name="title">
+				<span>{{ title }} </span>
+			</slot>
+		</div>
+		<div
+			class="item"
+			v-for="(item, index) of list"
+			:class="[
+				item.type || '',
+				!fadeOut ? 'no-fadeout' : '',
+				!lastLine && index === list.length - 1 ? 'no-last-line' : '',
+			]"
+		>
+			<div class="label">
+				<slot name="label" :item="item">{{ item.label }}</slot>
+			</div>
+			<div class="text" v-if="item.text">
+				<slot name="text" :item="item">
+					<span v-html="item.text"></span>
 				</slot>
 			</div>
-			<div
-				class="item"
-				v-for="(item, index) of list"
-				:class="[
-					item.type || '',
-					!fadeOut ? 'no-fadeout' : '',
-					!lastLine && index === list.length - 1 ? 'no-last-line' : '',
-				]"
-			>
-				<div class="label">
-					<slot name="label" :item="item">{{ item.label }}</slot>
-				</div>
-				<div class="text" v-if="item.text">
-					<slot name="text" :item="item">
-						<span v-html="item.text"></span>
-					</slot>
-				</div>
-				<div class="other" :class="{'no-text': !item.text}">
-					<slot name="other" :item="item">
-						<span v-if="item.time">{{ item.time }}</span>
-						<span v-if="item.user" :title="item.user">{{ item.user }}</span>
-					</slot>
-				</div>
-				<Icons
-					:icon-name="icons[item.type] || icons.default"
-					class="icon"
-					color="var(--z-nav-font-color)"
-				></Icons>
+			<div class="other" :class="{'no-text': !item.text}">
+				<slot name="other" :item="item">
+					<span v-if="item.time">{{ item.time }}</span>
+					<span v-if="item.user" :title="item.user">{{ item.user }}</span>
+				</slot>
 			</div>
-		</Lock>
+			<Icons
+				:icon-name="icons[item.type] || icons.default"
+				class="icon"
+				color="var(--z-nav-font-color)"
+			></Icons>
+		</div>
+		<Lock v-model="unLock"></Lock>
 	</div>
 </template>
 <style scoped lang="scss">

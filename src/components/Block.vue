@@ -331,13 +331,12 @@ defineExpose({
 				always
 			>
 				<div v-show="expandBlock" class="block-component-body">
-					<Lock v-model="unLock">
-						<slot name="default"></slot>
-					</Lock>
+					<slot name="default"></slot>
 				</div>
 			</el-scrollbar>
 		</div>
 		<i v-if="!expandBlock" class="icon i-ic-baseline-more-horiz more"></i>
+		<Lock v-model="unLock"></Lock>
 	</div>
 </template>
 <style scoped lang="scss">

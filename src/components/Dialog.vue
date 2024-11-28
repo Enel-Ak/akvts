@@ -133,17 +133,16 @@ onMounted(() => {
 			</div>
 		</template>
 
-		<Lock v-model="unLock">
-			<el-scrollbar
-				v-resize="onAutoHeight"
-				ref="scrollRef"
-				class="dialog-scrollbar"
-				:height="height"
-				always
-			>
-				<slot name="default"></slot>
-			</el-scrollbar>
-		</Lock>
+		<el-scrollbar
+			v-resize="onAutoHeight"
+			ref="scrollRef"
+			class="dialog-scrollbar"
+			:height="height"
+			always
+		>
+			<slot name="default"></slot>
+			<Lock v-model="unLock"></Lock>
+		</el-scrollbar>
 
 		<template #footer>
 			<slot name="footer-button"></slot>
