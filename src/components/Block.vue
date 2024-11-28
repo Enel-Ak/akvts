@@ -329,7 +329,7 @@ defineExpose({
 				always
 			>
 				<div v-show="expandBlock" class="block-component-body">
-					<Lock label="授权已过期">
+					<Lock>
 						<slot name="default"></slot>
 					</Lock>
 				</div>

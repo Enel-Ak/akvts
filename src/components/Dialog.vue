@@ -132,7 +132,7 @@ onMounted(() => {
 			</div>
 		</template>
 
-		<Lock label="授权已过期">
+		<Lock>
 			<el-scrollbar
 				v-resize="onAutoHeight"
 				ref="scrollRef"

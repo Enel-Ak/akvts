@@ -814,7 +814,7 @@ defineExpose({
 </script>
 <template>
 	<div class="table-component">
-		<Lock label="授权已过期">
+		<Lock>
 			<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
 				<div class="left">
 					<slot name="toolbarBegin"> </slot>

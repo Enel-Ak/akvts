@@ -372,7 +372,7 @@ defineExpose({
 		v-enter="onEnterSubmit"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
 	>
-		<Lock label="授权已过期">
+		<Lock>
 			<el-form
 				ref="formRef"
 				v-bind="$attrs"
