@@ -1,6 +1,7 @@
 <script setup>
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
+import Lock from './Lock.vue'
 
 const emits = defineEmits([
 	'contentExpand',
@@ -149,7 +150,7 @@ const initObserver = () => {
 					isExpand = false
 				}, props.delay)
 			})
-			observer.observe(blockRef.value.querySelector('.block-component-body'))
+			observer.observe(blockRef.value?.querySelector('.block-component-body'))
 		}
 	}
 }
@@ -328,7 +329,9 @@ defineExpose({
 				always
 			>
 				<div v-show="expandBlock" class="block-component-body">
-					<slot name="default"></slot>
+					<Lock label="授权已过期">
+						<slot name="default"></slot>
+					</Lock>
 				</div>
 			</el-scrollbar>
 		</div>

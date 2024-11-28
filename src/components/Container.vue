@@ -1,6 +1,7 @@
 <script setup>
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useContainerEnum} from '@/enum/useGlobalEnum'
+import Lock from './Lock.vue'
 
 const emits = defineEmits(['collapse', 'scroll'])
 const props = defineProps({
@@ -94,29 +95,35 @@ onUnmounted(() => {
 				<div v-if="enableExpand" class="expand" @click="onExpand">
 					<Icons icon-name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
-				<slot name="header"></slot>
+				<Lock>
+					<slot name="header"></slot>
+				</Lock>
 			</div>
 			<div class="container-aside" v-if="frame.includes('aside')">
-				<slot name="aside"></slot>
+				<Lock>
+					<slot name="aside"></slot>
+				</Lock>
 			</div>
 			<div
 				class="container-body"
 				v-if="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
 			>
-				<div class="container-body-sub" v-if="frame.includes('header')">
-					<slot name="top"></slot>
-				</div>
-				<slot name="default"></slot>
-				<div
-					v-if="enableFooter && frame.includes('footer')"
-					class="container-footer"
-					:class="{'no-aside': !frame.includes('aside')}"
-				>
-					<slot name="footer">
-						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
-					</slot>
-				</div>
+				<Lock label="授权已过期, 请联系管理员" size="48" fontSize="18px">
+					<div class="container-body-sub" v-if="frame.includes('header')">
+						<slot name="top"></slot>
+					</div>
+					<slot name="default"></slot>
+					<div
+						v-if="enableFooter && frame.includes('footer')"
+						class="container-footer"
+						:class="{'no-aside': !frame.includes('aside')}"
+					>
+						<slot name="footer">
+							<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
+						</slot>
+					</div>
+				</Lock>
 			</div>
 		</template>
 		<template v-else-if="model === 'ahbf'">

@@ -56,12 +56,12 @@ const formItemTest2 = ref('')
 const dialog = ref(false)
 </script>
 <template>
+	<Akvts code="jLV4CS$&&u98$h"></Akvts>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
-		<Akvts code="jLV4CS$&&u98$h"></Akvts>
 		<Dialog v-model="dialog"></Dialog>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>

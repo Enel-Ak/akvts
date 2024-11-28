@@ -4,10 +4,19 @@ import {ref} from 'vue'
 const props = defineProps({
 	label: {
 		type: String,
-		default: '授权已过期',
+		default: '',
+	},
+	size: {
+		type: [Number, String],
+		default: 38,
+	},
+	fontSize: {
+		type: [Number, String],
+		default: 12,
 	},
 })
 
+const _0xO0l1 = ref(0)
 const _0x1A2B = (() => Date['now']())()
 const _0x4V3E = (_0x1A2B, _0x2B3C) => Math['floor'](_0x1A2B / _0x2B3C)
 const _0x6HJW = (_0xI9T6) => {
@@ -45,16 +54,19 @@ const _0x8QP = async () => {
 		return 0
 	}
 }
-
-const _0xO0l1 = ref(0)
 _0x8QP().then((val) => (_0xO0l1.value = val))
 </script>
 <template>
 	<div class="akvts-lock">
 		<slot v-if="_0xO0l1" name="default"></slot>
 		<div v-else class="akvts-lock__content">
-			<Icons icon-name="Lock" size="38" color="var(--z-danger)" />
-			<span class="message">{{ label }}</span>
+			<Icons icon-name="Lock" :size="size" color="var(--z-danger)" />
+			<span
+				v-if="label"
+				class="message"
+				:style="{'font-size': typeof fontSize === 'number' ? fontSize + 'px' : fontSize}"
+				>{{ label }}</span
+			>
 		</div>
 	</div>
 </template>
@@ -69,12 +81,12 @@ _0x8QP().then((val) => (_0xO0l1.value = val))
 		height: 100%;
 		justify-content: center;
 		padding: 20px;
-		width: calc(100% - 40px);
+		width: calc(100% - 10px);
 		.message {
 			color: var(--z-font-color);
 			font-size: 12px;
 			opacity: 0.8;
-			padding: 10px 0;
+			padding: 20px 0;
 		}
 	}
 }
