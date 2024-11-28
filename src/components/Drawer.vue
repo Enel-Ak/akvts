@@ -1,4 +1,5 @@
 <script setup>
+import {ref} from 'vue'
 import Lock from './Lock.vue'
 const emits = defineEmits(['clickClose', 'clickConfirm'])
 const props = defineProps({
