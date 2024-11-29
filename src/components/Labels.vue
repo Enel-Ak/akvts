@@ -301,3 +301,10 @@ onMounted(() => {
 	}
 }
 </style>
+<style>
+body {
+	ul[popper-class='labels-component-popper'] {
+		border: none !important;
+	}
+}
+</style>
