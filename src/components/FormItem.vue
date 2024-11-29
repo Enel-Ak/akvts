@@ -979,10 +979,10 @@ defineExpose({
 	align-items: center;
 	display: flex;
 	justify-content: space-between;
-	.el-form-item__label {
+	:deep(.el-form-item__label) {
 		flex: 1;
 	}
-	.el-form-item__content {
+	:deep(.el-form-item__content) {
 		flex: none;
 	}
 }
