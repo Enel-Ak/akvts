@@ -138,6 +138,7 @@ const dialog = ref(false)
 				<Icons icon-name="Done"></Icons>
 				<Icons icon-name="Back"></Icons>
 				<Icons icon-name="More"></Icons>
+				<Icons icon-name="Language"></Icons>
 			</div>
 			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
