@@ -781,6 +781,8 @@ defineExpose({
 					full: item.full,
 					'row-edit': isRowEdit,
 					'last-item': onCheckIsLastItem(item, index),
+					'space-between':
+						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
 				}"
 			>
 				<div class="form-item">
