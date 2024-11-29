@@ -1,5 +1,6 @@
 <script setup>
 import {ref} from 'vue'
+import {_0x98AK} from '@/hooks/useWasm'
 import Record from '../../components/Record.vue'
 import Toolbar from '../../components/Toolbar.vue'
 const flowRef = ref()
@@ -56,15 +57,15 @@ const formItemTest2 = ref('')
 const dialog = ref(false)
 </script>
 <template>
-	<Akvts code="jLV4CS$&&u98$h"></Akvts>
+	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
 	<Watermark></Watermark>
 	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
-		<el-button @click="dialog = true">下载</el-button>
-		<Import v-model="dialog" :on-error="onError" />
+		<!-- <el-button @click="dialog = true">下载</el-button> -->
+		<!-- <Import v-model="dialog" :on-error="onError" /> -->
 		<!-- <Dialog v-model="dialog" :full-screen="true">
 			<div style="height: 9999px; border: 1px solid #f00"></div>
 		</Dialog> -->
