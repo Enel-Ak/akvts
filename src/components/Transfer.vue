@@ -1,6 +1,5 @@
 <script setup>
 import {ref, toRaw} from 'vue'
-import {Search} from '@element-plus/icons-vue'
 
 const emits = defineEmits([
 	'query',
@@ -61,7 +60,9 @@ const onDeleteCollectGroup = (val, index) => {
 const onTransferChange = (val, direction, movedKeys) => {
 	// 向右添加
 	console.log('Transfer change', val, direction, movedKeys, props.data)
-	const raws = props.data.filter((item) => val.join().includes(item.key)).map((item) => toRaw(item))
+	const raws = props.data
+		.filter((item) => val.join().includes(item.key))
+		.map((item) => toRaw(item))
 	emits('transferChange', val, direction, movedKeys, raws)
 	emits('update:modelValue', transferValue.value)
 }
@@ -99,7 +100,9 @@ defineExpose({
 					>
 						<div class="transfer-component-collect-option">
 							<span>{{ option.label }}</span>
-							<span @click.stop="onDeleteCollectGroup(option.value, index)">&times;</span>
+							<span @click.stop="onDeleteCollectGroup(option.value, index)"
+								>&times;</span
+							>
 						</div>
 					</el-option>
 				</el-select>
@@ -109,7 +112,11 @@ defineExpose({
 
 				<span class="collect-btn" v-if="enbableCollect" @click="onClickAddCollect">
 					加入收藏
-					<i v-if="collectValue" class="icon i-ic-baseline-star" style="color: var(--z-main)"></i>
+					<i
+						v-if="collectValue"
+						class="icon i-ic-baseline-star"
+						style="color: var(--z-main)"
+					></i>
 					<i v-else class="icon i-ic-baseline-star-border"></i>
 				</span>
 			</div>
@@ -117,9 +124,13 @@ defineExpose({
 		<div class="search" v-if="enbableSearch">
 			<slot name="search-left"></slot>
 			<slot name="search">
-				<el-input v-model="queryValue" :placeholder="queryPlaceholder" @input="onQueryInput">
+				<el-input
+					v-model="queryValue"
+					:placeholder="queryPlaceholder"
+					@input="onQueryInput"
+				>
 					<template #prefix>
-						<el-icon class="el-input__icon"><Search /></el-icon>
+						<Icons icon-name="Search" color="var(--z-font-color)"></Icons>
 					</template>
 				</el-input>
 			</slot>
