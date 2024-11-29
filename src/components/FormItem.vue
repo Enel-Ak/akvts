@@ -12,7 +12,7 @@ const emits = defineEmits([
 	'blur',
 ])
 const props = defineProps({
-	modelValue: {type: [String, Number, Array], default: () => ''},
+	modelValue: {type: [String, Number, Array, Boolean], default: () => ''},
 	items: {type: Object, default: () => []}, // 表单项配置
 	form: {type: Object, default: () => ({})}, // 表单对象, 用于双向绑定
 	formData: {type: Object, default: () => ({})}, // 表单项数据, 接口数据
