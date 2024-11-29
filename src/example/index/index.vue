@@ -52,7 +52,7 @@ const onSubmit = (data) => {
 	setTimeout(() => (loaidng.value = false), 3000)
 }
 const formTest = ref({})
-const formItemTest = ref('')
+const formItemTest = ref(123)
 const formItemTest2 = ref('')
 const dialog = ref(false)
 </script>
@@ -144,7 +144,7 @@ const dialog = ref(false)
 			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
 			</Record> -->
-			<TableV2
+			<!-- <TableV2
 				:enableSelection="true"
 				:auto-height="true"
 				:form-column-count="2"
@@ -197,9 +197,9 @@ const dialog = ref(false)
 						],
 					},
 				]"
-			></TableV2>
+			></TableV2> -->
 		</Block>
-		<Flow ref="flowRef" v-model="flowConfig"></Flow>
+		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
 	</Container>
 </template>
 <style scoped lang="scss"></style>
