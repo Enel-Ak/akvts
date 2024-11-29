@@ -28,12 +28,7 @@ const onClickCollapseItem = (item) => {
 }
 </script>
 <template>
-	<el-scrollbar
-		always
-		:height="height"
-		:class="{shadow: enableTopShadow}"
-		class="collapse-component"
-	>
+	<el-scrollbar :height="height" :class="{shadow: enableTopShadow}" class="collapse-component">
 		<el-collapse v-model="collapseActive" v-bind="$attrs" class="collapse">
 			<el-collapse-item :name="item.name" v-for="item of data">
 				<template #title>
@@ -88,8 +83,8 @@ const onClickCollapseItem = (item) => {
 
 	.collapse {
 		border: 1px solid var(--z-line);
-		margin-right: torem(10px);
-		margin-left: torem(10px);
+		// margin-right: torem(10px);
+		// margin-left: torem(10px);
 
 		:deep(button) {
 			padding-left: torem(10px);
