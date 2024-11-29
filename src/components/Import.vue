@@ -2,13 +2,13 @@
 import {ref, watch} from 'vue'
 import axios from 'axios'
 import {ElMessage} from 'element-plus'
-import {useGlobal} from '@/store/useGlobal'
 
-const emits = defineEmits(['close'])
+const emits = defineEmits(['update:modelValue'])
 const props = defineProps({
+	moduleValue: {type: Boolean, default: false},
 	title: {type: String, default: '导入数据'},
-	visible: {type: Boolean, default: false},
 	autoUpload: {type: Boolean, default: false},
+	attrs: {type: Object, default: () => ({})},
 	url: {type: String, default: ''},
 	multiple: {type: Boolean, default: false},
 	accept: {type: String, default: '.xlsx'},
@@ -20,18 +20,17 @@ const props = defineProps({
 
 	finishedClose: {type: Boolean, default: false},
 })
+
 watch(
-	() => props.visible,
+	() => props.moduleValue,
 	(val) => {
-		dialogVisible.value = val
 		if (val) {
 			uploadRef.value?.clearFiles()
 		}
 	}
 )
+
 const uploadRef = ref()
-const global = useGlobal()
-const dialogVisible = ref(props.visible)
 const baseUrl = import.meta.env.VITE_GLOBAL_API_URL
 
 const onDownloadTemplate = () => {
@@ -63,23 +62,22 @@ const onDownloadTemplate = () => {
 		})
 }
 
-const onClose = () => {
-	console.log('ImportDialogClose')
-	dialogVisible.value = false
-	emits('close')
-}
-
 const onUploadFile = () => {
 	console.log('ImportDialogUploadFile')
 	uploadRef.value.submit()
 	if (props.finishedClose) {
-		onClose()
+		emits('update:modelValue', false)
 	}
+}
+
+const onClose = () => {
+	console.log('ImportDialogClose')
+	emits('update:modelValue', false)
 }
 </script>
 <template>
 	<Dialog
-		v-model="dialogVisible"
+		v-model="modelValue"
 		confirmText="确认上传"
 		:title="title"
 		@close="onClose"
@@ -96,16 +94,18 @@ const onUploadFile = () => {
 		</div>
 		<el-upload
 			drag
-			v-bind="$attrs"
+			v-bind="attrs"
 			ref="uploadRef"
 			class="upload-component"
 			:action="`${baseUrl}${url}`"
-			:auto-upload="autoUpload"
-			:multiple="multiple"
-			:accept="accept"
-			:headers="{
-				Authorization: `Bearer ${global?.GetToken}`,
-			}"
+			:auto-upload="attrs.autoUpload || autoUpload"
+			:multiple="attrs.multiple || multiple"
+			:accept="attrs.accept || accept"
+			:headers="
+				attrs.headers || {
+					Authorization: `Bearer ${global?.GetToken}`,
+				}
+			"
 		>
 			<el-icon class="el-icon--upload"><upload-filled /></el-icon>
 			<div class="el-upload__text">将文件拖拽到这里上传或<em>点击</em></div>
