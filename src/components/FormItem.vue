@@ -280,7 +280,7 @@ watch(
 					Object.assign(_form.value, {[props.items[0].prop]: val})
 					console.log('Form Item modelValue Remote Init Complete: ', _form.value, val)
 				})
-			} else if (val) {
+			} else {
 				Object.assign(_form.value, {[props.items[0].prop]: val})
 			}
 		}
