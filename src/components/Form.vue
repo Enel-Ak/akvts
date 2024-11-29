@@ -615,6 +615,16 @@ defineExpose({
 			&.last-item {
 				border-bottom: 0;
 			}
+
+			&.space-between {
+				justify-content: space-between;
+				.el-form-item__label {
+					flex: 1;
+				}
+				.el-form-item__content {
+					flex: none;
+				}
+			}
 		}
 
 		:deep(.el-form-item__label) {
