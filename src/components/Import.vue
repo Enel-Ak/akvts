@@ -8,7 +8,6 @@ const props = defineProps({
 	moduleValue: {type: Boolean, default: false},
 	title: {type: String, default: '导入数据'},
 	autoUpload: {type: Boolean, default: false},
-	attrs: {type: Object, default: () => ({})},
 	url: {type: String, default: ''},
 	multiple: {type: Boolean, default: false},
 	accept: {type: String, default: '.xlsx'},
@@ -27,11 +26,13 @@ watch(
 		if (val) {
 			uploadRef.value?.clearFiles()
 		}
+		visible.value = val
 	}
 )
 
 const uploadRef = ref()
 const baseUrl = import.meta.env.VITE_GLOBAL_API_URL
+const visible = ref(props.modelValue)
 
 const onDownloadTemplate = () => {
 	console.log('ImportDialogDownloadTemplate')
@@ -77,7 +78,7 @@ const onClose = () => {
 </script>
 <template>
 	<Dialog
-		v-model="modelValue"
+		v-model="visible"
 		confirmText="确认上传"
 		:title="title"
 		@close="onClose"
@@ -94,7 +95,7 @@ const onClose = () => {
 		</div>
 		<el-upload
 			drag
-			v-bind="attrs"
+			v-bind="$attrs"
 			ref="uploadRef"
 			class="upload-component"
 			:action="`${baseUrl}${url}`"
