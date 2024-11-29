@@ -186,14 +186,22 @@ onMounted(() => {
 				<Icons icon-name="More"></Icons>
 			</span>
 			<template #dropdown>
-				<el-dropdown-menu>
+				<el-dropdown-menu popper-class="labels-component-popper">
 					<template v-for="(item, index) of items">
-						<el-dropdown-item v-if="index >= $props.max" @click="onClickLabel(item, true)">
+						<el-dropdown-item
+							v-if="index >= $props.max"
+							@click="onClickLabel(item, true)"
+						>
 							<div class="labels-component-more" :title="item[keys[1]]">
 								{{
-									item[keys[1]].length > 2 ? item[keys[1]].substring(0, 2) + '...' : item[keys[1]]
+									item[keys[1]].length > 2
+										? item[keys[1]].substring(0, 2) + '...'
+										: item[keys[1]]
 								}}
-								<span class="labels-component-close" @click.stop="onCancelItem(item)">
+								<span
+									class="labels-component-close"
+									@click.stop="onCancelItem(item)"
+								>
 									&times;
 								</span>
 							</div>
