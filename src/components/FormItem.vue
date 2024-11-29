@@ -975,6 +975,18 @@ defineExpose({
 	transform: translateX(torem(-5px));
 }
 
+.space-between {
+	align-items: center;
+	display: flex;
+	justify-content: space-between;
+	.el-form-item__label {
+		flex: 1;
+	}
+	.el-form-item__content {
+		flex: none;
+	}
+}
+
 .form-item {
 	align-items: center;
 	color: var(--z-font-color);
