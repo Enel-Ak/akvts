@@ -38,7 +38,6 @@ emits('update:modelValue', _0x98AK.value)
 		<div v-else class="loader">
 			<Icons icon-name="More"></Icons>
 		</div> -->
-		{{ _0x98AK }}
 		<slot name="default"></slot>
 	</div>
 </template>
