@@ -980,7 +980,7 @@ defineExpose({
 	display: flex;
 	justify-content: space-between;
 	:deep(.el-form-item__label) {
-		flex: 1;
+		// flex: 1;
 	}
 	:deep(.el-form-item__content) {
 		flex: none;
