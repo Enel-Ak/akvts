@@ -11,6 +11,7 @@ const props = defineProps({
 	url: {type: String, default: ''},
 	multiple: {type: Boolean, default: false},
 	accept: {type: String, default: '.xlsx'},
+	headers: {type: Object, default: () => ({})},
 	tip: {type: String, default: '仅支持上传文件后缀为.xlsx'},
 
 	enableDownloadTemplate: {type: Boolean, default: true},
@@ -99,14 +100,10 @@ const onClose = () => {
 			ref="uploadRef"
 			class="upload-component"
 			:action="`${baseUrl}${url}`"
-			:auto-upload="attrs.autoUpload || autoUpload"
-			:multiple="attrs.multiple || multiple"
-			:accept="attrs.accept || accept"
-			:headers="
-				attrs.headers || {
-					Authorization: `Bearer ${global?.GetToken}`,
-				}
-			"
+			:auto-upload="autoUpload"
+			:multiple="multiple"
+			:accept="accept"
+			:headers="headers"
 		>
 			<el-icon class="el-icon--upload"><upload-filled /></el-icon>
 			<div class="el-upload__text">将文件拖拽到这里上传或<em>点击</em></div>
