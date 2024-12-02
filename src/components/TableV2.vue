@@ -422,18 +422,21 @@ const onClickButton = (btn, row, index) => {
 
 const onClickRow = (row, column) => {
 	clickTimer && clearTimeout(clickTimer)
-	clickTimer = setTimeout(() => {
-		console.log('TableV2 Component Click Row', row, column)
-		if (disableTable.value) {
-			return
-		}
+	clickTimer = setTimeout(
+		() => {
+			console.log('TableV2 Component Click Row', row, column)
+			if (disableTable.value) {
+				return
+			}
 
-		if (props.enableSelection) {
-			tableComponentRef.value.toggleRowSelection(row)
-		}
+			if (props.enableSelection) {
+				tableComponentRef.value.toggleRowSelection(row)
+			}
 
-		emits('clickRow', {row, column})
-	}, 256)
+			emits('clickRow', {row, column})
+		},
+		props.enableRowEdit ? 256 : 0
+	)
 }
 
 const onDoubleClickRow = (row, column, event) => {
