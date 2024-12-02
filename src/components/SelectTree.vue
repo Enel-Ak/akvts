@@ -87,6 +87,7 @@ const onTrigger = (needClose = true) => {
 		tree.style.left = left + 'px'
 		tree.style.width = width + 20 + 'px'
 		tree.style.opacity = 1
+		tree.style.zIndex = 3000
 
 		tree.addEventListener('click', onClickOption)
 
@@ -197,7 +198,10 @@ defineExpose({
 						</span>
 						<template #dropdown>
 							<el-dropdown-menu>
-								<div class="select-tree-component-tags-more" :style="{width: tagsWidth + 'px'}">
+								<div
+									class="select-tree-component-tags-more"
+									:style="{width: tagsWidth + 'px'}"
+								>
 									<template v-for="(node, index) of inputValues">
 										<el-tag
 											v-if="index > $props.max - 1"
