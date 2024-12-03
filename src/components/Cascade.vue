@@ -63,8 +63,7 @@ const onFormItemChange = (val, item, index, init = true) => {
 
 		if (props.static) {
 			next.options = item.options.find((i) => i.value === val)?.children ?? []
-		} else {
-			if (form.value[item.prop] && init && item.casecadeUrl) {
+		} else if (form.value[item.prop] && init && item.casecadeUrl) {
 				initOptions(next, nextIndex)
 			}
 		}
@@ -88,10 +87,7 @@ const setDefaultData = async (val) => {
 	for (let i = 0; i < val.length; i++) {
 		const item = val[i]
 
-		if (form.value[item.prop]) {
-			form.value[item.prop] =
-				item.value || (item.multiple ? [] : cascade.value[item.prop] || '')
-		}
+		form.value[item.prop] = item.value || (item.multiple ? [] : cascade.value[item.prop] || '')
 
 		if (!props.grid) {
 			if (item.hasOwnProperty('casecadeUrl')) {
