@@ -275,8 +275,8 @@ defineExpose({
 			@focus="onFocus"
 			@blur="onBlur"
 		>
-			<template #default="{node, data}">
-				<slot name="node" :node="node" :data="data">
+			<template #default="{data}">
+				<slot name="default" :node="data">
 					<span>{{ data.label }}</span>
 				</slot>
 			</template>

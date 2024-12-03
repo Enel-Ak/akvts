@@ -55,12 +55,41 @@ const formRef = ref()
 const formTest = ref({})
 const formItemTest = ref(123)
 const formItemTest2 = ref('')
-const dialog = ref(true)
+const dialog = ref(false)
 const onFormChange = (val, item) => {
 	if (item.prop === 'abc2') {
 		formRef.value.clear()
 	}
 }
+const cascadeOneSelect = ref([])
+const optionsaa = ref([
+	{
+		label: '紧凑型',
+		value: 9,
+		children: [
+			{
+				label: '选项1',
+				value: 1,
+				children: [
+					{
+						label: '选项2',
+						value: 11,
+						children: [{label: '选项22', value: 111, leaf: true}],
+					},
+					{label: '选项3', value: 12, leaf: true},
+				],
+			},
+			{label: '选项4', value: 2, leaf: true},
+			{label: '选项5', value: 3, leaf: true},
+		],
+	},
+	{
+		prop: 'second',
+		label: '紧凑型2',
+		value: 10,
+		leaf: true,
+	},
+])
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -70,6 +99,17 @@ const onFormChange = (val, item) => {
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
+		<Cascade
+			v-model="cascadeOneSelect"
+			:options="optionsaa"
+			:one-select="true"
+			:one-select-props="{}"
+			:show-all-levels="true"
+			max-level="-1"
+			placeholder="请选择紧凑型联动"
+		>
+			<template #default="scoped">{{ scoped }}</template>
+		</Cascade>
 		<!-- <el-button @click="dialog = true">下载</el-button> -->
 		<!-- <Import v-model="dialog" :on-error="onError" /> -->
 		<Dialog v-model="dialog"></Dialog>
