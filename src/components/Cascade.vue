@@ -297,7 +297,6 @@ defineExpose({
 			v-for="(item, index) of options"
 			v-model="form[item.prop]"
 			:items="[item]"
-			:form="form"
 			@change="(val, item) => onFormItemChange(val, item, index)"
 			@focus="onFocus"
 			@blur="onBlur"
