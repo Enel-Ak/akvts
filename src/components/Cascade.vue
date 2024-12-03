@@ -209,6 +209,7 @@ const onClear = () => {
 	} else {
 		cascade.value = []
 	}
+	emits('update:modelValue', props.oneSelect ? cascade.value : form.value)
 	console.log('Cascade Component Clear: ', props.oneSelect ? cascade.value : form.value)
 }
 
