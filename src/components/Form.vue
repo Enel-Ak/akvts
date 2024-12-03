@@ -242,7 +242,7 @@ const setDefault = async () => {
 	emits('update:modelValue', form.value)
 }
 
-const onClear = (needEmit = true) => {
+const onClear = (needEmit = true, clearAll = false) => {
 	const notClearColumns = {}
 
 	for (const key in form.value) {
@@ -285,7 +285,10 @@ const onClear = (needEmit = true) => {
 	}
 
 	isClear.value = true
-	Object.assign(form.value, {...notClearColumns})
+
+	if (!clearAll) {
+		Object.assign(form.value, {...notClearColumns})
+	}
 	console.log('Form Not Clear', notClearColumns)
 	console.log('Form Clear', form.value)
 	emits('update:modelValue', form.value)
@@ -346,7 +349,7 @@ onMounted(() => {
 })
 
 defineExpose({
-	clear: () => onClear(),
+	clear: (clearAll = false) => onClear(true, clearAll),
 	resetFields: () => onResetFields(),
 	validate: (callback) => formRef.value.validate((valid) => callback(valid)),
 	submit: () => onSubmit(),
