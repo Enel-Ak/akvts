@@ -55,7 +55,7 @@ const formRef = ref()
 const formTest = ref({})
 const formItemTest = ref(123)
 const formItemTest2 = ref('')
-const dialog = ref(false)
+const dialog = ref(true)
 const onFormChange = (val, item) => {
 	if (item.prop === 'abc2') {
 		formRef.value.clear()
@@ -72,9 +72,7 @@ const onFormChange = (val, item) => {
 		<Toolbar></Toolbar>
 		<!-- <el-button @click="dialog = true">下载</el-button> -->
 		<!-- <Import v-model="dialog" :on-error="onError" /> -->
-		<!-- <Dialog v-model="dialog" :full-screen="true">
-			<div style="height: 9999px; border: 1px solid #f00"></div>
-		</Dialog> -->
+		<Dialog v-model="dialog"></Dialog>
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form
