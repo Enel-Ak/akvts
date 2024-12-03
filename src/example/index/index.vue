@@ -51,10 +51,16 @@ const onSubmit = (data) => {
 	loaidng.value = true
 	setTimeout(() => (loaidng.value = false), 3000)
 }
+const formRef = ref()
 const formTest = ref({})
 const formItemTest = ref(123)
 const formItemTest2 = ref('')
 const dialog = ref(false)
+const onFormChange = (val, item) => {
+	if (item.prop === 'abc2') {
+		formRef.value.clear()
+	}
+}
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -72,6 +78,7 @@ const dialog = ref(false)
 		<Block title="测试组件" :enableFixedHeight="true">
 			<template #expand>
 				<Form
+					ref="formRef"
 					v-model="formTest"
 					:props="[
 						{prop: 'abc', label: '测试', type: 'text'},
@@ -88,12 +95,15 @@ const dialog = ref(false)
 							attrs: {filterable: false, multiple: false, multipleLimit: 2},
 						},
 					]"
+					:not-clear-keys="['abc', 'abc2']"
 					:enableEnterPush="true"
 					:loading="loaidng"
+					@change="onFormChange"
 					@submit="onSubmit"
 					class="pd-5"
 				></Form>
 			</template>
+			<el-button @click="formRef.clear()">手动清空</el-button>
 			<FormItem
 				v-model="formItemTest"
 				:items="[{prop: 'formItemTest', type: 'text', label: '测试'}]"

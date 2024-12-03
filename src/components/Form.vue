@@ -266,7 +266,8 @@ const onClear = (needEmit = true) => {
 	}
 
 	isClear.value = true
-	Object.assign(form.value, notClearColumns)
+	Object.assign(form.value, {...notClearColumns})
+	console.log('Form Not Clear', notClearColumns)
 	console.log('Form Clear', form.value)
 	emits('update:modelValue', form.value)
 	nextTick(() => (isClear.value = false))
