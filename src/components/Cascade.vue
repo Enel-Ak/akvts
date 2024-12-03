@@ -88,7 +88,10 @@ const setDefaultData = async (val) => {
 	for (let i = 0; i < val.length; i++) {
 		const item = val[i]
 
-		form.value[item.prop] = item.value || (item.multiple ? [] : cascade.value[item.prop] || '')
+		if (form.vvalue[item.prop]) {
+			form.value[item.prop] =
+				item.value || (item.multiple ? [] : cascade.value[item.prop] || '')
+		}
 
 		if (!props.grid) {
 			if (item.hasOwnProperty('casecadeUrl')) {
