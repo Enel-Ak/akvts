@@ -1004,6 +1004,7 @@ defineExpose({
 												: false
 										"
 										size="small"
+										@click.stop
 									>
 										<Icons
 											v-if="btn.icon"
