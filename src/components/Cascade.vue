@@ -119,13 +119,6 @@ const oneSelectLazyLoad = (node, resolve) => {
 	const {level, children} = node
 	let {url, method, data, query, beforeCompleted} = props.oneSelectProps
 
-	console.log(node)
-
-	if (!url) {
-		console.log('Cascade Component OneSelectLazyLoad: 请配置 Url !')
-		return
-	}
-
 	let requestData = {...data}
 	let requestQuery = {...query}
 
@@ -135,6 +128,11 @@ const oneSelectLazyLoad = (node, resolve) => {
 		if (result.data) requestData = {...requestData, ...result.data}
 		if (result.query) requestQuery = {...requestQuery, ...result.query}
 		if (result.url) url = result.url
+	}
+
+	if (!url) {
+		console.log('Cascade Component OneSelectLazyLoad: 请配置 Url !')
+		return
 	}
 
 	axios
