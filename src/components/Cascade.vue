@@ -149,7 +149,7 @@ const oneSelectLazyLoad = (node, resolve) => {
 				const nodes = data.map((item) => ({
 					label: item[props.keys[0]],
 					value: item[props.keys[1]],
-					leaf: level == props.maxLevel ? true : item.isLeaf || item.leaf,
+					leaf: level == props.maxLevel ? true : item.isLeaf || item.leaf || true,
 					raw: JSON.parse(JSON.stringify(item)),
 				}))
 
