@@ -249,6 +249,14 @@ watch(
 )
 
 defineExpose({
+	clear: () => {
+		props.options.forEach((item, index) => {
+			form.value[item.prop] = ''
+			if (index) {
+				item.options = []
+			}
+		})
+	},
 	setValue: (key, value) => (form.value[key] = value),
 })
 </script>
