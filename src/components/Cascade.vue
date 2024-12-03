@@ -64,8 +64,7 @@ const onFormItemChange = (val, item, index, init = true) => {
 		if (props.static) {
 			next.options = item.options.find((i) => i.value === val)?.children ?? []
 		} else if (form.value[item.prop] && init && item.casecadeUrl) {
-				initOptions(next, nextIndex)
-			}
+			initOptions(next, nextIndex)
 		}
 	}
 
