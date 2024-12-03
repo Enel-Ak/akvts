@@ -103,7 +103,7 @@ const onFormChange = (val, item) => {
 					class="pd-5"
 				></Form>
 			</template>
-			<el-button @click="formRef.clear()">手动清空</el-button>
+			<el-button @click="formRef.clear(true)">手动清空</el-button>
 			<FormItem
 				v-model="formItemTest"
 				:items="[{prop: 'formItemTest', type: 'text', label: '测试'}]"

@@ -246,7 +246,7 @@ const onClear = (needEmit = true, clearAll = false) => {
 	const notClearColumns = {}
 
 	for (const key in form.value) {
-		if (props.notClearKeys.includes(key)) {
+		if (props.notClearKeys.includes(key) && !clearAll) {
 			notClearColumns[key] = form.value[key]
 		} else {
 			switch (typeof form.value[key]) {
@@ -286,9 +286,8 @@ const onClear = (needEmit = true, clearAll = false) => {
 
 	isClear.value = true
 
-	if (!clearAll) {
-		Object.assign(form.value, {...notClearColumns})
-	}
+	Object.assign(form.value, {...notClearColumns})
+
 	console.log('Form Not Clear', notClearColumns)
 	console.log('Form Clear', form.value)
 	emits('update:modelValue', form.value)
