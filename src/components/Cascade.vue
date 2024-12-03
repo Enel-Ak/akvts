@@ -130,10 +130,11 @@ const oneSelectLazyLoad = (node, resolve) => {
 	let requestQuery = {...query}
 
 	if (beforeCompleted) {
-		const result = beforeCompleted(node, data, query)
+		const result = beforeCompleted(node, data, query, url)
 
 		if (result.data) requestData = {...requestData, ...result.data}
 		if (result.query) requestQuery = {...requestQuery, ...result.query}
+		if (result.url) url = result.url
 	}
 
 	axios
