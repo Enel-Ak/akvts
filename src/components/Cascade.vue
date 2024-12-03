@@ -40,7 +40,7 @@ const props = defineProps({
 	},
 })
 
-const form = ref({})
+const form = ref(props.modelValue)
 const cascade = ref(props.modelValue)
 const cascadeRef = ref()
 const cascadeProps = ref(props.oneSelectProps)
@@ -198,6 +198,20 @@ const initOptions = (item, level = 0) => {
 	})
 }
 
+const onClear = () => {
+	if (!props.oneSelect) {
+		props.options.forEach((item, index) => {
+			form.value[item.prop] = ''
+			if (index) {
+				item.options = []
+			}
+		})
+	} else {
+		cascade.value = []
+	}
+	console.log('Cascade Component Clear: ', props.oneSelect ? cascade.value : form.value)
+}
+
 onMounted(() => {
 	if (props.oneSelect) {
 		cascadeProps.value.lazyLoad = oneSelectLazyLoad
@@ -238,25 +252,13 @@ watch(
 	() => props.isClear,
 	(val) => {
 		if (val) {
-			props.options.forEach((item, index) => {
-				form.value[item.prop] = ''
-				if (index) {
-					item.options = []
-				}
-			})
+			onClear()
 		}
 	}
 )
 
 defineExpose({
-	clear: () => {
-		props.options.forEach((item, index) => {
-			form.value[item.prop] = ''
-			if (index) {
-				item.options = []
-			}
-		})
-	},
+	clear: () => onClear(),
 	setValue: (key, value) => (form.value[key] = value),
 })
 </script>

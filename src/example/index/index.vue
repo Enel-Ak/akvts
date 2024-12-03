@@ -61,6 +61,7 @@ const onFormChange = (val, item) => {
 		formRef.value.clear()
 	}
 }
+const cascadeRef = ref()
 const cascadeOneSelect = ref([])
 const optionsaa = ref([
 	{
@@ -90,6 +91,7 @@ const optionsaa = ref([
 		leaf: true,
 	},
 ])
+setTimeout(() => cascadeRef.value.clear(), 5000)
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -100,6 +102,7 @@ const optionsaa = ref([
 		<template #top> </template>
 		<Toolbar></Toolbar>
 		<Cascade
+			ref="cascadeRef"
 			v-model="cascadeOneSelect"
 			:options="optionsaa"
 			:one-select="true"
