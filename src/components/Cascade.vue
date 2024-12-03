@@ -146,11 +146,11 @@ const oneSelectLazyLoad = (node, resolve) => {
 			setTimeout(() => {
 				// 根据后端数据修改
 				const data = res.data.items || res.data || []
-				const nodes = data.map((item) => ({
-					label: item[props.keys[0]],
-					value: item[props.keys[1]],
-					leaf: level == props.maxLevel ? true : item.isLeaf || item.leaf || true,
-					raw: JSON.parse(JSON.stringify(item)),
+				const nodes = data.map((dataitem) => ({
+					label: dataitem[props.keys[0]],
+					value: dataitem[props.keys[1]],
+					leaf: level == props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || true,
+					raw: JSON.parse(JSON.stringify(dataitem)),
 				}))
 
 				resolve(nodes)
@@ -186,11 +186,12 @@ const initOptions = (item, level = 0) => {
 				// props.keys[0] 为 label,
 				// props.keys[1] 为 value
 				const data = res.data.items || res.data
-				item.options = data.map((item) => ({
-					label: item[props.keys[0]],
-					value: item[props.keys[1]],
-					level: level == props.maxLevel ? true : item.isLeaf || item.leaf,
-					raw: JSON.parse(JSON.stringify(item)),
+				item.options = data.map((dateitem) => ({
+					label: dateitem[props.keys[0]],
+					value: dateitem[props.keys[1]],
+					level:
+						level == props.maxLevel ? true : dateitem.isLeaf || dateitem.leaf || true,
+					raw: JSON.parse(JSON.stringify(dateitem)),
 				}))
 				console.log('Cascade Component Options: ', item.options, props.keys)
 				resolve()
@@ -294,6 +295,7 @@ defineExpose({
 		<FormItem
 			v-else
 			v-for="(item, index) of options"
+			v-model="form[item.prop]"
 			:items="[item]"
 			:form="form"
 			@change="(val, item) => onFormItemChange(val, item, index)"

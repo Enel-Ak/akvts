@@ -62,7 +62,7 @@ const onFormChange = (val, item) => {
 	}
 }
 const cascadeRef = ref()
-const cascadeOneSelect = ref([])
+const cascadeOneSelect = ref([9, 1, 11, 111])
 const optionsaa = ref([
 	{
 		label: '紧凑型',
@@ -91,7 +91,42 @@ const optionsaa = ref([
 		leaf: true,
 	},
 ])
-setTimeout(() => cascadeRef.value.clear(), 5000)
+
+const cascadeOneSelect2 = ref({first: 2})
+const options2 = ref([
+	{
+		prop: 'first',
+		label: '远程联动1',
+		type: 'select',
+		casecadeUrl: '/api/first',
+		// casecadeParams: {a: 1},
+		beforeInitOptions: (val, next, item) => {
+			next.casecadeParams = {a: 123}
+		},
+		options: [
+			{label: '选项1', value: 1},
+			{label: '选项2', value: 2},
+			{label: '选项3', value: 3},
+		],
+	},
+	{
+		prop: 'second',
+		type: 'select',
+		label: '远程联动2',
+		placeholder: '请选择上一级',
+		casecadeUrl: '/api/second',
+		casecadeParams: {b: 1},
+	},
+	{
+		prop: 'three',
+		type: 'select',
+		label: '远程联动3',
+		placeholder: '请选择上一级',
+		casecadeUrl: '/api/three',
+		casecadeParams: {c: 1},
+	},
+])
+// setTimeout(() => cascadeRef.value.clear(), 5000)
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -101,7 +136,8 @@ setTimeout(() => cascadeRef.value.clear(), 5000)
 		<template #aside> aside </template>
 		<template #top> </template>
 		<Toolbar></Toolbar>
-		<Cascade
+		<Cascade v-model="cascadeOneSelect2" :options="options2" :vertical="true"></Cascade>
+		<!-- <Cascade
 			ref="cascadeRef"
 			v-model="cascadeOneSelect"
 			:options="optionsaa"
@@ -112,7 +148,8 @@ setTimeout(() => cascadeRef.value.clear(), 5000)
 			placeholder="请选择紧凑型联动"
 		>
 			<template #default="scoped">{{ scoped }}</template>
-		</Cascade>
+		</Cascade> -->
+
 		<!-- <el-button @click="dialog = true">下载</el-button> -->
 		<!-- <Import v-model="dialog" :on-error="onError" /> -->
 		<Dialog v-model="dialog"></Dialog>
