@@ -624,6 +624,7 @@ const setTableHeight = () => {
 	__height.value = finallyHeight < 200 ? 200 : finallyHeight
 }
 
+let setFnWidthCount = 0
 const setFnWidth = (again = false) => {
 	const el = tableComponentRef.value?.$el
 	let width = 0
@@ -657,7 +658,14 @@ const setFnWidth = (again = false) => {
 		if (btns?.length === 0) {
 			console.log('TableV2 Component setFnWidth', 'No Buttons')
 			width = 142
-			setTimeout(() => setFnWidth(true), 1)
+			if (setFnWidthCount > 10) {
+				setFnWidthCount = 0
+				return
+			}
+			setTimeout(() => {
+				setFnWidthCount++
+				setFnWidth(true)
+			}, 1)
 		}
 	}
 
