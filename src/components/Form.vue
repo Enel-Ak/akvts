@@ -249,7 +249,26 @@ const onClear = (needEmit = true) => {
 		if (props.notClearKeys.includes(key)) {
 			notClearColumns[key] = form.value[key]
 		} else {
-			form.value[key] = null
+			switch (typeof form.value[key]) {
+				case 'string':
+					form.value[key] = ''
+					break
+				case 'number':
+					form.value[key] = null
+					break
+				case 'boolean':
+					form.value[key] = false
+					break
+				case 'object':
+					if (Array.isArray(form.value[key])) {
+						form.value[key] = []
+					} else {
+						form.value[key] = {}
+					}
+					break
+				default:
+					form.value[key] = null
+			}
 		}
 	}
 
