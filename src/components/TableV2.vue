@@ -40,7 +40,7 @@ const emits = defineEmits([
 	'dialogClose',
 	'dialogClosed',
 	'dialogOpened',
-	'loading',
+	'_loading',
 ])
 const props = defineProps({
 	rowKey: {type: String, default: 'id'},
@@ -86,6 +86,7 @@ const props = defineProps({
 
 	pagination: {type: Object, default: () => ({total: 0, size: 10, page: 1})},
 	stripe: {type: Boolean, default: true},
+	loading: {type: Boolean, default: false},
 })
 
 const initializing = ref(false)
@@ -109,7 +110,7 @@ const disableTable = ref(props.disabled)
 const lastAlign = ref(props.lastColumnAlign)
 const showStripe = ref(props.stripe ? 'var(--z-table-even-bg)' : 'transparent')
 
-const loading = ref(false)
+const _loading = ref(props.loading)
 const unLock = ref(0)
 
 const __height = ref(0)
@@ -190,6 +191,11 @@ watch(
 	}
 )
 
+watch(
+	() => props.loading,
+	(val) => (_loading.value = val)
+)
+
 const getList = () => {
 	console.log('TableV2 Component getList')
 	clearTimeout(__requestTimer)
@@ -200,15 +206,15 @@ const getList = () => {
 			return
 		}
 
-		if (loading.value) {
+		if (_loading.value) {
 			return
 		}
 
 		let isEvent = false
 		let timer = null
 
-		loading.value = true
-		emits('loading', loading.value)
+		_loading.value = true
+		emits('_loading', _loading.value)
 		axios
 			.request({
 				url: props.url,
@@ -222,8 +228,8 @@ const getList = () => {
 				const _next = (calldata) => {
 					tableData.value = calldata || items
 					total.value = totalCount
-					loading.value = false
-					emits('loading', loading.value)
+					_loading.value = false
+					emits('_loading', _loading.value)
 					emits('completed', 'get')
 					nextTick(() => setFnWidth(true))
 					console.log('TableV2 Component Next Finish', tableData.value, total.value)
@@ -250,7 +256,7 @@ const getList = () => {
 				console.log('TableV2 Component getList Error', err)
 			})
 			.finally(() => {
-				loading.value = false
+				_loading.value = false
 				console.log('TableV2 Component getList Finally')
 				if (!isEvent) {
 					clearTimeout(__requestTimer)
@@ -871,7 +877,7 @@ defineExpose({
 		<el-table
 			ref="tableComponentRef"
 			v-bind="$attrs"
-			v-loading="loading"
+			v-_loading="_loading"
 			:row-key="rowKey"
 			:height="autoHeight ? (tableData.length === 0 ? 250 : 'auto') : __height"
 			:data="tableData"
@@ -1073,7 +1079,7 @@ defineExpose({
 					ref="formRef"
 					button-align="flex-end"
 					:rules="formRules"
-					:loading="loading"
+					:_loading="_loading"
 					:data="
 						tableColumns.filter((col) =>
 							dialogTitle === props.editText

@@ -179,7 +179,11 @@ const options2 = ref([
 					@change="onFormChange"
 					@submit="onSubmit"
 					class="pd-5"
-				></Form>
+				>
+					<template #form-abc-right>
+						<div>998</div>
+					</template>
+				</Form>
 			</template>
 			<el-button @click="formRef.clear(true)">手动清空</el-button>
 			<FormItem
