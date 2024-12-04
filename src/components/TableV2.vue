@@ -877,7 +877,7 @@ defineExpose({
 		<el-table
 			ref="tableComponentRef"
 			v-bind="$attrs"
-			v-_loading="_loading"
+			v-loading="_loading"
 			:row-key="rowKey"
 			:height="autoHeight ? (tableData.length === 0 ? 250 : 'auto') : __height"
 			:data="tableData"
@@ -1079,7 +1079,7 @@ defineExpose({
 					ref="formRef"
 					button-align="flex-end"
 					:rules="formRules"
-					:_loading="_loading"
+					:loading="_loading"
 					:data="
 						tableColumns.filter((col) =>
 							dialogTitle === props.editText
