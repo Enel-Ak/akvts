@@ -1,14 +1,14 @@
 export const directives = (app) => {
-	const keyboard = (keycode, fn) => {
+	const keyboard = (keycode, dom, fn) => {
 		console.log('Directive keyboard:', keycode)
 		if (typeof fn !== 'function') {
 			return
 		}
-		document.addEventListener('keydown', (e) => {
+		dom.addEventListener('keydown', (e) => {
 			if (e.key === keycode) {
 				console.log('Directive Key Code:', e.key)
 				fn(e)
-				document.removeEventListener('keydown', fn)
+				dom.removeEventListener('keydown', fn)
 			}
 		})
 	}
@@ -16,20 +16,20 @@ export const directives = (app) => {
 	// escape 指令
 	app.directive('escape', {
 		mounted(el, binding, vnode, prevVnode) {
-			keyboard('Escape', binding.value)
+			keyboard('Escape', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', binding.value)
+			el.removeEventListener('keydown', binding.value)
 		},
 	})
 
 	// enter 指令
 	app.directive('enter', {
 		mounted(el, binding, vnode, prevVnode) {
-			keyboard('Enter', binding.value)
+			keyboard('Enter', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', binding.value)
+			el.removeEventListener('keydown', binding.value)
 		},
 	})
 
@@ -46,10 +46,10 @@ export const directives = (app) => {
 	// 删除键
 	app.directive('backspace', {
 		mounted(el, binding, vnode, prevVnode) {
-			keyboard('Backspace', binding.value)
+			keyboard('Backspace', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', binding.value)
+			document.removeEventListener('keydown', el, binding.value)
 		},
 	})
 
