@@ -49,7 +49,7 @@ export const directives = (app) => {
 			keyboard('Backspace', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', el, binding.value)
+			el.removeEventListener('keydown', el, binding.value)
 		},
 	})
 

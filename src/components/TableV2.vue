@@ -48,7 +48,7 @@ const props = defineProps({
 	emptyText: {type: String, default: '暂无数据'},
 	columns: {type: Array, default: () => []},
 	formRules: {type: Object, default: () => {}},
-	formLabelWidth: {type: [Number, String], default: '80px'},
+	formLabelWidth: {type: [Number, String], default: '100px'},
 	formColumnCount: {type: Number, default: 1},
 
 	url: String,
@@ -836,7 +836,7 @@ defineExpose({
 })
 </script>
 <template>
-	<div class="table-component">
+	<div class="table-component" v-escape="onTableRowEditCancel">
 		<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
 			<div class="left">
 				<slot name="toolbarBegin"> </slot>
@@ -851,12 +851,7 @@ defineExpose({
 						<el-button type="primary" size="small"> 批量保存 </el-button>
 					</template>
 				</el-popconfirm>
-				<el-button
-					v-if="currentEditRow"
-					size="small"
-					v-escape="onTableRowEditCancel"
-					@click="onTableRowEditCancel"
-				>
+				<el-button v-if="currentEditRow" size="small" @click="onTableRowEditCancel">
 					取消
 				</el-button>
 
@@ -940,7 +935,7 @@ defineExpose({
 												item.rid === scope.row.id && item.prop === slot
 										),
 									}"
-									:_form-label-width="formLabelWidth"
+									:_form-label-width="0"
 									@change="onTableFormRowEditChange"
 									@focus="onTableFormItemFocus(scope.row)"
 									@blur="onTableFormItemBlur(scope.row)"
