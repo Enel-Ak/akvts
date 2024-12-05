@@ -451,6 +451,7 @@ defineExpose({
 					:autoRemote="autoRemote"
 					:notInitRemoteKeys="notInitRemoteKeys"
 					:isClear="isClear"
+					:_formLabelWidth="labelWidth"
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
 					@changeFile="onFormChange"

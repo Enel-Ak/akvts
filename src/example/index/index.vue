@@ -159,8 +159,9 @@ const options2 = ref([
 				<Form
 					ref="formRef"
 					v-model="formTest"
+					:label-width="0"
 					:props="[
-						{prop: 'abc', label: '测试', type: 'text'},
+						{prop: 'abc', label: '测试', type: 'text', labelWidth: '100px'},
 						{prop: 'abc3', label: '测试', type: 'datetimerange'},
 						{
 							prop: 'abc2',

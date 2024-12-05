@@ -29,6 +29,7 @@ const props = defineProps({
 
 	isClear: {type: Boolean, default: false},
 
+	_formLabelWidth: {type: [String, Number], default: 0},
 	_expandArray: {type: Array, default: () => []},
 	_expandIndex: {type: Number, default: 0},
 })
@@ -356,7 +357,11 @@ defineExpose({
 			<el-form-item
 				v-if="!item.type"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:label-width="item.labelWidth"
 				:prop="item.prop"
 				:class="{
@@ -382,7 +387,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'text'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -440,7 +449,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'password'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -480,7 +493,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'select'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -534,7 +551,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'selectRemote'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -599,7 +620,11 @@ defineExpose({
 					].includes(item.type)
 				"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -649,7 +674,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'checkbox'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -691,7 +720,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'radio'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -732,7 +765,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'textarea'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -774,7 +811,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'switch'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -805,7 +846,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'cascade'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -841,7 +886,11 @@ defineExpose({
 			<!-- 下拉树 -->
 			<el-form-item
 				v-if="item.type === 'treeSelect'"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
@@ -879,7 +928,11 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'upload'"
 				v-bind="$attrs"
-				:label="!isRowEdit ? item.label : ''"
+				:label="
+					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+						? item.label
+						: ''
+				"
 				:prop="item.prop"
 				:label-width="item.labelWidth"
 				:class="{
