@@ -23,7 +23,6 @@ import Transfer from './components/Transfer.vue'
 import ViewImage from './components/ViewImage.vue'
 import TreeV2 from './components/TreeV2.vue'
 import Watermark from './components/Watermark.vue'
-import Refresh from './components/Refresh.vue'
 import Icons from './components/Icons.vue'
 
 const components = {
@@ -52,7 +51,6 @@ const components = {
 	ViewImage,
 	TreeV2,
 	Watermark,
-	Refresh,
 	Icons,
 }
 
@@ -89,6 +87,5 @@ export {
 	ViewImage,
 	TreeV2,
 	Watermark,
-	Refresh,
 	Icons,
 }
