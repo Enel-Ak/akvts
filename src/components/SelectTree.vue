@@ -1,5 +1,5 @@
 <script setup>
-import {nextTick, onMounted, ref} from 'vue'
+import {nextTick, onMounted, onUnmounted, ref} from 'vue'
 
 const emits = defineEmits(['nodeClick', 'check', 'update:modelValue'])
 const props = defineProps({
@@ -162,12 +162,18 @@ const onCloseTag = (node) => {
 	)
 }
 
+const onCloseContains = (e) => {
+	if (!selectTreeRef.value?.contains(e.target)) {
+		onClose()
+	}
+}
+
 onMounted(() => {
-	document.addEventListener('click', (e) => {
-		if (!selectTreeRef.value.contains(e.target)) {
-			onClose()
-		}
-	})
+	document.addEventListener('click', onCloseContains)
+})
+
+onUnmounted(() => {
+	document.removeEventListener('click', onCloseContains)
 })
 
 defineExpose({
