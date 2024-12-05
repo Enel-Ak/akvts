@@ -54,7 +54,7 @@ const onCurrentChange = (val) => {
 			:total="$props.total"
 			:page-sizes="$props.pageSizes"
 			background
-			small="small"
+			size="small"
 			layout="total,sizes, prev, pager, next, jumper"
 			@size-change="onSizeChange"
 			@current-change="onCurrentChange"
