@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from 'vue'
+import {onMounted, ref} from 'vue'
 import {_0x98AK} from '@/hooks/useWasm'
 
 const emits = defineEmits(['update:modelValue'])
@@ -17,7 +17,9 @@ const props = defineProps({
 		default: 12,
 	},
 })
-emits('update:modelValue', _0x98AK.value)
+onMounted(() => {
+	emits('update:modelValue', _0x98AK.value)
+})
 </script>
 <template>
 	<div class="akvts-lock">
