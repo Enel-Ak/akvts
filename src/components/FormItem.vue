@@ -365,7 +365,9 @@ defineExpose({
 						? item.label
 						: ''
 				"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:prop="item.prop"
 				:class="{
 					full: item.full,
@@ -398,7 +400,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -462,7 +466,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -508,7 +514,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -568,7 +576,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -639,7 +649,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -695,7 +707,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -743,7 +757,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -790,7 +806,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -838,7 +856,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -875,7 +895,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -917,7 +939,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -961,7 +985,9 @@ defineExpose({
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
+				:label-width="
+					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
+				"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
