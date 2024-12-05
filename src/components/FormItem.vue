@@ -23,7 +23,7 @@ const props = defineProps({
 
 	isRowEdit: {type: Boolean, default: false},
 	autoRemote: {type: Boolean, default: true},
-	notInitRemoteKeys: {type: Array, default: () => []},
+	doNotInitRemote: {type: Array, default: () => []},
 
 	expand: {type: Boolean, default: true}, // 默认展开折叠
 
@@ -68,7 +68,7 @@ const remoteCompleted = (query, item, res, callback) => {
 }
 
 const initRemoteValueById = (query, item) => {
-	if (!item.remoteUrl || props.notInitRemoteKeys.indexOf(item.prop) > -1) return
+	if (!item.remoteUrl || props.doNotInitRemote.indexOf(item.prop) > -1) return
 
 	console.log('Form Item Init Remote: ', query, item)
 	const [baseUrl, params] = item.remoteUrl.split('?')

@@ -37,8 +37,8 @@ const props = defineProps({
 
 	columnCount: {type: [Number, String], default: 1},
 	size: {type: String, default: 'default'},
-	notClearKeys: {type: Array, default: () => []},
-	notInitRemoteKeys: {type: Array, default: () => []},
+	doNotClear: {type: Array, default: () => []},
+	doNotInitRemote: {type: Array, default: () => []},
 })
 
 watch(
@@ -252,7 +252,7 @@ const onClear = (needEmit = true, clearAll = false) => {
 	const notClearColumns = {}
 
 	for (const key in form.value) {
-		if (props.notClearKeys.includes(key) && !clearAll) {
+		if (props.doNotClear.includes(key) && !clearAll) {
 			notClearColumns[key] = form.value[key]
 		} else {
 			switch (typeof form.value[key]) {
@@ -449,7 +449,7 @@ defineExpose({
 					"
 					:columnCount="columnCount"
 					:autoRemote="autoRemote"
-					:notInitRemoteKeys="notInitRemoteKeys"
+					:doNotInitRemote="doNotInitRemote"
 					:isClear="isClear"
 					:_formLabelWidth="labelWidth"
 					@init-remote-complete="onInitRemoteComplete"
