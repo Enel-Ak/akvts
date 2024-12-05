@@ -144,7 +144,11 @@ const oneSelectLazyLoad = (node, resolve) => {
 			setTimeout(() => {
 				// 根据后端数据修改
 				const data = res.data.items || res.data || []
-				console.log('Cascade Component OneSelectLazyLoad Data: ', data)
+
+				if (!Array.isArray(data)) {
+					resolve([])
+					return
+				}
 
 				const nodes = data?.map((dataitem) => ({
 					label: dataitem[props.keys[0]],
@@ -190,14 +194,22 @@ const initOptions = (item, level = 0) => {
 				// props.keys[0] 为 label,
 				// props.keys[1] 为 value
 				const data = res.data.items || res.data || []
-				item.options = data?.map((dataitem) => ({
-					label: dataitem[props.keys[0]],
-					value: dataitem[props.keys[1]],
-					level:
-						level == props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || true,
-					raw: JSON.parse(JSON.stringify(dataitem)),
-				}))
-				console.log('Cascade Component Options: ', item.options, props.keys)
+
+				if (!Array.isArray(data)) {
+					item.options = []
+					resolve()
+				} else {
+					item.options = data?.map((dataitem) => ({
+						label: dataitem[props.keys[0]],
+						value: dataitem[props.keys[1]],
+						level:
+							level == props.maxLevel
+								? true
+								: dataitem.isLeaf || dataitem.leaf || true,
+						raw: JSON.parse(JSON.stringify(dataitem)),
+					}))
+					console.log('Cascade Component Options: ', item.options, props.keys)
+				}
 				resolve()
 			})
 			.catch((err) => {
