@@ -144,6 +144,8 @@ const oneSelectLazyLoad = (node, resolve) => {
 			setTimeout(() => {
 				// 根据后端数据修改
 				const data = res.data.items || res.data || []
+				console.log('Cascade Component OneSelectLazyLoad Data: ', data)
+
 				const nodes = data?.map((dataitem) => ({
 					label: dataitem[props.keys[0]],
 					value: dataitem[props.keys[1]],
@@ -188,12 +190,12 @@ const initOptions = (item, level = 0) => {
 				// props.keys[0] 为 label,
 				// props.keys[1] 为 value
 				const data = res.data.items || res.data || []
-				item.options = data?.map((dateitem) => ({
-					label: dateitem[props.keys[0]],
-					value: dateitem[props.keys[1]],
+				item.options = data?.map((dataitem) => ({
+					label: dataitem[props.keys[0]],
+					value: dataitem[props.keys[1]],
 					level:
-						level == props.maxLevel ? true : dateitem.isLeaf || dateitem.leaf || true,
-					raw: JSON.parse(JSON.stringify(dateitem)),
+						level == props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || true,
+					raw: JSON.parse(JSON.stringify(dataitem)),
 				}))
 				console.log('Cascade Component Options: ', item.options, props.keys)
 				resolve()
