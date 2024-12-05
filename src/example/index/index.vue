@@ -177,7 +177,7 @@ const options2 = ref([
 					]"
 					:enableEnterPush="true"
 					:loading="loaidng"
-					:not-clear-keys="['abc2']"
+					:do-not-clear="['abc2']"
 					@change="onFormChange"
 					@submit="onSubmit"
 					class="pd-5"
@@ -238,7 +238,7 @@ const options2 = ref([
 			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
 			</Record> -->
-			<!-- <TableV2
+			<TableV2
 				:enableSelection="true"
 				:auto-height="true"
 				:form-column-count="2"
@@ -291,7 +291,7 @@ const options2 = ref([
 						],
 					},
 				]"
-			></TableV2> -->
+			></TableV2>
 		</Block>
 		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
 	</Container>

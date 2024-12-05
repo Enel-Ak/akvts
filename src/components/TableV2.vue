@@ -293,15 +293,18 @@ const onCreate = (data) => {
 }
 
 const onUpdate = (data, isBatch = false) => {
-	if (!props.url && props.autoLoad) {
+	if (!props.url && props.autoLoad && !isBatch) {
 		console.log('Error: BasicTabel Component url is required')
 		return
 	}
 	emits('beforeUpdate', data)
 
 	if (isBatch) {
+		if (!props.url) {
+			return Promise.reject('Error: BasicTabel Component url is required')
+		}
 		return axios.request({
-			url: `${props.url}/${data.id}?time=${new Date().getTime()}`,
+			url: `${props.url}/${data.id}?_t=${Date.now()}`,
 			method: 'PUT',
 			data,
 			headers: props.headers,
@@ -310,7 +313,7 @@ const onUpdate = (data, isBatch = false) => {
 
 	axios
 		.request({
-			url: `${props.url}/${data.id}?time=${new Date().getTime()}`,
+			url: `${props.url}/${data.id}?_t=${Date.now()}`,
 			method: 'PUT',
 			data,
 			headers: props.headers,
@@ -562,6 +565,8 @@ const onTableRowEditSaveAll = () => {
 		})
 		currentEditColumns.value.length = 0
 		getList()
+	}).catch(() => {
+		ElMessage.error('全部更新失败')
 	})
 }
 
@@ -662,7 +667,7 @@ const setFnWidth = (again = false) => {
 		}
 
 		if (btns?.length === 0) {
-			console.log('TableV2 Component setFnWidth', 'No Buttons')
+			console.log('TableV2 Component setFnWidth No Buttons')
 			width = 142
 			if (setFnWidthCount > 10) {
 				setFnWidthCount = 0
@@ -926,8 +931,8 @@ defineExpose({
 						<slot :name="slot" v-bind="scope" :form-item="getFormItemByProp(slot)">
 							<template v-if="scope.row.__enableEdit && enableRowEdit">
 								<FormItem
+									v-model="scope.row[slot]"
 									:items="[getFormItemByProp(slot)]"
-									:form="scope.row"
 									:is-row-edit="true"
 									:class="{
 										'has-changed': currentEditColumns.some(
@@ -935,6 +940,7 @@ defineExpose({
 												item.rid === scope.row.id && item.prop === slot
 										),
 									}"
+									:_form-label-width="formLabelWidth"
 									@change="onTableFormRowEditChange"
 									@focus="onTableFormItemFocus(scope.row)"
 									@blur="onTableFormItemBlur(scope.row)"

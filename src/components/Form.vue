@@ -23,7 +23,7 @@ const props = defineProps({
 	props: {type: Object, default: () => []}, // 表单配置, 同data, 后续会废弃data
 	defaultData: {type: Object, default: () => ({})}, // 用于重置表单
 	rules: {type: Object, default: () => ({})},
-	labelWidth: {type: [String, Number], default: '80px'},
+	labelWidth: {type: [String, Number], default: '100px'},
 	grid: {type: Boolean, default: false},
 
 	confirmText: {type: String, default: '提交'},

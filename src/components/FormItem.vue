@@ -29,7 +29,7 @@ const props = defineProps({
 
 	isClear: {type: Boolean, default: false},
 
-	_formLabelWidth: {type: [String, Number], default: 0},
+	_formLabelWidth: {type: [String, Number], default: '100px'},
 	_expandArray: {type: Array, default: () => []},
 	_expandIndex: {type: Number, default: 0},
 })
@@ -334,6 +334,7 @@ defineExpose({
 						:columnCount="count"
 						:_expandArray="activeNames"
 						:_expandIndex="_expandIndex + 1"
+						:_formLabelWidth="_formLabelWidth"
 						@change="onChange"
 						@changeFile="onChange"
 						@focus="onFocus"
@@ -358,11 +359,13 @@ defineExpose({
 				v-if="!item.type"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:prop="item.prop"
 				:class="{
 					full: item.full,
@@ -388,12 +391,14 @@ defineExpose({
 				v-if="item.type === 'text'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -450,12 +455,14 @@ defineExpose({
 				v-if="item.type === 'password'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -494,12 +501,14 @@ defineExpose({
 				v-if="item.type === 'select'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -552,12 +561,14 @@ defineExpose({
 				v-if="item.type === 'selectRemote'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -621,12 +632,14 @@ defineExpose({
 				"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -675,12 +688,14 @@ defineExpose({
 				v-if="item.type === 'checkbox'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -721,12 +736,14 @@ defineExpose({
 				v-if="item.type === 'radio'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -766,12 +783,14 @@ defineExpose({
 				v-if="item.type === 'textarea'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -812,12 +831,14 @@ defineExpose({
 				v-if="item.type === 'switch'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -847,12 +868,14 @@ defineExpose({
 				v-if="item.type === 'cascade'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -887,12 +910,14 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'treeSelect'"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -929,12 +954,14 @@ defineExpose({
 				v-if="item.type === 'upload'"
 				v-bind="$attrs"
 				:label="
-					!isRowEdit && (parseInt(item.labelWidth) > 0 || parseInt(_formLabelWidth) > 0)
+					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
+					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
 						? item.label
 						: ''
 				"
 				:prop="item.prop"
-				:label-width="item.labelWidth"
+				:label-width="item.labelWidth || parseInt(_formLabelWidth)"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
