@@ -43,7 +43,13 @@ const props = defineProps({
 
 watch(
 	() => props.modelValue,
-	(to) => Object.assign(form.value, {...stringToTimeRange(to)}),
+	(to) => {
+		if (Object.keys(to).length === 0) {
+			form.value = {}
+		} else {
+			Object.assign(form.value, {...stringToTimeRange(to)})
+		}
+	},
 	{deep: true}
 )
 

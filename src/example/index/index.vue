@@ -48,6 +48,7 @@ const loaidng = ref(false)
 const onSubmit = (data) => {
 	console.log('onSubmit', data)
 
+	formTest.value = {}
 	loaidng.value = true
 	setTimeout(() => (loaidng.value = false), 3000)
 }
@@ -173,9 +174,9 @@ const options2 = ref([
 							attrs: {filterable: false, multiple: false, multipleLimit: 2},
 						},
 					]"
-					:not-clear-keys="['abc', 'abc2']"
 					:enableEnterPush="true"
 					:loading="loaidng"
+					:not-clear-keys="['abc2']"
 					@change="onFormChange"
 					@submit="onSubmit"
 					class="pd-5"
