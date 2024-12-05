@@ -229,7 +229,7 @@ const getFormLabel = (item) => {
 			(!props.isRowEdit && parseInt(props._formLabelWidth) > 0) ||
 			(parseInt(props._formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
 			(!item.hasOwnProperty('labelWidth') && parseInt(props._formLabelWidth) !== 0)
-				? item.label
+				? item?.label
 				: ''
 	}
 	return label
@@ -334,7 +334,7 @@ defineExpose({
 							size="15px"
 							class="mg-right-5"
 						></Icons>
-						{{ item.label }}
+						{{ item?.label }}
 					</div>
 				</template>
 				<div class="form-items">
@@ -424,7 +424,7 @@ defineExpose({
 								v-bind="item.attrs"
 								type="text"
 								:readonly="item.disabled"
-								:placeholder="item.placeholder || `请输入${item.label}`"
+								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
 								clearable
 								@input="emits('update:modelValue', $event)"
@@ -440,7 +440,7 @@ defineExpose({
 								:min="item.min || 0"
 								:max="item.max || 100000000"
 								:readonly="item.disabled"
-								:placeholder="item.placeholder || `请输入${item.label}`"
+								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
 								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
@@ -483,7 +483,7 @@ defineExpose({
 								v-bind="item.attrs"
 								type="password"
 								:readonly="item.disabled"
-								:placeholder="item.placeholder || `请输入${item.label}`"
+								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
 								clearable
 								@input="emits('update:modelValue', $event)"
@@ -524,7 +524,7 @@ defineExpose({
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
 								:disabled="item.disabled"
-								:placeholder="item.placeholder || `请选择${item.label}`"
+								:placeholder="item.placeholder || `请选择${item?.label}`"
 								:filterable="item.attrs?.filterable || item.filterable"
 								:multiple="item.attrs?.multiple || item.multiple"
 								:multiple-limit="
@@ -586,7 +586,7 @@ defineExpose({
 								filterable
 								clearable
 								remote
-								:placeholder="item.placeholder || `请输入关键字搜索${item.label}`"
+								:placeholder="item.placeholder || `请输入关键字搜索${item?.label}`"
 								:remote-method="(query) => remoteMethod(query, item)"
 								:disabled="item.disabled"
 								:loading="loading"
@@ -650,7 +650,7 @@ defineExpose({
 								:disabled="item.attrs?.disabled || item.disabled"
 								:disabled-date="item.attrs?.disabledDate || item.disabledDate"
 								:type="item.type"
-								:placeholder="item.placeholder || `请选择${item.label}`"
+								:placeholder="item.placeholder || `请选择${item?.label}`"
 								:value-format="
 									item.type === 'datetime' || item.type === 'datetimerange'
 										? 'YYYY-MM-DD HH:mm:ss'
@@ -789,7 +789,7 @@ defineExpose({
 								resize="none"
 								:rows="6"
 								:readonly="item.disabled"
-								:placeholder="item.placeholder || `请输入${item.label}`"
+								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
 								:maxlength="item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
@@ -903,7 +903,7 @@ defineExpose({
 								:data="item.options"
 								:render-after-expand="false"
 								:multiple="item.multiple"
-								:placeholder="item.placeholder || `请选择${item.label}`"
+								:placeholder="item.placeholder || `请选择${item?.label}`"
 								:filterable="item.filterable"
 								:check-strictly="item.checkStrictly"
 								@change="onChange($event, item)"
