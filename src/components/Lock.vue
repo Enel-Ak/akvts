@@ -17,9 +17,7 @@ const props = defineProps({
 		default: 12,
 	},
 })
-onMounted(() => {
-	emits('update:modelValue', _0x98AK.value)
-})
+emits('update:modelValue', _0x98AK.value)
 </script>
 <template>
 	<div class="akvts-lock">
