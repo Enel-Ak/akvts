@@ -222,6 +222,19 @@ const onBlur = () => {
 	emits('blur')
 }
 
+const getFormLabel = (item) => {
+	let label = ''
+	if (item.hasOwnProperty('label')) {
+		label =
+			(!props.isRowEdit && parseInt(props._formLabelWidth) > 0) ||
+			(parseInt(props._formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
+			(!item.hasOwnProperty('labelWidth') && parseInt(props._formLabelWidth) !== 0)
+				? item.label
+				: ''
+	}
+	return label
+}
+
 watch(
 	() => props._expandIndex,
 	(val) => {
@@ -353,18 +366,12 @@ defineExpose({
 			</el-collapse-item>
 		</el-collapse>
 
-		<!-- 无type时(插槽) -->
 		<template v-else>
+			<!-- 无type时(插槽) -->
 			<el-form-item
 				v-if="!item.type"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
@@ -392,13 +399,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'text'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -458,13 +459,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'password'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -506,13 +501,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'select'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -568,13 +557,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'selectRemote'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -641,13 +624,7 @@ defineExpose({
 					].includes(item.type)
 				"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -699,13 +676,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'checkbox'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -749,13 +720,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'radio'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -798,13 +763,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'textarea'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -848,13 +807,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'switch'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -887,13 +840,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'cascade'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -931,13 +878,7 @@ defineExpose({
 			<!-- 下拉树 -->
 			<el-form-item
 				v-if="item.type === 'treeSelect'"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
@@ -977,13 +918,7 @@ defineExpose({
 			<el-form-item
 				v-if="item.type === 'upload'"
 				v-bind="$attrs"
-				:label="
-					(!isRowEdit && parseInt(_formLabelWidth) > 0) ||
-					(parseInt(_formLabelWidth) === 0 && item.hasOwnProperty('labelWidth')) ||
-					(!item.hasOwnProperty('labelWidth') && parseInt(_formLabelWidth) !== 0)
-						? item.label
-						: ''
-				"
+				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
