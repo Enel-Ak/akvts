@@ -4,7 +4,7 @@
   ;; 定义内存
   (memory $memory 1)
   ;; 导出内存以便 JavaScript 可以访问
-  (export "_0xAK97" (memory $memory))
+  (export "memory" (memory $memory))
 
   ;; 在内存中存储预设字符，保留在偏移量 0
   (data (i32.const 0) "jLV4CS$&&u98$h") ;; 预设字符存储在偏移量 0
@@ -13,7 +13,7 @@
   (global $expiryTime (mut i64) (i64.const 1735603200)) ;; 设置过期时间 Math.floor(new Date('2024-12-31') / 1000) , wat2wasm akvts.wat -o akvts.wasm
 
   ;; 导出校验函数
-  (func (export "_0xAK98") (param $inputPtr i32) (param $currentTime i64) (result i32)
+  (func (export "validate") (param $inputPtr i32) (param $currentTime i64) (result i32)
     ;; 初始化 isEqual 为 1
     (local $isEqual i32)
     (local $timeValid i32)
@@ -129,6 +129,5 @@
       (local.get $timeValid)
     )
   )
-
   ;; ...existing code...
 )

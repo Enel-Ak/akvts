@@ -1,8 +1,14 @@
 <script setup>
+import {useValidate} from '@/hooks/useWasm'
+import {watch} from 'vue'
 const props = defineProps({
 	code: String,
 })
-localStorage.removeItem('AKVTS_TOKEN')
-localStorage.setItem('AKVTS_TOKEN', props.code)
+
+watch(
+	() => props.code,
+	(val) => useValidate(val),
+	{immediate: true}
+)
 </script>
 <template></template>

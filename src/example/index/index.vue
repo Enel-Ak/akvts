@@ -1,6 +1,6 @@
 <script setup>
 import {ref} from 'vue'
-import {_0x98AK} from '@/hooks/useWasm'
+import {activated} from '@/hooks/useWasm'
 import Record from '../../components/Record.vue'
 import Toolbar from '../../components/Toolbar.vue'
 const flowRef = ref()
