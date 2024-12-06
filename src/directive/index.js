@@ -4,11 +4,11 @@ export const directives = (app) => {
 		if (typeof fn !== 'function') {
 			return
 		}
-		dom.addEventListener('keydown', (e) => {
+		document.addEventListener('keydown', (e) => {
 			if (e.key === keycode) {
 				console.log('Directive Key Code:', e.key)
 				fn(e)
-				dom.removeEventListener('keydown', fn)
+				document.removeEventListener('keydown', fn)
 			}
 		})
 	}
@@ -19,7 +19,7 @@ export const directives = (app) => {
 			keyboard('Escape', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			el.removeEventListener('keydown', binding.value)
+			document.removeEventListener('keydown', binding.value)
 		},
 	})
 
@@ -29,7 +29,7 @@ export const directives = (app) => {
 			keyboard('Enter', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			el.removeEventListener('keydown', binding.value)
+			document.removeEventListener('keydown', binding.value)
 		},
 	})
 
@@ -49,7 +49,7 @@ export const directives = (app) => {
 			keyboard('Backspace', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			el.removeEventListener('keydown', el, binding.value)
+			document.removeEventListener('keydown', el, binding.value)
 		},
 	})
 
