@@ -4,6 +4,10 @@ import {watch} from 'vue'
 
 const emits = defineEmits(['update:modelValue'])
 const props = defineProps({
+	modelValue: {
+		type: Boolean,
+		default: 0,
+	},
 	label: {
 		type: String,
 		default: '',
