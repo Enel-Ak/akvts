@@ -31,7 +31,7 @@ watch(
 )
 </script>
 <template>
-	<div class="lock-component">
+	<div v-bind="$attrs" class="lock-component">
 		<slot name="default"></slot>
 	</div>
 </template>

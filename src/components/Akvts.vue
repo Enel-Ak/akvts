@@ -9,7 +9,11 @@ watch(
 	() => props.code,
 	(val) => {
 		if (val) {
-			useValidate(val)
+			try {
+				useValidate(val)
+			} catch (e) {
+				throw new Error('无法获取激活验证')
+			}
 		}
 	},
 	{immediate: true}
