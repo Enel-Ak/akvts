@@ -158,6 +158,8 @@ const oneSelectLazyLoad = (node, resolve) => {
 					raw: JSON.parse(JSON.stringify(dataitem)),
 				}))
 
+				console.log('Cascade Component OneSelectLazyLoad Nodes: ', nodes)
+
 				resolve(nodes)
 			}, 0)
 		})
