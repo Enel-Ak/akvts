@@ -7,7 +7,11 @@ const props = defineProps({
 
 watch(
 	() => props.code,
-	(val) => useValidate(val),
+	(val) => {
+		if (val) {
+			useValidate(val)
+		}
+	},
 	{immediate: true}
 )
 </script>

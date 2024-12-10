@@ -1081,7 +1081,7 @@ defineExpose({
 					button-align="flex-end"
 					:rules="formRules"
 					:loading="_loading"
-					:data="
+					:props="
 						tableColumns.filter((col) =>
 							dialogTitle === props.editText
 								? !updateHideColunms.includes(col.prop)

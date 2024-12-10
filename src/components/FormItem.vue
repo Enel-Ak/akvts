@@ -15,7 +15,7 @@ const props = defineProps({
 	modelValue: {type: [String, Number, Array, Boolean], default: () => ''},
 	items: {type: Object, default: () => []}, // 表单项配置
 	form: {type: Object, default: () => ({})}, // 表单对象, 用于双向绑定
-	formData: {type: Object, default: () => ({})}, // 表单项数据, 接口数据
+	formData: {type: Object, default: () => ({})}, // 表单项数据, 接口数据, 用于 TableV2 组件新增/编辑表单, 不是行内编辑
 	formItems: {type: Array, default: () => []},
 	size: {type: String, default: 'default'},
 	grid: {type: Boolean, default: false},

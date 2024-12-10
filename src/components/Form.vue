@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref, toRaw, watch, nextTick} from 'vue'
+import {computed, onMounted, ref, toRaw, watch, nextTick, reactive} from 'vue'
 import axios from 'axios'
 import Lock from './Lock.vue'
 

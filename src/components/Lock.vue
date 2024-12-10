@@ -31,5 +31,7 @@ watch(
 )
 </script>
 <template>
-	<slot name="default"></slot>
+	<div class="lock-component">
+		<slot name="default"></slot>
+	</div>
 </template>
