@@ -129,7 +129,7 @@ const oneSelectLazyLoad = (node, resolve) => {
 	}
 
 	if (!url) {
-		console.log('Cascade Component OneSelectLazyLoad: 请配置 Url !')
+		console.log('Cascade Component oneSelectLazyLoad: 请配置 Url !')
 		return
 	}
 
@@ -145,10 +145,10 @@ const oneSelectLazyLoad = (node, resolve) => {
 				// 根据后端数据修改
 				const data = res.data.items || res.data || []
 
-				if (!Array.isArray(data)) {
-					resolve([])
-					return
-				}
+				// if (!Array.isArray(data)) {
+				// 	resolve([])
+				// 	return
+				// }
 
 				const nodes = data?.map((dataitem) => ({
 					label: dataitem[props.keys[0]],
@@ -161,7 +161,7 @@ const oneSelectLazyLoad = (node, resolve) => {
 			}, 0)
 		})
 		.catch((err) => {
-			console.log('Cascade Component OneSelectLazyLoad Error: ', err)
+			console.log('Cascade Component 3 Error: ', err)
 			resolve([])
 		})
 		.finally(() => resolve([]))
@@ -195,21 +195,19 @@ const initOptions = (item, level = 0) => {
 				// props.keys[1] 为 value
 				const data = res.data.items || res.data || []
 
-				if (!Array.isArray(data)) {
-					item.options = []
-					resolve()
-				} else {
-					item.options = data?.map((dataitem) => ({
-						label: dataitem[props.keys[0]],
-						value: dataitem[props.keys[1]],
-						level:
-							level == props.maxLevel
-								? true
-								: dataitem.isLeaf || dataitem.leaf || true,
-						raw: JSON.parse(JSON.stringify(dataitem)),
-					}))
-					console.log('Cascade Component Options: ', item.options, props.keys)
-				}
+				// if (!Array.isArray(data)) {
+				// 	item.options = []
+				// 	resolve()
+				// } else {
+				item.options = data?.map((dataitem) => ({
+					label: dataitem[props.keys[0]],
+					value: dataitem[props.keys[1]],
+					level:
+						level == props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || true,
+					raw: JSON.parse(JSON.stringify(dataitem)),
+				}))
+				console.log('Cascade Component Options: ', item.options, props.keys)
+				// }
 				resolve()
 			})
 			.catch((err) => {
