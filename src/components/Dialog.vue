@@ -52,7 +52,7 @@ const initObserver = () => {
 					entries.forEach((entry) => {
 						const h = document.body.offsetHeight / 2
 						const now = entry.borderBoxSize[0].blockSize
-						console.log('Dialog resize observer', now, h)
+						// console.log('Dialog resize observer', now, h)
 						if (now < h) {
 							height.value = now
 						} else {

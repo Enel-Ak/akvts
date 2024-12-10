@@ -36,7 +36,9 @@ const props = defineProps({
 
 const _form = ref(props.form)
 const activeNames = ref(props._expandArray)
+const activeIndex = ref(props._expandIndex)
 const currentActiveNames = ref([])
+
 const loading = ref(false)
 const count = ref(props.columnCount)
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
@@ -236,18 +238,6 @@ const getFormLabel = (item) => {
 }
 
 watch(
-	() => props._expandIndex,
-	(val) => {
-		setTimeout(() => {
-			currentActiveNames.value = activeNames.value[val]
-		}, 16.7)
-	},
-	{
-		immediate: true,
-	}
-)
-
-watch(
 	() => props.items,
 	(newVal) => {
 		if (props.expand) {
@@ -265,6 +255,27 @@ watch(
 		}
 	},
 	{deep: true}
+)
+
+watch(
+	() => props._expandArray,
+	(val) => {
+		activeNames.value = val
+	},
+	{
+		deep: true,
+	}
+)
+
+watch(
+	() => props._expandIndex,
+	(val) => {
+		setTimeout(() => {
+			activeIndex.value = val
+			currentActiveNames.value = activeNames.value[val]
+		}, 0)
+	},
+	{immediate: true}
 )
 
 watch(
@@ -346,7 +357,7 @@ defineExpose({
 						:isRowEdit="isRowEdit"
 						:columnCount="count"
 						:_expandArray="activeNames"
-						:_expandIndex="_expandIndex + 1"
+						:_expandIndex="activeIndex + 1"
 						:_formLabelWidth="_formLabelWidth"
 						@change="onChange"
 						@changeFile="onChange"
