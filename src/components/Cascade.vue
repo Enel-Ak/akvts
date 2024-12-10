@@ -117,6 +117,8 @@ const oneSelectLazyLoad = (node, resolve) => {
 	console.log(
 		'Cascade Component OneSelectLazyLoad: ',
 		node,
+		level,
+		props.maxLevel,
 		props.maxLevel === level,
 		typeof props.maxLevel,
 		typeof level
