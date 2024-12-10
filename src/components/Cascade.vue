@@ -114,15 +114,7 @@ const setDefaultData = async (val) => {
 
 const oneSelectLazyLoad = (node, resolve) => {
 	const {level, children} = node
-	console.log(
-		'Cascade Component OneSelectLazyLoad: ',
-		node,
-		level,
-		props.maxLevel,
-		props.maxLevel === level,
-		typeof props.maxLevel,
-		typeof level
-	)
+	console.log('Cascade Component OneSelectLazyLoad: ', node)
 
 	let {url, method, data, query, beforeCompleted} = props.oneSelectProps
 
@@ -163,7 +155,7 @@ const oneSelectLazyLoad = (node, resolve) => {
 					label: dataitem[props.keys[0]],
 					value: dataitem[props.keys[1]],
 					leaf:
-						level == props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || false,
+						level >= props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || false,
 					raw: JSON.parse(JSON.stringify(dataitem)),
 				}))
 
@@ -215,7 +207,7 @@ const initOptions = (item, level = 0) => {
 						label: dataitem[props.keys[0]],
 						value: dataitem[props.keys[1]],
 						level:
-							level == props.maxLevel
+							level >= props.maxLevel
 								? true
 								: dataitem.isLeaf || dataitem.leaf || false,
 						raw: JSON.parse(JSON.stringify(dataitem)),
