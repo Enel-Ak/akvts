@@ -113,7 +113,7 @@ const setDefaultData = async (val) => {
 }
 
 const oneSelectLazyLoad = (node, resolve) => {
-	console.log('Cascade Component OneSelectLazyLoad: ', node)
+	console.log('Cascade Component OneSelectLazyLoad: ', node, props.maxLevel)
 	const {level, children} = node
 	let {url, method, data, query, beforeCompleted} = props.oneSelectProps
 
