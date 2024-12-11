@@ -219,8 +219,8 @@ const onFocus = (e) => {
 	}, 16.7)
 }
 
-const onBlur = () => {
-	console.log('Form Item Blur')
+const onBlur = (e) => {
+	console.log('Form Item Blur', e)
 	emits('blur')
 }
 
@@ -440,7 +440,7 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 							/>
 							<el-input-number
@@ -457,7 +457,7 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -499,7 +499,7 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -548,7 +548,7 @@ defineExpose({
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 								@keyup.native.enter="emits('focus', true)"
 							>
@@ -603,7 +603,7 @@ defineExpose({
 								:loading="loading"
 								:size="size"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 								style="flex: 1"
 							>
@@ -673,7 +673,7 @@ defineExpose({
 								start-placeholder="开始时间"
 								end-placeholder="结束时间"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 								@keydown.native.enter="emits('focus', true)"
 							/>
@@ -805,7 +805,7 @@ defineExpose({
 								:maxlength="item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus="onFocus"
+								@focus.stop="onFocus"
 								@blur="onBlur"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
