@@ -349,10 +349,6 @@ defineExpose({
 					</div>
 				</template>
 				<div class="form-items">
-					<!-- @change="onChange"
-						@changeFile="onChange"
-						@focus="onFocus"
-						@blur="onBlur" -->
 					<FormItem
 						:form="_form"
 						:formData="formData"
@@ -363,6 +359,10 @@ defineExpose({
 						:_expandArray="activeNames"
 						:_expandIndex="activeIndex + 1"
 						:_formLabelWidth="_formLabelWidth"
+						@change="onChange"
+						@changeFile="onFileChange"
+						@focus="onFocus"
+						@blur="onBlur"
 					>
 						<template v-for="child of formItems" #[`form-${child.prop}`]="scope">
 							<slot
