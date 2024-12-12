@@ -249,6 +249,12 @@ const options2 = ref([
 					{id: 'test2', defbcff: 1},
 				]"
 				:default-sort="{prop: 'abc', order: 'descending'}"
+				:buttons="[
+					{
+						label: '测试',
+						type: 'primary',
+					},
+				]"
 				:columns="[
 					{
 						prop: 'abc',
