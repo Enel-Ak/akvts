@@ -218,6 +218,7 @@ const options2 = ref([
 				<Icons icon-name="Lock"></Icons>
 				<Icons icon-name="Unlock"></Icons>
 				<Icons icon-name="Warning"></Icons>
+				<Icons icon-name="Warning2"></Icons>
 				<Icons icon-name="User"></Icons>
 				<Icons icon-name="ArrowRight"></Icons>
 				<Icons icon-name="ArrowRight2"></Icons>
