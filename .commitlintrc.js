@@ -19,5 +19,7 @@ export default {
 				'wip',
 			],
 		],
+		'type-empty': [2, 'never'], // 确保 type 不为空
+		'subject-empty': [2, 'never'], // 确保 subject 不为空
 	},
 }
