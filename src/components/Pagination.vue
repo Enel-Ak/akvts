@@ -43,6 +43,13 @@ const onSizeChange = (val) => {
 const onCurrentChange = (val) => {
 	emits('current-change', val)
 }
+
+watch(
+	() => props.pageSize,
+	(val) => {
+		__pageSize.value = val
+	}
+)
 </script>
 <template>
 	<div class="pageination-component" :style="{justifyContent: $props.justifyContent}">
@@ -50,8 +57,8 @@ const onCurrentChange = (val) => {
 		<el-pagination
 			v-bind="$attrs"
 			v-model:current-page="__currentPage"
-			v-model:page-size="__pageSize"
 			:total="$props.total"
+			:page-size="__pageSize"
 			:page-sizes="$props.pageSizes"
 			background
 			size="small"
