@@ -12,9 +12,10 @@ const emits = defineEmits([
 
 const props = defineProps({
 	data: {type: Array, default: () => []}, // { key,label,disabled, false }
-	collectOptions: {type: Array, default: () => []},
 
+	collectOptions: {type: Array, default: () => []},
 	collectPlaceholder: {type: String, default: '我的收藏'},
+
 	queryPlaceholder: {type: String, default: '请输入关键字搜索'},
 
 	enbableCollect: {type: Boolean, default: true},
