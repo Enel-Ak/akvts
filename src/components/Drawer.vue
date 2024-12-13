@@ -44,15 +44,9 @@ const onClickConfirm = () => {
 			</template>
 			<template #footer>
 				<slot name="footer">
-					<el-button @click="onClickClose">
-						<i class="icon i-ic-outline-cancel" mr-3px></i>
-						取消
-					</el-button>
+					<el-button @click="onClickClose"> 取消 </el-button>
 					<slot name="footer-botton"></slot>
-					<el-button type="primary" @click="onClickConfirm">
-						<i class="icon i-ic-round-task-alt" mr-3px></i>
-						确认
-					</el-button>
+					<el-button type="primary" @click="onClickConfirm"> 确认 </el-button>
 				</slot>
 			</template>
 		</el-drawer>
