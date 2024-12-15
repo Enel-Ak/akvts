@@ -1,14 +1,5 @@
 <script setup>
-import {
-	onActivated,
-	onDeactivated,
-	onMounted,
-	onUnmounted,
-	ref,
-	nextTick,
-	computed,
-	openBlock,
-} from 'vue'
+import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import Lock from './Lock.vue'
 
@@ -102,7 +93,7 @@ const _offset = computed(() => {
 const onExpand = () => {
 	if (!props.enableExpand) return
 	expandBlock.value = !expandBlock.value
-	emits('collapsed', expandBlock.value)
+	emits('collapsed', !expandBlock.value)
 }
 
 const onExpendContent = (isToggle = true) => {

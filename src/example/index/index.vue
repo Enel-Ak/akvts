@@ -128,6 +128,7 @@ const options2 = ref([
 	},
 ])
 // setTimeout(() => cascadeRef.value.clear(), 5000)
+const collapsed = ref(false)
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -160,6 +161,7 @@ const options2 = ref([
 			:enableExpandButton="true"
 			:enableExpand="true"
 			:expandVertical="false"
+			@collapsed="collapsed = $event"
 		>
 			<template #expand>
 				<!-- <Form
