@@ -16,6 +16,7 @@ const emits = defineEmits([
 	'contentExpand',
 	'heightChanged',
 	'fullScreenChanged',
+	'collapsed',
 	'clickBack',
 	'backMethod',
 ])
@@ -101,6 +102,7 @@ const _offset = computed(() => {
 const onExpand = () => {
 	if (!props.enableExpand) return
 	expandBlock.value = !expandBlock.value
+	emits('collapsed', expandBlock.value)
 }
 
 const onExpendContent = (isToggle = true) => {
@@ -437,6 +439,7 @@ defineExpose({
 		display: flex;
 		height: torem(40px);
 		padding: torem(10px);
+		transition: all 0.15s linear;
 		white-space: nowrap;
 
 		button {
