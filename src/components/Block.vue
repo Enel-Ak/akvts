@@ -1,5 +1,14 @@
 <script setup>
-import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
+import {
+	onActivated,
+	onDeactivated,
+	onMounted,
+	onUnmounted,
+	ref,
+	nextTick,
+	computed,
+	openBlock,
+} from 'vue'
 import {useRouter} from 'vue-router'
 import Lock from './Lock.vue'
 
@@ -17,10 +26,13 @@ const props = defineProps({
 	backQuery: {type: Object, default: () => ({})},
 
 	border: {type: Boolean, default: true},
+	collapsedText: {type: String, default: '展开'},
+	collapsedWidth: {type: [Number, String], default: '60px'},
 	height: {type: [Number, String], default: 0}, // 固定高度
 	autoHeight: {type: Boolean, default: false}, // 自适应高度
 
 	expand: {type: Boolean, default: true}, // 默认展开
+	expandVertical: {type: Boolean, default: true}, // 默认垂直展开, false 为水平展开
 	borderRadius: {type: [Number, String], default: 0},
 	enableExpand: {type: Boolean, default: false}, // 启用展开/收起
 	enableExpandButton: {type: Boolean, default: false}, // 启用展开/收起按钮, 最右侧图标
@@ -54,6 +66,9 @@ const expendContentOpen = ref(props.expandContent)
 const expendContentHeight = ref(0)
 const br = ref(props.borderRadius + 'px')
 const mb = ref(props.enableFixedHeight ? '0' : '20px')
+const cw = ref(
+	typeof props.collapsedWidth === 'string' ? props.collapsedWidth : props.collapsedWidth + 'px'
+)
 const frame = ref(JSON.parse(localStorage.getItem('containerFrame') || '[]'))
 
 let observer = null
@@ -248,7 +263,11 @@ defineExpose({
 		class="block-component"
 		ref="blockRef"
 		v-resize="onResize"
-		:class="{'full-screen': isFullScreen, 'no-border': !border}"
+		:class="{
+			'full-screen': isFullScreen,
+			'no-border': !border,
+			collapsed: !expandBlock && !expandVertical,
+		}"
 	>
 		<div class="block-title" @click.stop="onExpand">
 			<div class="topLeft" @click.stop>
@@ -274,10 +293,6 @@ defineExpose({
 
 			<el-button v-if="enableExpandContent" size="small" @click.stop="onExpendContent">
 				{{ expendContentOpen ? collapseContentText : expandContentText }}
-				<!-- <i
-					class="icon i-ic-baseline-expand-more"
-					:style="{rotate: expendContentOpen ? '180deg' : '0deg'}"
-				></i> -->
 				<Icons
 					icon-name="Expand"
 					:style="{rotate: expendContentOpen ? '180deg' : '0deg'}"
@@ -296,14 +311,19 @@ defineExpose({
 				:class="{open: expandBlock}"
 				v-if="enableExpandButton"
 			>
-				<i class="icon i-ic-baseline-keyboard-arrow-down"></i>
+				<Icons v-if="expandVertical" icon-name="Expand"></Icons>
+				<template v-else>
+					{{ expandBlock ? '收起' : '展开' }}
+				</template>
 			</el-button>
 		</div>
 
 		<div
 			class="block-content"
 			:class="{'auto-height': expandBlock && autoHeight, expand: expandBlock}"
-			:style="{height: !expandBlock ? 0 : height > 0 ? `${height}px` : `${contextHeight}px`}"
+			:style="{
+				height: !expandBlock ? 0 : height > 0 ? `${height}px` : `${contextHeight}px`,
+			}"
 		>
 			<div
 				v-if="enableExpandContent"
@@ -335,7 +355,13 @@ defineExpose({
 				</div>
 			</el-scrollbar>
 		</div>
-		<i v-if="!expandBlock" class="icon i-ic-baseline-more-horiz more"></i>
+
+		<Icons v-if="!expandBlock" icon-name="More" class="more"></Icons>
+
+		<div v-if="!expandBlock && !expandVertical" class="collapsed-controller" @click="onExpand">
+			<slot name="collapsed">{{ collapsedText }}</slot>
+		</div>
+
 		<Lock v-model="unLock"></Lock>
 	</div>
 </template>
@@ -350,6 +376,37 @@ defineExpose({
 
 	margin-bottom: v-bind(mb);
 	transition: all 0.15s linear;
+
+	&.collapsed {
+		width: v-bind(cw);
+		.block-title,
+		.more {
+			opacity: 0;
+			overflow: hidden;
+		}
+		.block-content {
+			height: 100% !important;
+		}
+
+		.collapsed-controller {
+			align-items: center;
+			bottom: 0;
+			cursor: pointer;
+			color: var(--z-main);
+			display: flex;
+			font-size: 16px;
+			height: 100%;
+			left: 0;
+			letter-spacing: 5px;
+			justify-content: center;
+			position: absolute;
+			top: 0;
+			right: 0;
+			text-orientation: upright;
+			writing-mode: vertical-rl;
+			width: 100%;
+		}
+	}
 
 	&.no-border {
 		border: none;

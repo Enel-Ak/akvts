@@ -136,8 +136,8 @@ const options2 = ref([
 		<template #header> header</template>
 		<template #aside> aside </template>
 		<template #top> </template>
-		<Toolbar></Toolbar>
-		<Cascade v-model="cascadeOneSelect2" :options="options2" :vertical="true"></Cascade>
+		<!-- <Toolbar></Toolbar> -->
+		<!-- <Cascade v-model="cascadeOneSelect2" :options="options2" :vertical="true"></Cascade> -->
 		<!-- <Cascade
 			ref="cascadeRef"
 			v-model="cascadeOneSelect"
@@ -153,10 +153,16 @@ const options2 = ref([
 
 		<!-- <el-button @click="dialog = true">下载</el-button> -->
 		<!-- <Import v-model="dialog" :on-error="onError" /> -->
-		<Dialog v-model="dialog"></Dialog>
-		<Block title="测试组件" :enableFixedHeight="true">
+		<!-- <Dialog v-model="dialog"></Dialog> -->
+		<Block
+			title="测试组件"
+			:enableFixedHeight="true"
+			:enableExpandButton="true"
+			:enableExpand="true"
+			:expandVertical="false"
+		>
 			<template #expand>
-				<Form
+				<!-- <Form
 					ref="formRef"
 					v-model="formTest"
 					:label-width="0"
@@ -185,10 +191,10 @@ const options2 = ref([
 					<template #form-abc-right>
 						<div>998</div>
 					</template>
-				</Form>
+				</Form> -->
 			</template>
-			<el-button @click="formRef.clear(true)">手动清空</el-button>
-			<FormItem
+			<!-- <el-button @click="formRef.clear(true)">手动清空</el-button> -->
+			<!-- <FormItem
 				v-model="formItemTest"
 				:items="[{prop: 'formItemTest', type: 'text', label: '测试'}]"
 			></FormItem>
@@ -202,7 +208,7 @@ const options2 = ref([
 						options: [{label: 'a', value: 1}],
 					},
 				]"
-			></FormItem>
+			></FormItem> -->
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
 				<Icons icon-name="Setting" size="16px"></Icons>
