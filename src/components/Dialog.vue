@@ -148,6 +148,7 @@ onMounted(() => {
 			<slot name="footer-button"></slot>
 			<slot name="footer" v-if="enableButton">
 				<el-button v-if="enableClose" @click="onClickClose">
+					<Icons icon-name="Clear2" color="var(--z-nav-color)" class="mg-right-5" />
 					{{ closeText }}
 				</el-button>
 				<slot name="footer-button-between"></slot>
@@ -155,6 +156,11 @@ onMounted(() => {
 					<el-popconfirm :title="popconfirmText" @confirm="onClickConfirm">
 						<template #reference>
 							<el-button v-if="enableConfirm" type="primary" :loading="loading">
+								<Icons
+									icon-name="Send"
+									color="var(--z-nav-color)"
+									class="mg-right-5"
+								/>
 								{{ confirmText }}
 							</el-button>
 						</template>
@@ -167,6 +173,7 @@ onMounted(() => {
 						@click="onClickConfirm"
 						:loading="loading"
 					>
+						<Icons icon-name="Send" color="var(--z-nav-color)" class="mg-right-5" />
 						{{ confirmText }}
 					</el-button>
 				</template>
