@@ -41,7 +41,6 @@ const emits = defineEmits([
 	'dialogClosed',
 	'dialogOpened',
 	'loading',
-	'update:data',
 ])
 const props = defineProps({
 	rowKey: {type: String, default: 'id'},
@@ -179,13 +178,7 @@ watch(
 	() => props.defaultTableData,
 	(newVal) => {
 		if (newVal) {
-			console.log('TableV2 Component defaultTableData Changed', newVal)
-
 			tableData.value = newVal
-			nextTick(() => {
-				setTableStatus(props.status)
-				// emits('update:data', tableData.value)
-			})
 		}
 	},
 	{deep: true}
@@ -242,12 +235,8 @@ const getList = () => {
 				const _next = (calldata) => {
 					tableData.value = calldata || items
 					total.value = totalCount
-
-					setTableStatus(props.status)
-
 					_loading.value = false
 					emits('loading', _loading.value)
-					emits('updated:data', tableData.value)
 					emits('completed', 'get')
 					nextTick(() => setFnWidth(true))
 					console.log('TableV2 Component Next Finish', tableData.value, total.value)
@@ -733,7 +722,6 @@ const setTableStatus = (status) => {
 			delete item.__enableEdit
 		})
 	}
-	setGroupWidth()
 }
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
