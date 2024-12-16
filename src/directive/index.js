@@ -1,16 +1,19 @@
 export const directives = (app) => {
-	const keyboard = (keycode, dom, fn) => {
+	const keyboard = (keycode, el, fn) => {
 		console.log('Directive keyboard:', keycode)
 		if (typeof fn !== 'function') {
 			return
 		}
-		document.addEventListener('keydown', (e) => {
+
+		const handleEvent = (e) => {
 			if (e.key === keycode) {
 				console.log('Directive Key Code:', e.key)
 				fn(e)
-				document.removeEventListener('keydown', fn)
+				// document.removeEventListener('keydown', handleEvent)
 			}
-		})
+		}
+		document.__pasteHandler = handleEvent
+		document.addEventListener('keydown', handleEvent)
 	}
 
 	// escape 指令
@@ -19,7 +22,7 @@ export const directives = (app) => {
 			keyboard('Escape', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', binding.value)
+			document.removeEventListener('keydown', document.__pasteHandler)
 		},
 	})
 
@@ -29,7 +32,7 @@ export const directives = (app) => {
 			keyboard('Enter', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', binding.value)
+			document.removeEventListener('keydown', document.__pasteHandler)
 		},
 	})
 
@@ -49,7 +52,7 @@ export const directives = (app) => {
 			keyboard('Backspace', el, binding.value)
 		},
 		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', el, binding.value)
+			document.removeEventListener('keydown', document.__pasteHandler)
 		},
 	})
 

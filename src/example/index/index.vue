@@ -56,7 +56,7 @@ const formRef = ref()
 const formTest = ref({})
 const formItemTest = ref(123)
 const formItemTest2 = ref('')
-const dialog = ref(true)
+const dialog = ref(false)
 const onFormChange = (val, item) => {
 	if (item.prop === 'abc2') {
 		formRef.value.clear()
@@ -129,6 +129,7 @@ const options2 = ref([
 ])
 // setTimeout(() => cascadeRef.value.clear(), 5000)
 const collapsed = ref(false)
+const tableData = ref([])
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -164,7 +165,7 @@ const collapsed = ref(false)
 			@collapsed="collapsed = $event"
 		>
 			<template #expand>
-				<!-- <Form
+				<Form
 					ref="formRef"
 					v-model="formTest"
 					:label-width="0"
@@ -193,7 +194,7 @@ const collapsed = ref(false)
 					<template #form-abc-right>
 						<div>998</div>
 					</template>
-				</Form> -->
+				</Form>
 			</template>
 			<!-- <el-button @click="formRef.clear(true)">手动清空</el-button> -->
 			<!-- <FormItem
@@ -247,17 +248,20 @@ const collapsed = ref(false)
 			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>
 			</Record> -->
+			<!-- :default-sort="{prop: 'abc', order: 'descending'}" -->
+
 			<TableV2
+				v-model:data="tableData"
 				:enableSelection="true"
 				:auto-height="true"
 				:form-column-count="2"
 				:enableLatestData="false"
 				:enable-row-edit="true"
+				status="edit"
 				:default-table-data="[
 					{id: 'test1', defbcff: 0},
 					{id: 'test2', defbcff: 1},
 				]"
-				:default-sort="{prop: 'abc', order: 'descending'}"
 				:buttons="[
 					{
 						label: '测试',
@@ -269,8 +273,8 @@ const collapsed = ref(false)
 						prop: 'abc',
 						label: '测试',
 						type: 'text',
-						sortable: true,
-						attrs: {width: 400},
+						// sortable: true,
+						attrs: {width: 140},
 						tooltip: true,
 					},
 					{
@@ -278,20 +282,41 @@ const collapsed = ref(false)
 						label: '测试2',
 
 						children: [
-							{prop: 'defa', label: 'defa', type: 'text'},
+							{
+								prop: 'defa',
+								label: 'defa',
+								type: 'select',
+								options: [{label: '测试', value: 1}],
+							},
 							{
 								prop: 'defb',
 								label: 'defb',
 								children: [
-									{prop: 'defba', label: 'defba', type: 'text'},
-									{prop: 'defbb', label: 'defbb', type: 'text'},
+									{prop: 'defba', label: 'defba', type: 'datetime'},
+									{
+										prop: 'defbb',
+										label: 'defbb',
+										type: 'radio',
+										options: [
+											{label: '男', value: 1},
+											{label: '女', value: 0},
+										],
+									},
 									{
 										prop: 'defbcf',
 										label: 'defbcf',
 										type: 'text',
 										children: [
-											{prop: 'defbaf', label: 'defba', type: 'text'},
-											{prop: 'defbbf', label: 'defbb', type: 'text'},
+											{
+												prop: 'defbaf',
+												label: 'defba',
+												type: 'checkbox',
+												options: [
+													{label: '男', value: 1},
+													{label: '女', value: 0},
+												],
+											},
+											{prop: 'defbbf', label: 'defbb', type: 'switch'},
 											{prop: 'defbcf', label: 'defbc', type: 'text'},
 										],
 									},
@@ -306,7 +331,11 @@ const collapsed = ref(false)
 						],
 					},
 				]"
-			></TableV2>
+			>
+				<template #defbcf="scoped">
+					<el-input v-model="scoped.row.defbcf" @click.stop />
+				</template>
+			</TableV2>
 		</Block>
 		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
 	</Container>
