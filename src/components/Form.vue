@@ -41,72 +41,6 @@ const props = defineProps({
 	doNotInitRemote: {type: Array, default: () => []},
 })
 
-watch(
-	() => props.modelValue,
-	(to) => {
-		if (Object.keys(to).length === 0) {
-			form.value = {}
-		} else {
-			Object.assign(form.value, {...stringToTimeRange(to)})
-		}
-	},
-	{deep: true}
-)
-
-watch(
-	() => props.defaultData,
-	(to) => {
-		if (to) {
-			console.log('Form Default Data Change', stringToTimeRange(to))
-			// form.value = {...stringToTimeRange(to)}
-			Object.assign(form.value, {...stringToTimeRange(to)})
-			// emits('update:modelValue', form.value)
-		}
-	},
-	{deep: true}
-)
-
-watch(
-	() => props.data,
-	(newVal) => {
-		if (JSON.stringify(newVal) !== JSON.stringify(formProps.value)) {
-			formProps.value = newVal
-			updateColunms()
-		}
-	},
-	{deep: true}
-)
-
-watch(
-	() => props.props,
-	(newVal) => {
-		if (JSON.stringify(newVal) !== JSON.stringify(formProps.value)) {
-			formProps.value = newVal
-			updateColunms()
-		}
-	},
-	{deep: true}
-)
-
-watch(
-	() => props.grid,
-	(newVal) => {
-		for (const key in props.rules) {
-			if (props.rules[key].length > 0) {
-				props.rules[key].forEach((m) => {
-					m.required = !newVal
-				})
-			}
-		}
-		setTimeout(() => {
-			if (!newVal) {
-				formRef.value.clearValidate()
-			}
-		}, 1)
-	},
-	{deep: true}
-)
-
 const isLoading = computed(() => props.loading)
 const formRef = ref()
 const formItemRef = ref()
@@ -321,6 +255,72 @@ const getIconSize = () => {
 	}
 	return size
 }
+
+watch(
+	() => props.modelValue,
+	(to) => {
+		if (Object.keys(to).length === 0) {
+			form.value = {}
+		} else {
+			Object.assign(form.value, {...stringToTimeRange(to)})
+		}
+	},
+	{deep: true, immediate: true}
+)
+
+watch(
+	() => props.defaultData,
+	(to) => {
+		if (to) {
+			console.log('Form Default Data Change', stringToTimeRange(to))
+			// form.value = {...stringToTimeRange(to)}
+			Object.assign(form.value, {...stringToTimeRange(to)})
+			// emits('update:modelValue', form.value)
+		}
+	},
+	{deep: true}
+)
+
+watch(
+	() => props.data,
+	(newVal) => {
+		if (JSON.stringify(newVal) !== JSON.stringify(formProps.value)) {
+			formProps.value = newVal
+			updateColunms()
+		}
+	},
+	{deep: true}
+)
+
+watch(
+	() => props.props,
+	(newVal) => {
+		if (JSON.stringify(newVal) !== JSON.stringify(formProps.value)) {
+			formProps.value = newVal
+			updateColunms()
+		}
+	},
+	{deep: true}
+)
+
+watch(
+	() => props.grid,
+	(newVal) => {
+		for (const key in props.rules) {
+			if (props.rules[key].length > 0) {
+				props.rules[key].forEach((m) => {
+					m.required = !newVal
+				})
+			}
+		}
+		setTimeout(() => {
+			if (!newVal) {
+				formRef.value.clearValidate()
+			}
+		}, 1)
+	},
+	{deep: true}
+)
 
 onMounted(() => {
 	console.log('Form Mounted')

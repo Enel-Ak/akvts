@@ -53,7 +53,7 @@ const onSubmit = (data) => {
 	setTimeout(() => (loaidng.value = false), 3000)
 }
 const formRef = ref()
-const formTest = ref({})
+const formTest = ref({abc: '780'})
 const formItemTest = ref(123)
 const formItemTest2 = ref('')
 const dialog = ref(false)
