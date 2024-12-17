@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from 'vue'
+import {onMounted, ref} from 'vue'
 import {activated} from '@/hooks/useWasm'
 import Record from '../../components/Record.vue'
 import Toolbar from '../../components/Toolbar.vue'
@@ -130,6 +130,13 @@ const options2 = ref([
 // setTimeout(() => cascadeRef.value.clear(), 5000)
 const collapsed = ref(false)
 const tableData = ref([])
+const tableDefalutData = ref([])
+onMounted(() => {
+	tableDefalutData.value = [
+		{id: 'test1', defbcff: 0},
+		{id: 'test2', defbcff: 1},
+	]
+})
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -258,10 +265,7 @@ const tableData = ref([])
 				:enableLatestData="false"
 				:enable-row-edit="true"
 				status="edit"
-				:default-table-data="[
-					{id: 'test1', defbcff: 0},
-					{id: 'test2', defbcff: 1},
-				]"
+				:default-table-data="tableDefalutData"
 				:buttons="[
 					{
 						label: '测试',
@@ -332,8 +336,14 @@ const tableData = ref([])
 					},
 				]"
 			>
+				<template #defbb="scoped">
+					{{ scoped.row.defbb ? '男' : '女' }}
+				</template>
+				<template #defbaf="scoped">
+					{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
+				</template>
 				<template #defbcf="scoped">
-					<el-input v-model="scoped.row.defbcf" @click.stop />
+					<el-input size="small" v-model="scoped.row.defbcf" @click.stop />
 				</template>
 			</TableV2>
 		</Block>

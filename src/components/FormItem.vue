@@ -145,6 +145,14 @@ const onChange = (val, item) => {
 	emits('change', val, item)
 }
 
+const onFocus = () => {
+	emits('focus')
+}
+
+const onBlur = () => {
+	emits('blur')
+}
+
 const toBufferString = (buffer) => {
 	let binary = ''
 	let bytes = new Uint8Array(buffer)
@@ -287,13 +295,13 @@ watch(
 	() => props.modelValue,
 	(val) => {
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
-		console.log('Form Item modelValue Change: ', props.items, val, typeof val)
+		// console.log('Form Item modelValue Change: ', props.items, val, typeof val)
 		let newVal = val
 		if (props.items.length === 1) {
 			if (props.items[0].remoteInit && props.items[0].remoteUrl && newVal) {
 				remoteMethod(newVal, props.items[0], () => {
 					Object.assign(_form.value, {[props.items[0].prop]: newVal})
-					console.log('Form Item modelValue Remote Init Complete: ', _form.value, newVal)
+					// console.log('Form Item modelValue Remote Init Complete: ', _form.value, newVal)
 				})
 			} else {
 				if (
@@ -437,7 +445,8 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								@click.stop
 							/>
 							<el-input-number
@@ -454,7 +463,8 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -497,7 +507,8 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -547,7 +558,8 @@ defineExpose({
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								@click.stop
 								@keyup.enter="emits('enter')"
 							>
@@ -603,7 +615,8 @@ defineExpose({
 								:loading="loading"
 								:size="size"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								style="flex: 1"
 							>
 								<el-option
@@ -673,7 +686,8 @@ defineExpose({
 								start-placeholder="开始时间"
 								end-placeholder="结束时间"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								@click.stop
 								@keydown.enter="emits('enter')"
 							/>
@@ -718,7 +732,8 @@ defineExpose({
 									:name="option.name"
 									:disabled="option.disabled"
 									:size="size"
-									@focus.stop
+									@focus.stop="onFocus"
+									@blur.stop="onBlur"
 									@click.stop
 								>
 									{{ option.label }}
@@ -764,7 +779,8 @@ defineExpose({
 									:value="option.value"
 									:disabled="item.disabled"
 									:size="size"
-									@focus.stop
+									@focus.stop="onFocus"
+									@blur.stop="onBlur"
 									@click.stop
 								>
 									{{ option.label }}
@@ -812,7 +828,8 @@ defineExpose({
 								:maxlength="item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop
+								@focus.stop="onFocus"
+								@blur.stop="onBlur"
 								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -849,7 +866,8 @@ defineExpose({
 							:inactive-text="item.inactiveText"
 							:size="size"
 							@change="onChange($event, item)"
-							@focus.stop
+							@focus.stop="onFocus"
+							@blur.stop="onBlur"
 							@click.stop
 						/>
 						<slot :name="`form-${item.prop}-right`"></slot>

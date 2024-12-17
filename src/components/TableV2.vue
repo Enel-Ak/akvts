@@ -179,6 +179,7 @@ watch(
 	(newVal) => {
 		if (newVal) {
 			tableData.value = newVal
+			nextTick(() => props.status === 'edit' && setTableStatus(props.status))
 		}
 	},
 	{deep: true}
@@ -238,7 +239,10 @@ const getList = () => {
 					_loading.value = false
 					emits('loading', _loading.value)
 					emits('completed', 'get')
-					nextTick(() => setFnWidth(true))
+					nextTick(() => {
+						setTableStatus(props.status)
+						setFnWidth(true)
+					})
 					console.log('TableV2 Component Next Finish', tableData.value, total.value)
 				}
 
@@ -457,11 +461,11 @@ const onClickRow = (row, column) => {
 
 const onDoubleClickRow = (row, column, event) => {
 	if (props.enableRowEdit) {
-		console.log('TableV2 Component Double Click Row', row, column, event)
 		clickTimer && clearTimeout(clickTimer)
 		row.__enableEdit = true
 		currentEditRow.value = row
 		setGroupWidth()
+		console.log('TableV2 Component Double Click Row', row, column, event)
 	}
 }
 
@@ -714,12 +718,12 @@ const setEval = (str, row) => {
 
 const setTableStatus = (status) => {
 	if (status === TableStatusEnum.Edit) {
-		tableData.value.forEach((item) => {
-			item.__enableEdit = true
+		tableData.value.forEach((row) => {
+			row.__enableEdit = true
 		})
 	} else {
-		tableData.value.forEach((item) => {
-			delete item.__enableEdit
+		tableData.value.forEach((row) => {
+			delete row.__enableEdit
 		})
 	}
 }
@@ -942,32 +946,33 @@ defineExpose({
 					:enableRowEdit="currentEditRow !== null"
 				>
 					<template v-for="slot of customSlots" #[slot]="scope">
-						<slot :name="slot" v-bind="scope" :form-item="getFormItemByProp(slot)">
-							<template v-if="scope.row.__enableEdit && enableRowEdit">
-								<FormItem
-									v-model="scope.row[slot]"
-									:items="[getFormItemByProp(slot)]"
-									:is-row-edit="true"
-									:class="{
-										'has-changed': currentEditColumns.some(
-											(item) =>
-												item.rid === scope.row.id && item.prop === slot
-										),
-									}"
-									:_form-label-width="0"
-									@change="onTableFormRowEditChange"
-									@focus="onTableFormItemFocus(scope.row)"
-									@blur="onTableFormItemBlur(scope.row)"
-									size="small"
-								></FormItem>
-							</template>
-							<template v-else>
-								{{
-									typeof scope.row[slot] === 'number'
-										? scope.row[slot]
-										: scope.row[slot] || '-'
-								}}
-							</template>
+						<FormItem
+							v-if="scope.row.__enableEdit && enableRowEdit"
+							v-model="scope.row[slot]"
+							:items="[getFormItemByProp(slot)]"
+							:is-row-edit="true"
+							:class="{
+								'has-changed': currentEditColumns.some(
+									(item) => item.rid === scope.row.id && item.prop === slot
+								),
+							}"
+							:_form-label-width="0"
+							@change="onTableFormRowEditChange"
+							@focus="onTableFormItemFocus(scope.row)"
+							@blur="onTableFormItemBlur(scope.row)"
+							size="small"
+						></FormItem>
+						<slot
+							v-else
+							:name="slot"
+							v-bind="scope"
+							:form-item="getFormItemByProp(slot)"
+						>
+							{{
+								typeof scope.row[slot] === 'number'
+									? scope.row[slot]
+									: scope.row[slot] || '-'
+							}}
 						</slot>
 					</template>
 				</TableColumn>
