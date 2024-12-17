@@ -10,11 +10,12 @@ const emits = defineEmits([
 	'update:modelValue',
 	'focus',
 	'blur',
+	'enter',
 ])
 const props = defineProps({
-	modelValue: {type: [String, Number, Array, Boolean], default: () => ''},
+	modelValue: {type: [String, Number, Array, Boolean], default: () => ''}, // 单独使用FormItem组件时, 传入的modelValue
 	items: {type: Object, default: () => []}, // 表单项配置
-	form: {type: Object, default: () => ({})}, // 表单对象, 用于双向绑定
+	form: {type: Object, default: () => ({})}, // 表单对象, 用于双向绑定 form 组件表单数据
 	formData: {type: Object, default: () => ({})}, // 表单项数据, 接口数据, 用于 TableV2 组件新增/编辑表单, 不是行内编辑
 	formItems: {type: Array, default: () => []},
 	size: {type: String, default: 'default'},
@@ -212,18 +213,6 @@ const onCheckIsLastItem = (item, index) => {
 	)
 }
 
-const onFocus = (e) => {
-	setTimeout(() => {
-		console.log('Form Item Focus', e)
-		emits('focus')
-	}, 16.7)
-}
-
-const onBlur = (e) => {
-	console.log('Form Item Blur', e)
-	emits('blur')
-}
-
 const getFormLabel = (item) => {
 	let label = ''
 	if (item.hasOwnProperty('label')) {
@@ -298,15 +287,23 @@ watch(
 	() => props.modelValue,
 	(val) => {
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
-		console.log('Form Item modelValue Change: ', props.items, val)
+		console.log('Form Item modelValue Change: ', props.items, val, typeof val)
+		let newVal = val
 		if (props.items.length === 1) {
-			if (props.items[0].remoteInit && props.items[0].remoteUrl && val) {
-				remoteMethod(val, props.items[0], () => {
-					Object.assign(_form.value, {[props.items[0].prop]: val})
-					console.log('Form Item modelValue Remote Init Complete: ', _form.value, val)
+			if (props.items[0].remoteInit && props.items[0].remoteUrl && newVal) {
+				remoteMethod(newVal, props.items[0], () => {
+					Object.assign(_form.value, {[props.items[0].prop]: newVal})
+					console.log('Form Item modelValue Remote Init Complete: ', _form.value, newVal)
 				})
 			} else {
-				Object.assign(_form.value, {[props.items[0].prop]: val})
+				if (
+					props.items[0].type === 'checkbox' &&
+					typeof newVal === 'string' &&
+					!newVal.length
+				) {
+					newVal = []
+				}
+				Object.assign(_form.value, {[props.items[0].prop]: newVal})
 			}
 		}
 	},
@@ -361,8 +358,6 @@ defineExpose({
 						:_formLabelWidth="_formLabelWidth"
 						@change="onChange"
 						@changeFile="onFileChange"
-						@focus="onFocus"
-						@blur="onBlur"
 					>
 						<template v-for="child of formItems" #[`form-${child.prop}`]="scope">
 							<slot
@@ -442,8 +437,8 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
+								@focus.stop
+								@click.stop
 							/>
 							<el-input-number
 								v-else-if="item.inputType === 'number'"
@@ -459,8 +454,8 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
+								@focus.stop
+								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -502,8 +497,8 @@ defineExpose({
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
+								@focus.stop
+								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -552,9 +547,9 @@ defineExpose({
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
-								@keyup.native.enter="emits('focus', true)"
+								@focus.stop
+								@click.stop
+								@keyup.enter="emits('enter')"
 							>
 								<el-option
 									v-for="option of item.options"
@@ -608,8 +603,7 @@ defineExpose({
 								:loading="loading"
 								:size="size"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
+								@focus.stop
 								style="flex: 1"
 							>
 								<el-option
@@ -679,9 +673,9 @@ defineExpose({
 								start-placeholder="开始时间"
 								end-placeholder="结束时间"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
-								@keydown.native.enter="emits('focus', true)"
+								@focus.stop
+								@click.stop
+								@keydown.enter="emits('enter')"
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -724,6 +718,8 @@ defineExpose({
 									:name="option.name"
 									:disabled="option.disabled"
 									:size="size"
+									@focus.stop
+									@click.stop
 								>
 									{{ option.label }}
 								</el-checkbox>
@@ -768,6 +764,8 @@ defineExpose({
 									:value="option.value"
 									:disabled="item.disabled"
 									:size="size"
+									@focus.stop
+									@click.stop
 								>
 									{{ option.label }}
 								</el-radio>
@@ -814,8 +812,8 @@ defineExpose({
 								:maxlength="item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
-								@focus.stop="onFocus"
-								@blur="onBlur"
+								@focus.stop
+								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
@@ -851,6 +849,8 @@ defineExpose({
 							:inactive-text="item.inactiveText"
 							:size="size"
 							@change="onChange($event, item)"
+							@focus.stop
+							@click.stop
 						/>
 						<slot :name="`form-${item.prop}-right`"></slot>
 					</slot>
@@ -889,8 +889,6 @@ defineExpose({
 							:oneSelect="item.cascadeOneSelect"
 							:oneSelectProps="item.cascadeOneSelectProps"
 							@change="onChange($event, item)"
-							@focus="onFocus"
-							@blur="onBlur"
 						></Cascade>
 						<slot :name="`form-${item.prop}-right`"></slot>
 					</slot>

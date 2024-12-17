@@ -33,7 +33,7 @@ const props = defineProps({
 	enableButton: {type: Boolean, default: true},
 	enableReset: {type: Boolean, default: true},
 	enableClear: {type: Boolean, default: true},
-	enableEnterPush: {type: Boolean, default: true},
+	enableEnter: {type: Boolean, default: true},
 
 	columnCount: {type: [Number, String], default: 1},
 	size: {type: String, default: 'default'},
@@ -108,7 +108,6 @@ watch(
 )
 
 const isLoading = computed(() => props.loading)
-const isFocus = ref(false)
 const formRef = ref()
 const formItemRef = ref()
 const form = ref(props.modelValue)
@@ -169,16 +168,6 @@ const onSubmit = () => {
 			emits('submit', timeRangeToString(formValue))
 		}
 	})
-}
-
-const onEnterSubmit = () => {
-	if (props.enableEnterPush && isFocus.value && !isLoading.value) {
-		// 在 form change 之后执行
-		setTimeout(() => {
-			console.log('Form Enter Submit', isFocus.value)
-			onSubmit()
-		}, 16.7)
-	}
 }
 
 const onResetFields = () => {
@@ -323,21 +312,6 @@ const onFormChange = (val, item) => {
 	emits('change', val, item)
 }
 
-const onFocus = (isFocusEnter = false) => {
-	isFocus.value = true
-	console.log('Form Focus', isFocus.value)
-	if (isFocusEnter) {
-		onEnterSubmit()
-	}
-	emits('focus')
-}
-
-const onBlur = () => {
-	isFocus.value = false
-	console.log('Form Blur', isFocus.value)
-	emits('blur')
-}
-
 const getIconSize = () => {
 	let size = 16
 	if (props.size === 'large') {
@@ -398,8 +372,8 @@ defineExpose({
 </script>
 <template>
 	<div
+		v-action:enter="onSubmit"
 		class="form-component"
-		v-enter="onEnterSubmit"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
 	>
 		<el-form
@@ -455,8 +429,7 @@ defineExpose({
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
 					@changeFile="onFormChange"
-					@focus="onFocus"
-					@blur="onBlur"
+					@enter="onSubmit"
 				>
 					<template v-for="item of formItems" #[`form-${item.prop}`]="scope">
 						<!-- row: 表格内, value: 普通表单 -->

@@ -56,6 +56,26 @@ export const directives = (app) => {
 		},
 	})
 
+	// 按键指令
+	app.directive('action', {
+		mounted(el, binding) {
+			const arg = binding.arg.charAt(0).toUpperCase() + binding.arg.slice(1)
+			const handler = (event) => {
+				if (event.key === arg && el.contains(event.target)) {
+					console.log('Directive action', arg)
+					binding.value(event)
+				}
+			}
+
+			el.__keyHandler__ = handler
+			document.addEventListener('keydown', handler)
+		},
+		unmounted(el, binding) {
+			// 移除事件监听
+			document.removeEventListener('keydown', el.__keyHandler__)
+		},
+	})
+
 	// 粘贴
 	app.directive('paste', {
 		mounted(el, binding) {
