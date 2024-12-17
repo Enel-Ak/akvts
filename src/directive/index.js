@@ -68,10 +68,12 @@ export const directives = (app) => {
 			}
 
 			el.__keyHandler__ = handler
+			el.setAttribute('action', binding.arg)
 			document.addEventListener('keydown', handler)
 		},
 		unmounted(el, binding) {
 			// 移除事件监听
+			el.removeAttribute('action')
 			document.removeEventListener('keydown', el.__keyHandler__)
 		},
 	})
