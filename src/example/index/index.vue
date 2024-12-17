@@ -53,7 +53,7 @@ const onSubmit = (data) => {
 	setTimeout(() => (loaidng.value = false), 3000)
 }
 const formRef = ref()
-const formTest = ref({abc: '780'})
+const formTest = ref({abc21: 0})
 const formItemTest = ref(123)
 const formItemTest2 = ref('')
 const dialog = ref(false)
@@ -180,18 +180,24 @@ onMounted(() => {
 						{prop: 'abc', label: '测试', type: 'text', labelWidth: '100px'},
 						{prop: 'abc3', label: '测试', type: 'datetimerange'},
 						{
-							prop: 'abc2',
-							label: '测试2',
-							type: 'select',
-							options: [
-								{label: '测试', value: '1'},
-								{label: '测试2', value: '2'},
-								{label: '测试3', value: '3'},
-							],
-							attrs: {filterable: false, multiple: false, multipleLimit: 2},
+							prop: 'abc21',
+							label: '测试21',
+							type: 'radio',
+							options: [{label: '测试', value: 0}],
 						},
+						// {
+						// 	prop: 'abc2',
+						// 	label: '测试2',
+						// 	type: 'select',
+						// 	options: [
+						// 		{label: '测试', value: '1'},
+						// 		{label: '测试2', value: '2'},
+						// 		{label: '测试3', value: '3'},
+						// 	],
+						// 	attrs: {filterable: false, multiple: false, multipleLimit: 2},
+						// },
 					]"
-					:enableEnterPush="true"
+					:enable-enter="false"
 					:loading="loaidng"
 					:do-not-clear="['abc2']"
 					@change="onFormChange"

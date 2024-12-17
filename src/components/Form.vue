@@ -256,6 +256,12 @@ const getIconSize = () => {
 	return size
 }
 
+const onEnter = () => {
+	if (props.enableEnter) {
+		onSubmit()
+	}
+}
+
 watch(
 	() => props.modelValue,
 	(to) => {
@@ -372,7 +378,7 @@ defineExpose({
 </script>
 <template>
 	<div
-		v-action:enter="onSubmit"
+		v-action:enter="onEnter"
 		class="form-component"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
 	>
