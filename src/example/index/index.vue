@@ -264,7 +264,7 @@ onMounted(() => {
 				:form-column-count="2"
 				:enableLatestData="false"
 				:enable-row-edit="true"
-				status="edit"
+				status="none"
 				:default-table-data="tableDefalutData"
 				:buttons="[
 					{

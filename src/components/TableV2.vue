@@ -859,7 +859,7 @@ defineExpose({
 })
 </script>
 <template>
-	<div class="table-component">
+	<div class="table-component" v-action:escape="onTableRowEditCancel">
 		<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
 			<div class="left">
 				<slot name="toolbarBegin"> </slot>

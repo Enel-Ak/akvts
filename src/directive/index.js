@@ -13,6 +13,7 @@ export const directives = (app) => {
 	app.directive('action', {
 		mounted(el, binding) {
 			const arg = binding.arg.charAt(0).toUpperCase() + binding.arg.slice(1)
+
 			const handler = (event) => {
 				if (event.key === arg && el.contains(event.target)) {
 					console.log('Directive action', arg)
