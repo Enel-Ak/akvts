@@ -332,7 +332,7 @@ watch(
 
 onMounted(() => {
 	console.log('Form Mounted')
-	// nextTick(() => setDefault())
+	nextTick(() => setDefault())
 })
 
 defineExpose({
