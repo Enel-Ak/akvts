@@ -1,41 +1,4 @@
 export const directives = (app) => {
-	const keyboard = (keycode, el, fn) => {
-		console.log('Directive keyboard:', keycode)
-		if (typeof fn !== 'function') {
-			return
-		}
-
-		const handleEvent = (e) => {
-			if (e.key === keycode) {
-				console.log('Directive Key Code:', e.key)
-				fn(e)
-				// document.removeEventListener('keydown', handleEvent)
-			}
-		}
-		document.__pasteHandler = handleEvent
-		document.addEventListener('keydown', handleEvent)
-	}
-
-	// escape 指令
-	app.directive('escape', {
-		mounted(el, binding, vnode, prevVnode) {
-			keyboard('Escape', el, binding.value)
-		},
-		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', document.__pasteHandler)
-		},
-	})
-
-	// enter 指令
-	app.directive('enter', {
-		mounted(el, binding, vnode, prevVnode) {
-			keyboard('Enter', el, binding.value)
-		},
-		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', document.__pasteHandler)
-		},
-	})
-
 	// resize 指令
 	app.directive('resize', {
 		mounted(el, binding, vnode, prevVnode) {
@@ -43,16 +6,6 @@ export const directives = (app) => {
 		},
 		unmounted(el, binding, vnode, prevVnode) {
 			window.removeEventListener('resize', binding.value)
-		},
-	})
-
-	// 删除键
-	app.directive('backspace', {
-		mounted(el, binding, vnode, prevVnode) {
-			keyboard('Backspace', el, binding.value)
-		},
-		unmounted(el, binding, vnode, prevVnode) {
-			document.removeEventListener('keydown', document.__pasteHandler)
 		},
 	})
 
