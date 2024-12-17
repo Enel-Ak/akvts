@@ -30,6 +30,7 @@ const props = defineProps({
 
 	isClear: {type: Boolean, default: false},
 
+	_fromform: {type: Boolean, default: false},
 	_formLabelWidth: {type: [String, Number], default: '100px'},
 	_expandArray: {type: Array, default: () => []},
 	_expandIndex: {type: Number, default: 0},
@@ -295,9 +296,10 @@ watch(
 	() => props.modelValue,
 	(val) => {
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
-		// console.log('Form Item modelValue Change: ', props.items, val, typeof val)
+		// console.log('Form Item modelValue Change: ', props.items, val, _form.value)
 		let newVal = val
-		if (props.items.length === 1) {
+		// 表单内部不启用双向绑定 _fromform: true
+		if (props.items.length === 1 && !props._fromform) {
 			if (props.items[0].remoteInit && props.items[0].remoteUrl && newVal) {
 				remoteMethod(newVal, props.items[0], () => {
 					Object.assign(_form.value, {[props.items[0].prop]: newVal})

@@ -44,7 +44,7 @@ const props = defineProps({
 const isLoading = computed(() => props.loading)
 const formRef = ref()
 const formItemRef = ref()
-const form = ref(props.modelValue)
+const form = ref({})
 const formProps = ref(props.props)
 const formItems = ref([])
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
@@ -264,7 +264,9 @@ const onEnter = () => {
 
 watch(
 	() => props.modelValue,
-	(to) => {
+	(to, from) => {
+		console.log('Form Model Value Change', to, from)
+
 		if (Object.keys(to).length === 0) {
 			form.value = {}
 		} else {
@@ -330,7 +332,7 @@ watch(
 
 onMounted(() => {
 	console.log('Form Mounted')
-	nextTick(() => setDefault())
+	// nextTick(() => setDefault())
 })
 
 defineExpose({
@@ -431,6 +433,7 @@ defineExpose({
 					:autoRemote="autoRemote"
 					:doNotInitRemote="doNotInitRemote"
 					:isClear="isClear"
+					:_fromform="true"
 					:_formLabelWidth="labelWidth"
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
