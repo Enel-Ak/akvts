@@ -1264,7 +1264,7 @@ defineExpose({
 			display: flex;
 			flex-wrap: wrap;
 			label {
-				margin-right: 20px;
+				margin-right: 14px;
 			}
 		}
 	}
