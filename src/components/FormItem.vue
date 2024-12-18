@@ -732,7 +732,7 @@ defineExpose({
 									v-for="option of item.options"
 									:value="option.value"
 									:name="option.name"
-									:disabled="option.disabled"
+									:disabled="option.disabled || item.disabled"
 									:size="size"
 									@focus.stop="onFocus"
 									@blur.stop="onBlur"
