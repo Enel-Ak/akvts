@@ -1254,10 +1254,13 @@ defineExpose({
 		background-color: var(--z-bg-secondary) !important;
 	}
 
-	:deep(.form-item) > * {
-		width: 100% !important;
-		:deep(.el-checkbox-group),
-		:deep(.el-radio-group) {
+	:deep(.form-item) {
+		> * {
+			width: 100% !important;
+		}
+
+		.el-checkbox-group,
+		.el-radio-group {
 			display: flex;
 			flex-wrap: wrap;
 			label {
