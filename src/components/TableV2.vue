@@ -1256,6 +1256,14 @@ defineExpose({
 
 	:deep(.form-item) > * {
 		width: 100% !important;
+		.el-checkbox-group,
+		.el-radio-group {
+			display: flex;
+			flex-wrap: wrap;
+			label {
+				margin-right: 20px;
+			}
+		}
 	}
 }
 
