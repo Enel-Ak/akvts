@@ -54,6 +54,7 @@ const props = defineProps({
 	url: String,
 	reqData: {type: Object, default: () => ({})},
 	reqParams: {type: Object, default: () => ({})},
+	method: {type: String, default: 'GET'},
 	headers: {type: Object, default: () => ({})},
 	defaultTableData: {type: Object, default: () => []},
 	buttons: {type: Array, default: () => []},
@@ -179,7 +180,9 @@ watch(
 	(newVal) => {
 		if (newVal) {
 			tableData.value = newVal
-			nextTick(() => props.status === 'edit' && setTableStatus(props.status))
+			nextTick(() => {
+				props.status === 'edit' && setTableStatus(props.status)
+			})
 		}
 	},
 	{deep: true}
@@ -226,8 +229,9 @@ const getList = () => {
 		axios
 			.request({
 				url: props.url,
-				method: 'GET',
+				method: props.method,
 				params: props.reqParams,
+				data: props.reqData,
 				headers: props.headers,
 			})
 			.then((res) => {
@@ -238,7 +242,7 @@ const getList = () => {
 					total.value = totalCount
 					_loading.value = false
 					emits('loading', _loading.value)
-					emits('completed', 'get')
+					emits('completed', props.method)
 					nextTick(() => {
 						setTableStatus(props.status)
 						setFnWidth(true)
@@ -726,6 +730,7 @@ const setTableStatus = (status) => {
 			delete row.__enableEdit
 		})
 	}
+	setGroupWidth()
 }
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
