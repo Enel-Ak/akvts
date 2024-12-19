@@ -267,7 +267,7 @@ onMounted(() => {
 				:form-column-count="2"
 				:enableLatestData="false"
 				:enable-row-edit="true"
-				status="edit"
+				status="none"
 				:default-table-data="tableDefalutData"
 				:buttons="[
 					{
@@ -339,6 +339,8 @@ onMounted(() => {
 					},
 				]"
 			>
+				<template #header-abc="scoped">123</template>
+				<template #abc="scoped">{{ scoped }}</template>
 				<template #defbb="scoped">
 					{{ scoped.row.defbb ? '男' : '女' }}
 				</template>

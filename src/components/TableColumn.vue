@@ -30,7 +30,7 @@ const col = props.col
 		ellipsis
 	>
 		<template #header>
-			<slot :name="'header-' + col.prop" :row="col">
+			<slot :name="`header-${col.prop}`" :row="col">
 				<template v-if="col.tooltip">
 					<el-tooltip :content="col.label" placement="top-start">
 						{{ col.label }}
@@ -40,13 +40,7 @@ const col = props.col
 			</slot>
 		</template>
 		<template #default="scope">
-			<slot :name="col.prop" :row="scope.row" :index="scope.$index">
-				{{
-					typeof scope.row[col.prop] === 'number'
-						? typeof scope.row[col.prop]
-						: typeof scope.row[col.prop] || '-'
-				}}
-			</slot>
+			<slot :name="col.prop" :row="scope.row" :index="scope.$index"></slot>
 		</template>
 	</el-table-column>
 
@@ -65,6 +59,9 @@ const col = props.col
 		ellipsis
 	>
 		<TableColumn v-for="t in col.children" :key="t.label" :col="t" :customSlots="customSlots">
+			<template v-for="slot in customSlots" #[`header-${slot}`]="scope">
+				<slot :name="`header-${slot}`" :v-bind="scope" />
+			</template>
 			<template v-for="slot in customSlots" #[slot]="scope">
 				<slot :name="slot" v-bind="scope" />
 			</template>

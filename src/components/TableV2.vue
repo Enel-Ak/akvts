@@ -950,6 +950,9 @@ defineExpose({
 					:customSlots="customSlots"
 					:enableRowEdit="currentEditRow !== null"
 				>
+					<template v-for="slot of customSlots" #[`header-${slot}`]="scope">
+						<slot :name="`header-${slot}`" v-bind="scope"></slot>
+					</template>
 					<template v-for="slot of customSlots" #[slot]="scope">
 						<FormItem
 							v-if="scope.row.__enableEdit && enableRowEdit"
