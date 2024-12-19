@@ -426,7 +426,7 @@ const onNodeClick = (info) => {
 const onDblClickNode = (info) => {
 	console.log('Flow node dbl click: ', info)
 	if (props.disabled) return
-	setCaretAt(info.node, info.event.target)
+	// setCaretAt(info.node, info.event.target)
 	emits('nodeDblClick', info)
 }
 
