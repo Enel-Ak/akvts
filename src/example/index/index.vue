@@ -131,6 +131,9 @@ const options2 = ref([
 const collapsed = ref(false)
 const tableData = ref([])
 const tableDefalutData = ref([])
+const onEditChange = (val, record, row, column) => {
+	console.log('onEditChange', val, record, row, column)
+}
 onMounted(() => {
 	tableDefalutData.value = [
 		{id: 'test1', defbcff: 0, abc: 1},
@@ -267,8 +270,9 @@ onMounted(() => {
 				:form-column-count="2"
 				:enableLatestData="false"
 				:enable-row-edit="true"
-				status="none"
+				status="edit"
 				:default-table-data="tableDefalutData"
+				@edit-change="onEditChange"
 				:buttons="[
 					{
 						label: '测试',
@@ -279,7 +283,7 @@ onMounted(() => {
 					{
 						prop: 'abc',
 						label: '测试',
-
+						type: 'text',
 						// sortable: true,
 						attrs: {align: 'left'},
 						// tooltip: false,

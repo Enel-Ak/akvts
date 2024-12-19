@@ -30,6 +30,7 @@ const emits = defineEmits([
 	'clickRow',
 	'clickButton',
 	'selectionChange',
+	'editChange',
 	'sortChange',
 	'formReset',
 	'formClear',
@@ -538,6 +539,16 @@ const onTableFormRowEditChange = (val, item) => {
 		currentEditColumns.value.push({rid: currentEditRow.value.id, prop: item.prop})
 	}
 
+	console.log(
+		'Table Component Edit Rows:',
+		val,
+		currentEditColumns.value,
+		currentEditRows.value,
+		item
+	)
+
+	emits('editChange', val, currentEditColumns.value, currentEditRow.value, item)
+
 	nextTick(() => {
 		currentEidtEls.value = document.querySelectorAll('.table-component .has-changed')
 		currentEidtEls.value.forEach((el) => {
@@ -547,14 +558,6 @@ const onTableFormRowEditChange = (val, item) => {
 			}
 		})
 	})
-
-	console.log(
-		'Table Component Edit Rows:',
-		val,
-		item,
-		currentEditRows.value,
-		currentEditColumns.value
-	)
 }
 
 const onTableRowEditSaveAll = () => {
@@ -991,9 +994,8 @@ defineExpose({
 			<el-table-column
 				v-if="
 					((enableEdit || enableDelete || buttons.length > 0) && !disableTable) ||
-					((buttons.some((f) => f.important) ||
-						buttons.every((f) => (f.hasOwnProperty('show') ? f.show : true))) &&
-						$slots.buttons)
+					buttons.some((f) => f.important) ||
+					$slots.buttons
 				"
 				label="操作"
 				align="center"
