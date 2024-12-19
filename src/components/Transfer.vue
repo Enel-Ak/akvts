@@ -18,6 +18,7 @@ const props = defineProps({
 
 	queryPlaceholder: {type: String, default: '请输入关键字搜索'},
 
+	enableRemote: {type: Boolean, default: false},
 	enbableCollect: {type: Boolean, default: true},
 	enbableSearch: {type: Boolean, default: true},
 
@@ -29,6 +30,7 @@ const collectValue = ref('')
 const queryValue = ref('')
 
 const filterMethod = (query, item) => {
+	if (props.enableRemote) return
 	if (queryValue.value === '') return true
 	return item.label?.toLowerCase().includes(queryValue.value?.toLowerCase())
 }
@@ -149,6 +151,12 @@ defineExpose({
 				<slot name="default" :option="option">
 					<span>{{ option.label }}</span>
 				</slot>
+			</template>
+			<template #left-footer>
+				<slot name="left-footer"></slot>
+			</template>
+			<template #right-footer>
+				<slot name="right-footer"></slot>
 			</template>
 		</el-transfer>
 		<div class="footer">

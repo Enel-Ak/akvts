@@ -276,7 +276,7 @@ const resetNode = async () => {
 	await nextTick()
 	setTimeout(() => {
 		if (props.addNodeFitView) {
-			fitView()
+			// fitView()
 		}
 	}, 0)
 	output()

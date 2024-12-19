@@ -140,7 +140,19 @@ onMounted(() => {
 		{id: 'test2', defbcff: 1},
 	]
 	setTimeout(() => {
-		tableDefalutData.value.push({id: 'test3', defbcff: 2})
+		tableDefalutData.value.push(
+			...[
+				{id: 'test3', defbcff: 2},
+				{id: 'test4', defbcff: 3},
+				{id: 'test5', defbcff: 4},
+				{id: 'test6', defbcff: 5},
+				{id: 'test7', defbcff: 6},
+				{id: 'test8', defbcff: 7},
+				{id: 'test9', defbcff: 8},
+				{id: 'test10', defbcff: 9},
+				{id: 'test11', defbcff: 10},
+			]
+		)
 	}, 3000)
 })
 </script>
@@ -275,7 +287,7 @@ onMounted(() => {
 				:form-column-count="2"
 				:enableLatestData="false"
 				:enable-row-edit="true"
-				status="edit"
+				status="none"
 				@edit-change="onEditChange"
 				:buttons="[
 					{
@@ -358,7 +370,7 @@ onMounted(() => {
 				</template>
 			</TableV2>
 		</Block>
-		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
+		<Flow ref="flowRef" v-model="flowConfig"></Flow>
 	</Container>
 </template>
 <style scoped lang="scss"></style>
