@@ -991,9 +991,9 @@ defineExpose({
 			<el-table-column
 				v-if="
 					((enableEdit || enableDelete || buttons.length > 0) && !disableTable) ||
-					buttons.some((f) => f.important) ||
-					buttons.every((f) => (f.hasOwnProperty('show') ? f.show : true)) ||
-					$slots.buttons
+					((buttons.some((f) => f.important) ||
+						buttons.every((f) => (f.hasOwnProperty('show') ? f.show : true))) &&
+						$slots.buttons)
 				"
 				label="操作"
 				align="center"
