@@ -24,6 +24,10 @@ const props = defineProps({
 		type: String,
 		default: 'flex-end',
 	},
+	layout: {
+		type: String,
+		default: 'total,sizes, prev, pager, next, jumper',
+	},
 })
 
 watch(
@@ -60,9 +64,9 @@ watch(
 			:total="$props.total"
 			:page-size="__pageSize"
 			:page-sizes="$props.pageSizes"
+			:layout="layout"
 			background
 			size="small"
-			layout="total,sizes, prev, pager, next, jumper"
 			@size-change="onSizeChange"
 			@current-change="onCurrentChange"
 		/>

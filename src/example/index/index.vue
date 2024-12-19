@@ -370,7 +370,7 @@ onMounted(() => {
 				</template>
 			</TableV2>
 		</Block>
-		<Flow ref="flowRef" v-model="flowConfig"></Flow>
+		<!-- <Flow ref="flowRef" v-model="flowConfig"></Flow> -->
 	</Container>
 </template>
 <style scoped lang="scss"></style>
