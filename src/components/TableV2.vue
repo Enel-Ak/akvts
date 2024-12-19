@@ -730,6 +730,7 @@ const setTableStatus = (status) => {
 			delete row.__enableEdit
 		})
 	}
+	setGroupWidth()
 }
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
@@ -801,6 +802,7 @@ defineExpose({
 	isCreate: () => isCreate,
 	create: (data) => onCreate(data),
 	update: (data) => onUpdate(data),
+	delete: (data) => onDelete(data),
 	push: (data, key = '__id', isReplace = true) => {
 		const setId = (row) => {
 			if (!data.hasOwnProperty(key) && !data.hasOwnProperty('id')) {

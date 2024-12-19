@@ -133,7 +133,7 @@ const tableData = ref([])
 const tableDefalutData = ref([])
 onMounted(() => {
 	tableDefalutData.value = [
-		{id: 'test1', defbcff: 0},
+		{id: 'test1', defbcff: 0, abc: 1},
 		{id: 'test2', defbcff: 1},
 	]
 })
@@ -279,10 +279,10 @@ onMounted(() => {
 					{
 						prop: 'abc',
 						label: '测试',
-						type: 'text',
+
 						// sortable: true,
-						attrs: {width: 140},
-						tooltip: true,
+						attrs: {align: 'left'},
+						// tooltip: false,
 					},
 					{
 						prop: 'def',
@@ -339,8 +339,6 @@ onMounted(() => {
 					},
 				]"
 			>
-				<template #header-abc="scoped">123</template>
-				<template #abc="scoped">{{ scoped }}</template>
 				<template #defbb="scoped">
 					{{ scoped.row.defbb ? '男' : '女' }}
 				</template>
