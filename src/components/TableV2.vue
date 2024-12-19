@@ -244,7 +244,7 @@ const getList = () => {
 					emits('loading', _loading.value)
 					emits('completed', props.method)
 					nextTick(() => {
-						setTableStatus(props.status)
+						props.status === 'edit' && setTableStatus(props.status)
 						setFnWidth(true)
 					})
 					console.log('TableV2 Component Next Finish', tableData.value, total.value)
@@ -730,7 +730,6 @@ const setTableStatus = (status) => {
 			delete row.__enableEdit
 		})
 	}
-	setGroupWidth()
 }
 
 const getFormItemByProp = (prop, arr = tableColumns.value) => {
