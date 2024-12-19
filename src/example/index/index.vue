@@ -139,6 +139,9 @@ onMounted(() => {
 		{id: 'test1', defbcff: 0, abc: 1},
 		{id: 'test2', defbcff: 1},
 	]
+	setTimeout(() => {
+		tableDefalutData.value.push({id: 'test3', defbcff: 2})
+	}, 3000)
 })
 </script>
 <template>
@@ -263,15 +266,16 @@ onMounted(() => {
 			</Record> -->
 			<!-- :default-sort="{prop: 'abc', order: 'descending'}" -->
 
+			{{ tableDefalutData }}
+			<!-- :default-table-data="tableDefalutData" -->
 			<TableV2
-				v-model:data="tableData"
+				v-model="tableDefalutData"
 				:enableSelection="true"
 				:auto-height="true"
 				:form-column-count="2"
 				:enableLatestData="false"
 				:enable-row-edit="true"
 				status="edit"
-				:default-table-data="tableDefalutData"
 				@edit-change="onEditChange"
 				:buttons="[
 					{

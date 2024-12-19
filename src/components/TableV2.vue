@@ -19,6 +19,7 @@ import {useGuid} from '@/hooks'
 import Lock from './Lock.vue'
 
 const emits = defineEmits([
+	'update:modelValue',
 	'beforeComplete',
 	'completed',
 	'beforeCreate',
@@ -44,6 +45,7 @@ const emits = defineEmits([
 	'loading',
 ])
 const props = defineProps({
+	modelValue: {type: Array, default: () => []},
 	rowKey: {type: String, default: 'id'},
 	autoLoad: {type: Boolean, default: true},
 	emptyText: {type: String, default: '暂无数据'},
@@ -129,6 +131,21 @@ let clickTimer = null
 let isCreate = false
 
 watch(
+	() => props.modelValue,
+	(newVal) => {
+		tableData.value = newVal
+		nextTick(() => {
+			if (newVal.length === 0) {
+				setGroupWidth(true)
+			} else {
+				props.status === 'edit' && setTableStatus(props.status)
+			}
+		})
+	},
+	{deep: true}
+)
+
+watch(
 	() => [props.url, props.reqParams, props.reqData],
 	(newVal) => {
 		console.log('TableV2 Component Request Params Changed', newVal)
@@ -182,6 +199,7 @@ watch(
 		if (newVal) {
 			tableData.value = newVal
 			nextTick(() => {
+				emits('update:modelValue', tableData.value)
 				props.status === 'edit' && setTableStatus(props.status)
 			})
 		}
@@ -242,6 +260,7 @@ const getList = () => {
 					tableData.value = calldata || items
 					total.value = totalCount
 					_loading.value = false
+					emits('update:modelValue', tableData.value)
 					emits('loading', _loading.value)
 					emits('completed', props.method)
 					nextTick(() => {
