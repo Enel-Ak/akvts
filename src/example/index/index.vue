@@ -133,6 +133,12 @@ const tableData = ref([])
 const tableDefalutData = ref([])
 const onEditChange = (val, record, row, column) => {
 	console.log('onEditChange', val, record, row, column)
+
+	setTimeout(() => {
+		// tableDefalutData.value[0].abc = ''
+		row.abc = ''
+		console.log('row', row)
+	}, 1000)
 }
 onMounted(() => {
 	tableDefalutData.value = [

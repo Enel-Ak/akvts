@@ -991,33 +991,30 @@ defineExpose({
 						<slot :name="`header-${slot}`" v-bind="scope"></slot>
 					</template>
 					<template v-for="slot of customSlots" #[slot]="scope">
-						<FormItem
-							v-if="scope.row.__enableEdit && enableRowEdit"
-							v-model="scope.row[slot]"
-							:items="[getFormItemByProp(slot)]"
-							:is-row-edit="true"
-							:class="{
-								'has-changed': currentEditColumns.some(
-									(item) => item.rid === scope.row.id && item.prop === slot
-								),
-							}"
-							:_form-label-width="0"
-							@change="onTableFormRowEditChange"
-							@focus="onTableFormItemFocus(scope.row)"
-							@blur="onTableFormItemBlur(scope.row)"
-							size="small"
-						></FormItem>
-						<slot
-							v-else
-							:name="slot"
-							v-bind="scope"
-							:form-item="getFormItemByProp(slot)"
-						>
-							{{
-								typeof scope.row[slot] === 'number'
-									? scope.row[slot]
-									: scope.row[slot] || '-'
-							}}
+						<slot :name="slot" v-bind="scope" :form-item="getFormItemByProp(slot)">
+							<FormItem
+								v-if="scope.row.__enableEdit && enableRowEdit"
+								v-model="scope.row[slot]"
+								:items="[getFormItemByProp(slot)]"
+								:is-row-edit="true"
+								:class="{
+									'has-changed': currentEditColumns.some(
+										(item) => item.rid === scope.row.id && item.prop === slot
+									),
+								}"
+								:_form-label-width="0"
+								@change="onTableFormRowEditChange"
+								@focus="onTableFormItemFocus(scope.row)"
+								@blur="onTableFormItemBlur(scope.row)"
+								size="small"
+							></FormItem>
+							<template v-else>
+								{{
+									typeof scope.row[slot] === 'number'
+										? scope.row[slot]
+										: scope.row[slot] || '-'
+								}}
+							</template>
 						</slot>
 					</template>
 				</TableColumn>
