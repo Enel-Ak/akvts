@@ -561,11 +561,13 @@ const onTableFormRowEditChange = (val, item) => {
 	}
 
 	// 记录修改过的行和列
-	if (
-		!currentEditColumns.value.some(
-			(si) => item.rid === currentEditRow.value.id && item.prop === si.prop
-		)
-	) {
+	const cur = currentEditColumns.value.find(
+		(si) => si.rid === currentEditRow.value.id && si.prop === item.prop
+	)
+
+	if (cur) {
+		cur.value = val
+	} else {
 		currentEditColumns.value.push({rid: currentEditRow.value.id, prop: item.prop, value: val})
 	}
 
@@ -577,7 +579,7 @@ const onTableFormRowEditChange = (val, item) => {
 		item
 	)
 
-	emits('editChange', val, currentEditColumns.value, currentEditRow.value, item)
+	emits('editChange', val, currentEditColumns.value, currentEditRows.value, item)
 
 	nextTick(() => {
 		currentEidtEls.value = document.querySelectorAll('.table-component .has-changed')
@@ -826,13 +828,13 @@ onUnmounted(() => {
 
 defineExpose({
 	clear: () => onClear(),
+	cancelEdit: () => onTableRowEditCancel(),
 	disabled: (bool = true) => {
 		nextTick(() => {
 			disableTable.value = bool
 		})
 	},
 	reload: () => getList(),
-	cancelEdit: () => onTableRowEditCancel(),
 	isCreate: () => isCreate,
 	create: (data) => onCreate(data),
 	update: (data) => onUpdate(data),

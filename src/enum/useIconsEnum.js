@@ -45,6 +45,8 @@ const Icons = {
 	File: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg>',
 	CopyFile:
 		'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm-1 4l6 6v10c0 1.1-.9 2-2 2H7.99C6.89 23 6 22.1 6 21l.01-14c0-1.1.89-2 1.99-2h7zm-1 7h5.5L14 6.5V12z"/></svg>',
+	Thumbtack:
+		'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16"><path fill="currentColor" fill-rule="evenodd" d="M11.28 1.22a.75.75 0 0 0-1.26.7L6.69 5.25H4.206c-1.114 0-1.671 1.346-.884 2.134l1.911 1.911l-3.72 4.135A2 2 0 0 0 1 14.768V15h.233a2 2 0 0 0 1.337-.513l4.135-3.721l1.911 1.91c.788.788 2.134.23 2.134-.883V9.31l3.33-3.33a.75.75 0 0 0 .7-1.261l-.603-.604l-2.293-2.293l-.604-.603Z" clip-rule="evenodd"/></svg>',
 }
 
 export default Icons

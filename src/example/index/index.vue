@@ -272,6 +272,7 @@ onMounted(() => {
 				<Icons icon-name="Back"></Icons>
 				<Icons icon-name="More"></Icons>
 				<Icons icon-name="Language"></Icons>
+				<Icons icon-name="Thumbtack"></Icons>
 			</div>
 			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>

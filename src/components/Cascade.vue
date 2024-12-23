@@ -250,8 +250,8 @@ onMounted(() => {
 watch(
 	() => props.modelValue,
 	(val) => {
+		console.log('Cascade Component Module Value Watch: ', val)
 		if (!props.oneSelect) {
-			console.log('Cascade Component Module Value Watch: ', val)
 			form.value = val
 			if (Object.keys(val).length === 0) {
 				for (let i = 1; i < props.options.length; i++) {
