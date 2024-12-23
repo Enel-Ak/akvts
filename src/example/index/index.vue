@@ -342,16 +342,16 @@ onMounted(() => {
 										type: 'text',
 										children: [
 											{
-												prop: 'defbaf',
-												label: 'defba',
+												prop: 'defbafo',
+												label: 'defbafo',
 												type: 'checkbox',
 												options: [
 													{label: '男', value: 1},
 													{label: '女', value: 0},
 												],
 											},
-											{prop: 'defbbf', label: 'defbb', type: 'switch'},
-											{prop: 'defbcf', label: 'defbc', type: 'text'},
+											{prop: 'defbbf', label: 'defbbf', type: 'switch'},
+											{prop: 'defbcfb', label: 'defbcfb', type: 'text'},
 										],
 									},
 									{prop: 'defbcff', label: 'defbcff', type: 'text'},
@@ -372,8 +372,8 @@ onMounted(() => {
 				<template #defbaf="scoped">
 					{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
 				</template>
-				<template #defbcf="scoped">
-					<el-input size="small" v-model="scoped.row.defbcf" @click.stop />
+				<template #edit-defbcfb="scoped">
+					<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
 				</template>
 			</TableV2>
 		</Block>

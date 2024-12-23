@@ -991,9 +991,13 @@ defineExpose({
 						<slot :name="`header-${slot}`" v-bind="scope"></slot>
 					</template>
 					<template v-for="slot of customSlots" #[slot]="scope">
-						<slot :name="slot" v-bind="scope" :form-item="getFormItemByProp(slot)">
+						<slot
+							v-if="scope.row.__enableEdit && enableRowEdit"
+							:name="`edit-${slot}`"
+							v-bind="scope"
+							:form-item="getFormItemByProp(slot)"
+						>
 							<FormItem
-								v-if="scope.row.__enableEdit && enableRowEdit"
 								v-model="scope.row[slot]"
 								:items="[getFormItemByProp(slot)]"
 								:is-row-edit="true"
@@ -1008,13 +1012,18 @@ defineExpose({
 								@blur="onTableFormItemBlur(scope.row)"
 								size="small"
 							></FormItem>
-							<template v-else>
-								{{
-									typeof scope.row[slot] === 'number'
-										? scope.row[slot]
-										: scope.row[slot] || '-'
-								}}
-							</template>
+						</slot>
+						<slot
+							v-else
+							:name="slot"
+							v-bind="scope"
+							:form-item="getFormItemByProp(slot)"
+						>
+							{{
+								typeof scope.row[slot] === 'number'
+									? scope.row[slot]
+									: scope.row[slot] || '-'
+							}}
 						</slot>
 					</template>
 				</TableColumn>
