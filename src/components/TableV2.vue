@@ -43,6 +43,7 @@ const emits = defineEmits([
 	'dialogClosed',
 	'dialogOpened',
 	'loading',
+	'error',
 ])
 const props = defineProps({
 	modelValue: {type: Array, default: () => []},
@@ -78,6 +79,7 @@ const props = defineProps({
 	enableSelection: {type: Boolean, default: false},
 	enableIndex: {type: Boolean, default: true},
 	enableRowEdit: {type: Boolean, default: false}, // 启用行内编辑
+	enableSingleEdit: {type: Boolean, default: true}, // 单行编辑
 	enableLatestData: {type: Boolean, default: true}, // 组件内编辑启用获取最新数据
 
 	createHideColunms: {type: Array, default: () => []},
@@ -289,6 +291,7 @@ const getList = () => {
 			})
 			.catch((err) => {
 				console.log('TableV2 Component getList Error', err)
+				emits('error', err)
 			})
 			.finally(() => {
 				_loading.value = false
@@ -296,7 +299,6 @@ const getList = () => {
 				if (!isEvent) {
 					clearTimeout(__requestTimer)
 					__requestTimer = null
-					emits('completed', 'get')
 				}
 			})
 	}, 16.7)
@@ -321,7 +323,9 @@ const onCreate = (data) => {
 			dialogVisible.value = false
 			getList()
 		})
-		.catch((err) => {})
+		.catch((err) => {
+			emits('error', err)
+		})
 		.finally(() => {
 			emits('completed', 'post')
 		})
@@ -364,7 +368,9 @@ const onUpdate = (data, isBatch = false) => {
 				getList()
 			}
 		})
-		.catch((err) => {})
+		.catch((err) => {
+			emits('error', err)
+		})
 		.finally(() => {
 			emits('completed', 'put')
 		})
@@ -396,7 +402,9 @@ const onDelete = ({row}) => {
 			dialogVisible.value = false
 			getList()
 		})
-		.catch((err) => {})
+		.catch((err) => {
+			emits('error', err)
+		})
 		.finally(() => {
 			emits('completed', 'delete')
 		})
@@ -487,6 +495,9 @@ const onDoubleClickRow = (row, column, event) => {
 	if (props.enableRowEdit) {
 		clickTimer && clearTimeout(clickTimer)
 		row.__enableEdit = true
+		if (props.enableSingleEdit && currentEditRow.value) {
+			currentEditRow.value.__enableEdit = false
+		}
 		currentEditRow.value = row
 		setGroupWidth()
 		console.log('TableV2 Component Double Click Row', row, column, event)
@@ -555,7 +566,7 @@ const onTableFormRowEditChange = (val, item) => {
 			(si) => item.rid === currentEditRow.value.id && item.prop === si.prop
 		)
 	) {
-		currentEditColumns.value.push({rid: currentEditRow.value.id, prop: item.prop})
+		currentEditColumns.value.push({rid: currentEditRow.value.id, prop: item.prop, value: val})
 	}
 
 	console.log(
@@ -821,6 +832,7 @@ defineExpose({
 		})
 	},
 	reload: () => getList(),
+	cancelEdit: () => onTableRowEditCancel(),
 	isCreate: () => isCreate,
 	create: (data) => onCreate(data),
 	update: (data) => onUpdate(data),
