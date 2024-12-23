@@ -34,6 +34,7 @@ const props = defineProps({
 	_formLabelWidth: {type: [String, Number], default: '100px'},
 	_expandArray: {type: Array, default: () => []},
 	_expandIndex: {type: Number, default: 0},
+	_hasChanged: {type: Boolean, default: false},
 })
 
 const _form = ref(props.form)
@@ -312,6 +313,11 @@ watch(
 					!newVal.length
 				) {
 					newVal = []
+				} else if (
+					props.items[0].type === 'text' &&
+					props.items[0].inputType === 'number'
+				) {
+					newVal = Number(newVal)
 				}
 				Object.assign(_form.value, {[props.items[0].prop]: newVal})
 			}
@@ -363,6 +369,7 @@ defineExpose({
 						:formItems="formItems"
 						:isRowEdit="isRowEdit"
 						:columnCount="count"
+						:class="class"
 						:_expandArray="activeNames"
 						:_expandIndex="activeIndex + 1"
 						:_formLabelWidth="_formLabelWidth"
@@ -399,6 +406,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -428,6 +436,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -491,6 +500,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -535,6 +545,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -593,6 +604,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -661,6 +673,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -715,6 +728,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -763,6 +777,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -810,6 +825,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -856,6 +872,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -893,6 +910,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -930,6 +948,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">
@@ -971,6 +990,7 @@ defineExpose({
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
+					'has-changed': props._hasChanged,
 				}"
 			>
 				<div class="form-item">

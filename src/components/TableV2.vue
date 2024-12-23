@@ -1001,12 +1001,12 @@ defineExpose({
 								v-model="scope.row[slot]"
 								:items="[getFormItemByProp(slot)]"
 								:is-row-edit="true"
-								:class="{
-									'has-changed': currentEditColumns.some(
-										(item) => item.rid === scope.row.id && item.prop === slot
-									),
-								}"
 								:_form-label-width="0"
+								:_hasChanged="
+									currentEditColumns.some(
+										(item) => item.rid === scope.row.id && item.prop === slot
+									)
+								"
 								@change="onTableFormRowEditChange"
 								@focus="onTableFormItemFocus(scope.row)"
 								@blur="onTableFormItemBlur(scope.row)"
