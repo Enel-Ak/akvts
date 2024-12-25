@@ -490,8 +490,12 @@ const onClickRow = (row, column) => {
 }
 
 const onDoubleClickRow = (row, column, event) => {
+	if (row.id === currentEditRow.value?.id) {
+		return
+	}
 	if (props.enableRowEdit) {
 		clickTimer && clearTimeout(clickTimer)
+
 		row.__enableEdit = true
 		if (props.enableSingleEdit && currentEditRow.value) {
 			currentEditRow.value.__enableEdit = false

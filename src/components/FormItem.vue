@@ -791,7 +791,7 @@ defineExpose({
 					'has-changed': props._hasChanged,
 				}"
 			>
-				<div class="form-item">
+				<div class="form-item" @click.stop>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -840,7 +840,7 @@ defineExpose({
 					'has-changed': props._hasChanged,
 				}"
 			>
-				<div class="form-item">
+				<div class="form-item" @click.stop>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
