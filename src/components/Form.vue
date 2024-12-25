@@ -451,10 +451,22 @@ defineExpose({
 						></slot>
 					</template>
 					<template v-for="item of formItems" #[`form-${item.prop}-right`]="scope">
-						<slot :name="`form-${item.prop}-right`"></slot>
+						<slot
+							:name="`form-${item.prop}-right`"
+							:row="scope.row"
+							:form="form"
+							:value="form[item.prop]"
+						></slot>
+					</template>
+					<template v-for="item of formItems" #[`form-${item.prop}-error`]="scope">
+						<slot
+							:name="`form-${item.prop}-error`"
+							:row="scope.row"
+							:form="form"
+							:value="form[item.prop]"
+						></slot>
 					</template>
 				</FormItem>
-
 				<el-form-item
 					class="btns flowing"
 					v-if="buttonVertical === 'flowing' && enableButton && !formDisabled && !grid"

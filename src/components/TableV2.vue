@@ -188,9 +188,7 @@ watch(
 
 		tableData.value = []
 		customSlots.value = arr
-		nextTick(() => {
-			tableColumns.value = JSON.parse(JSON.stringify(newVal))
-		})
+		nextTick(() => (tableColumns.value = newVal))
 	},
 	{deep: true, immediate: true}
 )
@@ -498,6 +496,7 @@ const onDoubleClickRow = (row, column, event) => {
 		if (props.enableSingleEdit && currentEditRow.value) {
 			currentEditRow.value.__enableEdit = false
 		}
+
 		currentEditRow.value = row
 		setGroupWidth()
 		console.log('TableV2 Component Double Click Row', row, column, event)
@@ -524,16 +523,16 @@ const onTableFormItemFocus = (row) => {
 		setTimeout(() => {
 			console.log('TableV2 Component Table Form Item Focus', row)
 			clickTimer && clearTimeout(clickTimer)
-		}, 257) // 256ms 为单击事件的延迟
+		}, 0) // 256ms 为单击事件的延迟
 	}
 }
 
-const onTableFormItemBlur = (row) => {
+const onTableFormItemBlur = (valid, row) => {
 	if (props.enableRowEdit) {
 		setTimeout(() => {
-			console.log('TableV2 Component Table Form Item Blur', row)
+			console.log('TableV2 Component Table Form Item Blur', valid, row)
 			clickTimer && clearTimeout(clickTimer)
-		}, 257) // 256ms 为单击事件的延迟
+		}, 0) // 256ms 为单击事件的延迟
 	}
 }
 
@@ -582,7 +581,8 @@ const onTableFormRowEditChange = (val, item) => {
 	emits('editChange', val, currentEditColumns.value, currentEditRows.value, item)
 
 	nextTick(() => {
-		currentEidtEls.value = document.querySelectorAll('.table-component .has-changed')
+		const tableEl = tableComponentRef.value.$el
+		currentEidtEls.value = tableEl.querySelectorAll('.has-changed')
 		currentEidtEls.value.forEach((el) => {
 			const td = el.closest('td')
 			if (td) {
@@ -980,6 +980,7 @@ defineExpose({
 			</el-table-column>
 
 			<!-- 表头列表 -->
+
 			<template v-for="col of tableColumns" :key="col.prop">
 				<TableColumn
 					v-if="col.hasOwnProperty('tableShow') ? col.tableShow : true"
@@ -1002,6 +1003,7 @@ defineExpose({
 								:items="[getFormItemByProp(slot)]"
 								:is-row-edit="true"
 								:_form-label-width="0"
+								:_fromTable="true"
 								:_hasChanged="
 									currentEditColumns.some(
 										(item) => item.rid === scope.row.id && item.prop === slot
@@ -1009,9 +1011,17 @@ defineExpose({
 								"
 								@change="onTableFormRowEditChange"
 								@focus="onTableFormItemFocus(scope.row)"
-								@blur="onTableFormItemBlur(scope.row)"
+								@blur="(valid) => onTableFormItemBlur(valid, scope.row)"
 								size="small"
-							></FormItem>
+							>
+								<template #[`form-${slot}-error`]>
+									<slot
+										:name="`edit-${slot}-error`"
+										v-bind="scope"
+										:form-item="getFormItemByProp(slot)"
+									></slot>
+								</template>
+							</FormItem>
 						</slot>
 						<slot
 							v-else

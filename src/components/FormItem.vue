@@ -1,5 +1,5 @@
 <script setup>
-import {ref, watch, computed, onMounted} from 'vue'
+import {ref, watch, computed, onMounted, nextTick} from 'vue'
 import axios from 'axios'
 import {ElMessage} from 'element-plus'
 
@@ -31,6 +31,7 @@ const props = defineProps({
 	isClear: {type: Boolean, default: false},
 
 	_fromform: {type: Boolean, default: false},
+	_fromTable: {type: Boolean, default: false},
 	_formLabelWidth: {type: [String, Number], default: '100px'},
 	_expandArray: {type: Array, default: () => []},
 	_expandIndex: {type: Number, default: 0},
@@ -38,6 +39,7 @@ const props = defineProps({
 })
 
 const _form = ref(props.form)
+const formItemRef = ref()
 const activeNames = ref(props._expandArray)
 const activeIndex = ref(props._expandIndex)
 const currentActiveNames = ref([])
@@ -151,8 +153,44 @@ const onFocus = () => {
 	emits('focus')
 }
 
-const onBlur = () => {
-	emits('blur')
+const onBlur = (item) => {
+	if (props._fromTable || !props._fromform) {
+		// 单独使用FormItem组件时的校验
+		const valid = customSignleFormItemValidator(item)
+		emits('blur', valid)
+	} else {
+		emits('blur')
+	}
+}
+
+const customSignleFormItemValidator = (item) => {
+	let curvalid = true
+	if (item.formItemProps && item.formItemProps.rules) {
+		const idx = props.items.findIndex((f) => f.prop === item.prop)
+		const fir = formItemRef.value[idx]
+
+		item.formItemProps.rules.forEach((rule) => {
+			if (rule.validator && typeof rule.validator === 'function') {
+				rule.validator(props.modelValue, (valid, msg) => {
+					fir.validateState = !valid ? 'error' : ''
+					if (item.type === 'radio') {
+						fir.validateMessage = !valid ? '(请任选一项)' : ''
+					} else if (item.type === 'checkbox') {
+						fir.validateMessage = !valid ? '(请至少选一项)' : ''
+					} else if (item.type === 'select') {
+						fir.validateMessage = !valid ? '(从下列选项中)' : ''
+					} else {
+						fir.validateMessage = !valid ? msg : ''
+					}
+
+					if (!valid) {
+						curvalid = false
+					}
+				})
+			}
+		})
+	}
+	return curvalid
 }
 
 const toBufferString = (buffer) => {
@@ -383,6 +421,12 @@ defineExpose({
 								:form="form"
 								:row="formData"
 							></slot>
+							<slot
+								:name="`form-${child.prop}-error`"
+								v-bind="scoped"
+								:form="form"
+								:row="formData"
+							></slot>
 						</template>
 					</FormItem>
 				</div>
@@ -393,12 +437,12 @@ defineExpose({
 			<!-- 无type时(插槽) -->
 			<el-form-item
 				v-if="!item.type"
-				v-bind="$attrs"
 				:label="getFormLabel(item)"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
 				:prop="item.prop"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -423,12 +467,14 @@ defineExpose({
 			<!-- 文本框 -->
 			<el-form-item
 				v-if="item.type === 'text'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
+				:inline-message="_fromTable"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -453,11 +499,12 @@ defineExpose({
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
+								:validate-event="_fromform"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								@click.stop
 							/>
 							<el-input-number
@@ -470,29 +517,34 @@ defineExpose({
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
+								:validate-event="_fromform"
 								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
 						</template>
 					</slot>
 				</div>
+				<template #error="scoped">
+					<slot :name="`form-${item.prop}-error`" :item="item"></slot>
+				</template>
 			</el-form-item>
 
 			<!-- 密码框 -->
 			<el-form-item
 				v-if="item.type === 'password'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -516,11 +568,12 @@ defineExpose({
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
+								:validate-event="_fromform"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -532,12 +585,13 @@ defineExpose({
 			<!-- 下拉框 -->
 			<el-form-item
 				v-if="item.type === 'select'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -568,11 +622,12 @@ defineExpose({
 								"
 								:collapse-tags="item.attrs?.collapseTags || item.collapseTags"
 								:size="size"
+								:validate-event="_fromform"
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								@click.stop
 								@keyup.enter="emits('enter')"
 							>
@@ -591,12 +646,13 @@ defineExpose({
 			<!-- 下拉远程搜索 -->
 			<el-form-item
 				v-if="item.type === 'selectRemote'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -628,9 +684,10 @@ defineExpose({
 								:disabled="item.disabled"
 								:loading="loading"
 								:size="size"
+								:validate-event="_fromform"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								style="flex: 1"
 							>
 								<el-option
@@ -660,12 +717,13 @@ defineExpose({
 						'datetimerange',
 					].includes(item.type)
 				"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -696,13 +754,14 @@ defineExpose({
 										: 'YYYY-MM-DD'
 								"
 								:size="size"
+								:validate-event="_fromform"
 								:style="{width: item.full ? '100%' : '100%'}"
 								range-separator="到"
 								start-placeholder="开始时间"
 								end-placeholder="结束时间"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								@click.stop
 								@keydown.enter="emits('enter')"
 							/>
@@ -715,12 +774,13 @@ defineExpose({
 			<!-- 多选 -->
 			<el-form-item
 				v-if="item.type === 'checkbox'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -740,7 +800,7 @@ defineExpose({
 							<el-checkbox-group
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
-								@change="onChange($event, item)"
+								@change="onChange($event, item), nextTick(() => onBlur(item))"
 							>
 								<el-checkbox
 									v-for="option of item.options"
@@ -748,8 +808,7 @@ defineExpose({
 									:name="option.name"
 									:disabled="option.disabled || item.disabled"
 									:size="size"
-									@focus.stop="onFocus"
-									@blur.stop="onBlur"
+									:validate-event="_fromform"
 									@click.stop
 								>
 									{{ option.label }}
@@ -764,12 +823,13 @@ defineExpose({
 			<!-- 单选 -->
 			<el-form-item
 				v-if="item.type === 'radio'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -789,15 +849,14 @@ defineExpose({
 							<el-radio-group
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
-								@change="onChange($event, item)"
+								@change="onChange($event, item), nextTick(() => onBlur(item))"
 							>
 								<el-radio
 									v-for="(option, index) of item.options"
 									:value="option.value"
 									:disabled="item.disabled"
 									:size="size"
-									@focus.stop="onFocus"
-									@blur.stop="onBlur"
+									:validate-event="_fromform"
 									@click.stop
 								>
 									{{ option.label }}
@@ -812,12 +871,13 @@ defineExpose({
 			<!-- 文本域 -->
 			<el-form-item
 				v-if="item.type === 'textarea'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -843,11 +903,12 @@ defineExpose({
 								:readonly="item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
+								:validate-event="_fromform"
 								:maxlength="item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
-								@blur.stop="onBlur"
+								@blur.stop="onBlur(item)"
 								@click.stop
 							/>
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -859,12 +920,13 @@ defineExpose({
 			<!-- 开关 -->
 			<el-form-item
 				v-if="item.type === 'switch'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -884,9 +946,8 @@ defineExpose({
 							:active-text="item.activeText"
 							:inactive-text="item.inactiveText"
 							:size="size"
+							:validate-event="_fromform"
 							@change="onChange($event, item)"
-							@focus.stop="onFocus"
-							@blur.stop="onBlur"
 							@click.stop
 						/>
 						<slot :name="`form-${item.prop}-right`"></slot>
@@ -897,12 +958,13 @@ defineExpose({
 			<!-- 下拉联动 -->
 			<el-form-item
 				v-if="item.type === 'cascade'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -936,11 +998,13 @@ defineExpose({
 			<!-- 下拉树 -->
 			<el-form-item
 				v-if="item.type === 'treeSelect'"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
@@ -977,12 +1041,13 @@ defineExpose({
 			<!-- 上传: 返回base64, 非流直接上传 -->
 			<el-form-item
 				v-if="item.type === 'upload'"
-				v-bind="$attrs"
+				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
 				:label-width="
 					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
 				"
+				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
 					'row-edit': isRowEdit,
