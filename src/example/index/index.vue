@@ -178,7 +178,7 @@ const qqqq = (value, callback) => {
 			valid = !!value
 	}
 	console.log('自定义校验', valid)
-	callback(valid, '错误提示')
+	callback(valid, '1111错误提示')
 }
 
 const abc = [
@@ -192,7 +192,6 @@ const abc = [
 		formItemProps: {
 			rules: [
 				{
-					required: true,
 					validator: qqqq,
 					trigger: 'blur',
 				},
