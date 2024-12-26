@@ -34,7 +34,6 @@ const onClickConfirm = () => {
 			:close-on-press-escape="closeOnPressEscape"
 			:destroy-on-close="destroyOnClose"
 			class="drawer-component"
-			@close="onClickClose"
 		>
 			<template #header>
 				<slot name="header"></slot>
