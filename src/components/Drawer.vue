@@ -10,6 +10,8 @@ const props = defineProps({
 	closeOnPressEscape: {type: Boolean, default: true},
 	destroyOnClose: {type: Boolean, default: false},
 	size: {type: [String, Number], default: '30%'},
+	enableClose: {type: Boolean, default: true},
+	enableConfirm: {type: Boolean, default: true},
 })
 
 const unLock = ref(0)
@@ -43,9 +45,11 @@ const onClickConfirm = () => {
 			</template>
 			<template #footer>
 				<slot name="footer">
-					<el-button @click="onClickClose"> 取消 </el-button>
+					<el-button v-if="enableClose" @click="onClickClose"> 取消 </el-button>
 					<slot name="footer-botton"></slot>
-					<el-button type="primary" @click="onClickConfirm"> 确认 </el-button>
+					<el-button v-if="enableConfirm" type="primary" @click="onClickConfirm">
+						确认
+					</el-button>
 				</slot>
 			</template>
 		</el-drawer>
