@@ -197,6 +197,7 @@ const abc = [
 				},
 			],
 		},
+		width: 400,
 	},
 	{
 		prop: 'def',

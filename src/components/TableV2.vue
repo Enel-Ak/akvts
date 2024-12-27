@@ -28,6 +28,7 @@ const emits = defineEmits([
 	'updated',
 	'beforeDelete',
 	'deleted',
+	'beforeRowEdit',
 	'clickRow',
 	'clickButton',
 	'selectionChange',
@@ -495,6 +496,9 @@ const onDoubleClickRow = (row, column, event) => {
 	}
 	if (props.enableRowEdit) {
 		clickTimer && clearTimeout(clickTimer)
+		clickTimer = null
+
+		emits('beforeRowEdit', row, column, event)
 
 		row.__enableEdit = true
 		if (props.enableSingleEdit && currentEditRow.value) {
@@ -502,7 +506,7 @@ const onDoubleClickRow = (row, column, event) => {
 		}
 
 		currentEditRow.value = row
-		setGroupWidth()
+		setGroupWidth(false, column)
 		console.log('TableV2 Component Double Click Row', row, column, event)
 	}
 }
@@ -642,14 +646,18 @@ const onTableRowEditCancel = () => {
 	getList()
 }
 
-const setGroupWidth = (isReset = false) => {
+const setGroupWidth = (isReset = false, column = null) => {
 	nextTick(() => {
 		const loops = (arr) =>
 			arr.forEach((item) => {
+				let width = 200
+				if (column && item.width && item.prop === column.property) {
+					width = item.width
+				}
 				if (item.children) {
 					loops(item.children)
 				} else {
-					item.width = isReset ? undefined : 200
+					item.width = isReset ? undefined : width
 				}
 			})
 
