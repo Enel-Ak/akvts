@@ -181,6 +181,9 @@ watch(
 				if (col.children) {
 					loops(col.children)
 				} else {
+					if (col.hasOwnProperty('width')) {
+						col._customWidth = col.width
+					}
 					arr.push(col.prop)
 				}
 			}
@@ -650,14 +653,14 @@ const setGroupWidth = (isReset = false, column = null) => {
 	nextTick(() => {
 		const loops = (arr) =>
 			arr.forEach((item) => {
-				let width = 200
-				if (column && item.width && item.prop === column.property) {
-					width = item.width
-				}
 				if (item.children) {
 					loops(item.children)
 				} else {
-					item.width = isReset ? undefined : width
+					let width = item._customWidth ?? 200
+					if (isReset) {
+						width = item._customWidth ?? undefined
+					}
+					item.width = width
 				}
 			})
 

@@ -24,7 +24,7 @@ app.use(pinia)
 directives(app)
 
 app.use(ElementPlus, {
-	locale: zhCn.default,
+	locale: zhCn,
 })
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
