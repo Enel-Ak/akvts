@@ -134,6 +134,9 @@ const tableDefalutData = ref([])
 const onEditChange = (val, record, row, column) => {
 	console.log('onEditChange', val, record, row, column)
 }
+const onBeforeRowEdit = (row, column, event) => {
+	row.abc = 789
+}
 onMounted(() => {
 	tableDefalutData.value = [
 		{id: 'test1', defbcff: 0, abc: 1},
@@ -473,6 +476,7 @@ const formItemRef = ref()
 				:enable-row-edit="true"
 				status="none"
 				@edit-change="onEditChange"
+				@beforeRowEdit="onBeforeRowEdit"
 				:buttons="[
 					{
 						label: '测试',
