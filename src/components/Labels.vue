@@ -22,7 +22,7 @@ const router = useRouter()
 const items = ref([])
 const current = ref(null)
 const prev = ref(null)
-const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2.85}%`)
+const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25}%`)
 const h = computed(() => {
 	let _h = props.height
 	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {

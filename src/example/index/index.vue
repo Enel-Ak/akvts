@@ -305,7 +305,9 @@ const formItemRef = ref()
 	<Container :frame="['header', 'default', 'footer', 'aside']">
 		<template #header> header</template>
 		<template #aside> aside </template>
-		<template #top> </template>
+		<template #top>
+			<Labels :height="30"></Labels>
+		</template>
 		<!-- <Toolbar></Toolbar> -->
 		<!-- <Cascade v-model="cascadeOneSelect2" :options="options2" :vertical="true"></Cascade> -->
 		<!-- <Cascade
@@ -337,8 +339,41 @@ const formItemRef = ref()
 			<Form
 				ref="formRef"
 				v-model="formTest"
-				:label-width="0"
+				:grid="true"
+				:column-count="2"
 				:props="[
+					{
+						prop: 'djcs',
+						label: '多级测试',
+						children: [
+							{
+								prop: 'zd1',
+								label: '字段1',
+								type: 'text',
+							},
+							{
+								prop: 'zd2',
+								label: '字段2',
+								type: 'text',
+							},
+							{
+								prop: 'zd3',
+								label: '字段1',
+								type: 'text',
+							},
+							{
+								prop: 'zd4',
+								label: '字段2',
+								type: 'text',
+							},
+							{
+								prop: 'zd5',
+								label: '字段2',
+								type: 'text',
+								full: true,
+							},
+						],
+					},
 					{
 						prop: 'abc',
 						label: '测试',

@@ -617,6 +617,18 @@ defineExpose({
 			overflow: hidden;
 		}
 
+		:deep(.group) {
+			margin: torem(10px) !important;
+
+			.el-collapse-item__content {
+				padding: torem(10px);
+			}
+
+			.form-items {
+				border-right: 1px solid var(--z-line);
+			}
+		}
+
 		:deep(.el-form-item) {
 			border: 1px solid var(--z-line);
 			border-right: 0;

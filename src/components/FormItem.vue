@@ -36,6 +36,7 @@ const props = defineProps({
 	_expandArray: {type: Array, default: () => []},
 	_expandIndex: {type: Number, default: 0},
 	_hasChanged: {type: Boolean, default: false},
+	_inGrid: {type: Boolean, default: false},
 })
 
 const _form = ref(props.form)
@@ -254,10 +255,11 @@ const onCollapseChange = (val, index) => {
 }
 
 const onCheckIsLastItem = (item, index) => {
+	const len = props.items.filter((f) => !f.hasOwnProperty('children')).length
 	return (
-		(Math.floor((props.items.length - 1) / props.columnCount) * props.columnCount <= index &&
-			!item.full) ||
-		index === props.items.length - 1
+		((Math.floor((len - 1) / props.columnCount) * props.columnCount <= index && !item.full) ||
+			index === len - 1) &&
+		!props._inGrid
 	)
 }
 
@@ -401,16 +403,23 @@ defineExpose({
 				</template>
 				<div class="form-items">
 					<FormItem
+						:items="item.children"
 						:form="_form"
 						:formData="formData"
-						:items="item.children"
 						:formItems="formItems"
-						:isRowEdit="isRowEdit"
+						:size="size"
+						:grid="grid"
 						:columnCount="count"
+						:isRowEdit="isRowEdit"
+						:autoRemote="autoRemote"
+						:doNotInitRemote="doNotInitRemote"
+						:expand="expand"
+						:isClear="isClear"
 						:class="class"
 						:_expandArray="activeNames"
 						:_expandIndex="activeIndex + 1"
 						:_formLabelWidth="_formLabelWidth"
+						:_inGrid="true"
 						@change="onChange"
 						@changeFile="onFileChange"
 					>
