@@ -618,7 +618,11 @@ defineExpose({
 		}
 
 		:deep(.group) {
-			margin: torem(10px) !important;
+			margin: torem(10px);
+
+			+ .group {
+				margin-top: 0;
+			}
 
 			.el-collapse-item__content {
 				padding: torem(10px);
@@ -649,7 +653,8 @@ defineExpose({
 			}
 
 			&.last-item {
-				border-bottom: 0;
+				border-bottom: 1px solid var(--z-line);
+				margin-bottom: -1px;
 			}
 		}
 

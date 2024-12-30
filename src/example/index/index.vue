@@ -343,6 +343,22 @@ const formItemRef = ref()
 				:column-count="2"
 				:props="[
 					{
+						prop: 'djcs2',
+						label: '多级测试',
+						children: [
+							{
+								prop: 'zd8',
+								label: '字段1',
+								type: 'text',
+							},
+							{
+								prop: 'zd9',
+								label: '字段2',
+								type: 'text',
+							},
+						],
+					},
+					{
 						prop: 'djcs',
 						label: '多级测试',
 						children: [
@@ -379,6 +395,7 @@ const formItemRef = ref()
 						label: '测试',
 						type: 'text',
 						labelWidth: '100px',
+						full: true,
 						formItemProps: {
 							rules: [
 								// {
@@ -394,6 +411,7 @@ const formItemRef = ref()
 							],
 						},
 					},
+
 					{
 						prop: 'abc3',
 						label: '测试',
@@ -409,6 +427,11 @@ const formItemRef = ref()
 								},
 							],
 						},
+					},
+					{
+						prop: 'abc88',
+						label: '测试',
+						type: 'datetimerange',
 					},
 					// {
 					// 	prop: 'abc21',
