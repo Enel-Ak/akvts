@@ -25,7 +25,7 @@ const props = defineProps({
 	},
 	opacity: {
 		type: Number,
-		default: 0.5,
+		default: 0.3,
 	},
 	rotate: {
 		type: Number,

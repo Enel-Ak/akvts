@@ -625,11 +625,16 @@ defineExpose({
 			}
 
 			.el-collapse-item__content {
+				background-color: rgba($color: var(--z-bg-gray-rgb), $alpha: 0.95);
 				padding: torem(10px);
 			}
 
 			.form-items {
 				border-right: 1px solid var(--z-line);
+			}
+
+			.el-form-item__content {
+				background-color: var(--z-theme);
 			}
 		}
 
@@ -652,7 +657,7 @@ defineExpose({
 				}
 			}
 
-			&.last-item {
+			&.last-item:not(.full) {
 				border-bottom: 1px solid var(--z-line);
 				margin-bottom: -1px;
 			}
