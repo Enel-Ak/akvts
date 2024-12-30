@@ -904,7 +904,7 @@ defineExpose({
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
 								:validate-event="_fromform"
-								:maxlength="item.maxlength || 1000"
+								:maxlength="item.attrs?.maxlength || item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"

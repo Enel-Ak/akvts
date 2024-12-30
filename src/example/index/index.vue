@@ -3,6 +3,7 @@ import {onMounted, ref} from 'vue'
 import {activated} from '@/hooks/useWasm'
 import Record from '../../components/Record.vue'
 import Toolbar from '../../components/Toolbar.vue'
+
 const flowRef = ref()
 const flowConfig = ref({
 	id: 'abc',
@@ -332,6 +333,7 @@ const formItemRef = ref()
 			@collapsed="collapsed = $event"
 		>
 			<template #expand> </template>
+			<LoadingTransition></LoadingTransition>
 			<Form
 				ref="formRef"
 				v-model="formTest"
@@ -459,6 +461,7 @@ const formItemRef = ref()
 				<Icons icon-name="More"></Icons>
 				<Icons icon-name="Language"></Icons>
 				<Icons icon-name="Thumbtack"></Icons>
+				<Icons icon-name="Loading"></Icons>
 			</div>
 			<!-- <Record title="历史记录" :data="recordData">
 				<template #label="scoped">{{ scoped.item.label }}</template>

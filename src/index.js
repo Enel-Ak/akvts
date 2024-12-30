@@ -24,6 +24,7 @@ import ViewImage from './components/ViewImage.vue'
 import TreeV2 from './components/TreeV2.vue'
 import Watermark from './components/Watermark.vue'
 import Icons from './components/Icons.vue'
+import LoadingTransition from './components/LoadingTransition.vue'
 
 const components = {
 	Akvts,
@@ -52,6 +53,7 @@ const components = {
 	TreeV2,
 	Watermark,
 	Icons,
+	LoadingTransition,
 }
 
 export default {
@@ -88,4 +90,5 @@ export {
 	TreeV2,
 	Watermark,
 	Icons,
+	LoadingTransition,
 }
