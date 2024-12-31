@@ -898,14 +898,8 @@ defineExpose({
 	clearSelection: () => tableComponentRef.value?.clearSelection(),
 	toggleRowSelection: (row, bool) => tableComponentRef.value?.toggleRowSelection(row, bool),
 	toggleAllSelection: () => tableComponentRef.value?.toggleAllSelection(),
-	setRowEditData: (val, data, formItem) => {
-		// 外部自定义插槽编辑行的时候设置当前编辑行数据
-		if (data.__enableEdit && props.enableRowEdit) {
-			currentEditRow.value = data
-			// 从tableData中找到当前编辑行
-			onTableFormRowEditChange(val, formItem)
-		}
-	},
+
+	setRowValue: (id, prop, val) => (tableData.value.find((item) => item.id === id)[prop] = val),
 	setFormValue: (key, value) => formRef.value?.setValue(key, value),
 	setFormAttr: (key, attr, value) => formRef.value?.setAttr(key, attr, value),
 
@@ -1191,6 +1185,7 @@ defineExpose({
 					:default-data="defaultData"
 					:label-width="formLabelWidth"
 					:column-count="formColumnCount"
+					:_fromTable="true"
 					@beforeSubmit="onFormBeforeSubmit"
 					@submit="onFormSubmit"
 					@reset="emits('formReset')"

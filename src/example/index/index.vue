@@ -4,6 +4,7 @@ import {activated} from '@/hooks/useWasm'
 import Record from '../../components/Record.vue'
 import Toolbar from '../../components/Toolbar.vue'
 
+const tableRef = ref()
 const flowRef = ref()
 const flowConfig = ref({
 	id: 'abc',
@@ -140,8 +141,8 @@ const onBeforeRowEdit = (row, column, event) => {
 }
 onMounted(() => {
 	tableDefalutData.value = [
-		{id: 'test1', defbcff: 0, abc: 1},
-		{id: 'test2', defbcff: 1},
+		{id: 'test1', uui: 0, def: 1},
+		{id: 'test2', uui: 1},
 	]
 })
 
@@ -181,120 +182,42 @@ const qqqq = (value, callback) => {
 		default:
 			valid = !!value
 	}
-	console.log('自定义校验', valid)
-	callback(valid, '1111错误提示')
+	const val = Number(tableDefalutData.value[0].uui) + Number(tableDefalutData.value[0].def)
+	tableRef.value.setRowValue('test1', 'defc', val)
+	console.log('自定义校验', valid, typeof callback)
+	typeof callback === 'function' && callback(valid, '1111错误提示')
 }
 
 const abc = [
 	{
-		prop: 'abc',
+		prop: 'uui',
 		label: '测试',
 		type: 'text',
 		// sortable: true,
 		attrs: {align: 'left'},
 		// tooltip: false,
-		formItemProps: {
-			rules: [
-				{
-					validator: qqqq,
-					trigger: 'blur',
-				},
-			],
-		},
+
 		width: 400,
 	},
 	{
 		prop: 'def',
 		label: '测试2',
-
-		children: [
-			{
-				prop: 'defa',
-				label: 'defa',
-				type: 'select',
-				options: [{label: '测试', value: 1}],
-				formItemProps: {
-					rules: [
-						{
-							validator: qqqq,
-							trigger: 'blur',
-						},
-					],
+		type: 'text',
+		formItemProps: {
+			rules: [
+				{
+					required: true,
+					validator: qqqq,
+					trigger: 'blur',
 				},
-			},
-			{
-				prop: 'defb',
-				label: 'defb',
-				children: [
-					{
-						prop: 'defba',
-						label: 'defba',
-						type: 'datetime',
-						formItemProps: {
-							rules: [
-								{
-									validator: qqqq,
-									trigger: 'blur',
-								},
-							],
-						},
-					},
-					{
-						prop: 'defbb',
-						label: 'defbb',
-						type: 'radio',
-						options: [
-							{label: '男', value: '男'},
-							{label: '女', value: '女'},
-						],
-						formItemProps: {
-							rules: [
-								{
-									validator: qqqq,
-									trigger: 'blur',
-								},
-							],
-						},
-					},
-					{
-						prop: 'defbcf',
-						label: 'defbcf',
-						type: 'text',
-						children: [
-							{
-								prop: 'defbafo',
-								label: 'defbafo',
-								type: 'checkbox',
-								options: [
-									{label: '男', value: 1},
-									{label: '女', value: 0},
-								],
-								formItemProps: {
-									rules: [
-										{
-											validator: qqqq,
-											trigger: 'blur',
-										},
-									],
-								},
-							},
-							{
-								prop: 'defbbf',
-								label: 'defbbf',
-								type: 'switch',
-							},
-							{prop: 'defbcfb', label: 'defbcfb', type: 'text'},
-						],
-					},
-					{prop: 'defbcff', label: 'defbcff', type: 'text'},
-					{prop: 'defbcffe', label: 'defbcffe', type: 'text'},
-					{prop: 'defbcfff', label: 'defbcfff', type: 'text'},
-				],
-			},
-			{prop: 'defc', label: 'defc', type: 'text'},
-			{prop: 'defd', label: 'defc', type: 'text'},
-			{prop: 'defe', label: 'defc', type: 'text'},
-		],
+			],
+		},
+	},
+	{
+		prop: 'defc',
+		label: '测试3',
+		type: 'text',
+		disabled: true,
 	},
 ]
 const formItemRef = ref()
@@ -336,60 +259,27 @@ const formItemRef = ref()
 		>
 			<template #expand> </template>
 			<LoadingTransition></LoadingTransition>
+			{{ formTest }}
 			<Form
 				ref="formRef"
 				v-model="formTest"
-				:grid="true"
+				:enable-button="true"
+				:enable-label="true"
+				:enable-button-vertical="false"
+				:grid="false"
 				:column-count="2"
+				:rules="{
+					age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
+				}"
 				:props="[
 					{
-						prop: 'djcs2',
-						label: '多级测试',
-						children: [
-							{
-								prop: 'zd8',
-								label: '字段1',
-								type: 'text',
-							},
-							{
-								prop: 'zd9',
-								label: '字段2',
-								type: 'text',
-							},
-						],
+						prop: 'age',
+						label: '年龄',
+						type: 'text',
+						inputType: 'number',
+						disabled: false,
 					},
-					{
-						prop: 'djcs',
-						label: '多级测试',
-						children: [
-							{
-								prop: 'zd1',
-								label: '字段1',
-								type: 'text',
-							},
-							{
-								prop: 'zd2',
-								label: '字段2',
-								type: 'text',
-							},
-							{
-								prop: 'zd3',
-								label: '字段1',
-								type: 'text',
-							},
-							{
-								prop: 'zd4',
-								label: '字段2',
-								type: 'text',
-							},
-							{
-								prop: 'zd5',
-								label: '字段2',
-								type: 'text',
-								full: true,
-							},
-						],
-					},
+
 					{
 						prop: 'abc',
 						label: '测试',
@@ -397,59 +287,9 @@ const formItemRef = ref()
 						labelWidth: '100px',
 						full: true,
 						formItemProps: {
-							rules: [
-								// {
-								// 	required: true,
-								// 	message: '请输入测试',
-								// 	trigger: 'blur',
-								// },
-								{
-									required: true,
-									validator: cccc,
-									trigger: 'blur',
-								},
-							],
+							rules: [{required: true, message: '请输入年龄1', trigger: 'blur'}],
 						},
 					},
-
-					{
-						prop: 'abc3',
-						label: '测试',
-						type: 'datetimerange',
-						labelWidth: '100px',
-						formItemProps: {
-							rules: [
-								{
-									required: true,
-									// message: '请选时间',
-									validator: cccc,
-									trigger: 'blur',
-								},
-							],
-						},
-					},
-					{
-						prop: 'abc88',
-						label: '测试',
-						type: 'datetimerange',
-					},
-					// {
-					// 	prop: 'abc21',
-					// 	label: '测试21',
-					// 	type: 'radio',
-					// 	options: [{label: '测试', value: 0}],
-					// },
-					// {
-					// 	prop: 'abc2',
-					// 	label: '测试2',
-					// 	type: 'select',
-					// 	options: [
-					// 		{label: '测试', value: '1'},
-					// 		{label: '测试2', value: '2'},
-					// 		{label: '测试3', value: '3'},
-					// 	],
-					// 	attrs: {filterable: false, multiple: false, multipleLimit: 2},
-					// },
 				]"
 				:enable-enter="false"
 				:loading="loaidng"
@@ -475,17 +315,6 @@ const formItemRef = ref()
 					},
 				]"
 			></FormItem>
-			<!--<FormItem
-				v-model="formItemTest2"
-				:items="[
-					{
-						prop: 'formItemTest2',
-						type: 'select',
-						label: '下拉',
-						options: [{label: 'a', value: 1}],
-					},
-				]"
-			></FormItem> -->
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
 				<Icons icon-name="Setting" size="16px"></Icons>
@@ -521,14 +350,11 @@ const formItemRef = ref()
 				<Icons icon-name="Thumbtack"></Icons>
 				<Icons icon-name="Loading"></Icons>
 			</div>
-			<!-- <Record title="历史记录" :data="recordData">
-				<template #label="scoped">{{ scoped.item.label }}</template>
-			</Record> -->
-			<!-- :default-sort="{prop: 'abc', order: 'descending'}" -->
 
 			{{ tableDefalutData }}
-			<!-- :default-table-data="tableDefalutData" -->
+
 			<TableV2
+				ref="tableRef"
 				v-model="tableDefalutData"
 				:enableSelection="true"
 				:auto-height="true"
@@ -545,6 +371,9 @@ const formItemRef = ref()
 					},
 				]"
 				:columns="abc"
+				:form-rules="{
+					uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
+				}"
 			>
 				<!-- <template #edit-abc-error="scoped">{{ scoped }}</template> -->
 				<template #defbb="scoped">

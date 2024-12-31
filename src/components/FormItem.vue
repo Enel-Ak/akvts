@@ -29,8 +29,9 @@ const props = defineProps({
 	expand: {type: Boolean, default: true}, // 默认展开折叠
 
 	isClear: {type: Boolean, default: false},
+	class: {type: String, default: ''},
 
-	_fromform: {type: Boolean, default: false},
+	_fromForm: {type: Boolean, default: false},
 	_fromTable: {type: Boolean, default: false},
 	_formLabelWidth: {type: [String, Number], default: '100px'},
 	_expandArray: {type: Array, default: () => []},
@@ -155,7 +156,9 @@ const onFocus = () => {
 }
 
 const onBlur = (item) => {
-	if (props._fromTable || !props._fromform) {
+	console.log('Form Item Blur: ', item, props.isRowEdit, props._fromForm)
+
+	if (item.formItemProps && item.formItemProps.rules) {
 		// 单独使用FormItem组件时的校验
 		const valid = customSignleFormItemValidator(item)
 		emits('blur', valid)
@@ -166,31 +169,31 @@ const onBlur = (item) => {
 
 const customSignleFormItemValidator = (item) => {
 	let curvalid = true
-	if (item.formItemProps && item.formItemProps.rules) {
-		const idx = props.items.findIndex((f) => f.prop === item.prop)
-		const fir = formItemRef.value[idx]
 
-		item.formItemProps.rules.forEach((rule) => {
-			if (rule.validator && typeof rule.validator === 'function') {
-				rule.validator(props.modelValue, (valid, msg) => {
-					fir.validateState = !valid ? 'error' : ''
-					if (item.type === 'radio') {
-						fir.validateMessage = !valid ? '(请任选一项)' : ''
-					} else if (item.type === 'checkbox') {
-						fir.validateMessage = !valid ? '(请至少选一项)' : ''
-					} else if (item.type === 'select') {
-						fir.validateMessage = !valid ? '(从下列选项中)' : ''
-					} else {
-						fir.validateMessage = !valid ? msg : ''
-					}
+	const idx = props.items.findIndex((f) => f.prop === item.prop)
+	const fir = formItemRef.value[idx]
 
-					if (!valid) {
-						curvalid = false
-					}
-				})
-			}
-		})
-	}
+	item.formItemProps.rules.forEach((rule) => {
+		if (rule.validator && typeof rule.validator === 'function') {
+			rule.validator(props.modelValue, (valid, msg) => {
+				fir.validateState = !valid ? 'error' : ''
+				if (item.type === 'radio') {
+					fir.validateMessage = !valid ? '(请任选一项)' : ''
+				} else if (item.type === 'checkbox') {
+					fir.validateMessage = !valid ? '(请至少选一项)' : ''
+				} else if (item.type === 'select') {
+					fir.validateMessage = !valid ? '(从下列选项中)' : ''
+				} else {
+					fir.validateMessage = !valid ? msg : ''
+				}
+
+				if (!valid) {
+					curvalid = false
+				}
+			})
+		}
+	})
+
 	return curvalid
 }
 
@@ -339,8 +342,8 @@ watch(
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
 		// console.log('Form Item modelValue Change: ', props.items, val, _form.value)
 		let newVal = val
-		// 表单内部不启用双向绑定 _fromform: true
-		if (props.items.length === 1 && !props._fromform) {
+		// 表单内部不启用双向绑定 _fromForm: true
+		if (props.items.length === 1 && !props._fromForm) {
 			if (props.items[0].remoteInit && props.items[0].remoteUrl && newVal) {
 				remoteMethod(newVal, props.items[0], () => {
 					Object.assign(_form.value, {[props.items[0].prop]: newVal})
@@ -405,8 +408,8 @@ defineExpose({
 					<FormItem
 						:items="item.children"
 						:form="_form"
-						:formData="formData"
 						:formItems="formItems"
+						:formData="formData"
 						:size="size"
 						:grid="grid"
 						:columnCount="count"
@@ -420,6 +423,9 @@ defineExpose({
 						:_expandIndex="activeIndex + 1"
 						:_formLabelWidth="_formLabelWidth"
 						:_inGrid="true"
+						:_fromForm="_fromForm"
+						:_fromTable="_fromTable"
+						@init-remote-complete="onInitRemoteComplete"
 						@change="onChange"
 						@changeFile="onFileChange"
 					>
@@ -432,7 +438,7 @@ defineExpose({
 							></slot>
 							<slot
 								:name="`form-${child.prop}-error`"
-								v-bind="scoped"
+								v-bind="scope"
 								:form="form"
 								:row="formData"
 							></slot>
@@ -443,39 +449,7 @@ defineExpose({
 		</el-collapse>
 
 		<template v-else>
-			<!-- 无type时(插槽) -->
 			<el-form-item
-				v-if="!item.type"
-				:label="getFormLabel(item)"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				:prop="item.prop"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
-					<slot :name="`form-${item.prop}`" :item="item">
-						<template v-if="grid">{{ _form[item.prop] || '-' }}</template>
-						<template v-else>
-							-
-							<slot :name="`form-${item.prop}-right`"></slot>
-						</template>
-					</slot>
-				</div>
-			</el-form-item>
-
-			<!-- 文本框 -->
-			<el-form-item
-				v-if="item.type === 'text'"
 				ref="formItemRef"
 				:label="getFormLabel(item)"
 				:prop="item.prop"
@@ -494,7 +468,19 @@ defineExpose({
 					'has-changed': props._hasChanged,
 				}"
 			>
-				<div class="form-item">
+				<!-- 无type时(插槽) -->
+				<div class="form-item" v-if="!item.type">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<template v-if="grid">{{ _form[item.prop] || '-' }}</template>
+						<template v-else>
+							-
+							<slot :name="`form-${item.prop}-right`"></slot>
+						</template>
+					</slot>
+				</div>
+
+				<!-- 文本框 -->
+				<div class="form-item" v-if="item.type === 'text'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -505,10 +491,11 @@ defineExpose({
 								v-model.trim="_form[item.prop]"
 								v-bind="item.attrs"
 								type="text"
-								:readonly="item.disabled"
+								:readonly="item.attrs?.readonly || item.readonly"
+								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
@@ -523,10 +510,11 @@ defineExpose({
 								type="number"
 								:min="item.min || 0"
 								:max="item.max || 100000000"
-								:readonly="item.disabled"
+								:readonly="item.attrs?.readonly || item.readonly"
+								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
 								@input="emits('update:modelValue', $event)"
@@ -539,32 +527,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-				<template #error="scoped">
-					<slot :name="`form-${item.prop}-error`" :item="item"></slot>
-				</template>
-			</el-form-item>
 
-			<!-- 密码框 -->
-			<el-form-item
-				v-if="item.type === 'password'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 密码框 -->
+				<div class="form-item" v-if="item.type === 'password'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -574,10 +539,11 @@ defineExpose({
 								v-model.trim="_form[item.prop]"
 								v-bind="item.attrs"
 								type="password"
-								:readonly="item.disabled"
+								:readonly="item.attrs?.readonly || item.readonly"
+								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
@@ -589,29 +555,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 下拉框 -->
-			<el-form-item
-				v-if="item.type === 'select'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 下拉框 -->
+				<div class="form-item" v-if="item.type === 'select'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -620,7 +566,7 @@ defineExpose({
 							<el-select
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
-								:disabled="item.disabled"
+								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请选择${item?.label}`"
 								:filterable="item.attrs?.filterable || item.filterable"
 								:multiple="item.attrs?.multiple || item.multiple"
@@ -631,7 +577,7 @@ defineExpose({
 								"
 								:collapse-tags="item.attrs?.collapseTags || item.collapseTags"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
@@ -650,29 +596,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 下拉远程搜索 -->
-			<el-form-item
-				v-if="item.type === 'selectRemote'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 下拉远程搜索 -->
+				<div class="form-item" v-if="item.type === 'selectRemote'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{
@@ -690,10 +616,10 @@ defineExpose({
 								remote
 								:placeholder="item.placeholder || `请输入关键字搜索${item?.label}`"
 								:remote-method="(query) => remoteMethod(query, item)"
-								:disabled="item.disabled"
+								:disabled="item.attrs?.disabled || item.disabled"
 								:loading="loading"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
 								@blur.stop="onBlur(item)"
@@ -709,41 +635,24 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 日期/时间选择器 -->
-			<el-form-item
-				v-if="
-					[
-						'date',
-						'year',
-						'month',
-						'week',
-						'datas',
-						'datetime',
-						'daterange',
-						'monthrange',
-						'datetimerange',
-					].includes(item.type)
-				"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 日期/时间选择器 -->
+				<div
+					class="form-item"
+					v-if="
+						[
+							'date',
+							'year',
+							'month',
+							'week',
+							'dates',
+							'datetime',
+							'daterange',
+							'monthrange',
+							'datetimerange',
+						].includes(item.type)
+					"
+				>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -752,7 +661,7 @@ defineExpose({
 							<el-date-picker
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
-								:readonly="item.readonly"
+								:readonly="item.attrs?.readonly || item.readonly"
 								:disabled="item.attrs?.disabled || item.disabled"
 								:disabled-date="item.attrs?.disabledDate || item.disabledDate"
 								:type="item.type"
@@ -763,7 +672,7 @@ defineExpose({
 										: 'YYYY-MM-DD'
 								"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								:style="{width: item.full ? '100%' : '100%'}"
 								range-separator="到"
 								start-placeholder="开始时间"
@@ -778,29 +687,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 多选 -->
-			<el-form-item
-				v-if="item.type === 'checkbox'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item" @click.stop>
+				<!-- 多选 -->
+				<div class="form-item" v-if="item.type === 'checkbox'" @click.stop>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -817,7 +706,9 @@ defineExpose({
 									:name="option.name"
 									:disabled="option.disabled || item.disabled"
 									:size="size"
-									:validate-event="_fromform"
+									:validate-event="
+										_fromForm || !item.hasOwnProperty('formItemProps')
+									"
 									@click.stop
 								>
 									{{ option.label }}
@@ -827,29 +718,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 单选 -->
-			<el-form-item
-				v-if="item.type === 'radio'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item" @click.stop>
+				<!-- 单选 -->
+				<div class="form-item" v-if="item.type === 'radio'" @click.stop>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -863,9 +734,11 @@ defineExpose({
 								<el-radio
 									v-for="(option, index) of item.options"
 									:value="option.value"
-									:disabled="item.disabled"
+									:disabled="option.disabled || item.disabled"
 									:size="size"
-									:validate-event="_fromform"
+									:validate-event="
+										_fromForm || !item.hasOwnProperty('formItemProps')
+									"
 									@click.stop
 								>
 									{{ option.label }}
@@ -875,29 +748,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 文本域 -->
-			<el-form-item
-				v-if="item.type === 'textarea'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 文本域 -->
+				<div class="form-item" v-if="item.type === 'textarea'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -909,10 +762,11 @@ defineExpose({
 								type="textarea"
 								resize="none"
 								:rows="6"
-								:readonly="item.disabled"
+								:readonly="item.attrs?.readonly || item.readonly"
+								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromform"
+								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 								:maxlength="item.attrs?.maxlength || item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
@@ -924,67 +778,27 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 开关 -->
-			<el-form-item
-				v-if="item.type === 'switch'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 开关 -->
+				<div class="form-item" v-if="item.type === 'switch'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<el-switch
 							v-model="_form[item.prop]"
 							v-bind="item.attrs"
-							:disabled="item.disabled"
+							:disabled="item.attrs?.disabled || item.disabled"
 							:active-text="item.activeText"
 							:inactive-text="item.inactiveText"
 							:size="size"
-							:validate-event="_fromform"
+							:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
 							@change="onChange($event, item)"
 							@click.stop
 						/>
 						<slot :name="`form-${item.prop}-right`"></slot>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 下拉联动 -->
-			<el-form-item
-				v-if="item.type === 'cascade'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 下拉联动 -->
+				<div class="form-item" v-if="item.type === 'cascade'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<Cascade
 							:grid="grid"
@@ -1002,29 +816,9 @@ defineExpose({
 						<slot :name="`form-${item.prop}-right`"></slot>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 下拉树 -->
-			<el-form-item
-				v-if="item.type === 'treeSelect'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 下拉树 -->
+				<div class="form-item" v-if="item.type === 'treeSelect'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
 							{{ _form[item.prop] || '-' }}
@@ -1045,29 +839,9 @@ defineExpose({
 						</template>
 					</slot>
 				</div>
-			</el-form-item>
 
-			<!-- 上传: 返回base64, 非流直接上传 -->
-			<el-form-item
-				v-if="item.type === 'upload'"
-				ref="formItemRef"
-				:label="getFormLabel(item)"
-				:prop="item.prop"
-				:label-width="
-					item.hasOwnProperty('label') ? item.labelWidth || parseInt(_formLabelWidth) : 0
-				"
-				v-bind="{...$attrs, ...item.formItemProps}"
-				:class="{
-					full: item.full,
-					'row-edit': isRowEdit,
-					'last-item': onCheckIsLastItem(item, index),
-					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',
-					'space-between':
-						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
-					'has-changed': props._hasChanged,
-				}"
-			>
-				<div class="form-item">
+				<!-- 上传: 返回base64, 非流直接上传 -->
+				<div class="form-item" v-if="item.type === 'upload'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<div class="form-upload">
 							<el-button type="primary" size="small">
@@ -1092,6 +866,10 @@ defineExpose({
 						<slot :name="`form-${item.prop}-right`"></slot>
 					</slot>
 				</div>
+
+				<template #error="scoped">
+					<slot :name="`form-${item.prop}-error`" :item="item"></slot>
+				</template>
 			</el-form-item>
 		</template>
 	</template>

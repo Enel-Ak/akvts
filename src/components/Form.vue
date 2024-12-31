@@ -21,7 +21,7 @@ const props = defineProps({
 	disable: {type: Boolean, default: false},
 	data: {type: Array, default: () => []}, // 默认值可以从配置的value设置, 但是不支持重置
 	props: {type: Object, default: () => []}, // 表单配置, 同data, 后续会废弃data
-	defaultData: {type: Object, default: () => ({})}, // 用于重置表单
+	defaultData: {type: Object, default: () => ({})}, // 用于表格的新增/编辑表单
 	rules: {type: Object, default: () => ({})},
 	labelWidth: {type: [String, Number], default: '100px'},
 	grid: {type: Boolean, default: false},
@@ -39,12 +39,16 @@ const props = defineProps({
 	size: {type: String, default: 'default'},
 	doNotClear: {type: Array, default: () => []},
 	doNotInitRemote: {type: Array, default: () => []},
+
+	_fromTable: {type: Boolean, default: false},
 })
 
 const isLoading = computed(() => props.loading)
 const formRef = ref()
 const formItemRef = ref()
 const form = ref({})
+const formReset = ref(JSON.parse(JSON.stringify(props.modelValue)))
+
 const formProps = ref(props.props)
 const formItems = ref([])
 const flexSize = computed(() => (props.columnCount > 1 ? '10px' : '0px'))
@@ -106,8 +110,11 @@ const onSubmit = () => {
 
 const onResetFields = () => {
 	onClear(false)
-	// form.value = {...props.defaultData}
-	Object.assign(form.value, {...props.defaultData})
+	if (props._fromTable) {
+		Object.assign(form.value, {...props.defaultData})
+	} else {
+		Object.assign(form.value, {...formReset.value})
+	}
 	emits('reset')
 }
 
@@ -178,26 +185,27 @@ const onClear = (needEmit = true, clearAll = false) => {
 		if (props.doNotClear.includes(key) && !clearAll) {
 			notClearColumns[key] = form.value[key]
 		} else {
-			switch (typeof form.value[key]) {
-				case 'string':
-					form.value[key] = ''
-					break
-				case 'number':
-					form.value[key] = null
-					break
-				case 'boolean':
-					form.value[key] = false
-					break
-				case 'object':
-					if (Array.isArray(form.value[key])) {
-						form.value[key] = []
-					} else {
-						form.value[key] = {}
+			props.props.forEach((item) => {
+				if (item.prop === key) {
+					switch (item.type) {
+						case 'text':
+						case 'textarea':
+							form.value[key] = ''
+							if (item.inputType === 'number') {
+								form.value[key] = 0
+							}
+							break
+						case 'daterange':
+						case 'monthrange':
+						case 'datetimerange':
+						case 'checkbox':
+							form.value[key] = []
+							break
+						default:
+							form.value[key] = null
 					}
-					break
-				default:
-					form.value[key] = null
-			}
+				}
+			})
 		}
 	}
 
@@ -433,7 +441,7 @@ defineExpose({
 					:autoRemote="autoRemote"
 					:doNotInitRemote="doNotInitRemote"
 					:isClear="isClear"
-					:_fromform="true"
+					:_fromForm="!_fromTable"
 					:_formLabelWidth="labelWidth"
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
