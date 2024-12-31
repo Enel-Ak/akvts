@@ -460,6 +460,7 @@ defineExpose({
 				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
+					'is-grid': grid,
 					'row-edit': isRowEdit,
 					'last-item': onCheckIsLastItem(item, index),
 					'no-label': item.labelWidth === 0 || item.labelWidth === '0px',

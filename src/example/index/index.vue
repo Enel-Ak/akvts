@@ -266,8 +266,8 @@ const formItemRef = ref()
 				:enable-button="true"
 				:enable-label="true"
 				:enable-button-vertical="false"
-				:grid="false"
-				:column-count="2"
+				:grid="true"
+				:column-count="3"
 				:rules="{
 					age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
 				}"
@@ -285,7 +285,7 @@ const formItemRef = ref()
 						label: '测试',
 						type: 'text',
 						labelWidth: '100px',
-						full: true,
+
 						formItemProps: {
 							rules: [{required: true, message: '请输入年龄1', trigger: 'blur'}],
 						},

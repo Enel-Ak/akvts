@@ -625,6 +625,12 @@ defineExpose({
 			overflow: hidden;
 		}
 
+		:deep(.is-grid) {
+			.form-item {
+				display: block;
+			}
+		}
+
 		:deep(.group) {
 			margin: torem(10px);
 
