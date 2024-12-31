@@ -6,6 +6,7 @@ import {
 	onUnmounted,
 	ref,
 	toRaw,
+	reactive,
 	watch,
 	onDeactivated,
 	onBeforeUnmount,
@@ -111,9 +112,9 @@ const tableColumns = ref([])
 const customSlots = ref([])
 
 const formRef = ref()
+const formData = ref({})
 const dialogTitle = ref('')
 const dialogVisible = ref(false)
-const defaultData = ref(null)
 
 const currentEditRow = ref(null)
 const currentEditRows = ref([])
@@ -228,6 +229,19 @@ watch(
 watch(
 	() => props.loading,
 	(val) => (_loading.value = val)
+)
+
+watch(
+	() => formData.value,
+	(newVal) => {
+		const row = tableData.value.find((item) => item.id === newVal?.id)
+		if (row) {
+			for (const key in newVal) {
+				row[key] = newVal[key]
+			}
+		}
+	},
+	{deep: true}
 )
 
 const getList = () => {
@@ -365,7 +379,7 @@ const onUpdate = (data, isBatch = false) => {
 				typeof callback === 'function' && callback()
 			} else {
 				ElMessage.success('更新成功')
-				defaultData.value = null
+				formData.value = null
 				dialogVisible.value = false
 				getList()
 			}
@@ -419,15 +433,16 @@ const onFormBeforeSubmit = (form) => {
 }
 
 const onFormSubmit = (form) => {
-	if (defaultData.value) {
-		onUpdate({...defaultData.value, ...form})
+	if (formData.value) {
+		onUpdate({...formData.value, ...form})
 	} else {
 		onCreate(form)
 	}
 }
 
-const onDialog = async (type, scope) => {
-	console.log('Basic Table Component onDialog', type, scope)
+const onDialog = async (type, scoped) => {
+	console.log('Basic Table Component onDialog', type, scoped)
+
 	isCreate = type === 'create'
 	const str = isCreate ? props.createText : props.editText
 
@@ -437,24 +452,24 @@ const onDialog = async (type, scope) => {
 	setTimeout(() => {
 		if (isCreate) {
 			formRef.value?.clear()
-			defaultData.value = null
-		} else if (props.enableLatestData) {
+			formData.value = {}
+		} else if (props.enableLatestData && props.url) {
 			axios
 				.request({
-					url: `${props.url}/${scope.row.id}`,
+					url: `${props.url}/${scoped.row.id}`,
 				})
 				.then((res) => {
-					emits('formBeforeEdit', res.data, toRaw(scope.row))
-					defaultData.value = res.data
+					emits('formBeforeEdit', res.data, scoped.row)
+					formData.value = Object.assign(scoped.row, res.data)
 				})
 		} else {
-			defaultData.value = toRaw(scope.row)
+			formData.value = scoped.row
 		}
 	}, 0)
 }
 
 const onDialogOpen = () => {
-	emits('dialogOpen', defaultData.value)
+	emits('dialogOpen', formData.value)
 }
 
 const onDialogClose = () => {
@@ -462,12 +477,12 @@ const onDialogClose = () => {
 }
 
 const onDialogClosed = () => {
-	defaultData.value = null
+	formData.value = null
 	emits('dialogClosed')
 }
 
 const onDialogOpened = () => {
-	emits('dialogOpened', defaultData.value)
+	emits('dialogOpened', formData.value)
 }
 
 const onClickButton = (btn, row, index) => {
@@ -524,7 +539,14 @@ const onSortChange = (val) => {
 }
 
 const onFormChanged = (val, item) => {
-	emits('formChanged', {value: val, item, tableFormRef: formRef.value})
+	console.log('TableV2 Component Form Changed', val, item)
+
+	emits('formChanged', {
+		value: val,
+		item,
+		tableFormRef: formRef.value,
+		row: formData.value,
+	})
 }
 
 const onTableFormItemFocus = (row) => {
@@ -585,11 +607,19 @@ const onTableFormRowEditChange = (val, item) => {
 		'Table Component Edit Rows:',
 		val,
 		currentEditColumns.value,
+		currentEditRow.value,
 		currentEditRows.value,
 		item
 	)
 
-	emits('editChange', val, currentEditColumns.value, currentEditRows.value, item)
+	emits(
+		'editChange',
+		val,
+		currentEditColumns.value,
+		currentEditRow.value,
+		currentEditRows.value,
+		item
+	)
 
 	nextTick(() => {
 		const tableEl = tableComponentRef.value.$el
@@ -890,7 +920,7 @@ defineExpose({
 	},
 	getElTableRef: () => tableComponentRef.value,
 	getTotal: () => total.value,
-	getUpdateRow: () => tableData.value.find((item) => item.id === defaultData.value?.id),
+	getUpdateRow: () => tableData.value.find((item) => item.id === formData.value?.id),
 	getTableData: () => tableData.value,
 	getFormData: () => formRef.value?.getData(),
 	getFormValue: (key) => formRef.value?.getValue(key),
@@ -899,13 +929,15 @@ defineExpose({
 	toggleRowSelection: (row, bool) => tableComponentRef.value?.toggleRowSelection(row, bool),
 	toggleAllSelection: () => tableComponentRef.value?.toggleAllSelection(),
 
-	setRowValue: (id, prop, val) => (tableData.value.find((item) => item.id === id)[prop] = val),
+	setRowValue: (id, prop, val) => {
+		tableData.value.find((item) => item.id === id)[prop] = val
+	},
 	setFormValue: (key, value) => formRef.value?.setValue(key, value),
 	setFormAttr: (key, attr, value) => formRef.value?.setAttr(key, attr, value),
 
 	visibleFormDialog: (bool, data = null) => {
 		dialogVisible.value = bool
-		defaultData.value = data
+		formData.value = data
 	},
 })
 </script>
@@ -1061,24 +1093,28 @@ defineExpose({
 				:width="__fnWidth"
 				class="table-component-btns"
 			>
-				<template #="{row, column, $index}">
-					<slot name="buttons" :row="row"></slot>
+				<template #="scoped">
+					<slot name="buttons" :row="scoped.row"></slot>
 					<template
 						v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))"
 					>
 						<template
-							v-if="row && btn.hasOwnProperty('show') ? setEval(btn.show, row) : true"
+							v-if="
+								scoped.row && btn.hasOwnProperty('show')
+									? setEval(btn.show, scoped.row)
+									: true
+							"
 						>
 							<el-button
 								v-if="!btn.popconfirm"
 								:type="btn.type"
 								:disabled="
 									btn.hasOwnProperty('disabled')
-										? setEval(btn.disabled, row)
+										? setEval(btn.disabled, scoped.row)
 										: false
 								"
 								size="small"
-								@click.stop="onClickButton(btn, row, $index)"
+								@click.stop="onClickButton(btn, scoped.row, scoped.$index)"
 							>
 								<Icons
 									v-if="btn.icon"
@@ -1094,14 +1130,14 @@ defineExpose({
 								:title="btn.popconfirm"
 								confirm-button-text="确定"
 								cancel-button-text="取消"
-								@confirm.stop="onClickButton(btn, row, $index)"
+								@confirm.stop="onClickButton(btn, scoped.row, scoped.$index)"
 							>
 								<template #reference>
 									<el-button
 										:type="btn.type"
 										:disabled="
 											btn.hasOwnProperty('disabled')
-												? setEval(btn.disabled, row)
+												? setEval(btn.disabled, scoped.row)
 												: false
 										"
 										size="small"
@@ -1124,7 +1160,7 @@ defineExpose({
 						v-if="enableOwnButton && enableEdit && !disableTable"
 						type="primary"
 						size="small"
-						@click.stop="onDialog('edit', {row, column, $index})"
+						@click.stop="onDialog('edit', scoped)"
 					>
 						<Icons icon-name="Edit" color="var(--z-nav-font-color)" size="16" />
 						{{ props.editText }}
@@ -1135,7 +1171,7 @@ defineExpose({
 						title="确认删除?"
 						confirm-button-text="确定"
 						cancel-button-text="取消"
-						@confirm.stop="onDelete({row: toRaw(row), column, $index})"
+						@confirm.stop="onDelete(scoped)"
 					>
 						<template #reference>
 							<el-button size="small" type="danger" @click.stop>
@@ -1169,10 +1205,11 @@ defineExpose({
 			@opened="onDialogOpened"
 			@closed="onDialogClosed"
 		>
-			<slot name="dialogForm" :row="defaultData">
+			<slot name="dialogForm" :row="formData">
+				{{ formData }}
 				<Form
 					ref="formRef"
-					button-align="flex-end"
+					v-model="formData"
 					:rules="formRules"
 					:loading="_loading"
 					:props="
@@ -1182,10 +1219,10 @@ defineExpose({
 								: !createHideColunms.includes(col.prop)
 						)
 					"
-					:default-data="defaultData"
 					:label-width="formLabelWidth"
 					:column-count="formColumnCount"
 					:_fromTable="true"
+					button-align="flex-end"
 					@beforeSubmit="onFormBeforeSubmit"
 					@submit="onFormSubmit"
 					@reset="emits('formReset')"

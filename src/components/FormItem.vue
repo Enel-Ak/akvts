@@ -175,20 +175,21 @@ const customSignleFormItemValidator = (item) => {
 
 	item.formItemProps.rules.forEach((rule) => {
 		if (rule.validator && typeof rule.validator === 'function') {
-			rule.validator(props.modelValue, (valid, msg) => {
-				fir.validateState = !valid ? 'error' : ''
-				if (item.type === 'radio') {
-					fir.validateMessage = !valid ? '(请任选一项)' : ''
-				} else if (item.type === 'checkbox') {
-					fir.validateMessage = !valid ? '(请至少选一项)' : ''
-				} else if (item.type === 'select') {
-					fir.validateMessage = !valid ? '(从下列选项中)' : ''
+			rule.validator(rule, props.modelValue || _form.value[item.prop], (error) => {
+				if (error) {
+					fir.validateState = 'error'
+					if (item.type === 'radio') {
+						fir.validateMessage = '请任选一项'
+					} else if (item.type === 'checkbox') {
+						fir.validateMessage = '请至少选一项'
+					} else if (item.type === 'select') {
+						fir.validateMessage = '从下列选项中选择'
+					} else {
+						fir.validateMessage = error.message || '验证失败'
+					}
 				} else {
-					fir.validateMessage = !valid ? msg : ''
-				}
-
-				if (!valid) {
-					curvalid = false
+					fir.validateState = ''
+					fir.validateMessage = ''
 				}
 			})
 		}

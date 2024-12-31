@@ -274,7 +274,7 @@ watch(
 	() => props.modelValue,
 	(to, from) => {
 		console.log('Form Model Value Change', to, from)
-
+		if (!to) return
 		if (Object.keys(to).length === 0) {
 			form.value = {}
 		} else {

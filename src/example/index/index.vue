@@ -50,7 +50,7 @@ const loaidng = ref(false)
 const onSubmit = (data) => {
 	console.log('onSubmit', data)
 
-	formTest.value = {}
+	// formTest.value = {}
 	loaidng.value = true
 	setTimeout(() => (loaidng.value = false), 3000)
 }
@@ -133,11 +133,24 @@ const options2 = ref([
 const collapsed = ref(false)
 const tableData = ref([])
 const tableDefalutData = ref([])
-const onEditChange = (val, record, row, column) => {
-	console.log('onEditChange', val, record, row, column)
+const onEditChange = (val, record, row, rows, column) => {
+	console.log('onEditChange', val, record, rows, column)
+	// 行编辑
+	if (column.prop === 'uui' || column.prop === 'def') {
+		tableRef.value.setRowValue(row.id, 'defc', Number(row.uui) + Number(row.def))
+	}
+}
+const onFormChanged = (scoped) => {
+	// 表单变化
+	if (scoped.item.prop === 'uui' || scoped.item.prop === 'def') {
+		tableRef.value.setFormValue(
+			'defc',
+			Number(scoped.row?.uui || 0) + Number(scoped.row?.def || 0)
+		)
+	}
 }
 const onBeforeRowEdit = (row, column, event) => {
-	row.abc = 789
+	// row.uui = 789
 }
 onMounted(() => {
 	tableDefalutData.value = [
@@ -146,46 +159,15 @@ onMounted(() => {
 	]
 })
 
-const dddd = (rule, value, callback) => {
-	console.log(1111, value)
-	if (value === '') {
-		callback(new Error('Please input the password'))
-	} else {
-		callback()
-	}
-}
-const cccc = (rule, value, callback) => {
-	console.log(2222, value)
-	if (!value || !value.length) {
-		callback(new Error('错误提示'))
-	} else {
-		callback()
-	}
-}
+const qqqq = (rule, value, callback) => {
+	console.log('自定义校验', rule, value, callback)
 
-const qqqq = (value, callback) => {
-	let valid = false
-	switch (typeof value) {
-		case 'string':
-			valid = value !== ''
-			break
-		case 'number':
-			valid = value > 0
-			break
-		case 'object':
-			if (Array.isArray(value)) {
-				valid = value.length > 0
-			} else {
-				valid = Object.values(value).length > 0
-			}
-			break
-		default:
-			valid = !!value
+	if (value <= 0 || !value) {
+		callback(new Error('自定义校验'))
+		return
 	}
-	const val = Number(tableDefalutData.value[0].uui) + Number(tableDefalutData.value[0].def)
-	tableRef.value.setRowValue('test1', 'defc', val)
-	console.log('自定义校验', valid, typeof callback)
-	typeof callback === 'function' && callback(valid, '1111错误提示')
+
+	callback()
 }
 
 const abc = [
@@ -266,7 +248,7 @@ const formItemRef = ref()
 				:enable-button="true"
 				:enable-label="true"
 				:enable-button-vertical="false"
-				:grid="true"
+				:grid="false"
 				:column-count="3"
 				:rules="{
 					age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
@@ -363,6 +345,7 @@ const formItemRef = ref()
 				:enable-row-edit="true"
 				status="none"
 				@edit-change="onEditChange"
+				@form-changed="onFormChanged"
 				@beforeRowEdit="onBeforeRowEdit"
 				:buttons="[
 					{
