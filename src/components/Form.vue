@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref, toRaw, watch, nextTick, reactive} from 'vue'
+import {computed, onMounted, ref, toRaw, watch, nextTick} from 'vue'
 import axios from 'axios'
 import Lock from './Lock.vue'
 
@@ -48,6 +48,7 @@ const formRef = ref()
 const formItemRef = ref()
 const form = ref({})
 const formReset = ref(JSON.parse(JSON.stringify(props.modelValue)))
+const isFirst = ref(true)
 
 const formProps = ref(props.props)
 const formItems = ref([])
@@ -110,11 +111,12 @@ const onSubmit = () => {
 
 const onResetFields = () => {
 	onClear(false)
-	if (props._fromTable) {
-		Object.assign(form.value, {...props.defaultData})
-	} else {
-		Object.assign(form.value, {...formReset.value})
-	}
+	// if (props._fromTable) {
+	// 	Object.assign(form.value, {...props.defaultData})
+	// } else {
+	Object.assign(form.value, {...formReset.value})
+
+	// }
 	emits('reset')
 }
 
@@ -186,39 +188,41 @@ const onClear = (needEmit = true, clearAll = false) => {
 		if (props.doNotClear.includes(key) && !clearAll) {
 			notClearColumns[key] = form.value[key]
 		} else {
-			props.props.forEach((item) => {
-				if (item.prop === key) {
-					switch (item.type) {
-						case 'text':
-						case 'textarea':
-							form.value[key] = ''
-							if (item.inputType === 'number') {
-								form.value[key] = 0
-							}
-							break
-						case 'daterange':
-						case 'monthrange':
-						case 'datetimerange':
-						case 'checkbox':
-							form.value[key] = []
-							break
-						default:
-							form.value[key] = null
+			const clearLoop = (arr) => {
+				arr.forEach((item) => {
+					if (item.children) {
+						clearLoop(item.children)
 					}
-				}
-			})
+					if (item.prop === key) {
+						switch (item.type) {
+							case 'text':
+							case 'textarea':
+								form.value[key] = ''
+								if (item.inputType === 'number') {
+									form.value[key] = 0
+								}
+								break
+							case 'daterange':
+							case 'monthrange':
+							case 'datetimerange':
+							case 'checkbox':
+								form.value[key] = []
+								break
+							default:
+								form.value[key] = null
+						}
+					}
+					if (item.type === 'selectRemote') {
+						item.options = []
+					}
+				})
+			}
+			clearLoop(formProps.value)
 		}
 	}
 
-	formProps.value.forEach((item) => {
-		if (item.type === 'selectRemote') {
-			item.options = []
-		}
-	})
-
-	// formRef.value.resetFields()
+	formRef.value.clearValidate()
 	if (needEmit) {
-		// 返回不需要清空的字段作为 props.defaultData的默认值
 		emits('clear', notClearColumns)
 	}
 
@@ -227,7 +231,7 @@ const onClear = (needEmit = true, clearAll = false) => {
 	Object.assign(form.value, {...notClearColumns})
 
 	console.log('Form Not Clear', notClearColumns)
-	console.log('Form Clear', form.value)
+	console.log('Form Cleared', form.value)
 	emits('update:modelValue', form.value)
 	nextTick(() => (isClear.value = false))
 }
@@ -281,6 +285,11 @@ watch(
 		} else {
 			Object.assign(form.value, {...stringToTimeRange(to)})
 		}
+
+		if (isFirst.value && Object.values(to).filter(Boolean).length > 0) {
+			formReset.value = JSON.parse(JSON.stringify(form.value))
+		}
+		console.log('Form Emit Update Model Value', form.value)
 	},
 	{deep: true, immediate: true}
 )
@@ -290,9 +299,7 @@ watch(
 	(to) => {
 		if (to) {
 			console.log('Form Default Data Change', stringToTimeRange(to))
-			// form.value = {...stringToTimeRange(to)}
 			Object.assign(form.value, {...stringToTimeRange(to)})
-			// emits('update:modelValue', form.value)
 		}
 	},
 	{deep: true}
@@ -342,6 +349,7 @@ watch(
 onMounted(() => {
 	console.log('Form Mounted')
 	nextTick(() => setDefault())
+	setTimeout(() => (isFirst.value = false), 16.7)
 })
 
 defineExpose({

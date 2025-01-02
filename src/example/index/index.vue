@@ -60,9 +60,9 @@ const formItemTest = ref(123)
 const formItemTest2 = ref('')
 const dialog = ref(false)
 const onFormChange = (val, item) => {
-	if (item.prop === 'abc2') {
-		formRef.value.clear()
-	}
+	// if (item.prop === 'abc2') {
+	// 	formRef.value.clear()
+	// }
 }
 const cascadeRef = ref()
 const cascadeOneSelect = ref([9, 1, 11, 111])
@@ -255,6 +255,17 @@ const formItemRef = ref()
 				}"
 				:props="[
 					{
+						prop: 'testgroup',
+						label: '测试分组',
+						children: [
+							{
+								prop: 'abc2',
+								label: '测试2',
+								type: 'text',
+							},
+						],
+					},
+					{
 						prop: 'age',
 						label: '年龄',
 						type: 'text',
@@ -275,7 +286,6 @@ const formItemRef = ref()
 				]"
 				:enable-enter="false"
 				:loading="loaidng"
-				:do-not-clear="['abc2']"
 				@change="onFormChange"
 				@submit="onSubmit"
 				class="pd-5"

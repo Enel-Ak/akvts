@@ -16,7 +16,7 @@ const props = defineProps({
 	modelValue: {type: [String, Number, Array, Boolean], default: () => ''}, // 单独使用FormItem组件时, 传入的modelValue
 	items: {type: Object, default: () => []}, // 表单项配置
 	form: {type: Object, default: () => ({})}, // 表单对象, 用于双向绑定 form 组件表单数据
-	formData: {type: Object, default: () => ({})}, // 表单项数据, 接口数据, 用于 TableV2 组件新增/编辑表单, 不是行内编辑
+	// formData: {type: Object, default: () => ({})}, // 表单项数据, 接口数据, 用于 TableV2 组件新增/编辑表单, 不是行内编辑
 	formItems: {type: Array, default: () => []},
 	size: {type: String, default: 'default'},
 	grid: {type: Boolean, default: false},
@@ -321,21 +321,21 @@ watch(
 	{immediate: true}
 )
 
-watch(
-	() => props.formData,
-	(newVal) => {
-		if (newVal && props.autoRemote) {
-			const selectRemoteItems = props.items.filter((item) => item.type === 'selectRemote')
-			selectRemoteItems.forEach((item) => {
-				const value = newVal[item.prop]
-				if (value) {
-					initRemoteValueById(value, item)
-				}
-			})
-		}
-	},
-	{deep: true}
-)
+// watch(
+// 	() => props.formData,
+// 	(newVal) => {
+// 		if (newVal && props.autoRemote) {
+// 			const selectRemoteItems = props.items.filter((item) => item.type === 'selectRemote')
+// 			selectRemoteItems.forEach((item) => {
+// 				const value = newVal[item.prop]
+// 				if (value) {
+// 					initRemoteValueById(value, item)
+// 				}
+// 			})
+// 		}
+// 	},
+// 	{deep: true}
+// )
 
 watch(
 	() => props.modelValue,
@@ -406,11 +406,11 @@ defineExpose({
 					</div>
 				</template>
 				<div class="form-items">
+					<!-- :formData="formData" -->
 					<FormItem
 						:items="item.children"
 						:form="_form"
 						:formItems="formItems"
-						:formData="formData"
 						:size="size"
 						:grid="grid"
 						:columnCount="count"
@@ -426,7 +426,6 @@ defineExpose({
 						:_inGrid="true"
 						:_fromForm="_fromForm"
 						:_fromTable="_fromTable"
-						@init-remote-complete="onInitRemoteComplete"
 						@change="onChange"
 						@changeFile="onFileChange"
 					>
@@ -435,13 +434,13 @@ defineExpose({
 								:name="`form-${child.prop}`"
 								v-bind="scope"
 								:form="form"
-								:row="formData"
+								:row="form"
 							></slot>
 							<slot
 								:name="`form-${child.prop}-error`"
 								v-bind="scope"
 								:form="form"
-								:row="formData"
+								:row="form"
 							></slot>
 						</template>
 					</FormItem>
