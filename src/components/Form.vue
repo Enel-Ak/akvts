@@ -175,6 +175,7 @@ const setDefault = async () => {
 		}
 	}
 	updateColunms()
+	formRef.value.resetFields()
 	emits('update:modelValue', form.value)
 }
 

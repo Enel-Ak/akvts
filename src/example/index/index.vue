@@ -241,7 +241,7 @@ const formItemRef = ref()
 		>
 			<template #expand> </template>
 			<LoadingTransition></LoadingTransition>
-			{{ formTest }}
+
 			<Form
 				ref="formRef"
 				v-model="formTest"
@@ -332,8 +332,6 @@ const formItemRef = ref()
 				<Icons icon-name="Thumbtack"></Icons>
 				<Icons icon-name="Loading"></Icons>
 			</div>
-
-			{{ tableDefalutData }}
 
 			<TableV2
 				ref="tableRef"

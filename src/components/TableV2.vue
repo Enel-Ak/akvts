@@ -1206,7 +1206,6 @@ defineExpose({
 			@closed="onDialogClosed"
 		>
 			<slot name="dialogForm" :row="formData">
-				{{ formData }}
 				<Form
 					ref="formRef"
 					v-model="formData"
