@@ -309,10 +309,10 @@ const getList = () => {
 			})
 			.catch((err) => {
 				console.log('TableV2 Component getList Error', err)
+				_loading.value = false
 				emits('error', err)
 			})
 			.finally(() => {
-				_loading.value = false
 				console.log('TableV2 Component getList Finally')
 				if (!isEvent) {
 					clearTimeout(__requestTimer)
