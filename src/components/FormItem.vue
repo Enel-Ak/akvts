@@ -401,6 +401,12 @@ onMounted(() => {})
 
 defineExpose({
 	initRemote: (query, item) => initRemoteValueById(query, item),
+	validate: () => {
+		// 单独使用FormItem组件时的手动校验
+		if (props.items.length === 1) {
+			onBlur(props.items[0])
+		}
+	},
 })
 </script>
 <template>

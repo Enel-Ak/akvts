@@ -56,7 +56,7 @@ const onSubmit = (data) => {
 }
 const formRef = ref()
 const formTest = ref({abc21: 0, abc: 7777})
-const formItemTest = ref(123)
+const formItemTest = ref()
 const formItemTest2 = ref('')
 const dialog = ref(false)
 const onFormChange = (val, item) => {
@@ -309,6 +309,7 @@ const formItemRef = ref()
 				]"
 				:rules="[{required: true, message: 'ddd', trigger: 'blur'}]"
 			></FormItem>
+			<el-button @click="formItemRef.validate()">手动校验</el-button>
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
 				<Icons icon-name="Setting" size="16px"></Icons>
