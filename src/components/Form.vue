@@ -442,7 +442,6 @@ defineExpose({
 					:size="size"
 					:form="form"
 					:formItems="formItems"
-					:formData="defaultData"
 					:items="
 						formProps.filter((f) => (f.hasOwnProperty('formShow') ? f.formShow : true))
 					"

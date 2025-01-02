@@ -406,7 +406,6 @@ defineExpose({
 					</div>
 				</template>
 				<div class="form-items">
-					<!-- :formData="formData" -->
 					<FormItem
 						:items="item.children"
 						:form="_form"
