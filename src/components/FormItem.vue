@@ -1,5 +1,5 @@
 <script setup>
-import {ref, watch, computed, onMounted, nextTick} from 'vue'
+import {ref, watch, computed, onMounted, nextTick, useAttrs} from 'vue'
 import axios from 'axios'
 import {ElMessage} from 'element-plus'
 
@@ -40,6 +40,7 @@ const props = defineProps({
 	_inGrid: {type: Boolean, default: false},
 })
 
+const attrs = useAttrs()
 const _form = ref(props.form)
 const formItemRef = ref()
 const activeNames = ref(props._expandArray)
@@ -163,6 +164,9 @@ const onBlur = (item) => {
 		(props.items.length === 1 && !props._fromForm)
 	) {
 		// 单独使用FormItem组件时的校验
+		if (attrs.hasOwnProperty('rules')) {
+			item.formItemProps = Object.assign(item.formItemProps || {}, {rules: attrs.rules})
+		}
 		customSignleFormItemValidator(item)
 		emits('blur')
 	} else {
@@ -185,29 +189,31 @@ const customSignleFormItemValidator = (item) => {
 		}
 	}
 
-	item.formItemProps.rules.forEach((rule) => {
-		if (rule.validator && typeof rule.validator === 'function') {
-			rule.validator(rule, props.modelValue || _form.value[item.prop], (error) => {
-				if (error) {
-					fir.validateState = 'error'
-					fir.validateMessage = msg(item.type, error)
-				} else {
-					fir.validateState = ''
-					fir.validateMessage = ''
-				}
-			})
-		} else if (!props._fromForm) {
-			// 如果不是来自 form 组件则单独使用FormItem组件, 需要单独校验
-			fir.validate(rule.trigger, () => {
-				if (rule.required && (!props.modelValue || !_form.value[item.prop])) {
-					fir.validateState = 'error'
-					fir.validateMessage = msg(item.type, new Error(rule.message))
-				} else {
-					fir.validateState = ''
-				}
-			})
-		}
-	})
+	if (item.formItemProps && item.formItemProps.rules) {
+		item.formItemProps.rules.forEach((rule) => {
+			if (rule.validator && typeof rule.validator === 'function') {
+				rule.validator(rule, props.modelValue || _form.value[item.prop], (error) => {
+					if (error) {
+						fir.validateState = 'error'
+						fir.validateMessage = msg(item.type, error)
+					} else {
+						fir.validateState = ''
+						fir.validateMessage = ''
+					}
+				})
+			} else if (!props._fromForm) {
+				// 如果不是来自 form 组件则单独使用FormItem组件, 需要单独校验
+				fir.validate(rule.trigger, () => {
+					if (rule.required && (!props.modelValue || !_form.value[item.prop])) {
+						fir.validateState = 'error'
+						fir.validateMessage = msg(item.type, new Error(rule.message))
+					} else {
+						fir.validateState = ''
+					}
+				})
+			}
+		})
+	}
 }
 
 const toBufferString = (buffer) => {

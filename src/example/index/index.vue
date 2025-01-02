@@ -301,12 +301,13 @@ const formItemRef = ref()
 						prop: 'formItemTest',
 						type: 'text',
 						label: '测试',
-						formItemProps: {
-							// rules: [{required: true, validator: qqqq, trigger: 'blur'}],
-							rules: [{required: true, message: '请输入测试', trigger: 'blur'}],
-						},
+						// formItemProps: {
+						// rules: [{required: true, validator: qqqq, trigger: 'blur'}],
+						// rules: [{required: true, message: '请输入测试', trigger: 'blur'}],
+						// },
 					},
 				]"
+				:rules="[{required: true, message: 'ddd', trigger: 'blur'}]"
 			></FormItem>
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
