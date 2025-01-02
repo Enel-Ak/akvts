@@ -1193,7 +1193,9 @@ defineExpose({
 				<slot name="empty">
 					<el-empty
 						:image-size="autoHeight ? 100 : 150"
-						:description="loading && tableData.length === 0 ? '加载中...' : '暂无数据'"
+						:description="
+							_loading && tableData.length === 0 ? '努力获取中...' : '暂无数据'
+						"
 					/>
 				</slot>
 			</template>
