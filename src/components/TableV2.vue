@@ -263,6 +263,8 @@ const getList = () => {
 
 		_loading.value = true
 		emits('loading', _loading.value)
+
+		tableData.value = []
 		axios
 			.request({
 				url: props.url,
