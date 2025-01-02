@@ -203,6 +203,10 @@ const abc = [
 	},
 ]
 const formItemRef = ref()
+const handValidate = () => {
+	const valid = formItemRef.value.validate()
+	console.log('手动校验结果: ', valid)
+}
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -262,6 +266,9 @@ const formItemRef = ref()
 								prop: 'abc2',
 								label: '测试2',
 								type: 'text',
+								formItemProps: {
+									rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+								},
 							},
 						],
 					},
@@ -307,9 +314,9 @@ const formItemRef = ref()
 						// },
 					},
 				]"
-				:rules="[{required: true, message: 'ddd', trigger: 'blur'}]"
+				:rules="[{required: true, message: '请输入测试', trigger: 'blur'}]"
 			></FormItem>
-			<el-button @click="formItemRef.validate()">手动校验</el-button>
+			<el-button @click="handValidate">手动校验</el-button>
 			<div class="df aic">
 				<Icons icon-name="Home" color="#f00"></Icons>
 				<Icons icon-name="Setting" size="16px"></Icons>

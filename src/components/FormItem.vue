@@ -163,12 +163,12 @@ const onBlur = (item) => {
 		(item.formItemProps && item.formItemProps.rules) ||
 		(props.items.length === 1 && !props._fromForm)
 	) {
-		// 单独使用FormItem组件时的校验
 		if (attrs.hasOwnProperty('rules')) {
-			item.formItemProps = Object.assign(item.formItemProps || {}, {rules: attrs.rules})
+			item.formItemProps = Object.assign(item?.formItemProps || {}, {rules: attrs.rules})
 		}
-		customSignleFormItemValidator(item)
+		const valid = customSignleFormItemValidator(item)
 		emits('blur')
+		return valid
 	} else {
 		emits('blur')
 	}
@@ -188,14 +188,17 @@ const customSignleFormItemValidator = (item) => {
 			return error?.message || '验证失败'
 		}
 	}
+	let valid = true
 
 	if (item.formItemProps && item.formItemProps.rules) {
 		item.formItemProps.rules.forEach((rule) => {
+			let curValid = true
 			if (rule.validator && typeof rule.validator === 'function') {
 				rule.validator(rule, props.modelValue || _form.value[item.prop], (error) => {
 					if (error) {
 						fir.validateState = 'error'
 						fir.validateMessage = msg(item.type, error)
+						curValid = false
 					} else {
 						fir.validateState = ''
 						fir.validateMessage = ''
@@ -203,17 +206,22 @@ const customSignleFormItemValidator = (item) => {
 				})
 			} else if (!props._fromForm) {
 				// 如果不是来自 form 组件则单独使用FormItem组件, 需要单独校验
-				fir.validate(rule.trigger, () => {
-					if (rule.required && (!props.modelValue || !_form.value[item.prop])) {
-						fir.validateState = 'error'
-						fir.validateMessage = msg(item.type, new Error(rule.message))
-					} else {
-						fir.validateState = ''
-					}
-				})
+				if (rule.required && (!props.modelValue || !_form.value[item.prop])) {
+					fir.validateState = 'error'
+					fir.validateMessage = msg(item.type, new Error(rule.message))
+					curValid = false
+				} else {
+					fir.validateState = ''
+				}
+			}
+
+			if (!curValid) {
+				valid = false
 			}
 		})
 	}
+
+	return valid
 }
 
 const toBufferString = (buffer) => {
@@ -404,8 +412,9 @@ defineExpose({
 	validate: () => {
 		// 单独使用FormItem组件时的手动校验
 		if (props.items.length === 1) {
-			onBlur(props.items[0])
+			return onBlur(props.items[0])
 		}
+		return false
 	},
 })
 </script>
@@ -519,7 +528,11 @@ defineExpose({
 								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
@@ -538,7 +551,11 @@ defineExpose({
 								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								:style="{width: columnCount > 1 ? '100%' : '100%'}"
 								clearable
 								@input="emits('update:modelValue', $event)"
@@ -567,7 +584,11 @@ defineExpose({
 								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								clearable
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
@@ -601,7 +622,11 @@ defineExpose({
 								"
 								:collapse-tags="item.attrs?.collapseTags || item.collapseTags"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								clearable
 								style="flex: 1"
 								@change="onChange($event, item)"
@@ -643,7 +668,11 @@ defineExpose({
 								:disabled="item.attrs?.disabled || item.disabled"
 								:loading="loading"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
 								@blur.stop="onBlur(item)"
@@ -696,7 +725,11 @@ defineExpose({
 										: 'YYYY-MM-DD'
 								"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								:style="{width: item.full ? '100%' : '100%'}"
 								range-separator="到"
 								start-placeholder="开始时间"
@@ -790,7 +823,11 @@ defineExpose({
 								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
 								:size="size"
-								:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+								:validate-event="
+									_fromForm ||
+									(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+									!(items.length === 1)
+								"
 								:maxlength="item.attrs?.maxlength || item.maxlength || 1000"
 								@input="emits('update:modelValue', $event)"
 								@change="onChange($event, item)"
@@ -813,7 +850,11 @@ defineExpose({
 							:active-text="item.activeText"
 							:inactive-text="item.inactiveText"
 							:size="size"
-							:validate-event="_fromForm || !item.hasOwnProperty('formItemProps')"
+							:validate-event="
+								_fromForm ||
+								(!item.hasOwnProperty('formItemProps') && items.length !== 1) ||
+								!(items.length === 1)
+							"
 							@change="onChange($event, item)"
 							@click.stop
 						/>
