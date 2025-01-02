@@ -158,44 +158,56 @@ const onFocus = () => {
 const onBlur = (item) => {
 	console.log('Form Item Blur: ', item, props.isRowEdit, props._fromForm)
 
-	if (item.formItemProps && item.formItemProps.rules) {
+	if (
+		(item.formItemProps && item.formItemProps.rules) ||
+		(props.items.length === 1 && !props._fromForm)
+	) {
 		// 单独使用FormItem组件时的校验
-		const valid = customSignleFormItemValidator(item)
-		emits('blur', valid)
+		customSignleFormItemValidator(item)
+		emits('blur')
 	} else {
 		emits('blur')
 	}
 }
 
 const customSignleFormItemValidator = (item) => {
-	let curvalid = true
-
 	const idx = props.items.findIndex((f) => f.prop === item.prop)
 	const fir = formItemRef.value[idx]
+	const msg = (type, error) => {
+		if (type === 'radio') {
+			return '请任选一项'
+		} else if (type === 'checkbox') {
+			return '请至少选一项'
+		} else if (type === 'select') {
+			return '从下列选项中选择'
+		} else {
+			return error?.message || '验证失败'
+		}
+	}
 
 	item.formItemProps.rules.forEach((rule) => {
 		if (rule.validator && typeof rule.validator === 'function') {
 			rule.validator(rule, props.modelValue || _form.value[item.prop], (error) => {
 				if (error) {
 					fir.validateState = 'error'
-					if (item.type === 'radio') {
-						fir.validateMessage = '请任选一项'
-					} else if (item.type === 'checkbox') {
-						fir.validateMessage = '请至少选一项'
-					} else if (item.type === 'select') {
-						fir.validateMessage = '从下列选项中选择'
-					} else {
-						fir.validateMessage = error.message || '验证失败'
-					}
+					fir.validateMessage = msg(item.type, error)
 				} else {
 					fir.validateState = ''
 					fir.validateMessage = ''
 				}
 			})
+		} else if (!props._fromForm) {
+			// 如果不是来自 form 组件则单独使用FormItem组件, 需要单独校验
+			fir.validate(rule.trigger, () => {
+				if (rule.required && (!props.modelValue || !_form.value[item.prop])) {
+					fir.validateState = 'error'
+					fir.validateMessage = msg(item.type, new Error(rule.message))
+				} else {
+					fir.validateState = ''
+				}
+			})
 		}
 	})
-
-	return curvalid
 }
 
 const toBufferString = (buffer) => {

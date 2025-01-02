@@ -302,7 +302,8 @@ const formItemRef = ref()
 						type: 'text',
 						label: '测试',
 						formItemProps: {
-							rules: [{required: true, validator: qqqq, trigger: 'blur'}],
+							// rules: [{required: true, validator: qqqq, trigger: 'blur'}],
+							rules: [{required: true, message: '请输入测试', trigger: 'blur'}],
 						},
 					},
 				]"
