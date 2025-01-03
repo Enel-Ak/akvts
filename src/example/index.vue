@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from 'vue'
+import {onMounted, ref} from 'vue'
 import useGuid from '@/hooks/useGuid'
 
 const containerExpand = ref(true)
@@ -24,6 +24,10 @@ const nav = [
 ]
 
 const onClickItem = (item) => {}
+const labelsRef = ref()
+onMounted(() => {
+	labelsRef.value.first(nav[0])
+})
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -34,10 +38,10 @@ const onClickItem = (item) => {}
 	>
 		<template #header> header</template>
 		<template #aside>
-			<Navigation :collapse="!containerExpand" :defaultActive="hid" :items="nav" />
+			<Navigation :collapse="!containerExpand" :items="nav" />
 		</template>
 		<template #top>
-			<Labels :height="30" @click-item="onClickItem"></Labels>
+			<Labels ref="labelsRef" :height="30"></Labels>
 		</template>
 
 		<router-view v-slot="{Component}">

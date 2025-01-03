@@ -32,6 +32,9 @@ const h = computed(() => {
 	return _h
 })
 
+const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
+const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
+
 const query = (item) => {
 	const split = item.path.split('?')
 	const query = {}
@@ -119,9 +122,6 @@ watch(
 )
 
 onBeforeMount(() => {
-	const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
-	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
-
 	if (history.length > 0) {
 		items.value = history
 
@@ -138,7 +138,18 @@ onBeforeMount(() => {
 	}
 })
 
-defineExpose({})
+defineExpose({
+	first: (item) => {
+		if (Object.keys(historyCurrent).length === 0) {
+			router.push({
+				path: item.path,
+				query: {
+					_l: item.label,
+				},
+			})
+		}
+	},
+})
 </script>
 <template>
 	<div class="labels-component">
