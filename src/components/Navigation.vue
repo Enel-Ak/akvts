@@ -136,10 +136,10 @@ onBeforeUnmount(() => {
 
 							<template v-for="subSubItem of subItem.children">
 								<el-menu-item
-									:index="subSubitem[props.keys[0]]"
+									:index="subSubItem[props.keys[0]]"
 									@click="onClickItem(subSubItem)"
 								>
-									<template #title> {{ subSubitem[props.keys[1]] }} </template>
+									<template #title> {{ subSubItem[props.keys[1]] }} </template>
 								</el-menu-item>
 							</template>
 						</el-sub-menu>
