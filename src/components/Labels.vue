@@ -110,7 +110,8 @@ watch(
 				label: to.query._l || '-无标题',
 				path: to.fullPath,
 			}
-			items.value.push(newLabel)
+
+			items.value.splice(1, 0, newLabel)
 			current.value = newLabel
 		} else {
 			const index = items.value.findIndex((item) => item.path === to.fullPath)

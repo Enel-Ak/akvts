@@ -23,7 +23,6 @@ const nav = [
 	},
 ]
 
-const onClickItem = (item) => {}
 const labelsRef = ref()
 onMounted(() => {
 	labelsRef.value.first(nav[0])
