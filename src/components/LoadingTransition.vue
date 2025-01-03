@@ -10,6 +10,23 @@ const props = defineProps({
 		type: String,
 		default: '正在获取',
 	},
+	align: {
+		type: String,
+		default: 'center',
+	},
+})
+
+const jc = computed(() => {
+	let _jc = 'center'
+	switch (props.align) {
+		case 'left':
+			_jc = 'flex-start'
+			break
+		case 'right':
+			_jc = 'flex-end'
+			break
+	}
+	return _jc
 })
 
 const iconSize = computed(() => {
@@ -27,7 +44,7 @@ const iconSize = computed(() => {
 const iconColor = computed(() => props.color)
 </script>
 <template>
-	<div class="akvts-loading-transition">
+	<div class="akvts-loading-transition" :style="{justifyContent: jc}">
 		<Icons icon-name="Loading" :color="iconColor"></Icons>
 		<span>
 			<slot name="text">
