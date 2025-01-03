@@ -63,7 +63,7 @@ watch(
 )
 
 watch(
-	() => props.badge,
+	() => props.badges,
 	(newVal) => {
 		nextTick(() => {
 			badges.value = newVal
