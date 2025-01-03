@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
 
 					<template v-for="subItem of item.children">
 						<el-menu-item
-							v-if="!subItem.children"
+							v-if="!subItem.children || subItem.children.length === 0"
 							:index="subItem[props.keys[0]]"
 							@click="onClickItem(subItem)"
 						>
@@ -137,7 +137,10 @@ onBeforeUnmount(() => {
 							</template>
 						</el-menu-item>
 
-						<el-sub-menu v-if="subItem.children" :index="subItem[props.keys[0]]">
+						<el-sub-menu
+							v-if="subItem.children && subItem.children.length > 0"
+							:index="subItem[props.keys[0]]"
+						>
 							<template #title>
 								<span>{{ subItem[props.keys[1]] }}</span>
 							</template>
