@@ -95,7 +95,10 @@ onBeforeUnmount(() => {
 		>
 			<template v-for="item of navItems">
 				<el-menu-item
-					v-if="!item.children && (item.hasOwnProperty('enable') ? item.enable : true)"
+					v-if="
+						(!item.children || item.children.length === 0) &&
+						(item.hasOwnProperty('enable') ? item.enable : true)
+					"
 					:index="item[props.keys[0]]"
 					@click="onClickItem(item)"
 				>
@@ -107,7 +110,11 @@ onBeforeUnmount(() => {
 				</el-menu-item>
 
 				<el-sub-menu
-					v-if="item.children && (item.hasOwnProperty('enable') ? item.enable : true)"
+					v-if="
+						item.children &&
+						item.children.length > 0 &&
+						(item.hasOwnProperty('enable') ? item.enable : true)
+					"
 					:index="item[props.keys[0]]"
 				>
 					<template #title>
