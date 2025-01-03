@@ -152,7 +152,7 @@ defineExpose({
 			router.push({
 				path: item.path,
 				query: {
-					_l: item.label,
+					_l: item[props.keys[1]],
 				},
 			})
 		}

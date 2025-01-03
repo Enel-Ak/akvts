@@ -18,6 +18,10 @@ const props = defineProps({
 		type: Function,
 		default: () => true,
 	},
+	keys: {
+		type: Array,
+		default: ['id', 'label'],
+	},
 })
 
 const route = useRoute()
@@ -34,11 +38,11 @@ const onClickItem = (item) => {
 	if (isContinue) {
 		emits('clickItem', item)
 		if (item.path) {
-			active.value = item.id
+			active.value = item[props.keys[0]]
 			router.push({
 				path: item.path,
 				query: {
-					_l: item.label,
+					_l: item[props.keys[1]],
 				},
 			})
 		}
@@ -87,14 +91,14 @@ onBeforeUnmount(() => {
 						(!item.children || (item.children && item.path)) &&
 						(item.hasOwnProperty('enable') ? item.enable : true)
 					"
-					:index="item.id"
+					:index="item[props.keys[0]]"
 					@click="onClickItem(item)"
 				>
 					<el-icon>
 						<Icons :icon-name="item.icon" color="var(--z-nav-font-color)"></Icons>
 					</el-icon>
 
-					<template #title> {{ item.label }} </template>
+					<template #title> {{ item[props.keys[1]] }} </template>
 				</el-menu-item>
 
 				<el-sub-menu
@@ -103,7 +107,7 @@ onBeforeUnmount(() => {
 						!item.path &&
 						(item.hasOwnProperty('enable') ? item.enable : true)
 					"
-					:index="item.id"
+					:index="item[props.keys[0]]"
 				>
 					<template #title>
 						<Icons
@@ -111,31 +115,31 @@ onBeforeUnmount(() => {
 							color="var(--z-nav-font-color)"
 							style="margin-left: 4px; margin-right: 7px"
 						></Icons>
-						<span>{{ item.label }}</span>
+						<span>{{ item[props.keys[1]] }}</span>
 					</template>
 
 					<template v-for="subItem of item.children">
 						<el-menu-item
 							v-if="!subItem.children"
-							:index="subItem.id"
+							:index="subItem[props.keys[0]]"
 							@click="onClickItem(subItem)"
 						>
 							<template #title>
-								<span class="subitem-menu">{{ subItem.label }}</span>
+								<span class="subItem-menu">{{ subItem[props.keys[1]] }}</span>
 							</template>
 						</el-menu-item>
 
-						<el-sub-menu v-if="subItem.children" :index="subItem.id">
+						<el-sub-menu v-if="subItem.children" :index="subItem[props.keys[0]]">
 							<template #title>
-								<span>{{ subItem.label }}</span>
+								<span>{{ subItem[props.keys[1]] }}</span>
 							</template>
 
 							<template v-for="subSubItem of subItem.children">
 								<el-menu-item
-									:index="subSubItem.id"
+									:index="subSubitem[props.keys[0]]"
 									@click="onClickItem(subSubItem)"
 								>
-									<template #title> {{ subSubItem.label }} </template>
+									<template #title> {{ subSubitem[props.keys[1]] }} </template>
 								</el-menu-item>
 							</template>
 						</el-sub-menu>
