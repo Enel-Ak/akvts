@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onBeforeUnmount, onMounted, watch, ref, nextTick} from 'vue'
+import {computed, onBeforeUnmount, onMounted, watch, ref} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 
 const emits = defineEmits(['clickItem'])
@@ -48,6 +48,14 @@ const onClickItem = (item) => {
 		}
 	}
 }
+
+watch(
+	() => props.items,
+	(newVal) => {
+		navItems.value = newVal
+	},
+	{deep: true}
+)
 
 watch(
 	() => route,
