@@ -157,7 +157,7 @@ const onFocus = () => {
 }
 
 const onBlur = (item) => {
-	console.log('Form Item Blur: ', item, props.isRowEdit, props._fromForm)
+	console.log('Form Item Blur: ', item)
 
 	if (
 		(item.formItemProps && item.formItemProps.rules) ||
@@ -986,6 +986,7 @@ defineExpose({
 	}
 
 	:deep(.el-collapse-item__content) {
+		background-color: rgba($color: var(--z-bg-gray-rgb), $alpha: 0.95);
 		padding: torem(10px) torem(10px) torem(20px) torem(10px);
 	}
 }
