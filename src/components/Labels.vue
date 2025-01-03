@@ -1,12 +1,13 @@
 <script setup>
-import {nextTick, onMounted, ref, toRaw, computed} from 'vue'
-import {useRouter} from 'vue-router'
+import {nextTick, ref, computed, watch, onBeforeMount} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
+import useGuid from '@/hooks/useGuid'
 
 const emits = defineEmits(['clickItem', 'cancelItem'])
 const props = defineProps({
 	keys: {
 		type: Array,
-		default: () => ['index', 'title'],
+		default: () => ['id', 'label'],
 	},
 	height: {
 		type: [Number, String],
@@ -18,10 +19,10 @@ const props = defineProps({
 	},
 })
 
+const route = useRoute()
 const router = useRouter()
 const items = ref([])
 const current = ref(null)
-const prev = ref(null)
 const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25}%`)
 const h = computed(() => {
 	let _h = props.height
@@ -31,26 +32,42 @@ const h = computed(() => {
 	return _h
 })
 
+const query = (item) => {
+	const split = item.path.split('?')
+	const query = {}
+	if (split[1]) {
+		split[1].split('&').forEach((i) => {
+			const k = i.split('=')
+			query[k[0]] = decodeURI(k[1])
+		})
+	}
+	return query
+}
+
+const save = () => {
+	localStorage.setItem('CURRENT_LABEL', JSON.stringify(current.value))
+	localStorage.setItem('LABELS', JSON.stringify(items.value))
+}
+
 const onClickLabel = (item, isDropdown = false, isPush = true) => {
 	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
-	prev.value = toRaw(current.value)
+
 	current.value = item
 
 	if (isDropdown) {
 		items.value.splice(1, 0, item)
 		setTimeout(() => {
 			items.value.splice(index + 1, 1)
-			saveHistory()
 		}, 0)
-	} else {
-		saveHistory()
 	}
 
 	console.log('Labels Click:', item)
-	localStorage.setItem('MAIN_LABEL', item.path)
-	isPush && item.path && router.push({path: item.path})
-	nextTick(() => setBar())
+
+	save()
 	emits('clickItem', item)
+	router.push({path: item.path, query: query(item)})
+
+	nextTick(() => setBar())
 }
 
 const onCancelItem = (item) => {
@@ -59,14 +76,13 @@ const onCancelItem = (item) => {
 	nextTick(() => {
 		if (current.value[props.keys[0]] === item[props.keys[0]]) {
 			const nextItem = items.value[index] || items.value[index - 1]
-			prev.value = toRaw(current.value)
 			current.value = nextItem
 			router.push({
 				path: nextItem.path,
+				query: query(nextItem),
 			})
 		}
-		saveHistory()
-		// next item
+		save()
 		emits('cancelItem', current.value)
 		nextTick(() => setBar())
 	})
@@ -82,80 +98,47 @@ const setBar = () => {
 	el.style.left = active.offsetLeft + active.offsetWidth / 2 - 2 + 'px'
 }
 
-const saveHistory = () => {
-	localStorage.setItem('LABELS', JSON.stringify(items.value))
-	localStorage.setItem('CURRENT_LABELS', JSON.stringify(current.value))
-	localStorage.setItem('PREV_LABELS', JSON.stringify(prev.value))
-}
-
-defineExpose({
-	add: (item) => {
-		console.log('Labels Props:', props, item)
-
-		if (item[props.keys[0]] === current.value?.[props.keys[0]]) {
-			console.log('Labels Add Return Item:', item, props.keys[0])
-			console.log('Labels Add Return Current:', current.value, props.keys[0])
-			return
-		}
-
-		prev.value = toRaw(current.value)
-		current.value = item
-
-		const enable = item.hasOwnProperty('enable') ? item.enable : true
-		const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
-
-		if (enable) {
-			if (index === -1) {
-				items.value.splice(1, 0, item)
+watch(
+	() => route,
+	(to, from) => {
+		if (!items.value.some((item) => item.path === to.fullPath)) {
+			const newLabel = {
+				id: useGuid(),
+				label: to.query._l || '-无标题',
+				path: to.fullPath,
 			}
-
-			if (index >= props.max) {
-				items.value.splice(index, 1)
-				items.value.splice(1, 0, item)
-			}
+			items.value.push(newLabel)
+			current.value = newLabel
+		} else {
+			const index = items.value.findIndex((item) => item.path === to.fullPath)
+			current.value = items.value[index]
 		}
-
-		console.log('Labels Add Prev:', prev.value)
-		console.log('Labels Add Current:', current.value)
-		console.log('Labels Add Items:', items.value)
-
-		saveHistory()
-		nextTick(() => setBar())
+		save()
 	},
-})
+	{deep: true}
+)
 
-onMounted(() => {
-	const historyCurrent = localStorage.getItem('CURRENT_LABELS')
+onBeforeMount(() => {
 	const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
+	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
 
 	if (history.length > 0) {
 		items.value = history
 
-		if (location.search) {
-			const module = location.pathname.split('/')[1]
-			const item = items.value.find((i) => i.component === `/${module}`)
-			console.log('Labels Search:', item)
-			if (item) {
-				nextTick(() => {
-					onClickLabel(item, false, false)
-				})
-			}
-			return
+		if (Object.keys(historyCurrent).length > 0) {
+			current.value = historyCurrent
+		} else {
+			current.value = history[0]
 		}
 
-		if (historyCurrent) {
-			nextTick(() => {
-				onClickLabel(JSON.parse(historyCurrent))
-			})
-			return
-		}
-
-		current.value = history[0]
 		router.push({
-			path: history[0].path,
+			path: current.value.path,
+			query: query(current.value),
 		})
 	}
 })
+
+defineExpose({})
 </script>
 <template>
 	<div class="labels-component">

@@ -25,6 +25,7 @@ import TreeV2 from './components/TreeV2.vue'
 import Watermark from './components/Watermark.vue'
 import Icons from './components/Icons.vue'
 import LoadingTransition from './components/LoadingTransition.vue'
+import Navigation from './components/Navigation.vue'
 
 const components = {
 	Akvts,
@@ -54,6 +55,7 @@ const components = {
 	Watermark,
 	Icons,
 	LoadingTransition,
+	Navigation,
 }
 
 export default {
@@ -91,4 +93,5 @@ export {
 	Watermark,
 	Icons,
 	LoadingTransition,
+	Navigation,
 }

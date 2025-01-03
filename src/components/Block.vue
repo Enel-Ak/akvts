@@ -61,7 +61,7 @@ const mb = ref(props.enableFixedHeight ? '0' : '20px')
 const cw = ref(
 	typeof props.collapsedWidth === 'string' ? props.collapsedWidth : props.collapsedWidth + 'px'
 )
-const frame = ref(JSON.parse(localStorage.getItem('containerFrame') || '[]'))
+const frame = ref(JSON.parse(localStorage.getItem('CONTAINER_FRAME') || '[]'))
 
 let observer = null
 let observerTimer = null
@@ -171,7 +171,7 @@ const init = () => {
 	}
 	if (props.expandContent) {
 		setTimeout(() => {
-			frame.value = JSON.parse(localStorage.getItem('containerFrame') || '[]')
+			frame.value = JSON.parse(localStorage.getItem('') || '[]')
 			onExpendContent(false)
 			nextTick(() => {
 				isExpand = false

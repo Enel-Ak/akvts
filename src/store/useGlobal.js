@@ -46,10 +46,6 @@ export const useGlobal = defineStore('useGlobal', {
 		setPermissions(permissions) {
 			this.permissions = permissions
 		},
-		setTheme(theme) {
-			this.theme = theme
-			localStorage.setItem('theme', theme)
-		},
 		setToken(token) {
 			this.token = token
 			localStorage.setItem('token', token)

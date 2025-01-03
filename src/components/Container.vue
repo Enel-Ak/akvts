@@ -78,7 +78,7 @@ watch(
 )
 
 onMounted(() => {
-	localStorage.setItem('containerFrame', JSON.stringify(props.frame))
+	localStorage.setItem('CONTAINER_FRAME', JSON.stringify(props.frame))
 	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
 })
 
