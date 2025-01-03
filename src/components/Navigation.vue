@@ -22,6 +22,10 @@ const props = defineProps({
 		type: Array,
 		default: ['id', 'label'],
 	},
+	badges: {
+		type: Object,
+		default: {},
+	},
 })
 
 const route = useRoute()
@@ -29,6 +33,7 @@ const router = useRouter()
 const navRef = ref()
 const navItems = ref(props.items)
 const active = ref(props.defaultActive)
+const badges = ref(props.badge)
 const isCollapse = computed(() => props.collapse)
 
 const onClickItem = (item) => {
@@ -53,6 +58,16 @@ watch(
 	() => props.items,
 	(newVal) => {
 		navItems.value = newVal
+	},
+	{deep: true}
+)
+
+watch(
+	() => props.badge,
+	(newVal) => {
+		nextTick(() => {
+			badges.value = newVal
+		})
 	},
 	{deep: true}
 )
@@ -106,7 +121,16 @@ onBeforeUnmount(() => {
 						<Icons :icon-name="item.icon" color="var(--z-nav-font-color)"></Icons>
 					</el-icon>
 
-					<template #title> {{ item[props.keys[1]] }} </template>
+					<template #title>
+						<el-badge
+							:value="badges[item.displayName]"
+							:hidden="badges[item.displayName] === 0"
+							:offset="[26, 27]"
+							:max="99"
+						>
+							{{ item[props.keys[1]] }}
+						</el-badge>
+					</template>
 				</el-menu-item>
 
 				<el-sub-menu
@@ -133,7 +157,17 @@ onBeforeUnmount(() => {
 							@click="onClickItem(subItem)"
 						>
 							<template #title>
-								<span class="subItem-menu">{{ subItem[props.keys[1]] }}</span>
+								<span class="subItem-menu">
+									<el-badge
+										:value="badges[subItem.displayName]"
+										:hidden="badges[subItem.displayName] === 0"
+										:offset="[26, 24]"
+										:max="99"
+										class="subitem-menu"
+									>
+										{{ subItem[props.keys[1]] }}
+									</el-badge>
+								</span>
 							</template>
 						</el-menu-item>
 
@@ -142,7 +176,16 @@ onBeforeUnmount(() => {
 							:index="subItem[props.keys[0]]"
 						>
 							<template #title>
-								<span>{{ subItem[props.keys[1]] }}</span>
+								<span>
+									<el-badge
+										:value="badges[subItem.displayName]"
+										:hidden="badges[subItem.displayName] === 0"
+										:offset="[26, 27]"
+										:max="99"
+									>
+										{{ subItem[props.keys[1]] }}
+									</el-badge>
+								</span>
 							</template>
 
 							<template v-for="subSubItem of subItem.children">
@@ -150,7 +193,16 @@ onBeforeUnmount(() => {
 									:index="subSubItem[props.keys[0]]"
 									@click="onClickItem(subSubItem)"
 								>
-									<template #title> {{ subSubItem[props.keys[1]] }} </template>
+									<template #title>
+										<el-badge
+											:value="badges[subSubItem.displayName]"
+											:hidden="badges[subSubItem.displayName] === 0"
+											:offset="[26, 27]"
+											:max="99"
+										>
+											{{ subSubItem[props.keys[1]] }}
+										</el-badge>
+									</template>
 								</el-menu-item>
 							</template>
 						</el-sub-menu>
