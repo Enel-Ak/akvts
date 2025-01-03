@@ -33,7 +33,7 @@ const router = useRouter()
 const navRef = ref()
 const navItems = ref(props.items)
 const active = ref(props.defaultActive)
-const badges = ref(props.badge)
+const badges = ref(props.badges)
 const isCollapse = computed(() => props.collapse)
 
 const onClickItem = (item) => {
@@ -123,8 +123,8 @@ onBeforeUnmount(() => {
 
 					<template #title>
 						<el-badge
-							:value="badges[item.displayName]"
-							:hidden="badges[item.displayName] === 0"
+							:value="badges?.[item[props.keys[1]]]"
+							:hidden="badges?.[item[props.keys[1]]] === 0"
 							:offset="[26, 27]"
 							:max="99"
 						>
@@ -159,8 +159,8 @@ onBeforeUnmount(() => {
 							<template #title>
 								<span class="subItem-menu">
 									<el-badge
-										:value="badges[subItem.displayName]"
-										:hidden="badges[subItem.displayName] === 0"
+										:value="badges?.[subItem[props.keys[1]]]"
+										:hidden="badges?.[subItem[props.keys[1]]] === 0"
 										:offset="[26, 24]"
 										:max="99"
 										class="subitem-menu"
@@ -178,8 +178,8 @@ onBeforeUnmount(() => {
 							<template #title>
 								<span>
 									<el-badge
-										:value="badges[subItem.displayName]"
-										:hidden="badges[subItem.displayName] === 0"
+										:value="badges?.[subItem[props.keys[1]]]"
+										:hidden="badges?.[subItem[props.keys[1]]] === 0"
 										:offset="[26, 27]"
 										:max="99"
 									>
@@ -195,8 +195,8 @@ onBeforeUnmount(() => {
 								>
 									<template #title>
 										<el-badge
-											:value="badges[subSubItem.displayName]"
-											:hidden="badges[subSubItem.displayName] === 0"
+											:value="badges?.[subSubItem[props.keys[1]]]"
+											:hidden="badges?.[subSubItem[props.keys[1]]] === 0"
 											:offset="[26, 27]"
 											:max="99"
 										>

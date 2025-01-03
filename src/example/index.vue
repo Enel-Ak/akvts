@@ -37,7 +37,7 @@ onMounted(() => {
 	>
 		<template #header> header</template>
 		<template #aside>
-			<Navigation :collapse="!containerExpand" :items="nav" />
+			<Navigation :collapse="!containerExpand" :items="nav" :badges="{首页: 99}" />
 		</template>
 		<template #top>
 			<Labels ref="labelsRef" :height="30"></Labels>
