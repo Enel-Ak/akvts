@@ -116,6 +116,13 @@ watch(
 		} else {
 			const index = items.value.findIndex((item) => item.path === to.fullPath)
 			current.value = items.value[index]
+
+			if (index > props.max - 1) {
+				items.value.splice(1, 0, current.value)
+				setTimeout(() => {
+					items.value.splice(index + 1, 1)
+				}, 0)
+			}
 		}
 		save()
 	},
