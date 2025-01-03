@@ -13,7 +13,7 @@ const nav = [
 		id: pid.value,
 		icon: 'Notifications',
 		label: '通知',
-		path: '',
+		path: '/Block',
 		sort: 3,
 		children: [
 			{id: useGuid(), label: '工作通知', path: '', sort: 1, pid},
