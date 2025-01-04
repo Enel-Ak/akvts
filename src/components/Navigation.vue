@@ -65,9 +65,7 @@ watch(
 watch(
 	() => props.badges,
 	(newVal) => {
-		nextTick(() => {
-			badges.value = newVal
-		})
+		badges.value = newVal
 	},
 	{deep: true}
 )
