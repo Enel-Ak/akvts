@@ -26,7 +26,7 @@ const nav = [
 const labelsRef = ref()
 
 onMounted(() => {
-	labelsRef.value.first(nav[0])
+	labelsRef.value.first(nav[1])
 })
 </script>
 <template>

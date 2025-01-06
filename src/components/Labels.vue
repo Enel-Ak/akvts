@@ -32,9 +32,6 @@ const h = computed(() => {
 	return _h
 })
 
-const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
-const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
-
 const query = (item) => {
 	const split = item.path.split('?')
 	const query = {}
@@ -48,13 +45,13 @@ const query = (item) => {
 }
 
 const save = () => {
-	localStorage.setItem('CURRENT_LABEL', JSON.stringify(current.value))
-	localStorage.setItem('LABELS', JSON.stringify(items.value))
+	nextTick(() => {
+		localStorage.setItem('CURRENT_LABEL', JSON.stringify(current.value))
+		localStorage.setItem('LABELS', JSON.stringify(items.value))
+	})
 }
 
 const onClickLabel = (item, isDropdown = false) => {
-	console.log('Labels Click', item)
-
 	const index = items.value.findIndex((i) => i[props.keys[0]].path === item[props.keys[0]].path)
 	current.value = item
 
@@ -65,7 +62,7 @@ const onClickLabel = (item, isDropdown = false) => {
 		}, 0)
 	}
 
-	save()
+	// save()
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
@@ -131,9 +128,9 @@ const updateLabelTitle = (e) => {
 watch(
 	() => route,
 	(to, from) => {
-		console.log('Labels Route Changed', to, from)
+		console.log('Labels Route Changed', to.fullPath, from)
 
-		if (to.meta.ignoreLabel) {
+		if (!to || to.meta.ignoreLabel) {
 			return
 		}
 
@@ -161,26 +158,25 @@ watch(
 
 		save()
 	},
-	{deep: true, immediate: true}
+	{deep: true}
 )
 
 onBeforeMount(() => {
+	// 从 localStorage 读取历史记录
+	const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
+	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
+	console.log('Labels History', history, historyCurrent)
+
 	if (history.length > 0) {
 		items.value = history
-
 		if (Object.keys(historyCurrent).length > 0) {
 			current.value = historyCurrent
 		} else {
 			current.value = history[0]
 		}
-		console.log('Labels History', current.value)
-		router.push({
-			path: current.value.path,
-			query: {
-				...route.query,
-				...query(current.value),
-			},
-		})
+		if (current.value) {
+			onClickLabel(current.value)
+		}
 	}
 })
 onMounted(() => {
@@ -193,9 +189,13 @@ onUnmounted(() => {
 
 defineExpose({
 	first: (item) => {
-		if (Object.keys(historyCurrent).length === 0) {
-			console.log('Labels first', item)
-			items.value = [item]
+		console.log('Labels first', item)
+
+		const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
+		const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
+		if (history.length === 0 && Object.keys(historyCurrent).length === 0) {
+			items.value.unshift(item)
+			current.value = item
 			router.push({
 				path: item.path,
 				query: query(item),
@@ -212,7 +212,7 @@ defineExpose({
 				type="button"
 				:title="item.modifiedTitle || item[keys[1]]"
 				:class="{
-					active: current?.[keys[0]] === item[keys[0]],
+					active: current?.path === item.path,
 				}"
 				@click="onClickLabel(item)"
 			>
