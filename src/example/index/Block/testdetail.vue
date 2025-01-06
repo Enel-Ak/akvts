@@ -8,6 +8,7 @@
 	{
 		meta: {
 			childTitle: '测试详情',
+			ignoreLabel:true
 		}
 	}
 </route>

@@ -114,6 +114,10 @@ watch(
 	(to, from) => {
 		console.log('Labels Route Changed', to, from)
 
+		if (to.meta.ignoreLabel) {
+			return
+		}
+
 		if (!items.value.some((item) => item.path === to.fullPath)) {
 			const newLabel = {
 				id: useGuid(),
