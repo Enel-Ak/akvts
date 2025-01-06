@@ -6,6 +6,10 @@ const props = defineProps({
 		type: String,
 		default: '',
 	},
+	svg: {
+		type: String,
+		default: '',
+	},
 	color: {
 		type: String,
 		default: 'var(--z-font-color)',
@@ -31,7 +35,7 @@ const iconSize = computed(() => {
 const iconColor = computed(() => props.color)
 </script>
 <template>
-	<i class="akvts-icons" v-html="Icons[iconName]"></i>
+	<i class="akvts-icons" v-html="svg || Icons[iconName]"></i>
 </template>
 <style scoped lang="scss">
 .akvts-icons {
