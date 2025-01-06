@@ -128,7 +128,7 @@ watch(
 		}
 		save()
 	},
-	{deep: true}
+	{deep: true, immediate: true}
 )
 
 onBeforeMount(() => {
@@ -150,6 +150,8 @@ onBeforeMount(() => {
 
 defineExpose({
 	first: (item) => {
+		console.log('Labels first', item)
+
 		if (Object.keys(historyCurrent).length === 0) {
 			router.push({
 				path: item.path,
