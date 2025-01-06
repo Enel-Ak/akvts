@@ -101,6 +101,14 @@ const setBar = () => {
 	el.style.left = active.offsetLeft + active.offsetWidth / 2 - 2 + 'px'
 }
 
+const getMetaTitle = (item) => {
+	let title = item.meta.title
+	if (title === '-未命名') {
+		title = item.meta.childTitle || '-未命名'
+	}
+	return title
+}
+
 watch(
 	() => route,
 	(to, from) => {
@@ -109,7 +117,7 @@ watch(
 		if (!items.value.some((item) => item.path === to.fullPath)) {
 			const newLabel = {
 				id: useGuid(),
-				label: to.meta.title || '-未命名',
+				label: getMetaTitle(to),
 				path: to.fullPath,
 			}
 
@@ -118,7 +126,7 @@ watch(
 		} else {
 			const index = items.value.findIndex((item) => item.path === to.fullPath)
 			current.value = items.value[index]
-			current.value.label = to.meta.title || '-未命名'
+			current.value.label = getMetaTitle(to)
 
 			if (index > props.max - 1) {
 				items.value.splice(1, 0, current.value)
@@ -128,14 +136,6 @@ watch(
 			}
 		}
 		save()
-	},
-	{deep: true, immediate: true}
-)
-
-watch(
-	() => router.currentRoute.value,
-	(to, from) => {
-		current.value.label = to.meta.title || '-未命名'
 	},
 	{deep: true, immediate: true}
 )
