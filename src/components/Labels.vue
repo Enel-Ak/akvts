@@ -132,6 +132,14 @@ watch(
 	{deep: true, immediate: true}
 )
 
+watch(
+	() => router.currentRoute.value,
+	(to, from) => {
+		current.value.label = to.meta.title || '-未命名'
+	},
+	{deep: true, immediate: true}
+)
+
 onBeforeMount(() => {
 	if (history.length > 0) {
 		items.value = history
