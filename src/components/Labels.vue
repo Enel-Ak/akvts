@@ -109,7 +109,7 @@ watch(
 		if (!items.value.some((item) => item.path === to.fullPath)) {
 			const newLabel = {
 				id: useGuid(),
-				label: to.meta.title || '-无标题',
+				label: to.meta.title || '-未命名',
 				path: to.fullPath,
 			}
 
@@ -118,6 +118,7 @@ watch(
 		} else {
 			const index = items.value.findIndex((item) => item.path === to.fullPath)
 			current.value = items.value[index]
+			current.value.label = to.meta.title || '-未命名'
 
 			if (index > props.max - 1) {
 				items.value.splice(1, 0, current.value)
