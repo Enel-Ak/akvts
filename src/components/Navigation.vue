@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
 						<Icons
 							:icon-name="item.icon"
 							color="var(--z-nav-font-color)"
-							style="margin-left: 4px; margin-right: 7px"
+							style="margin-left: 3px; margin-right: 8px"
 						></Icons>
 						<span>{{ item[props.keys[1]] }}</span>
 					</template>
