@@ -195,6 +195,7 @@ defineExpose({
 	first: (item) => {
 		if (Object.keys(historyCurrent).length === 0) {
 			console.log('Labels first', item)
+			items.value = [item]
 			router.push({
 				path: item.path,
 				query: query(item),
