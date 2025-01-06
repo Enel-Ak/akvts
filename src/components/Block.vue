@@ -137,6 +137,8 @@ const initObserver = () => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
 					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
+					console.log(1111, _offset.value)
+
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
 						if (expendContentOpen.value) {
@@ -171,7 +173,7 @@ const init = () => {
 	}
 	if (props.expandContent) {
 		setTimeout(() => {
-			frame.value = JSON.parse(localStorage.getItem('') || '[]')
+			// frame.value = JSON.parse(localStorage.getItem('') || '[]')
 			onExpendContent(false)
 			nextTick(() => {
 				isExpand = false

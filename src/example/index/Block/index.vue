@@ -16,7 +16,7 @@ const onClick2 = () => {
 }
 </script>
 <template>
-	<Block title="测试标题">
+	<Block title="测试标题" :enable-fixed-height="true">
 		<el-link @click="onClick">跳转测试</el-link> <br />
 		<el-link @click="onClick2">跳转测试2</el-link>
 	</Block>
