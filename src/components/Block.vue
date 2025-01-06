@@ -137,8 +137,6 @@ const initObserver = () => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
 					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
-					console.log(1111, _offset.value)
-
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
 						if (expendContentOpen.value) {
