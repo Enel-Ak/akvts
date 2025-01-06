@@ -51,8 +51,12 @@ export default ({mode}) => {
 					return {
 						...route,
 						meta: {
-							title: route.meta?.title || route.meta?.childTitle || '-未命名',
-							...route.meta, // 保留原有的 meta
+							title:
+								route.meta?.modifiedTitle ||
+								route.meta?.title ||
+								route.meta?.childTitle ||
+								'-未命名',
+							// ...route.meta, // 保留原有的 meta
 						},
 					}
 				},

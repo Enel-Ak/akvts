@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, provide, inject} from 'vue'
 import useGuid from '@/hooks/useGuid'
 
 const containerExpand = ref(true)
@@ -24,6 +24,7 @@ const nav = [
 ]
 
 const labelsRef = ref()
+
 onMounted(() => {
 	labelsRef.value.first(nav[0])
 })

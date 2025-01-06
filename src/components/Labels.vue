@@ -1,5 +1,5 @@
 <script setup>
-import {nextTick, ref, computed, watch, onBeforeMount} from 'vue'
+import {nextTick, ref, computed, watch, onBeforeMount, onMounted, onUnmounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import useGuid from '@/hooks/useGuid'
 
@@ -52,9 +52,10 @@ const save = () => {
 	localStorage.setItem('LABELS', JSON.stringify(items.value))
 }
 
-const onClickLabel = (item, isDropdown = false, isPush = true) => {
-	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
+const onClickLabel = (item, isDropdown = false) => {
+	console.log('Labels Click', item)
 
+	const index = items.value.findIndex((i) => i[props.keys[0]].path === item[props.keys[0]].path)
 	current.value = item
 
 	if (isDropdown) {
@@ -64,13 +65,20 @@ const onClickLabel = (item, isDropdown = false, isPush = true) => {
 		}, 0)
 	}
 
-	console.log('Labels Click:', item)
-
 	save()
 	emits('clickItem', item)
-	router.push({path: item.path, query: query(item)})
 
-	nextTick(() => setBar())
+	// 检查路径是否有效且不同于当前路径
+	if (item.path && item.path !== route.fullPath) {
+		router
+			.push({
+				path: item.path,
+				query: query(item),
+			})
+			.catch((err) => {
+				console.error('路由跳转失败:', err)
+			})
+	}
 }
 
 const onCancelItem = (item) => {
@@ -102,11 +110,22 @@ const setBar = () => {
 }
 
 const getMetaTitle = (item) => {
-	let title = item.meta.title
-	if (title === '-未命名') {
-		title = item.meta.childTitle || '-未命名'
+	let title = ''
+	if (current.value && current.value.modifiedTitle) {
+		title = current.value.modifiedTitle
+	} else {
+		title = item.meta.title || item.meta.childTitle || '-未命名'
 	}
 	return title
+}
+
+const updateLabelTitle = (e) => {
+	const {path, title} = e.detail
+	const index = items.value.findIndex((f) => f.path === path)
+	if (index !== -1) {
+		items.value[index].modifiedTitle = title
+	}
+	save()
 }
 
 watch(
@@ -139,6 +158,7 @@ watch(
 				}, 0)
 			}
 		}
+
 		save()
 	},
 	{deep: true, immediate: true}
@@ -153,21 +173,31 @@ onBeforeMount(() => {
 		} else {
 			current.value = history[0]
 		}
-
+		console.log('Labels History', current.value)
 		router.push({
 			path: current.value.path,
-			query: query(current.value),
+			query: {
+				...route.query,
+				...query(current.value),
+			},
 		})
 	}
+})
+onMounted(() => {
+	window.addEventListener('updateLabelTitle', updateLabelTitle)
+})
+
+onUnmounted(() => {
+	window.removeEventListener('updateLabelTitle', updateLabelTitle)
 })
 
 defineExpose({
 	first: (item) => {
-		console.log('Labels first', item)
-
 		if (Object.keys(historyCurrent).length === 0) {
+			console.log('Labels first', item)
 			router.push({
 				path: item.path,
+				query: query(item),
 			})
 		}
 	},
@@ -185,7 +215,7 @@ defineExpose({
 				}"
 				@click="onClickLabel(item)"
 			>
-				<span>{{ item[keys[1]] }}</span>
+				<span>{{ item.modifiedTitle || item[keys[1]] }}</span>
 				<Icons
 					v-if="index > 0"
 					icon-name="Cancel"
