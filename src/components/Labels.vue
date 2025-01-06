@@ -209,7 +209,7 @@ defineExpose({
 			<button
 				v-if="index < $props.max"
 				type="button"
-				:title="item[keys[1]]"
+				:title="item.modifiedTitle || item[keys[1]]"
 				:class="{
 					active: current?.[keys[0]] === item[keys[0]],
 				}"
