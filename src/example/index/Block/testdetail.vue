@@ -5,3 +5,10 @@
 	</div>
 </template>
 <style scoped lang="scss"></style>
+<route>
+	{
+		meta: {
+			title: '测试路由跳转'
+		}
+	}
+</route>

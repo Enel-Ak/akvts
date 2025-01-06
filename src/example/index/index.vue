@@ -265,3 +265,10 @@ const handValidate = () => {
 	</Block>
 </template>
 <style scoped lang="scss"></style>
+<route>
+	{
+		meta: {
+			title: '首页'
+		}
+	}
+</route>

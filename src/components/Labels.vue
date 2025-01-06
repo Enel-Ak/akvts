@@ -104,10 +104,12 @@ const setBar = () => {
 watch(
 	() => route,
 	(to, from) => {
+		console.log('Labels Route Changed', to, from)
+
 		if (!items.value.some((item) => item.path === to.fullPath)) {
 			const newLabel = {
 				id: useGuid(),
-				label: to.query._l || '-无标题',
+				label: to.meta.title || '-无标题',
 				path: to.fullPath,
 			}
 
@@ -151,9 +153,6 @@ defineExpose({
 		if (Object.keys(historyCurrent).length === 0) {
 			router.push({
 				path: item.path,
-				query: {
-					_l: item[props.keys[1]],
-				},
 			})
 		}
 	},

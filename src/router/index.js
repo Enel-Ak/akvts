@@ -1,5 +1,5 @@
 import {createRouter, createWebHistory} from 'vue-router'
-import routes from '~pages'
+import routes from 'virtual:generated-pages'
 
 export const router = createRouter({
 	// 基于浏览器 URL 的 hash 路由模式 /#/home
@@ -8,6 +8,8 @@ export const router = createRouter({
 	history: createWebHistory(),
 	routes: routes,
 })
+
+console.log('routes', routes)
 
 router.beforeEach((to, from, next) => {
 	next()

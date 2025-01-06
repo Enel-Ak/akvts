@@ -4,9 +4,6 @@ const router = useRouter()
 const onClick = () => {
 	router.push({
 		path: '/Block/testdetail',
-		query: {
-			_l: '测试',
-		},
 	})
 }
 </script>
@@ -15,4 +12,11 @@ const onClick = () => {
 		<el-link @click="onClick">跳转测试</el-link>
 	</Block>
 </template>
+<route>
+	{
+		meta: {
+			title: '设置'
+		}
+	}
+</route>
 <style scoped lang="scss"></style>

@@ -46,9 +46,6 @@ const onClickItem = (item) => {
 			active.value = item[props.keys[0]]
 			router.push({
 				path: item.path,
-				query: {
-					_l: item[props.keys[1]],
-				},
 			})
 		}
 	}
@@ -75,7 +72,7 @@ watch(
 	(to) => {
 		const id = (arr) => {
 			for (let i of arr) {
-				if (i.label === to.query._l) {
+				if (i.label === to.meta.title) {
 					return i.id
 				}
 				if (i.children) {

@@ -46,6 +46,16 @@ export default ({mode}) => {
 			pages({
 				dirs: 'src/example',
 				exclude: ['**/components/*.vue'],
+				extendRoute(route) {
+					// 如果当前路由没有定义 meta，添加一个默认的 meta
+					return {
+						...route,
+						meta: {
+							title: route.title || '-未命名',
+							...route.meta, // 保留原有的 meta
+						},
+					}
+				},
 			}),
 		],
 		build: {
