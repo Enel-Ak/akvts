@@ -28,6 +28,8 @@ const router = useRouter()
 const items = ref([])
 const current = ref(null)
 const _navigator = reactive(props.navigator)
+const _toPath = ref('')
+const _fromPath = ref('')
 
 const buttonWidth = computed(() => {
 	return `${100 / props.max - 1}%`
@@ -135,7 +137,7 @@ const deleteLabel = (e) => {
 const getNavItem = (to) => {
 	const loops = (arr) => {
 		for (const element of arr) {
-			if (element.path === to.path) {
+			if (element.path === to.fullPath) {
 				return element
 			}
 			if (element.children && element.children.length > 0) {
@@ -147,18 +149,26 @@ const getNavItem = (to) => {
 }
 
 const handleRouter = (to) => {
-	if (!to || to.meta.ignoreLabel) {
-		return
-	}
-
 	if (!items.value.some((item) => item.path === to.fullPath)) {
-		// 判断菜单是否存在
+		console.log('Labels Push', to.fullPath, _fromPath.value)
+
+		// 判断是否左侧菜单
 		const nav = getNavItem(to)
+		let pid = null
+		if (!nav) {
+			// 如果没有菜单, 则使用上一个菜单
+			if (current.value.pid) {
+				pid = current.value.pid
+			} else {
+				pid = current.value.id
+			}
+		}
+
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
 			path: to.fullPath,
-			pid: current.value && !nav ? current.value[props.keys[0]] : null,
+			pid,
 		}
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
@@ -182,9 +192,22 @@ const handleRouter = (to) => {
 }
 
 watch(
+	() => route.fullPath,
+	(to, from) => {
+		console.log('Labels FullPath Changed', to, from)
+
+		_toPath.value = to
+		_fromPath.value = from
+	}
+)
+
+watch(
 	() => route,
 	(to, from) => {
-		console.log('Labels Route Changed', to.fullPath, from)
+		console.log('Labels Route Changed', to, from)
+		if (!to || to.meta.ignoreLabel) {
+			return
+		}
 		handleRouter(to)
 	},
 	{deep: true}

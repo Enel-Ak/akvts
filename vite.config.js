@@ -57,6 +57,7 @@ export default ({mode}) => {
 								route.meta?.childTitle ||
 								'-未命名',
 							// ...route.meta, // 保留原有的 meta
+							ignoreLabel: route.meta?.ignoreLabel,
 						},
 					}
 				},
