@@ -24,7 +24,7 @@ const onClick2 = () => {
 <route>
 	{
 		meta: {
-			title: '设置'
+			title: '设置页面标题',
 		}
 	}
 </route>

@@ -8,25 +8,28 @@ const hid = ref(useGuid())
 const pid = ref(useGuid())
 const did = ref(useGuid())
 const nav = [
-	{id: hid.value, icon: 'Home', label: '首页', path: '/', sort: 1},
-	{id: useGuid(), icon: 'Setting', label: '设置', path: '/Block', sort: 2},
+	{id: 'a', icon: 'Home', label: '首页', path: '/', sort: 1},
+	{id: 'c', icon: 'Setting', label: '设置', path: '/Block', sort: 2},
 	{
-		id: pid.value,
+		id: 'b',
 		icon: 'Notifications',
 		label: '通知',
 		path: '/Block',
 		sort: 3,
 		children: [
-			{id: useGuid(), label: '工作通知', path: '', sort: 1, pid},
-			{id: did.value, label: '代办通知', path: '/Block', sort: 2, pid},
-			{id: useGuid(), label: '消息通知', path: '', sort: 3, pid},
+			{id: 'bb', label: '工作通知', path: '', sort: 1, pid},
+			{id: 'bbb', label: '代办通知', path: '/Block', sort: 2, pid},
+			{id: 'bbbb', label: '消息通知', path: '', sort: 3, pid},
 		],
 	},
 ]
 
 const labelsRef = ref()
+const currentItemId = ref('')
+const parentId = ref('')
 
 onMounted(() => {
+	currentItemId.value = nav[0].id
 	labelsRef.value.first(nav[0])
 	// setTimeout(() => {
 	// 	deleteLabel({path: '/Block'})
@@ -40,12 +43,17 @@ onMounted(() => {
 		:frame="['header', 'default', 'footer', 'aside']"
 		@collapse="($event) => (containerExpand = $event)"
 	>
-		<template #header> header</template>
+		<template #header> {{ currentItemId }}</template>
 		<template #aside>
-			<Navigation :collapse="!containerExpand" :items="nav" :badges="{首页: 99}" />
+			<Navigation
+				v-model="currentItemId"
+				:collapse="!containerExpand"
+				:items="nav"
+				:badges="{首页: 99}"
+			/>
 		</template>
 		<template #top>
-			<Labels ref="labelsRef" :height="30"></Labels>
+			<Labels v-model="currentItemId" ref="labelsRef" :height="30" :navigator="nav"></Labels>
 		</template>
 
 		<router-view v-slot="{Component}">

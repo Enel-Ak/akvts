@@ -1,10 +1,14 @@
 <script setup>
-import {nextTick, ref, computed, watch, onBeforeMount, onMounted, onUnmounted} from 'vue'
+import {nextTick, ref, computed, watch, onBeforeMount, onMounted, onUnmounted, reactive} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import useGuid from '@/hooks/useGuid'
 
-const emits = defineEmits(['clickItem', 'cancelItem'])
+const emits = defineEmits(['clickItem', 'cancelItem', 'update:modelValue'])
 const props = defineProps({
+	navigator: {
+		type: Array,
+		default: () => [],
+	},
 	keys: {
 		type: Array,
 		default: () => ['id', 'label'],
@@ -23,6 +27,7 @@ const route = useRoute()
 const router = useRouter()
 const items = ref([])
 const current = ref(null)
+const _navigator = reactive(props.navigator)
 
 const buttonWidth = computed(() => {
 	return `${100 / props.max - 1}%`
@@ -58,17 +63,7 @@ const save = () => {
 const onClickLabel = (item, isDropdown = false) => {
 	console.log('Labels Click:', item)
 
-	const index = items.value.findIndex((i) => i[props.keys[0]].path === item[props.keys[0]].path)
-	current.value = item
-
-	// if (isDropdown) {
-	// 	items.value.splice(1, 0, item)
-	// 	setTimeout(() => {
-	// 		items.value.splice(index + 1, 1)
-	// 	}, 0)
-	// }
-
-	// save()
+	emits('update:modelValue', item.pid || item.id)
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
@@ -137,38 +132,46 @@ const deleteLabel = (e) => {
 	onCancelItem(item)
 }
 
+const handleRouter = (to, from) => {
+	if (!to || to.meta.ignoreLabel) {
+		return
+	}
+
+	if (!items.value.some((item) => item.path === to.fullPath)) {
+		// 判断菜单是否存在
+		const has = _navigator.find((item) => item.path === to.path)
+		const newLabel = {
+			id: has ? has.id : useGuid(),
+			label: getMetaTitle(to),
+			path: to.fullPath,
+			pid: current.value && !has ? current.value[props.keys[0]] : null,
+		}
+		items.value.splice(1, 0, newLabel)
+		current.value = newLabel
+		if (newLabel.pid) {
+			emits('update:modelValue', newLabel.pid)
+		}
+	} else {
+		const index = items.value.findIndex((item) => item.path === to.fullPath)
+		current.value = items.value[index]
+		current.value.label = getMetaTitle(to)
+
+		if (index > props.max - 1) {
+			items.value.splice(1, 0, current.value)
+			setTimeout(() => {
+				items.value.splice(index + 1, 1)
+			}, 0)
+		}
+	}
+
+	save()
+}
+
 watch(
 	() => route,
 	(to, from) => {
 		console.log('Labels Route Changed', to.fullPath, from)
-
-		if (!to || to.meta.ignoreLabel) {
-			return
-		}
-
-		if (!items.value.some((item) => item.path === to.fullPath)) {
-			const newLabel = {
-				id: useGuid(),
-				label: getMetaTitle(to),
-				path: to.fullPath,
-			}
-
-			items.value.splice(1, 0, newLabel)
-			current.value = newLabel
-		} else {
-			const index = items.value.findIndex((item) => item.path === to.fullPath)
-			current.value = items.value[index]
-			current.value.label = getMetaTitle(to)
-
-			if (index > props.max - 1) {
-				items.value.splice(1, 0, current.value)
-				setTimeout(() => {
-					items.value.splice(index + 1, 1)
-				}, 0)
-			}
-		}
-
-		save()
+		handleRouter(to, from)
 	},
 	{deep: true}
 )

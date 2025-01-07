@@ -2,8 +2,12 @@
 import {computed, onBeforeUnmount, onMounted, watch, ref} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 
-const emits = defineEmits(['clickItem'])
+const emits = defineEmits(['clickItem', 'update:modelValue'])
 const props = defineProps({
+	modelValue: {
+		type: String,
+		default: '',
+	},
 	collapse: Boolean,
 	items: Object,
 	defaultActive: {
@@ -41,6 +45,7 @@ const onClickItem = (item) => {
 	const isContinue = props.beforeRouter(item)
 
 	if (isContinue) {
+		emits('update:modelValue', item[props.keys[0]])
 		emits('clickItem', item)
 		if (item.path) {
 			active.value = item[props.keys[0]]
@@ -68,22 +73,24 @@ watch(
 )
 
 watch(
-	() => route,
-	(to) => {
-		const id = (arr) => {
-			for (let i of arr) {
-				if (i.label === to.meta.title) {
-					return i.id
-				}
-				if (i.children) {
-					return id(i.children)
+	() => props.modelValue,
+	(newVal) => {
+		if (newVal) {
+			const id = (arr) => {
+				for (let i of arr) {
+					if (i.id === newVal) {
+						return i.id
+					}
+					if (i.children) {
+						return id(i.children)
+					}
 				}
 			}
+			const curId = id(navItems.value)
+			active.value = curId
 		}
-		const curId = id(navItems.value)
-		active.value = curId
 	},
-	{deep: true, immediate: true}
+	{immediate: true}
 )
 
 onMounted(() => {})

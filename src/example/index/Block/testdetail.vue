@@ -25,9 +25,9 @@ onActivated(() => {
 <route>
 	{
 		meta: {
-			childTitle: '测试详情2'
-			ignoreLabel:true
-		}
+			childTitle: '测试详情2',
+			ignoreLabel: true,
+		},
 	}
 </route>
 <style scoped lang="scss"></style>
