@@ -80,7 +80,8 @@ watch(
 				}
 			}
 		}
-		active.value = id(navItems.value)
+		const curId = id(navItems.value)
+		active.value = curId
 	},
 	{deep: true, immediate: true}
 )

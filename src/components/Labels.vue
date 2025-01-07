@@ -24,8 +24,8 @@ const router = useRouter()
 const items = ref([])
 const current = ref(null)
 // 2.25 更多宽度, 3 选中增加宽度
-const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25 - 3}%`)
-const buttonActiveWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25 + 3}%`)
+const buttonWidth = computed(() => `${100 / props.max - 2.25 - 3}%`)
+const buttonActiveWidth = computed(() => `${100 / props.max - 2.25 + 3}%`)
 const h = computed(() => {
 	let _h = props.height
 	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {
