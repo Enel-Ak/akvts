@@ -217,7 +217,7 @@ $szie170: 170px;
 			position: fixed;
 			top: calc(v-bind(offset) + 20px);
 			transform: translate(-20px, -20px);
-			width: calc(100% + 40px);
+			width: inherit;
 			z-index: 4;
 		}
 

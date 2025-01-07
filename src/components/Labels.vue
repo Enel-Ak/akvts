@@ -17,15 +17,18 @@ const props = defineProps({
 		type: Number,
 		default: 5,
 	},
+	collapse: Boolean,
 })
 
 const route = useRoute()
 const router = useRouter()
 const items = ref([])
 const current = ref(null)
-// 2.25 更多宽度, 3 选中增加宽度
-const buttonWidth = computed(() => `${100 / props.max - props.max / 30 - 2}%`)
-const buttonActiveWidth = computed(() => `${100 / props.max - props.max / 30 + 2}%`)
+
+const buttonWidth = computed(() => {
+	return `${100 / props.max - 1.5}%`
+})
+const buttonActiveWidth = computed(() => `${100 / props.max + props.max * 1.5}%`)
 const h = computed(() => {
 	let _h = props.height
 	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {
