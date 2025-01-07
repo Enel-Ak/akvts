@@ -11,7 +11,7 @@ const props = defineProps({
 	},
 	keys: {
 		type: Array,
-		default: () => ['id', 'label', 'pid'],
+		default: () => ['id', 'label'],
 	},
 	height: {
 		type: [Number, String],
@@ -134,6 +134,7 @@ const deleteLabel = (e) => {
 	onCancelItem(item)
 }
 
+// 获取左侧菜单
 const getNavItem = (to) => {
 	const loops = (arr) => {
 		for (const element of arr) {
@@ -148,26 +149,33 @@ const getNavItem = (to) => {
 	return loops(_navigator)
 }
 
+const getParentItem = (to) => {
+	const model = _fromPath.value.split('/')[1]
+	for (const item of items.value) {
+		if (item.path.split('/')[1] === model && model && !item.pid) {
+			return item
+		}
+	}
+	return null
+}
+
 const handleRouter = (to) => {
 	if (!items.value.some((item) => item.path === to.fullPath)) {
 		console.log('Labels Push', to.fullPath, _fromPath.value)
 
 		// 判断是否左侧菜单
 		const nav = getNavItem(to)
+		const parentItem = getParentItem(to)
+		console.log(1111, parentItem)
+
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
 			path: to.fullPath,
-			pid:
-				nav?.[props.keys[2]] ||
-				current.value?.[props.keys[2]] ||
-				(!nav ? current.value?.id : null),
+			pid: parentItem ? parentItem.id : null,
 		}
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
-		if (newLabel.pid) {
-			emits('update:modelValue', newLabel.pid)
-		}
 	} else {
 		const index = items.value.findIndex((item) => item.path === to.fullPath)
 		current.value = items.value[index]

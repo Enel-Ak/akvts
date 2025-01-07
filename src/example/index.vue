@@ -9,12 +9,12 @@ const pid = ref(useGuid())
 const did = ref(useGuid())
 const nav = [
 	{id: 'a', icon: 'Home', label: '首页', path: '/', sort: 1},
-	{id: 'c', icon: 'Setting', label: '设置', path: '/Block', sort: 2},
+	// {id: 'c', icon: 'Setting', label: '设置', path: '/Block', sort: 2},
 	{
 		id: 'b',
 		icon: 'Notifications',
 		label: '通知',
-		path: '/Block',
+		path: '',
 		sort: 3,
 		children: [
 			{id: 'bb', label: '工作通知', path: '', sort: 1, pid: 'b'},
