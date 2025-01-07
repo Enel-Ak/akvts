@@ -65,7 +65,9 @@ const save = () => {
 const onClickLabel = (item, isDropdown = false) => {
 	console.log('Labels Click:', item)
 
-	emits('update:modelValue', item.pid || item.id)
+	const leftNav = getNavItem({fullPath: item.path})
+
+	emits('update:modelValue', leftNav ? item.id : item.pid)
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
@@ -152,7 +154,11 @@ const getNavItem = (to) => {
 const getParentItem = (to) => {
 	const model = _fromPath.value.split('/')[1]
 	for (const item of items.value) {
-		if (item.path.split('/')[1] === model && model && !item.pid) {
+		if (
+			item.path.split('/')[1] === model &&
+			model &&
+			(item.pid === null || !item.hasOwnProperty('pid'))
+		) {
 			return item
 		}
 	}
@@ -160,14 +166,11 @@ const getParentItem = (to) => {
 }
 
 const handleRouter = (to) => {
+	// 判断是否左侧菜单
+	const nav = getNavItem(to)
+	const parentItem = getParentItem(to)
+
 	if (!items.value.some((item) => item.path === to.fullPath)) {
-		console.log('Labels Push', to.fullPath, _fromPath.value)
-
-		// 判断是否左侧菜单
-		const nav = getNavItem(to)
-		const parentItem = getParentItem(to)
-		console.log(1111, parentItem)
-
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
@@ -189,6 +192,7 @@ const handleRouter = (to) => {
 		}
 	}
 
+	emits('update:modelValue', nav ? current.value.id : current.value.pid)
 	save()
 }
 
