@@ -17,7 +17,6 @@ const props = defineProps({
 		type: Number,
 		default: 5,
 	},
-	collapse: Boolean,
 })
 
 const route = useRoute()

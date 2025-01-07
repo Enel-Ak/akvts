@@ -45,7 +45,7 @@ onMounted(() => {
 			<Navigation :collapse="!containerExpand" :items="nav" :badges="{首页: 99}" />
 		</template>
 		<template #top>
-			<Labels ref="labelsRef" :height="30" :collapse="!containerExpand"></Labels>
+			<Labels ref="labelsRef" :height="30"></Labels>
 		</template>
 
 		<router-view v-slot="{Component}">
