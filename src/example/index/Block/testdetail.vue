@@ -19,13 +19,13 @@ onActivated(() => {
 	<div class="testdetail">
 		<el-button @click="$router.go(-1)">测试路由跳转</el-button>
 		{{ router.currentRoute.value.fullPath }}
+		<!-- ignoreLabel: true, -->
 	</div>
 </template>
 <route>
 	{
 		meta: {
 			childTitle: '测试详情2',
-			ignoreLabel: true,
 		}
 	}
 </route>

@@ -11,7 +11,7 @@ const props = defineProps({
 	},
 	keys: {
 		type: Array,
-		default: () => ['id', 'label'],
+		default: () => ['id', 'label', 'pid'],
 	},
 	height: {
 		type: [Number, String],
@@ -154,21 +154,14 @@ const handleRouter = (to) => {
 
 		// 判断是否左侧菜单
 		const nav = getNavItem(to)
-		let pid = null
-		if (!nav) {
-			// 如果没有菜单, 则使用上一个菜单
-			if (current.value.pid) {
-				pid = current.value.pid
-			} else {
-				pid = current.value.id
-			}
-		}
-
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
 			path: to.fullPath,
-			pid,
+			pid:
+				nav?.[props.keys[2]] ||
+				current.value?.[props.keys[2]] ||
+				(!nav ? current.value?.id : null),
 		}
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
