@@ -1,5 +1,6 @@
 <script setup>
 import {onMounted, ref, provide, inject} from 'vue'
+import {deleteLabel} from '../hooks/useLabels'
 import useGuid from '@/hooks/useGuid'
 
 const containerExpand = ref(true)
@@ -26,7 +27,10 @@ const nav = [
 const labelsRef = ref()
 
 onMounted(() => {
-	labelsRef.value.first(nav[1])
+	labelsRef.value.first(nav[0])
+	// setTimeout(() => {
+	// 	deleteLabel({path: '/Block'})
+	// }, 5000)
 })
 </script>
 <template>

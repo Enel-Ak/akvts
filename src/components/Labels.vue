@@ -23,7 +23,9 @@ const route = useRoute()
 const router = useRouter()
 const items = ref([])
 const current = ref(null)
-const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25}%`)
+// 2.25 更多宽度, 3 选中增加宽度
+const buttonWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25 - 3}%`)
+const buttonActiveWidth = computed(() => `${100 / props.max - 30 / props.max / 2.25 + 3}%`)
 const h = computed(() => {
 	let _h = props.height
 	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {
@@ -127,6 +129,12 @@ const updateLabelTitle = (e) => {
 	save()
 }
 
+const deleteLabel = (e) => {
+	const {path} = e.detail
+	const item = items.value.find((f) => f.path === path)
+	onCancelItem(item)
+}
+
 watch(
 	() => route,
 	(to, from) => {
@@ -182,6 +190,7 @@ onBeforeMount(() => {
 	}
 })
 onMounted(() => {
+	window.addEventListener('deleteLabel', deleteLabel)
 	window.addEventListener('updateLabelTitle', updateLabelTitle)
 })
 
@@ -299,6 +308,7 @@ defineExpose({
 
 		&.active {
 			background-color: var(--z-nav-hover);
+			width: v-bind(buttonActiveWidth);
 		}
 
 		// &:not(:last-child)::after {

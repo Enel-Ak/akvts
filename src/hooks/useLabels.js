@@ -10,4 +10,16 @@ const updateLabelTitle = (obj) => {
 	)
 }
 
-export {updateLabelTitle}
+const deleteLabel = (obj) => {
+	if (!obj.path) {
+		console.error('缺少必要参数, path')
+		return
+	}
+	window.dispatchEvent(
+		new CustomEvent('deleteLabel', {
+			detail: obj,
+		})
+	)
+}
+
+export {updateLabelTitle, deleteLabel}

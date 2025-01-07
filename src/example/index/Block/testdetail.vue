@@ -26,6 +26,7 @@ onActivated(() => {
 	{
 		meta: {
 			childTitle: '测试详情2'
+			ignoreLabel:true
 		}
 	}
 </route>
