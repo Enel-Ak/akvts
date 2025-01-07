@@ -1,5 +1,5 @@
 <script setup>
-import {computed} from 'vue'
+import {computed, ref} from 'vue'
 
 const props = defineProps({
 	color: {
@@ -29,17 +29,7 @@ const jc = computed(() => {
 	return _jc
 })
 
-const iconSize = computed(() => {
-	let _size = 0
-	if (typeof _size === 'number') {
-		_size = `${_size}px`
-	} else if (_size.includes('px') || _size.includes('rem') || _size.includes('em')) {
-		_size = props.size
-	} else {
-		_size = `${_size}px`
-	}
-	return _size
-})
+const _color = ref(props.color)
 
 const iconColor = computed(() => props.color)
 </script>
@@ -89,10 +79,12 @@ const iconColor = computed(() => props.color)
 	}
 
 	span {
+		color: v-bind(_color);
 		transform: translateY(-0.5px);
 		small::after {
 			content: '';
 			animation: more 2s linear infinite;
+			color: v-bind(_color);
 		}
 	}
 
