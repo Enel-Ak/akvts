@@ -52,15 +52,17 @@ const save = () => {
 }
 
 const onClickLabel = (item, isDropdown = false) => {
+	console.log('Labels Click:', item)
+
 	const index = items.value.findIndex((i) => i[props.keys[0]].path === item[props.keys[0]].path)
 	current.value = item
 
-	if (isDropdown) {
-		items.value.splice(1, 0, item)
-		setTimeout(() => {
-			items.value.splice(index + 1, 1)
-		}, 0)
-	}
+	// if (isDropdown) {
+	// 	items.value.splice(1, 0, item)
+	// 	setTimeout(() => {
+	// 		items.value.splice(index + 1, 1)
+	// 	}, 0)
+	// }
 
 	// save()
 	emits('clickItem', item)
