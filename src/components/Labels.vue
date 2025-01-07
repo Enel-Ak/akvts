@@ -26,9 +26,9 @@ const items = ref([])
 const current = ref(null)
 
 const buttonWidth = computed(() => {
-	return `${100 / props.max - 1.5}%`
+	return `${100 / props.max - 1}%`
 })
-const buttonActiveWidth = computed(() => `${100 / props.max + props.max * 1.5}%`)
+const buttonActiveWidth = computed(() => `${100 / props.max + props.max * 1}%`)
 const h = computed(() => {
 	let _h = props.height
 	if (typeof _h === 'number' || (typeof _h === 'string' && _h.indexOf('px') === -1)) {
