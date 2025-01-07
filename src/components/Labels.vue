@@ -132,19 +132,33 @@ const deleteLabel = (e) => {
 	onCancelItem(item)
 }
 
-const handleRouter = (to, from) => {
+const getNavItem = (to) => {
+	const loops = (arr) => {
+		for (const element of arr) {
+			if (element.path === to.path) {
+				return element
+			}
+			if (element.children && element.children.length > 0) {
+				return loops(element.children)
+			}
+		}
+	}
+	return loops(_navigator)
+}
+
+const handleRouter = (to) => {
 	if (!to || to.meta.ignoreLabel) {
 		return
 	}
 
 	if (!items.value.some((item) => item.path === to.fullPath)) {
 		// 判断菜单是否存在
-		const has = _navigator.find((item) => item.path === to.path)
+		const nav = getNavItem(to)
 		const newLabel = {
-			id: has ? has.id : useGuid(),
+			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
 			path: to.fullPath,
-			pid: current.value && !has ? current.value[props.keys[0]] : null,
+			pid: current.value && !nav ? current.value[props.keys[0]] : null,
 		}
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
@@ -171,7 +185,7 @@ watch(
 	() => route,
 	(to, from) => {
 		console.log('Labels Route Changed', to.fullPath, from)
-		handleRouter(to, from)
+		handleRouter(to)
 	},
 	{deep: true}
 )
