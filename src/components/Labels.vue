@@ -148,7 +148,8 @@ const getNavItem = (to) => {
 			}
 		}
 	}
-	return loops(_navigator)
+	const nav = loops(_navigator)
+	return nav || null
 }
 
 const getParentItem = (to) => {
@@ -173,7 +174,7 @@ const handleRouter = (to) => {
 			path: to.fullPath,
 		}
 
-		if (!nav) {
+		if (!nav && parentItem) {
 			newLabel.pid = parentItem.id
 		}
 
