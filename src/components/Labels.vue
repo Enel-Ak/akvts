@@ -154,11 +154,7 @@ const getNavItem = (to) => {
 const getParentItem = (to) => {
 	const model = _fromPath.value.split('/')[1]
 	for (const item of items.value) {
-		if (
-			item.path.split('/')[1] === model &&
-			model &&
-			(item.pid === null || !item.hasOwnProperty('pid'))
-		) {
+		if (model && item.path.split('/')[1] === model && !item.hasOwnProperty('pid')) {
 			return item
 		}
 	}
@@ -175,8 +171,12 @@ const handleRouter = (to) => {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
 			path: to.fullPath,
-			pid: parentItem ? parentItem.id : null,
 		}
+
+		if (!nav) {
+			newLabel.pid = parentItem.id
+		}
+
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
 	} else {
@@ -242,6 +242,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+	window.removeEventListener('deleteLabel', deleteLabel)
 	window.removeEventListener('updateLabelTitle', updateLabelTitle)
 })
 
