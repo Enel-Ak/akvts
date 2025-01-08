@@ -149,6 +149,8 @@ const getNavItem = (to) => {
 		}
 	}
 	const nav = loops(_navigator)
+	console.log('Labels GetNavItem', nav)
+
 	return nav || null
 }
 
@@ -156,6 +158,7 @@ const getParentItem = (to) => {
 	const model = to.fullPath.split('/')[1]
 	for (const item of items.value) {
 		if (model && item.path.split('/')[1] === model && !item.hasOwnProperty('pid')) {
+			console.log('Labels GetParentItem', item)
 			return item
 		}
 	}
