@@ -149,7 +149,7 @@ const getNavItem = (to) => {
 		}
 	}
 	const nav = loops(_navigator.value)
-	console.log('Labels GetNavItem', nav, _navigator.value)
+	console.log('Labels GetNavItem', nav, to.fullPath, _navigator.value)
 
 	return nav || null
 }
