@@ -285,11 +285,27 @@ const onCollapseChange = (val, index) => {
 }
 
 const onCheckIsLastItem = (item, index) => {
-	const len = props.items.filter((f) => !f.hasOwnProperty('children')).length
+	// 过滤掉有children的项
+	const childrenLength = props.items.filter((f) => f.hasOwnProperty('children')).length
+	const items = props.items.filter((f) => !f.hasOwnProperty('children'))
+	const len = items.length
+
+	// 如果在网格中，不添加class
+	if (props._inGrid) {
+		return false
+	}
+
+	// 计算当前项所在的行数（从0开始）
+	const currentRow = Math.floor((index - childrenLength) / props.columnCount)
+	// 计算总行数（从0开始）
+	const totalRows = Math.ceil(len / props.columnCount)
+	// 是否是最后一行
+	const isLastRow = currentRow === totalRows - 1
 	return (
-		((Math.floor((len - 1) / props.columnCount) * props.columnCount <= index && !item.full) ||
-			index === len - 1) &&
-		!props._inGrid
+		// 是最后一行 且 不是full的项
+		(isLastRow && !item.full) ||
+		// 或者是最后一个项
+		index === len - 1
 	)
 }
 
@@ -492,6 +508,10 @@ defineExpose({
 				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
+					flx:
+						index === items.length - 1 ||
+						items?.[index + 1]?.hasOwnProperty('children') ||
+						items?.[index + 1]?.full,
 					'is-grid': grid,
 					'row-edit': isRowEdit,
 					'last-item': onCheckIsLastItem(item, index),
@@ -944,6 +964,7 @@ defineExpose({
 	width: calc(100% / v-bind(count) + 100% / v-bind(count) + 1px) !important;
 }
 .full {
+	flex: none;
 	width: 100% !important;
 }
 

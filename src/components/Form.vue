@@ -619,9 +619,11 @@ defineExpose({
 		padding: 0;
 	}
 
-	:deep(.el-form-item) {
-		&:last-child {
-			margin-bottom: 0;
+	:deep(.group) {
+		.el-form-item {
+			&:last-child {
+				margin-bottom: 0;
+			}
 		}
 	}
 
@@ -630,6 +632,7 @@ defineExpose({
 		.form-items {
 			border-radius: torem(5px);
 			border: 1px solid var(--z-line);
+			border-bottom: 0;
 			overflow: hidden;
 		}
 
@@ -681,7 +684,6 @@ defineExpose({
 
 			&.last-item:not(.full) {
 				border-bottom: 1px solid var(--z-line);
-				margin-bottom: -1px;
 			}
 		}
 
