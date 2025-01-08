@@ -148,7 +148,7 @@ const getNavItem = (to) => {
 			}
 		}
 	}
-	const nav = loops(_navigator)
+	const nav = loops(_navigator.value)
 	console.log('Labels GetNavItem', nav)
 
 	return nav || null
