@@ -27,7 +27,7 @@ const route = useRoute()
 const router = useRouter()
 const items = ref([])
 const current = ref(null)
-const _navigator = reactive(props.navigator)
+const _navigator = ref(props.navigator)
 const _toPath = ref('')
 const _fromPath = ref('')
 
@@ -220,6 +220,14 @@ watch(
 			return
 		}
 		handleRouter(to)
+	},
+	{deep: true}
+)
+
+watch(
+	() => props.navigator,
+	(newVal) => {
+		_navigator.value = newVal
 	},
 	{deep: true}
 )
