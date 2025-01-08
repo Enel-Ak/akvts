@@ -192,9 +192,11 @@ const handleRouter = (to) => {
 			}, 0)
 		}
 	}
-
-	emits('update:modelValue', current.value.pid || current.value.id)
 	save()
+	nextTick(() => {
+		console.log('Labels Current', current.value)
+		emits('update:modelValue', current.value.pid || current.value.id)
+	})
 }
 
 watch(

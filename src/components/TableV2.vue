@@ -5,8 +5,6 @@ import {
 	onMounted,
 	onUnmounted,
 	ref,
-	toRaw,
-	reactive,
 	watch,
 	onDeactivated,
 	onBeforeUnmount,
@@ -104,6 +102,7 @@ const TableStatusEnum = {
 	Edit: 'edit',
 }
 
+const guid = useGuid()
 const initializing = ref(false)
 const tableComponentRef = ref()
 const total = ref(0)
@@ -944,7 +943,7 @@ defineExpose({
 })
 </script>
 <template>
-	<div class="table-component" v-action:escape="onTableRowEditCancel">
+	<div :key="guid" class="table-component" v-action:escape="onTableRowEditCancel">
 		<div v-if="enableToolbar && !disableTable" class="table-component-toolbar">
 			<div class="left">
 				<slot name="toolbarBegin"> </slot>

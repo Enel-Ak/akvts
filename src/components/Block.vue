@@ -1,7 +1,7 @@
 <script setup>
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
-import useGuid from '@/hooks/useGuid'
+import {useGuid} from '@/hooks'
 import Lock from './Lock.vue'
 
 const emits = defineEmits([
