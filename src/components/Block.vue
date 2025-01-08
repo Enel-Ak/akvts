@@ -96,22 +96,50 @@ const onExpand = () => {
 	emits('collapsed', !expandBlock.value)
 }
 
+// const onExpendContent = (isToggle = true) => {
+// 	isExpand = true
+// 	const expandEl = blockRef.value.querySelector('.expand-content .el-scrollbar__view > *')
+
+// 	if (!expandEl || !expandBlock.value) return
+
+// 	if (isToggle) {
+// 		expendContentOpen.value = !expendContentOpen.value
+// 	}
+
+// 	const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
+
+// 	expendContentHeight.value = ech > props.expandContentHeight ? props.expandContentHeight : ech
+
+// 	emits('contentExpand', expendContentHeight.value, expendContentOpen.value)
+// 	emits('heightChanged', contextHeight.value - expendContentHeight.value)
+// }
+
 const onExpendContent = (isToggle = true) => {
+	if (!blockRef.value || !expandBlock.value) return
+
 	isExpand = true
 	const expandEl = blockRef.value.querySelector('.expand-content .el-scrollbar__view > *')
-
-	if (!expandEl || !expandBlock.value) return
+	if (!expandEl) return
 
 	if (isToggle) {
 		expendContentOpen.value = !expendContentOpen.value
 	}
 
-	const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
+	nextTick(() => {
+		const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
+		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : ech
 
-	expendContentHeight.value = ech > props.expandContentHeight ? props.expandContentHeight : ech
+		// 只有当高度真正改变时才触发事件
+		if (expendContentHeight.value !== newHeight) {
+			expendContentHeight.value = newHeight
+			emits('contentExpand', newHeight, expendContentOpen.value)
 
-	emits('contentExpand', expendContentHeight.value, expendContentOpen.value)
-	emits('heightChanged', contextHeight.value - expendContentHeight.value)
+			// 使用 nextTick 确保 DOM 更新后再触发高度变化事件
+			nextTick(() => {
+				emits('heightChanged', contextHeight.value - newHeight)
+			})
+		}
+	})
 }
 
 const onBack = () => {
