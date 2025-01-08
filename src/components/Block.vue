@@ -1,6 +1,7 @@
 <script setup>
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
+import useGuid from '@/hooks/useGuid'
 import Lock from './Lock.vue'
 
 const emits = defineEmits([
@@ -234,6 +235,9 @@ const onResize = () => {
 		clearTimeout(resieTimer)
 		// setTimeout(() => {
 		contextHeight.value = document.body.offsetHeight - _offset.value[0]
+		nextTick(() => {
+			emits('heightChanged', contextHeight.value - expendContentHeight.value)
+		})
 		emits('heightChanged', contextHeight.value - expendContentHeight.value)
 		// }, 16.7)
 	}
@@ -281,9 +285,10 @@ defineExpose({
 </script>
 <template>
 	<div
+		v-resize="onResize"
 		class="block-component"
 		ref="blockRef"
-		v-resize="onResize"
+		:key="useGuid()"
 		:class="{
 			'full-screen': isFullScreen,
 			'no-border': !border,
