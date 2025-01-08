@@ -75,20 +75,7 @@ watch(
 watch(
 	() => props.modelValue,
 	(newVal) => {
-		if (newVal) {
-			const id = (arr) => {
-				for (let i of arr) {
-					if (i.id === newVal) {
-						return i.id
-					}
-					if (i.children) {
-						return id(i.children)
-					}
-				}
-			}
-			const curId = id(navItems.value)
-			active.value = curId
-		}
+		active.value = newVal
 	},
 	{immediate: true}
 )
