@@ -235,9 +235,6 @@ const onResize = () => {
 		clearTimeout(resieTimer)
 		// setTimeout(() => {
 		contextHeight.value = document.body.offsetHeight - _offset.value[0]
-		nextTick(() => {
-			emits('heightChanged', contextHeight.value - expendContentHeight.value)
-		})
 		emits('heightChanged', contextHeight.value - expendContentHeight.value)
 		// }, 16.7)
 	}
