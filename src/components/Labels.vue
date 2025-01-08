@@ -144,7 +144,10 @@ const getNavItem = (to) => {
 				return element
 			}
 			if (element.children && element.children.length > 0) {
-				return loops(element.children)
+				const item = loops(element.children)
+				if (item) {
+					return item
+				}
 			}
 		}
 	}
