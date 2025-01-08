@@ -50,6 +50,7 @@ const props = defineProps({
 	isBack: {type: Boolean, default: false},
 })
 
+const guid = useGuid()
 const router = useRouter()
 const blockRef = ref()
 const contextHeight = ref(0)
@@ -285,7 +286,7 @@ defineExpose({
 		v-resize="onResize"
 		class="block-component"
 		ref="blockRef"
-		:key="useGuid()"
+		:key="guid"
 		:class="{
 			'full-screen': isFullScreen,
 			'no-border': !border,
