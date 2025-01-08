@@ -153,7 +153,7 @@ const getNavItem = (to) => {
 }
 
 const getParentItem = (to) => {
-	const model = _fromPath.value.split('/')[1]
+	const model = to.fullPath.split('/')[1]
 	for (const item of items.value) {
 		if (model && item.path.split('/')[1] === model && !item.hasOwnProperty('pid')) {
 			return item
@@ -174,8 +174,8 @@ const handleRouter = (to) => {
 			path: to.fullPath,
 		}
 
-		if (!nav && parentItem) {
-			newLabel.pid = parentItem.id
+		if (!nav) {
+			newLabel.pid = parentItem?.id
 		}
 
 		items.value.splice(1, 0, newLabel)
@@ -193,7 +193,7 @@ const handleRouter = (to) => {
 		}
 	}
 
-	emits('update:modelValue', nav ? current.value.id : current.value.pid)
+	emits('update:modelValue', current.value.pid || current.value.id)
 	save()
 }
 
