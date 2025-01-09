@@ -45,8 +45,8 @@ const badges = ref(props.badges)
 const isCollapse = computed(() => props.collapse)
 
 let currentScrollTop = 0
-let targetScrollTop = 0
 let animationFrameId = null
+let isfirst = true
 
 const onClickItem = (item) => {
 	console.log('Navigation Click:', item)
@@ -74,11 +74,52 @@ const animation = () => {
 		const containerRect = container.getBoundingClientRect()
 
 		// 计算目标元素顶部相对于容器顶部的实际偏移量
-		const relativeTop = targetRect.top - containerRect.top + container.scrollTop
+		const targetScrollTop = targetRect.top - containerRect.top + container.scrollTop
 
-		// 直接滚动到目标位置
-		container.scrollTop = relativeTop
+		// 如果是第一次，初始化当前滚动位置
+		if (currentScrollTop === 0) {
+			currentScrollTop = container.scrollTop
+		}
+
+		// 计算距离
+		const distance = targetScrollTop - currentScrollTop
+
+		// 如果距离很小，直接到达目标位置
+		if (Math.abs(distance) < 1) {
+			container.scrollTop = targetScrollTop
+			cancelAnimationFrame(animationFrameId)
+			return
+		}
+
+		// 缓动效果
+		currentScrollTop += distance * 0.15
+
+		// 应用滚动
+		container.scrollTop = currentScrollTop
+
+		// 继续动画
+		animationFrameId = requestAnimationFrame(animation)
 	}
+}
+
+// 重置滚动位置
+const resetScroll = () => {
+	currentScrollTop = 0
+	if (animationFrameId) {
+		cancelAnimationFrame(animationFrameId)
+	}
+}
+
+// 修改 delayAnimation
+const delayAnimation = () => {
+	setTimeout(
+		() => {
+			isfirst = false
+			resetScroll()
+			requestAnimationFrame(animation)
+		},
+		isfirst ? 256 : 0
+	)
 }
 
 watch(
@@ -101,7 +142,7 @@ watch(
 	() => props.modelValue,
 	(newVal) => {
 		active.value = newVal
-		nextTick(() => animation())
+		nextTick(() => delayAnimation())
 	},
 	{immediate: true}
 )
