@@ -30,7 +30,7 @@ const props = defineProps({
 	enableExpand: {type: Boolean, default: false}, // 启用展开/收起
 	enableExpandButton: {type: Boolean, default: false}, // 启用展开/收起按钮, 最右侧图标
 
-	enableBackButton: {type: Boolean, default: true}, // 启用返回按钮
+	enableBackButton: {type: Boolean, default: false}, // 启用返回按钮
 
 	expandContent: {type: Boolean, default: true}, // 默认展开/收起内容块
 	enableExpandContent: {type: Boolean, default: true}, // 启用展开/收起内容块按钮
