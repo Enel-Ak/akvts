@@ -330,7 +330,10 @@ defineExpose({
 				}"
 				@click="onClickLabel(item)"
 			>
-				<span>{{ item.modifiedTitle || item[keys[1]] }}</span>
+				<span v-if="item.modifiedTitle !== '-未命名' || item[keys[1]] !== '-未命名'">
+					{{ item.modifiedTitle || item[keys[1]] }}
+				</span>
+				<LoadingTransition v-else />
 				<Icons
 					v-if="index > 0"
 					icon-name="Cancel"

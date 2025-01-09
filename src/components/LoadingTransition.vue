@@ -79,8 +79,9 @@ const iconColor = computed(() => props.color)
 	}
 
 	span {
+		font-size: torem(12px);
 		color: v-bind(_color);
-		transform: translateY(-0.5px);
+		// transform: translateY(-0.5px);
 		small::after {
 			content: '';
 			animation: more 2s linear infinite;
