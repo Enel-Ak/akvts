@@ -333,7 +333,14 @@ defineExpose({
 				<span v-if="item.modifiedTitle || (item[keys[1]] && item[keys[1]] !== '-未命名')">
 					{{ item.modifiedTitle || item[keys[1]] }}
 				</span>
-				<LoadingTransition v-else />
+				<LoadingTransition
+					v-else
+					:color="
+						current?.path === item.path
+							? 'var(--z-nav-font-active)'
+							: 'var(--z-font-color)'
+					"
+				/>
 				<Icons
 					v-if="index > 0"
 					icon-name="Cancel"
