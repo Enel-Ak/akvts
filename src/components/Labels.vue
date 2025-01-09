@@ -149,7 +149,7 @@ const deleteLabel = (e) => {
 	onCancelItem(item)
 }
 
-// 获取左侧菜单
+// 根据路径获取导航
 const getNavItem = (to) => {
 	const loops = (arr) => {
 		for (const element of arr) {
@@ -167,6 +167,25 @@ const getNavItem = (to) => {
 	const nav = loops(_navigator.value)
 	console.log('Labels GetNavItem', nav, to.fullPath, _navigator.value)
 
+	return nav || null
+}
+
+// 根据导航名称获取导航
+const getNavItemByName = (name) => {
+	const loops = (arr) => {
+		for (const element of arr) {
+			if (element.name === name) {
+				return element
+			}
+			if (element.children && element.children.length > 0) {
+				const item = loops(element.children)
+				if (item) {
+					return item
+				}
+			}
+		}
+	}
+	const nav = loops(_navigator.value)
 	return nav || null
 }
 
@@ -211,6 +230,17 @@ const handleRouter = (to) => {
 			}, 0)
 		}
 	}
+
+	if (current.value.modifiedTitle || current.value.label.includes('-')) {
+		// 获取根据导航名称获取导航
+		const navItem = getNavItemByName(
+			(current.value.modifiedTitle || current.value.label).split('-')[1]
+		)
+		if (navItem) {
+			current.value.pid = navItem.id
+		}
+	}
+
 	save()
 	console.log('Labels Current', current.value)
 	emits('update:modelValue', current.value.pid || current.value.id)

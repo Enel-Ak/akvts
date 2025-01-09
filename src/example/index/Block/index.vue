@@ -24,7 +24,7 @@ const onClick2 = () => {
 <route>
 	{
 		meta: {
-			title: '设置页面标题',
+			title: '待办通知',
 		}
 	}
 </route>
