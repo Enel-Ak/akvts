@@ -49,9 +49,16 @@ const query = (item) => {
 	if (split[1]) {
 		console.log('Labels Query:', split[1])
 		split[1].split('&').forEach((i) => {
-			const k = i.split('=')
-			const v = decodeURI(k[1])
-			query[k[0]] = v && v !== 'undefined' ? v : ''
+			if (i.includes('=')) {
+				const [key, value] = i.split('=')
+				const decodedValue = value ? decodeURI(value) : ''
+				if (decodedValue && decodedValue !== 'undefined' && decodedValue !== 'null') {
+					query[key] = decodedValue
+				}
+			} else {
+				// 处理没有值的参数
+				query[i] = true
+			}
 		})
 	}
 	return query
