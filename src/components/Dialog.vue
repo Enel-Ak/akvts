@@ -4,7 +4,7 @@ import Lock from './Lock.vue'
 
 const emits = defineEmits(['clickClose', 'clickConfirm', 'update:modelValue', 'heightChanged'])
 const props = defineProps({
-	height: {type: Number, default: 0},
+	height: {type: [Number, String], default: 0},
 	autoHeight: {type: Boolean, default: true},
 	closeText: {type: String, default: '关闭'},
 	confirmText: {type: String, default: '确定'},
@@ -22,7 +22,12 @@ const props = defineProps({
 })
 
 const scrollRef = ref()
-const height = ref(0)
+const height = ref(
+	typeof props.height === 'number' ||
+		(typeof props.height === 'string' && !['px', '%', 'vh', 'em', 'rem'].includes(props.height))
+		? `${props.height}px`
+		: props.height
+)
 const unLock = ref(0)
 
 let observer = null
