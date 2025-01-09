@@ -174,7 +174,7 @@ const getNavItem = (to) => {
 const getNavItemByName = (name) => {
 	const loops = (arr) => {
 		for (const element of arr) {
-			if (element.name === name) {
+			if (element[props.keys[1]] === name) {
 				return element
 			}
 			if (element.children && element.children.length > 0) {
