@@ -341,6 +341,9 @@ onBeforeUnmount(() => {
 
 		.el-sub-menu > .el-menu > .el-menu-item {
 			padding-left: 50px;
+			.el-badge {
+				padding: 0 0 0 2px;
+			}
 		}
 
 		.el-menu > li > div,
