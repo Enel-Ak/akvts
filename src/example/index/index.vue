@@ -129,51 +129,51 @@ const handValidate = () => {
 			:enable-button="true"
 			:enable-label="true"
 			:enable-button-vertical="false"
-			:grid="true"
+			:grid="false"
 			:column-count="4"
 			:rules="{
 				age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
 			}"
 			:props="[
-				{
-					prop: 'testgroup',
-					label: '测试分组',
-					children: [
-						{
-							prop: 'abc2',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc23',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc23',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc42',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-							children: [{prop: 'cccd', label: '测试2', type: 'text'}],
-						},
-					],
-				},
+				// {
+				// 	prop: 'testgroup',
+				// 	label: '测试分组',
+				// 	children: [
+				// 		{
+				// 			prop: 'abc2',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc23',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc23',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc42',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 			children: [{prop: 'cccd', label: '测试2', type: 'text'}],
+				// 		},
+				// 	],
+				// },
 				{
 					prop: 'age',
 					label: '年龄',
@@ -181,120 +181,120 @@ const handValidate = () => {
 					inputType: 'number',
 					disabled: false,
 				},
-				{
-					prop: 'age1',
-					label: '年龄',
-					type: 'text',
-					inputType: 'number',
-					disabled: false,
-				},
-				{
-					prop: 'ag223e1',
-					label: '年龄',
-					type: 'text',
-					inputType: 'number',
-					disabled: false,
-				},
-				{
-					prop: 'ag3232e1',
-					label: '年龄',
-					type: 'text',
-					inputType: 'number',
-					disabled: false,
-				},
-				{
-					prop: 'a32g2e',
-					label: '年龄',
-					type: 'text',
-					inputType: 'number',
-					disabled: false,
-				},
-				{
-					prop: 'testgroup3',
-					label: '测试分组',
-					children: [
-						{
-							prop: 'abc23',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc233',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc233',
-							label: '测试2',
-							type: 'text',
-							full: true,
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc423',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-						{
-							prop: 'abc4233',
-							label: '测试2',
-							type: 'text',
-							formItemProps: {
-								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
-							},
-						},
-					],
-				},
-				{
-					prop: 'age3',
-					label: '年龄',
-					type: 'text',
-					inputType: 'number',
-					disabled: false,
-				},
+				// {
+				// 	prop: 'age1',
+				// 	label: '年龄',
+				// 	type: 'text',
+				// 	inputType: 'number',
+				// 	disabled: false,
+				// },
+				// {
+				// 	prop: 'ag223e1',
+				// 	label: '年龄',
+				// 	type: 'text',
+				// 	inputType: 'number',
+				// 	disabled: false,
+				// },
+				// {
+				// 	prop: 'ag3232e1',
+				// 	label: '年龄',
+				// 	type: 'text',
+				// 	inputType: 'number',
+				// 	disabled: false,
+				// },
+				// {
+				// 	prop: 'a32g2e',
+				// 	label: '年龄',
+				// 	type: 'text',
+				// 	inputType: 'number',
+				// 	disabled: false,
+				// },
+				// {
+				// 	prop: 'testgroup3',
+				// 	label: '测试分组',
+				// 	children: [
+				// 		{
+				// 			prop: 'abc23',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc233',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc233',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			full: true,
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc423',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 		{
+				// 			prop: 'abc4233',
+				// 			label: '测试2',
+				// 			type: 'text',
+				// 			formItemProps: {
+				// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+				// 			},
+				// 		},
+				// 	],
+				// },
+				// {
+				// 	prop: 'age3',
+				// 	label: '年龄',
+				// 	type: 'text',
+				// 	inputType: 'number',
+				// 	disabled: false,
+				// },
 
-				{
-					prop: 'abc',
-					label: '测试',
-					type: 'text',
-					labelWidth: '100px',
+				// {
+				// 	prop: 'abc',
+				// 	label: '测试',
+				// 	type: 'text',
+				// 	labelWidth: '100px',
 
-					formItemProps: {
-						rules: [{required: true, message: '请输入年龄1', trigger: 'blur'}],
-					},
-				},
-				{
-					prop: 'age323',
-					label: '年龄',
-					type: 'text',
-					inputType: 'number',
-					disabled: false,
-				},
+				// 	formItemProps: {
+				// 		rules: [{required: true, message: '请输入年龄1', trigger: 'blur'}],
+				// 	},
+				// },
+				// {
+				// 	prop: 'age323',
+				// 	label: '年龄',
+				// 	type: 'text',
+				// 	inputType: 'number',
+				// 	disabled: false,
+				// },
 
-				{
-					prop: 'abc1',
-					label: '测试',
-					type: 'text',
-					labelWidth: '100px',
-					full: true,
+				// {
+				// 	prop: 'abc1',
+				// 	label: '测试',
+				// 	type: 'text',
+				// 	labelWidth: '100px',
+				// 	full: true,
 
-					formItemProps: {
-						rules: [{required: true, message: '请输入年龄1', trigger: 'blur'}],
-					},
-				},
+				// 	formItemProps: {
+				// 		rules: [{required: true, message: '请输入年龄1', trigger: 'blur'}],
+				// 	},
+				// },
 			]"
-			:enable-enter="false"
+			:enable-enter="true"
 			:loading="loaidng"
 			@change="onFormChange"
 			@submit="onSubmit"

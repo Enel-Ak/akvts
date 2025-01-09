@@ -64,6 +64,7 @@ const formItemsPadding = computed(() => {
 })
 const formDisabled = ref(props.disabled)
 const isClear = ref(false)
+const isFocus = ref(false)
 const unLock = ref(0)
 
 const timeRangeToString = (output) => {
@@ -269,8 +270,20 @@ const getIconSize = () => {
 	return size
 }
 
-const onEnter = () => {
-	if (props.enableEnter) {
+const onFocus = () => {
+	isFocus.value = true
+	console.log('Form Focus', isFocus.value)
+	emits('focus')
+}
+
+const onBlur = () => {
+	isFocus.value = false
+	console.log('Form Blur', isFocus.value)
+	emits('blur')
+}
+
+const onEnter = (e) => {
+	if (props.enableEnter && isFocus.value) {
 		onSubmit()
 	}
 }
@@ -397,9 +410,9 @@ defineExpose({
 </script>
 <template>
 	<div
-		v-action:enter="onEnter"
 		class="form-component"
 		:class="{'form-grid': grid, 'form-component-flowing': buttonVertical === 'flowing'}"
+		v-action:enter="onEnter"
 	>
 		<el-form
 			ref="formRef"
@@ -409,6 +422,7 @@ defineExpose({
 			:label-width="labelWidth"
 			:class="{'not-label': labelWidth === 0 || labelWidth === '0'}"
 			:size="size"
+			@submit.prevent
 		>
 			<el-form-item
 				class="btns top"
@@ -454,7 +468,9 @@ defineExpose({
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
 					@changeFile="onFormChange"
-					@enter="onSubmit"
+					@enter="onEnter"
+					@focus="onFocus"
+					@blur="onBlur"
 				>
 					<template v-for="item of formItems" #[`form-${item.prop}`]="scope">
 						<!-- row: 表格内, value: 普通表单 -->
