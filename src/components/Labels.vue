@@ -139,8 +139,8 @@ const updateLabelTitle = (e) => {
 	const index = items.value.findIndex((f) => f.path === path)
 	if (index !== -1) {
 		items.value[index].modifiedTitle = title
+		save()
 	}
-	save()
 }
 
 const deleteLabel = (e) => {
@@ -330,7 +330,7 @@ defineExpose({
 				}"
 				@click="onClickLabel(item)"
 			>
-				<span v-if="item.modifiedTitle !== '-未命名' || item[keys[1]] !== '-未命名'">
+				<span v-if="item.modifiedTitle || (item[keys[1]] && item[keys[1]] !== '-未命名')">
 					{{ item.modifiedTitle || item[keys[1]] }}
 				</span>
 				<LoadingTransition v-else />
