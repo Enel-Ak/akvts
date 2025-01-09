@@ -638,7 +638,7 @@ defineExpose({
 	:deep(.group) {
 		.el-form-item {
 			&:last-child {
-				margin-bottom: 0;
+				// margin-bottom: 0;
 			}
 		}
 	}
