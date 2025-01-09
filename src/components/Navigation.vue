@@ -65,9 +65,13 @@ const animation = () => {
 	const referenceElement = targetElement?.closest('.container-aside')
 
 	if (targetElement && referenceElement) {
+		// 获取目标元素的完整位置信息
 		const targetRect = targetElement.getBoundingClientRect()
 		const referenceRect = referenceElement.getBoundingClientRect()
-		const relativeTop = targetRect.top - referenceRect.top
+
+		// 计算目标元素应该滚动到的位置
+		// 目标元素相对于视口顶部的距离 - 容器相对于视口顶部的距离 + 当前滚动位置
+		const relativeTop = targetRect.top - referenceRect.top + referenceElement.scrollTop
 
 		// 设置目标滚动位置
 		targetScrollTop = relativeTop
@@ -84,7 +88,7 @@ const animation = () => {
 		}
 
 		// 使用缓动函数计算新的滚动位置
-		currentScrollTop += distance * 0.15 // 这里的 0.15 是缓动系数，可以调整来改变动画速度
+		currentScrollTop += distance * 0.15
 
 		// 应用新的滚动位置
 		referenceElement.scrollTop = currentScrollTop
