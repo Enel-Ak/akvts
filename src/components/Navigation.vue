@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onBeforeUnmount, onMounted, watch, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, watch, ref, nextTick} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 
 const emits = defineEmits(['clickItem', 'update:modelValue'])
@@ -40,6 +40,10 @@ const active = ref(props.defaultActive)
 const badges = ref(props.badges)
 const isCollapse = computed(() => props.collapse)
 
+let currentScrollTop = 0
+let targetScrollTop = 0
+let animationFrameId = null
+
 const onClickItem = (item) => {
 	console.log('Navigation Click:', item)
 	const isContinue = props.beforeRouter(item)
@@ -53,6 +57,40 @@ const onClickItem = (item) => {
 				path: item.path,
 			})
 		}
+	}
+}
+
+const animation = () => {
+	const targetElement = document.querySelector(`[data-nav-id="${active.value}"]`)
+	const referenceElement = targetElement?.closest('.container-aside')
+
+	if (targetElement && referenceElement) {
+		const targetRect = targetElement.getBoundingClientRect()
+		const referenceRect = referenceElement.getBoundingClientRect()
+		const relativeTop = targetRect.top - referenceRect.top
+
+		// 设置目标滚动位置
+		targetScrollTop = relativeTop
+
+		// 计算当前滚动位置与目标位置的差距
+		const distance = targetScrollTop - currentScrollTop
+
+		// 如果差距足够小，直接到达目标位置
+		if (Math.abs(distance) < 0.5) {
+			currentScrollTop = targetScrollTop
+			referenceElement.scrollTop = currentScrollTop
+			cancelAnimationFrame(animationFrameId)
+			return
+		}
+
+		// 使用缓动函数计算新的滚动位置
+		currentScrollTop += distance * 0.15 // 这里的 0.15 是缓动系数，可以调整来改变动画速度
+
+		// 应用新的滚动位置
+		referenceElement.scrollTop = currentScrollTop
+
+		// 继续动画
+		animationFrameId = requestAnimationFrame(animation)
 	}
 }
 
@@ -76,6 +114,7 @@ watch(
 	() => props.modelValue,
 	(newVal) => {
 		active.value = newVal
+		nextTick(() => requestAnimationFrame(animation))
 	},
 	{immediate: true}
 )
@@ -84,6 +123,9 @@ onMounted(() => {})
 
 onBeforeUnmount(() => {
 	navItems.value = []
+	if (animationFrameId) {
+		cancelAnimationFrame(animationFrameId)
+	}
 })
 </script>
 <template>
@@ -105,6 +147,7 @@ onBeforeUnmount(() => {
 						(item.hasOwnProperty('enable') ? item.enable : true)
 					"
 					:index="item[props.keys[0]]"
+					:data-nav-id="item[props.keys[0]]"
 					@click="onClickItem(item)"
 				>
 					<el-icon>
@@ -134,6 +177,7 @@ onBeforeUnmount(() => {
 						(item.hasOwnProperty('enable') ? item.enable : true)
 					"
 					:index="item[props.keys[0]]"
+					:data-nav-id="item[props.keys[0]]"
 				>
 					<template #title>
 						<Icons
@@ -149,6 +193,7 @@ onBeforeUnmount(() => {
 						<el-menu-item
 							v-if="!subItem.children || subItem.children.length === 0"
 							:index="subItem[props.keys[0]]"
+							:data-nav-id="subItem[props.keys[0]]"
 							@click="onClickItem(subItem)"
 						>
 							<template #title>
@@ -169,6 +214,7 @@ onBeforeUnmount(() => {
 						<el-sub-menu
 							v-if="subItem.children && subItem.children.length > 0"
 							:index="subItem[props.keys[0]]"
+							:data-nav-id="subItem[props.keys[0]]"
 						>
 							<template #title>
 								<span>
