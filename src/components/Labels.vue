@@ -233,8 +233,14 @@ watch(
 				items.value.find((f) => f.id === current.value.id).pid = navItem.id
 				current.value.pid = navItem.id
 				save()
-				emits('update:modelValue', current.value.pid)
+				nextTick(() => {
+					emits('update:modelValue', current.value.pid)
+				})
 			}
+		} else {
+			nextTick(() => {
+				emits('update:modelValue', current.value.id)
+			})
 		}
 	}
 )
