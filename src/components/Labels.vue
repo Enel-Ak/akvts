@@ -51,7 +51,7 @@ const query = (item) => {
 		split[1].split('&').forEach((i) => {
 			if (i.includes('=')) {
 				const [key, value] = i.split('=')
-				const decodedValue = value ? decodeURI(value) : ''
+				const decodedValue = value ? decodeURI(value.trim()) : ''
 				if (decodedValue && decodedValue !== 'undefined' && decodedValue !== 'null') {
 					query[key] = decodedValue
 				}
@@ -74,9 +74,9 @@ const save = () => {
 const onClickLabel = (item, isDropdown = false) => {
 	console.log('Labels Click:', item)
 
-	const leftNav = getNavItem({fullPath: item.path})
+	// const leftNav = getNavItem({fullPath: item.path})
 
-	emits('update:modelValue', leftNav ? item.id : item.pid)
+	// emits('update:modelValue', leftNav ? item.id : item.pid)
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
@@ -189,21 +189,9 @@ const getNavItemByName = (name) => {
 	return nav || null
 }
 
-const getParentItem = (to) => {
-	const model = to.fullPath.split('/')[1]
-	for (const item of items.value) {
-		if (model && item.path.split('/')[1] === model && !item.hasOwnProperty('pid')) {
-			console.log('Labels GetParentItem', item)
-			return item
-		}
-	}
-	return null
-}
-
 const handleRouter = (to) => {
 	// 判断是否左侧菜单
 	const nav = getNavItem(to)
-	// const parentItem = getParentItem(to)
 
 	if (!items.value.some((item) => item.path === to.fullPath)) {
 		const newLabel = {
@@ -211,10 +199,6 @@ const handleRouter = (to) => {
 			label: getMetaTitle(to),
 			path: to.fullPath,
 		}
-
-		// if (!nav) {
-		// 	newLabel.pid = parentItem?.id
-		// }
 
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
@@ -315,11 +299,9 @@ onUnmounted(() => {
 
 defineExpose({
 	first: (item) => {
-		console.log('Labels first', item)
-
 		const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
-		const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
-		if (history.length === 0 && Object.keys(historyCurrent).length === 0) {
+		if (history.length === 0) {
+			console.log('Labels first', item)
 			items.value.unshift(item)
 			current.value = item
 			router.push({
