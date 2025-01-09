@@ -231,19 +231,21 @@ const handleRouter = (to) => {
 		}
 	}
 
-	if (current.value.modifiedTitle || current.value.label.includes('-')) {
-		// 获取根据导航名称获取导航
-		const navItem = getNavItemByName(
-			(current.value.modifiedTitle || current.value.label).split('-')[1]
-		)
-		if (navItem) {
-			current.value.pid = navItem.id
+	nextTick(() => {
+		if (current.value.modifiedTitle || current.value.label.includes('-')) {
+			// 获取根据导航名称获取导航
+			const navItem = getNavItemByName(
+				(current.value.modifiedTitle || current.value.label).split('-')[1]
+			)
+			if (navItem) {
+				current.value.pid = navItem.id
+			}
 		}
-	}
 
-	save()
-	console.log('Labels Current', current.value)
-	emits('update:modelValue', current.value.pid || current.value.id)
+		save()
+		console.log('Labels Current', current.value)
+		emits('update:modelValue', current.value.pid || current.value.id)
+	})
 }
 
 watch(
