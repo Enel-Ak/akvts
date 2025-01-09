@@ -57,7 +57,7 @@ const query = (item) => {
 				}
 			} else {
 				// 处理没有值的参数，设为 undefined 让 Vue Router 处理
-				query[i] = undefined
+				query[i] = null
 			}
 		})
 	}
