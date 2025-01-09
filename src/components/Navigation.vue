@@ -34,6 +34,10 @@ const props = defineProps({
 		type: String,
 		default: 'container-aside',
 	},
+	speed: {
+		type: Number,
+		default: 0.05,
+	},
 })
 
 const route = useRoute()
@@ -92,7 +96,7 @@ const animation = () => {
 		}
 
 		// 缓动效果
-		currentScrollTop += distance * 0.15
+		currentScrollTop += distance * props.speed
 
 		// 应用滚动
 		container.scrollTop = currentScrollTop
