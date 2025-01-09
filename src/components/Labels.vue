@@ -337,7 +337,7 @@ defineExpose({
 					v-else
 					:color="
 						current?.path === item.path
-							? 'var(--z-nav-font-active)'
+							? 'var(--z-nav-font-color)'
 							: 'var(--z-font-color)'
 					"
 				/>
