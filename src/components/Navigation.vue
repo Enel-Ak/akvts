@@ -61,40 +61,19 @@ const onClickItem = (item) => {
 }
 
 const animation = () => {
-	const targetElement = document.querySelector(`[data-nav-id="${active.value}"]`)
-	const referenceElement = targetElement?.closest('.container-aside')
+	const target = document.querySelector(`[data-nav-id="${active.value}"]`)
+	const container = target?.closest('.container-aside')
 
-	if (targetElement && referenceElement) {
-		// 获取目标元素的完整位置信息
-		const targetRect = targetElement.getBoundingClientRect()
-		const referenceRect = referenceElement.getBoundingClientRect()
+	if (target && container) {
+		// 获取目标元素在容器中的位置
+		const targetRect = target.getBoundingClientRect()
+		const containerRect = container.getBoundingClientRect()
 
-		// 计算目标元素应该滚动到的位置
-		// 目标元素相对于视口顶部的距离 - 容器相对于视口顶部的距离 + 当前滚动位置
-		const relativeTop = targetRect.top - referenceRect.top + referenceElement.scrollTop
+		// 计算目标元素顶部相对于容器顶部的实际偏移量
+		const relativeTop = targetRect.top - containerRect.top + container.scrollTop
 
-		// 设置目标滚动位置
-		targetScrollTop = relativeTop
-
-		// 计算当前滚动位置与目标位置的差距
-		const distance = targetScrollTop - currentScrollTop
-
-		// 如果差距足够小，直接到达目标位置
-		if (Math.abs(distance) < 0.5) {
-			currentScrollTop = targetScrollTop
-			referenceElement.scrollTop = currentScrollTop
-			cancelAnimationFrame(animationFrameId)
-			return
-		}
-
-		// 使用缓动函数计算新的滚动位置
-		currentScrollTop += distance * 0.15
-
-		// 应用新的滚动位置
-		referenceElement.scrollTop = currentScrollTop
-
-		// 继续动画
-		animationFrameId = requestAnimationFrame(animation)
+		// 直接滚动到目标位置
+		container.scrollTop = relativeTop
 	}
 }
 
@@ -118,7 +97,7 @@ watch(
 	() => props.modelValue,
 	(newVal) => {
 		active.value = newVal
-		nextTick(() => requestAnimationFrame(animation))
+		nextTick(() => animation())
 	},
 	{immediate: true}
 )
