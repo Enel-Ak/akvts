@@ -649,6 +649,10 @@ defineExpose({
 				margin-top: 0;
 			}
 
+			.group {
+				margin-bottom: 0;
+			}
+
 			.el-collapse-item__content {
 				background-color: rgba($color: var(--z-bg-gray-rgb), $alpha: 0.95);
 				padding: torem(10px);

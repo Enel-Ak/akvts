@@ -129,7 +129,7 @@ const handValidate = () => {
 			:enable-button="true"
 			:enable-label="true"
 			:enable-button-vertical="false"
-			:grid="false"
+			:grid="true"
 			:column-count="4"
 			:rules="{
 				age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
@@ -170,6 +170,7 @@ const handValidate = () => {
 							formItemProps: {
 								rules: [{required: true, message: '分组校验', trigger: 'blur'}],
 							},
+							children: [{prop: 'cccd', label: '测试2', type: 'text'}],
 						},
 					],
 				},

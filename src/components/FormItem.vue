@@ -1008,7 +1008,7 @@ defineExpose({
 
 	:deep(.el-collapse-item__content) {
 		background-color: rgba($color: var(--z-bg-gray-rgb), $alpha: 0.95);
-		padding: torem(10px) torem(10px) torem(20px) torem(10px);
+		padding: torem(10px) torem(10px) torem(0px) torem(10px);
 	}
 }
 
