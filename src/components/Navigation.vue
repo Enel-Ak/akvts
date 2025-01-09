@@ -38,6 +38,10 @@ const props = defineProps({
 		type: Number,
 		default: 0.05,
 	},
+	enableBuffer: {
+		type: Boolean,
+		default: true,
+	},
 })
 
 const route = useRoute()
@@ -79,6 +83,12 @@ const animation = () => {
 
 		// 计算目标元素顶部相对于容器顶部的实际偏移量
 		const targetScrollTop = targetRect.top - containerRect.top + container.scrollTop
+
+		// 如果不启用缓动，直接设置滚动位置
+		if (!props.enableBuffer) {
+			container.scrollTop = targetScrollTop
+			return
+		}
 
 		// 如果是第一次，初始化当前滚动位置
 		if (currentScrollTop === 0) {
