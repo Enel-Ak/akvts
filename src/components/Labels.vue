@@ -208,10 +208,8 @@ const handleRouter = (to) => {
 		}
 	}
 	save()
-	nextTick(() => {
-		console.log('Labels Current', current.value)
-		emits('update:modelValue', current.value.pid || current.value.id)
-	})
+	console.log('Labels Current', current.value)
+	emits('update:modelValue', current.value.pid || current.value.id)
 }
 
 watch(
