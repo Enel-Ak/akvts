@@ -49,7 +49,10 @@ const query = (item) => {
 	if (split[1]) {
 		split[1].split('&').forEach((i) => {
 			const k = i.split('=')
-			query[k[0]] = decodeURI(k[1])
+			const v = decodeURI(k[1])
+			if (v) {
+				query[k[0]] = v
+			}
 		})
 	}
 	return query
