@@ -131,7 +131,7 @@ const getMetaTitle = (item) => {
 		return item.modifiedTitle
 	}
 
-	return '-未命名'
+	return item.label
 }
 
 const updateLabelTitle = (e) => {
