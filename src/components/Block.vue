@@ -182,7 +182,7 @@ const initObserver = () => {
 							now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
 						}
 						contextHeight.value = now
-						console.log('Block resize observer is running', contextHeight.value)
+						// console.log('Block resize observer is running', contextHeight.value)
 					})
 
 					!isExpand &&

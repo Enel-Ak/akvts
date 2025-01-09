@@ -51,8 +51,7 @@ const query = (item) => {
 		split[1].split('&').forEach((i) => {
 			const k = i.split('=')
 			const v = decodeURI(k[1])
-			console.log('Labels Query Key:', k, v)
-			query[k[0]] = v && v !== 'undefined' ? '' : v
+			query[k[0]] = v && v !== 'undefined' ? v : ''
 		})
 	}
 	return query
