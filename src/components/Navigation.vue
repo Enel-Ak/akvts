@@ -30,6 +30,10 @@ const props = defineProps({
 		type: Object,
 		default: {},
 	},
+	containerClass: {
+		type: String,
+		default: 'container-aside',
+	},
 })
 
 const route = useRoute()
@@ -62,7 +66,7 @@ const onClickItem = (item) => {
 
 const animation = () => {
 	const target = document.querySelector(`[data-nav-id="${active.value}"]`)
-	const container = target?.closest('.container-aside')
+	const container = target?.closest('.' + props.containerClass)
 
 	if (target && container) {
 		// 获取目标元素在容器中的位置
