@@ -98,12 +98,8 @@ const animation = () => {
 		// 计算距离
 		const distance = targetScrollTop - currentScrollTop
 
-		// 根据滚动方向调整速度
-		let speed = props.speed
-		if (distance > 0) {
-			// 向下滚动
-			speed = Math.min(props.speed, props.speed / (distance * 0.01)) // 距离越大，速度越小
-		}
+		// 根据距离调整速度（不分方向）
+		const speed = Math.min(props.speed, props.speed / (Math.abs(distance) * 0.01))
 
 		// 如果距离很小，直接到达目标位置
 		if (Math.abs(distance) < 1) {
