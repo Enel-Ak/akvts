@@ -121,13 +121,17 @@ const setBar = () => {
 }
 
 const getMetaTitle = (item) => {
-	let title = ''
-	if (current.value && current.value.modifiedTitle) {
-		title = current.value.modifiedTitle
-	} else {
-		title = item.meta.title || item.meta.childTitle || '-未命名'
+	// 如果是路由对象，直接从 meta 中获取标题
+	if (item.meta) {
+		return item.meta.title || item.meta.childTitle || '-未命名'
 	}
-	return title
+
+	// 如果是标签对象，检查是否有修改过的标题
+	if (item.modifiedTitle) {
+		return item.modifiedTitle
+	}
+
+	return '-未命名'
 }
 
 const updateLabelTitle = (e) => {
@@ -198,7 +202,7 @@ const handleRouter = (to) => {
 	} else {
 		const index = items.value.findIndex((item) => item.path === to.fullPath)
 		current.value = items.value[index]
-		current.value.label = getMetaTitle(to)
+		current.value.label = getMetaTitle(current.value)
 
 		if (index > props.max - 1) {
 			items.value.splice(1, 0, current.value)
