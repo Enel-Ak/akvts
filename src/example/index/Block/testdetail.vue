@@ -11,7 +11,7 @@ onActivated(() => {
 
 	updateLabelTitle({
 		path: router.currentRoute.value.fullPath,
-		title: route.query.id ? '编辑-待办通知' : '新增-待办通知',
+		title: route.query.id ? '编辑-代办通知' : '新增-代办通知',
 	})
 })
 </script>
@@ -25,7 +25,7 @@ onActivated(() => {
 <route>
 	{
 		meta: {
-			childTitle: '测试-待办通知',
+			childTitle: '测试-代办通知',
 		}
 	}
 </route>

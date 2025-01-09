@@ -203,7 +203,7 @@ const getParentItem = (to) => {
 const handleRouter = (to) => {
 	// 判断是否左侧菜单
 	const nav = getNavItem(to)
-	const parentItem = getParentItem(to)
+	// const parentItem = getParentItem(to)
 
 	if (!items.value.some((item) => item.path === to.fullPath)) {
 		const newLabel = {
@@ -212,9 +212,9 @@ const handleRouter = (to) => {
 			path: to.fullPath,
 		}
 
-		if (!nav) {
-			newLabel.pid = parentItem?.id
-		}
+		// if (!nav) {
+		// 	newLabel.pid = parentItem?.id
+		// }
 
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
@@ -231,22 +231,29 @@ const handleRouter = (to) => {
 		}
 	}
 
-	nextTick(() => {
-		if (current.value.modifiedTitle || current.value.label.includes('-')) {
+	save()
+	console.log('Labels Current', current.value)
+	emits('update:modelValue', current.value.pid || current.value.id)
+}
+
+watch(
+	() => [current.value?.modifiedTitle, current.value?.label],
+	(newVal) => {
+		const [modifiedTitle, label] = newVal
+		console.log('Labels Current Title Changed', modifiedTitle, label)
+		if (modifiedTitle || label.includes('-')) {
 			// 获取根据导航名称获取导航
-			const navItem = getNavItemByName(
-				(current.value.modifiedTitle || current.value.label).split('-')[1]
-			)
+			const navItem = getNavItemByName((modifiedTitle || label).split('-')[1])
+
 			if (navItem) {
+				items.value.find((f) => f.id === current.value.id).pid = navItem.id
 				current.value.pid = navItem.id
+				save()
+				emits('update:modelValue', current.value.pid)
 			}
 		}
-
-		save()
-		console.log('Labels Current', current.value)
-		emits('update:modelValue', current.value.pid || current.value.id)
-	})
-}
+	}
+)
 
 watch(
 	() => route.fullPath,

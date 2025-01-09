@@ -129,7 +129,7 @@ const handValidate = () => {
 			:enable-button="true"
 			:enable-label="true"
 			:enable-button-vertical="false"
-			:grid="true"
+			:grid="false"
 			:column-count="4"
 			:rules="{
 				age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
