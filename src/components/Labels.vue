@@ -32,7 +32,7 @@ const _toPath = ref('')
 const _fromPath = ref('')
 
 const buttonWidth = computed(() => {
-	return `${100 / props.max - 1}%`
+	return `${100 / props.max - props.max / 30 - 1}%`
 })
 const buttonActiveWidth = computed(() => `${100 / props.max + props.max * 1}%`)
 const h = computed(() => {
