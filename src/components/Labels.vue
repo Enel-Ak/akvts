@@ -364,7 +364,7 @@ defineExpose({
 							@click="onClickLabel(item, true)"
 						>
 							<div
-								class="labels-component-more"
+								class="labels-component-more pd-right-15"
 								:title="item.modifiedTitle || item[keys[1]]"
 							>
 								{{
