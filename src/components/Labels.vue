@@ -470,7 +470,7 @@ defineExpose({
 		height: v-bind(h);
 		line-height: calc(v-bind(h) - 4px);
 		margin: 0 torem(5px);
-		width: 30px;
+		width: 200px;
 		.el-icon--right {
 			position: relative;
 		}
