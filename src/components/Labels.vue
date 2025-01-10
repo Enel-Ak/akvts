@@ -467,10 +467,12 @@ defineExpose({
 	}
 
 	.more {
+		display: flex;
 		height: v-bind(h);
+		justify-content: center;
 		line-height: calc(v-bind(h) - 4px);
-		margin: 0 torem(5px);
 		width: 30px;
+
 		.el-icon--right {
 			position: relative;
 		}
