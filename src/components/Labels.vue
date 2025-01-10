@@ -368,8 +368,8 @@ defineExpose({
 								:title="item.modifiedTitle || item[keys[1]]"
 							>
 								{{
-									(item.modifiedTitle || item[keys[1]]).length > 2
-										? (item.modifiedTitle || item[keys[1]]).substring(0, 2) +
+									(item.modifiedTitle || item[keys[1]]).length > 10
+										? (item.modifiedTitle || item[keys[1]]).substring(0, 10) +
 										  '...'
 										: item.modifiedTitle || item[keys[1]]
 								}}
@@ -470,7 +470,7 @@ defineExpose({
 		height: v-bind(h);
 		line-height: calc(v-bind(h) - 4px);
 		margin: 0 torem(5px);
-		width: 200px;
+		width: 30px;
 		.el-icon--right {
 			position: relative;
 		}
