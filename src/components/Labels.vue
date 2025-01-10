@@ -136,7 +136,7 @@ const getMetaTitle = (item) => {
 
 const updateLabelTitle = (e) => {
 	const {path, title} = e.detail
-	const index = items.value.findIndex((f) => f.path === path)
+	const index = items.value.findIndex((f) => f.path === decodeURI(path).trim())
 	if (index !== -1) {
 		items.value[index].modifiedTitle = title
 		save()
@@ -197,7 +197,7 @@ const handleRouter = (to) => {
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
-			path: decodeURI(to.fullPath.trim()),
+			path: decodeURI(to.fullPath).trim(),
 		}
 
 		items.value.splice(1, 0, newLabel)
