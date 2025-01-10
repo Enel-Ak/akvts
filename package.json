@@ -1,6 +1,6 @@
 {
 	"name": "akvts",
-	"version": "0.0.608",
+	"version": "0.0.609",
 	"main": "dist/akvts.umd.js",
 	"module": "dist/akvts.es.js",
 	"type": "module",
