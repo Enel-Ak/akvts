@@ -363,11 +363,15 @@ defineExpose({
 							v-if="index >= $props.max"
 							@click="onClickLabel(item, true)"
 						>
-							<div class="labels-component-more" :title="item[keys[1]]">
+							<div
+								class="labels-component-more"
+								:title="item.modifiedTitle || item[keys[1]]"
+							>
 								{{
-									item[keys[1]].length > 2
-										? item[keys[1]].substring(0, 2) + '...'
-										: item[keys[1]]
+									(item.modifiedTitle || item[keys[1]]).length > 2
+										? (item.modifiedTitle || item[keys[1]]).substring(0, 2) +
+										  '...'
+										: item.modifiedTitle || item[keys[1]]
 								}}
 								<span
 									class="labels-component-close"
