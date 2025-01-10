@@ -197,7 +197,7 @@ const handleRouter = (to) => {
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
-			path: to.fullPath.trim(),
+			path: decodeURI(to.fullPath.trim()),
 		}
 
 		items.value.splice(1, 0, newLabel)
