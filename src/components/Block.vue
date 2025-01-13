@@ -127,18 +127,19 @@ const onExpendContent = (isToggle = true) => {
 		expendContentOpen.value = !expendContentOpen.value
 	}
 
-	// 使用单个 nextTick，避免嵌套
 	nextTick(() => {
 		const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
-		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : 0
+		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : ech
 
-		// 只在高度真正改变时更新
+		// 只有当高度真正改变时才触发事件
 		if (expendContentHeight.value !== newHeight) {
 			expendContentHeight.value = newHeight
-			// 合并事件发送
-			const updatedContextHeight = contextHeight.value - newHeight
 			emits('contentExpand', newHeight, expendContentOpen.value)
-			emits('heightChanged', updatedContextHeight)
+
+			// 使用 nextTick 确保 DOM 更新后再触发高度变化事件
+			nextTick(() => {
+				emits('heightChanged', contextHeight.value - newHeight)
+			})
 		}
 	})
 }
@@ -159,60 +160,34 @@ const onBack = () => {
 }
 
 const initObserver = () => {
+	cleanUp()
 	if (blockRef.value) {
 		if (!observer) {
 			console.log('Block resize observer is created')
-			// observer = new ResizeObserver((entries) => {
-			// 	clearTimeout(observerTimer)
-			// 	observerTimer = setTimeout(() => {
-			// 		const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
-			// 		entries.forEach((entry) => {
-			// 			let now = entry.borderBoxSize[0].blockSize
-			// 			if (expendContentOpen.value) {
-			// 				now += expendContentHeight.value
-			// 			}
-			// 			if (
-			// 				(now < bodyHeight && props.enableFixedHeight) ||
-			// 				props.enableFixedHeight
-			// 			) {
-			// 				now = bodyHeight
-			// 			}
-			// 			if (isFullScreen.value) {
-			// 				now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
-			// 			}
-			// 			contextHeight.value = now
-			// 			// console.log('Block resize observer is running', contextHeight.value)
-			// 		})
-
-			// 		!isExpand &&
-			// 			emits('heightChanged', contextHeight.value - expendContentHeight.value)
-			// 		isExpand = false
-			// 	}, props.delay)
-			// })
 			observer = new ResizeObserver((entries) => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
-					const bodyHeight = document.body.offsetHeight - _offset.value[0]
-
+					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
 					entries.forEach((entry) => {
-						const now = entry.borderBoxSize[0].blockSize
-						let newHeight = now
-
-						// 分开处理不同情况，避免复杂的条件判断
+						let now = entry.borderBoxSize[0].blockSize
+						if (expendContentOpen.value) {
+							now += expendContentHeight.value
+						}
+						if (
+							(now < bodyHeight && props.enableFixedHeight) ||
+							props.enableFixedHeight
+						) {
+							now = bodyHeight
+						}
 						if (isFullScreen.value) {
-							newHeight = document.body.offsetHeight - _offset.value[1]
-						} else if (props.enableFixedHeight || now < bodyHeight) {
-							newHeight = bodyHeight
+							now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
 						}
-
-						// 只在高度真正改变时更新
-						if (contextHeight.value !== newHeight) {
-							contextHeight.value = newHeight
-							!isExpand &&
-								emits('heightChanged', newHeight - expendContentHeight.value)
-						}
+						contextHeight.value = now
+						// console.log('Block resize observer is running', contextHeight.value)
 					})
 
+					!isExpand &&
+						emits('heightChanged', contextHeight.value - expendContentHeight.value)
 					isExpand = false
 				}, props.delay)
 			})
@@ -254,6 +229,16 @@ const cleanUp = () => {
 		observer = null
 	}
 
+	// 清理所有定时器
+	if (observerTimer) {
+		clearTimeout(observerTimer)
+		observerTimer = null
+	}
+	if (resieTimer) {
+		clearTimeout(resieTimer)
+		resieTimer = null
+	}
+
 	isFullScreen.value = false
 }
 
@@ -292,14 +277,15 @@ onMounted(() => {
 
 onActivated(() => {
 	!isMounted && init()
+	isMounted = false
 })
 
 onDeactivated(() => {
-	!isMounted && cleanUp()
+	cleanUp()
 })
 
 onUnmounted(() => {
-	isMounted && cleanUp()
+	cleanUp()
 })
 
 defineExpose({
