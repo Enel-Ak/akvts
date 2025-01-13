@@ -211,16 +211,16 @@ const init = () => {
 }
 
 const cleanUp = () => {
-	if (blockRef.value) {
-		const el = blockRef.value.querySelector('.block-content')
-		const btn = blockRef.value.querySelector('.block-title .expand')
-		const more = el.nextElementSibling
+	// if (blockRef.value) {
+	// 	const el = blockRef.value.querySelector('.block-content')
+	// 	const btn = blockRef.value.querySelector('.block-title .expand')
+	// 	const more = el.nextElementSibling
 
-		el.style.height = 0
-		el.classList.remove('expand')
-		btn?.classList.remove('open')
-		more?.classList.remove('open')
-	}
+	// 	el.style.height = 0
+	// 	el.classList.remove('expand')
+	// 	btn?.classList.remove('open')
+	// 	more?.classList.remove('open')
+	// }
 
 	if (observer) {
 		console.log('Block resize observer is disconnected')
