@@ -2,6 +2,7 @@
 import {ref, computed} from 'vue'
 import Lock from './Lock.vue'
 
+const emits = defineEmits(['clickText'])
 const props = defineProps({
 	title: {
 		type: String,
@@ -54,6 +55,10 @@ const list = computed(() =>
 		}
 	})
 )
+
+const onClickText = (e, item) => {
+	emits('clickText', e, item)
+}
 </script>
 <template>
 	<div class="record-component">
@@ -74,7 +79,7 @@ const list = computed(() =>
 			<div class="label">
 				<slot name="label" :item="item">{{ item.label }}</slot>
 			</div>
-			<div class="text" v-if="item.text">
+			<div class="text" v-if="item.text" @click="onClickText($event, item)">
 				<slot name="text" :item="item">
 					<span v-html="item.text"></span>
 				</slot>
