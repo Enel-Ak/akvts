@@ -94,9 +94,7 @@ const onClickLabel = (item, isDropdown = false) => {
 const onCloseLabelAll = () => {
 	items.value.splice(1, items.value.length - 1)
 	current.value = items.value[0]
-	save()
-	emits('clickItem', current.value)
-	nextTick(() => setBar())
+	onClickLabel(current.value)
 }
 
 const onCancelItem = (item) => {
