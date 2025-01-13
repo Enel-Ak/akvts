@@ -36,7 +36,7 @@ const props = defineProps({
 	},
 	speed: {
 		type: Number,
-		default: 0.05,
+		default: 0.15,
 	},
 	enableBuffer: {
 		type: Boolean,
