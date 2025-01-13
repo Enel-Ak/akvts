@@ -203,7 +203,7 @@ const init = () => {
 		nextTick(() => {
 			// setTimeout(() => {
 			// frame.value = JSON.parse(localStorage.getItem('') || '[]')
-			onExpendContent(false)
+			// onExpendContent(false)
 			nextTick(() => {
 				isExpand = false
 			})
