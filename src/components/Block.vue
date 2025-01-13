@@ -200,13 +200,15 @@ const init = () => {
 		initObserver()
 	}
 	if (props.expandContent) {
-		setTimeout(() => {
+		nextTick(() => {
+			// setTimeout(() => {
 			// frame.value = JSON.parse(localStorage.getItem('') || '[]')
 			onExpendContent(false)
 			nextTick(() => {
 				isExpand = false
 			})
-		}, 32)
+			// }, 32)
+		})
 	}
 }
 
