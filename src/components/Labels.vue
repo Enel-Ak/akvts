@@ -120,6 +120,8 @@ const setBar = () => {
 }
 
 const getMetaTitle = (item) => {
+	console.log('Labels GetMetaTitle', item)
+
 	// 如果是路由对象，直接从 meta 中获取标题
 	if (item?.meta) {
 		return item.meta.title || item.meta.childTitle || '-未命名'
@@ -152,7 +154,7 @@ const deleteLabel = (e) => {
 const getNavItem = (to) => {
 	const loops = (arr) => {
 		for (const element of arr) {
-			if (element.path === to.fullPath) {
+			if (element.path === decodeURI(to.fullPath)) {
 				return element
 			}
 			if (element.children && element.children.length > 0) {
