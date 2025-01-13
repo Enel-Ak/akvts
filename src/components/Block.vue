@@ -160,7 +160,6 @@ const onBack = () => {
 }
 
 const initObserver = () => {
-	cleanUp()
 	if (blockRef.value) {
 		if (!observer) {
 			console.log('Block resize observer is created')
@@ -229,16 +228,6 @@ const cleanUp = () => {
 		observer = null
 	}
 
-	// 清理所有定时器
-	if (observerTimer) {
-		clearTimeout(observerTimer)
-		observerTimer = null
-	}
-	if (resieTimer) {
-		clearTimeout(resieTimer)
-		resieTimer = null
-	}
-
 	isFullScreen.value = false
 }
 
@@ -277,15 +266,14 @@ onMounted(() => {
 
 onActivated(() => {
 	!isMounted && init()
-	isMounted = false
 })
 
 onDeactivated(() => {
-	cleanUp()
+	!isMounted && cleanUp()
 })
 
 onUnmounted(() => {
-	cleanUp()
+	isMounted && cleanUp()
 })
 
 defineExpose({
