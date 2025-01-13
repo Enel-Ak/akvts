@@ -192,7 +192,7 @@ const handleRouter = (to) => {
 	// 判断是否左侧菜单
 	const nav = getNavItem(to)
 
-	if (!items.value.some((item) => item.path === to.fullPath)) {
+	if (!items.value.some((item) => item.path === decodeURI(to.fullPath).trim())) {
 		const newLabel = {
 			id: nav ? nav.id : useGuid(),
 			label: getMetaTitle(to),
