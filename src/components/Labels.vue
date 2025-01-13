@@ -91,6 +91,14 @@ const onClickLabel = (item, isDropdown = false) => {
 	}
 }
 
+const onCloseLabelAll = () => {
+	items.value.splice(1, items.value.length - 1)
+	current.value = items.value[0]
+	save()
+	emits('clickItem', current.value)
+	nextTick(() => setBar())
+}
+
 const onCancelItem = (item) => {
 	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 	items.value.splice(index, 1)
@@ -383,6 +391,7 @@ defineExpose({
 							</div>
 						</el-dropdown-item>
 					</template>
+					<el-dropdown-item @click="onCloseLabelAll"> 全部关闭 </el-dropdown-item>
 				</el-dropdown-menu>
 			</template>
 		</el-dropdown>
