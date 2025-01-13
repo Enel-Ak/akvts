@@ -228,6 +228,11 @@ const cleanUp = () => {
 		observer = null
 	}
 
+	if (observerTimer) {
+		clearTimeout(observerTimer)
+		observerTimer = null
+	}
+
 	isFullScreen.value = false
 }
 
@@ -265,15 +270,19 @@ onMounted(() => {
 })
 
 onActivated(() => {
+	console.log('Block Component is activated')
 	!isMounted && init()
+	isMounted = false
 })
 
 onDeactivated(() => {
+	console.log('Block Component is deactivated')
 	!isMounted && cleanUp()
 })
 
 onUnmounted(() => {
-	isMounted && cleanUp()
+	console.log('Block Component is unmounted')
+	cleanUp()
 })
 
 defineExpose({
