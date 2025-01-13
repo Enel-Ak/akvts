@@ -79,8 +79,7 @@ const onClickLabel = (item, isDropdown = false) => {
 
 	// 检查路径是否有效且不同于当前路径
 	console.log('Labels Click:', item, route.fullPath, decodeURI(route.fullPath).trim())
-	if (item.path) {
-		// && item.path !== decodeURI(route.fullPath).trim()
+	if (item.path && item.path !== decodeURI(route.fullPath).trim()) {
 		router
 			.push({
 				path: item.path.split('?')[0],
@@ -122,12 +121,12 @@ const setBar = () => {
 
 const getMetaTitle = (item) => {
 	// 如果是路由对象，直接从 meta 中获取标题
-	if (item.meta) {
+	if (item?.meta) {
 		return item.meta.title || item.meta.childTitle || '-未命名'
 	}
 
 	// 如果是标签对象，检查是否有修改过的标题
-	if (item.modifiedTitle) {
+	if (item?.modifiedTitle) {
 		return item.modifiedTitle
 	}
 
