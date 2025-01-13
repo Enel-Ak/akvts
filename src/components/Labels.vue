@@ -72,14 +72,13 @@ const save = () => {
 }
 
 const onClickLabel = (item, isDropdown = false) => {
-	console.log('Labels Click:', item)
-
 	// const leftNav = getNavItem({fullPath: item.path})
 
 	// emits('update:modelValue', leftNav ? item.id : item.pid)
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
+	console.log('Labels Click:', item, route.fullPath, decodeURI(route.fullPath).trim())
 	if (item.path && item.path !== decodeURI(route.fullPath).trim()) {
 		router
 			.push({
