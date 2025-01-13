@@ -80,7 +80,7 @@ const onClickLabel = (item, isDropdown = false) => {
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
-	if (item.path && item.path !== route.fullPath) {
+	if (item.path && item.path !== decodeURI(route.fullPath).trim()) {
 		router
 			.push({
 				path: item.path,
