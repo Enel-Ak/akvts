@@ -67,7 +67,6 @@ const frame = ref(JSON.parse(localStorage.getItem('CONTAINER_FRAME') || '[]'))
 
 let observer = null
 let observerTimer = null
-let observerTimer2 = null
 let resieTimer = null
 let isMounted = false
 let isExpand = false
@@ -186,12 +185,9 @@ const initObserver = () => {
 						// console.log('Block resize observer is running', contextHeight.value)
 					})
 
-					clearTimeout(observerTimer2)
-					observerTimer2 = setTimeout(() => {
-						!isExpand &&
-							emits('heightChanged', contextHeight.value - expendContentHeight.value)
-						isExpand = false
-					}, 16.7)
+					!isExpand &&
+						emits('heightChanged', contextHeight.value - expendContentHeight.value)
+					isExpand = false
 				}, props.delay)
 			})
 			observer.observe(blockRef.value?.querySelector('.block-component-body'))
