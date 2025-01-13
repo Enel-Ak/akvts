@@ -83,7 +83,7 @@ const onClickLabel = (item, isDropdown = false) => {
 		// && item.path !== decodeURI(route.fullPath).trim()
 		router
 			.push({
-				path: item.path,
+				path: item.path.split('?')[0],
 				query: query(item),
 			})
 			.catch((err) => {
