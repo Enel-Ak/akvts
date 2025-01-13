@@ -127,19 +127,18 @@ const onExpendContent = (isToggle = true) => {
 		expendContentOpen.value = !expendContentOpen.value
 	}
 
+	// 使用单个 nextTick，避免嵌套
 	nextTick(() => {
 		const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
-		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : ech
+		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : 0
 
-		// 只有当高度真正改变时才触发事件
+		// 只在高度真正改变时更新
 		if (expendContentHeight.value !== newHeight) {
 			expendContentHeight.value = newHeight
+			// 合并事件发送
+			const updatedContextHeight = contextHeight.value - newHeight
 			emits('contentExpand', newHeight, expendContentOpen.value)
-
-			// 使用 nextTick 确保 DOM 更新后再触发高度变化事件
-			nextTick(() => {
-				emits('heightChanged', contextHeight.value - newHeight)
-			})
+			emits('heightChanged', updatedContextHeight)
 		}
 	})
 }
@@ -163,30 +162,57 @@ const initObserver = () => {
 	if (blockRef.value) {
 		if (!observer) {
 			console.log('Block resize observer is created')
+			// observer = new ResizeObserver((entries) => {
+			// 	clearTimeout(observerTimer)
+			// 	observerTimer = setTimeout(() => {
+			// 		const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
+			// 		entries.forEach((entry) => {
+			// 			let now = entry.borderBoxSize[0].blockSize
+			// 			if (expendContentOpen.value) {
+			// 				now += expendContentHeight.value
+			// 			}
+			// 			if (
+			// 				(now < bodyHeight && props.enableFixedHeight) ||
+			// 				props.enableFixedHeight
+			// 			) {
+			// 				now = bodyHeight
+			// 			}
+			// 			if (isFullScreen.value) {
+			// 				now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
+			// 			}
+			// 			contextHeight.value = now
+			// 			// console.log('Block resize observer is running', contextHeight.value)
+			// 		})
+
+			// 		!isExpand &&
+			// 			emits('heightChanged', contextHeight.value - expendContentHeight.value)
+			// 		isExpand = false
+			// 	}, props.delay)
+			// })
 			observer = new ResizeObserver((entries) => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
-					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
+					const bodyHeight = document.body.offsetHeight - _offset.value[0]
+
 					entries.forEach((entry) => {
-						let now = entry.borderBoxSize[0].blockSize
-						if (expendContentOpen.value) {
-							now += expendContentHeight.value
-						}
-						if (
-							(now < bodyHeight && props.enableFixedHeight) ||
-							props.enableFixedHeight
-						) {
-							now = bodyHeight
-						}
+						const now = entry.borderBoxSize[0].blockSize
+						let newHeight = now
+
+						// 分开处理不同情况，避免复杂的条件判断
 						if (isFullScreen.value) {
-							now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
+							newHeight = document.body.offsetHeight - _offset.value[1]
+						} else if (props.enableFixedHeight || now < bodyHeight) {
+							newHeight = bodyHeight
 						}
-						contextHeight.value = now
-						// console.log('Block resize observer is running', contextHeight.value)
+
+						// 只在高度真正改变时更新
+						if (contextHeight.value !== newHeight) {
+							contextHeight.value = newHeight
+							!isExpand &&
+								emits('heightChanged', newHeight - expendContentHeight.value)
+						}
 					})
 
-					!isExpand &&
-						emits('heightChanged', contextHeight.value - expendContentHeight.value)
 					isExpand = false
 				}, props.delay)
 			})
