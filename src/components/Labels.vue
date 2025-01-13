@@ -204,7 +204,7 @@ const handleRouter = (to) => {
 		items.value.splice(1, 0, newLabel)
 		current.value = newLabel
 	} else {
-		const index = items.value.findIndex((item) => item.path === to.fullPath)
+		const index = items.value.findIndex((item) => item.path === decodeURI(to.fullPath).trim())
 		current.value = items.value[index]
 		current.value.label = getMetaTitle(current.value)
 
