@@ -114,24 +114,6 @@ const onExpand = () => {
 	emits('collapsed', !expandBlock.value)
 }
 
-// const onExpendContent = (isToggle = true) => {
-// 	isExpand = true
-// 	const expandEl = blockRef.value.querySelector('.expand-content .el-scrollbar__view > *')
-
-// 	if (!expandEl || !expandBlock.value) return
-
-// 	if (isToggle) {
-// 		expendContentOpen.value = !expendContentOpen.value
-// 	}
-
-// 	const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
-
-// 	expendContentHeight.value = ech > props.expandContentHeight ? props.expandContentHeight : ech
-
-// 	emits('contentExpand', expendContentHeight.value, expendContentOpen.value)
-// 	emits('heightChanged', contextHeight.value - expendContentHeight.value)
-// }
-
 const onExpendContent = (isToggle = true) => {
 	if (!blockRef.value || !expandBlock.value) return
 
@@ -557,7 +539,7 @@ defineExpose({
 			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
 		}
 		:deep(.search) {
-			padding: torem(10px) torem(15px);
+			padding: torem(10px) torem(15px) 0 torem(15px);
 		}
 		:deep(.el-form) {
 			> :last-child {
