@@ -144,13 +144,13 @@ const onExpendContent = (isToggle = true) => {
 	}
 
 	nextTick(() => {
-		const ech = expendContentOpen.value ? expandEl.scrollHeight : 0
+		const ech = expendContentOpen.value ? expandEl.offsetHeight : 0
 		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : ech
 
 		// 只有当高度真正改变时才触发事件
 
 		if (expendContentHeight.value !== newHeight) {
-			expendContentHeight.value = newHeight
+			expendContentHeight.value = newHeight + 1
 			emits('contentExpand', newHeight, expendContentOpen.value)
 
 			// 使用 nextTick 确保 DOM 更新后再触发高度变化事件
@@ -186,7 +186,7 @@ const initObserver = () => {
 					if (props.inherit) {
 						if (blockRef.value?.parentNode) {
 							contextHeight.value =
-								blockRef.value?.parentNode.offsetHeight - _offset.value[1] - 35
+								blockRef.value?.parentNode.offsetHeight - _offset.value[1]
 						}
 						return
 					}
@@ -324,6 +324,7 @@ defineExpose({
 		ref="blockRef"
 		:key="guid"
 		:class="{
+			'mg-bottom-0': inherit,
 			'full-screen': isFullScreen,
 			'no-border': !border,
 			collapsed: !expandBlock && !expandVertical,
@@ -431,6 +432,10 @@ defineExpose({
 
 	margin-bottom: v-bind(mb);
 	transition: all 0.15s linear;
+
+	&.mg-bottom-0 {
+		margin-bottom: 0;
+	}
 
 	&.collapsed {
 		height: 100%;
@@ -553,6 +558,12 @@ defineExpose({
 		}
 		:deep(.search) {
 			padding: torem(10px) torem(15px) 0 torem(15px);
+		}
+		:deep(.el-form) {
+			> :last-child {
+				padding-bottom: 0;
+				margin-bottom: 0;
+			}
 		}
 	}
 

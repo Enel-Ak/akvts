@@ -1,5 +1,5 @@
 <script setup>
-import {nextTick, onDeactivated, onMounted, onUnmounted, ref, watch} from 'vue'
+import {nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch} from 'vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -100,7 +100,9 @@ watch(
 	{deep: true}
 )
 
-onMounted(async () => {
+onMounted(async () => {})
+
+onActivated(async () => {
 	await initChart()
 	initObserver()
 })
