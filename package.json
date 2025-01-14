@@ -31,13 +31,13 @@
 		"dagre": "0.8.5",
 		"echarts": "5.5.1",
 		"element-plus": "2.8.8",
+		"gridstack": "11.2.0",
 		"husky": "9.1.7",
 		"sass": "1.81.0",
 		"sass-loader": "16.0.3",
 		"unplugin-element-plus": "0.8.0",
 		"vite-plugin-compression": "0.5.1",
-		"vite-plugin-pages": "0.32.3",
-		"vue-grid-layout": "2.4.0"
+		"vite-plugin-pages": "0.32.3"
 	},
 	"peerDependencies": {
 		"axios": "1.7.7",
