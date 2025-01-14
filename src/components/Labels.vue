@@ -71,7 +71,7 @@ const save = () => {
 	})
 }
 
-const onClickLabel = (item, isDropdown = false) => {
+const onClickLabel = (item, isDropdown = false, isPush = false) => {
 	// const leftNav = getNavItem({fullPath: item.path})
 
 	// emits('update:modelValue', leftNav ? item.id : item.pid)
@@ -79,7 +79,7 @@ const onClickLabel = (item, isDropdown = false) => {
 
 	// 检查路径是否有效且不同于当前路径
 	console.log('Labels Click:', item, route.fullPath, decodeURI(route.fullPath).trim())
-	if (item.path && item.path !== decodeURI(route.fullPath).trim()) {
+	if ((item.path && item.path !== decodeURI(route.fullPath).trim()) || isPush) {
 		router
 			.push({
 				path: item.path.split('?')[0],
@@ -285,19 +285,28 @@ watch(
 onBeforeMount(() => {
 	// 从 localStorage 读取历史记录
 	const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
-	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{}')
+	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{path:""}')
 	console.log('Labels History', history, historyCurrent)
 
 	if (history.length > 0) {
 		items.value = history
-		if (Object.keys(historyCurrent).length > 0) {
-			current.value = historyCurrent
+		const currentPath = decodeURI(router.currentRoute.value.fullPath).trim()
+		const existingItem = items.value.find((f) => f.path === currentPath)
+
+		if (existingItem) {
+			current.value =
+				existingItem.path === historyCurrent.path ? historyCurrent : existingItem
 		} else {
-			current.value = history[0]
+			const newItem = {
+				id: useGuid(),
+				label: '-未命名',
+				path: currentPath,
+			}
+			items.value.splice(1, 0, newItem)
+			current.value = newItem
 		}
-		if (current.value) {
-			onClickLabel(current.value)
-		}
+
+		onClickLabel(current.value, false, !existingItem)
 	}
 })
 onMounted(() => {

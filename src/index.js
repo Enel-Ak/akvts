@@ -26,6 +26,7 @@ import Watermark from './components/Watermark.vue'
 import Icons from './components/Icons.vue'
 import LoadingTransition from './components/LoadingTransition.vue'
 import Navigation from './components/Navigation.vue'
+import GridLayout from './components/GridLayout.vue'
 
 const components = {
 	Akvts,
@@ -56,6 +57,7 @@ const components = {
 	Icons,
 	LoadingTransition,
 	Navigation,
+	GridLayout,
 }
 
 export default {
@@ -94,4 +96,5 @@ export {
 	Icons,
 	LoadingTransition,
 	Navigation,
+	GridLayout,
 }

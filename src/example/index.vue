@@ -17,7 +17,7 @@ const nav = [
 		path: '',
 		sort: 3,
 		children: [
-			{id: 'bb', label: '工作通知', path: '', sort: 1, pid: 'b'},
+			{id: 'bb', label: '工作通知', path: '/Grid', sort: 1, pid: 'b'},
 			{id: 'bbb', label: '代办通知', path: '/Block', sort: 2, pid: 'b'},
 			{id: 'bbbb', label: '消息通知', path: '', sort: 3, pid: 'b'},
 		],
