@@ -465,6 +465,7 @@ defineExpose({
 					:isClear="isClear"
 					:_fromForm="!_fromTable"
 					:_formLabelWidth="labelWidth"
+					:_buttonVertical="buttonVertical"
 					@init-remote-complete="onInitRemoteComplete"
 					@change="onFormChange"
 					@changeFile="onFormChange"

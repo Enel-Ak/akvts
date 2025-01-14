@@ -38,6 +38,7 @@ const props = defineProps({
 	_expandIndex: {type: Number, default: 0},
 	_hasChanged: {type: Boolean, default: false},
 	_inGrid: {type: Boolean, default: false},
+	_buttonVertical: {type: String, default: 'bottom'},
 })
 
 const attrs = useAttrs()
@@ -519,6 +520,7 @@ defineExpose({
 					'space-between':
 						typeof item.spaceBetween === 'boolean' ? item.spaceBetween : false,
 					'has-changed': props._hasChanged,
+					'mg-bottom-0': _buttonVertical === 'flowing',
 				}"
 			>
 				<!-- 无type时(插槽) -->
@@ -1075,6 +1077,10 @@ defineExpose({
 		align-items: flex-start;
 		margin-right: v-bind(flexSize);
 		width: calc(100% / v-bind(columnCount) - v-bind(flexSize));
+
+		&.mg-bottom-0 {
+			margin-bottom: 0 !important;
+		}
 	}
 }
 </style>
