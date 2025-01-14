@@ -1080,6 +1080,7 @@ defineExpose({
 	}
 
 	.mg-bottom-0 {
+		height: 100%;
 		margin-bottom: 0 !important;
 	}
 }
