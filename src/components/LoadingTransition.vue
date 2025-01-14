@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue'
+import {computed, ref, watch} from 'vue'
 
 const props = defineProps({
 	color: {
@@ -30,8 +30,14 @@ const jc = computed(() => {
 })
 
 const _color = ref(props.color)
-
 const iconColor = computed(() => props.color)
+
+watch(
+	() => props.color,
+	(val) => {
+		_color.value = val
+	}
+)
 </script>
 <template>
 	<div class="akvts-loading-transition" :style="{justifyContent: jc}">

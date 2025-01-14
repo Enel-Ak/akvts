@@ -21,9 +21,9 @@ onMounted(() => {
 </template>
 <style lang="css" scoped>
 .grid-stack {
-	background: #fafad2;
+	background: var(--z-bg-secondary);
 }
 .grid-stack-item-content {
-	background-color: #18bc9c;
+	background-color: var(--z-theme);
 }
 </style>

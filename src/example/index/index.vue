@@ -111,6 +111,9 @@ const handValidate = () => {
 	const valid = formItemRef.value.validate()
 	console.log('手动校验结果: ', valid)
 }
+const onButtonClick = () => {
+	tableRef.value.cancelEdit(['test1'])
+}
 </script>
 <template>
 	<Block
@@ -369,6 +372,7 @@ const handValidate = () => {
 			@edit-change="onEditChange"
 			@form-changed="onFormChanged"
 			@beforeRowEdit="onBeforeRowEdit"
+			@click-button="onButtonClick"
 			:buttons="[
 				{
 					label: '测试',

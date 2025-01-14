@@ -16,6 +16,7 @@ import {ElMessage} from 'element-plus'
 import FormItem from './FormItem.vue'
 import {useGuid} from '@/hooks'
 import Lock from './Lock.vue'
+import {id} from 'element-plus/es/locales.mjs'
 
 const emits = defineEmits([
 	'update:modelValue',
@@ -656,28 +657,47 @@ const onTableRowEditSaveAll = () => {
 			}
 		})
 		currentEditColumns.value.length = 0
-		getList()
+		if (reload) getList()
 	}).catch(() => {
 		ElMessage.error('全部更新失败')
 	})
 }
 
-const onTableRowEditCancel = () => {
-	currentEditRow.value = null
-	currentEditRows.value = []
-	currentEidtEls.value?.forEach((el) => {
-		const td = el.closest('td')
-		if (td) {
-			td.classList.remove('has-changed')
+const onTableRowEditCancel = (ids = [], reload = true) => {
+	if (ids.length > 0) {
+		if (ids.includes(currentEditRow.value?.id)) {
+			currentEditRow.value = null
 		}
-	})
-	currentEditColumns.value = []
-	tableData.value = tableData.value.map((item) => {
-		delete item.__enableEdit
-		return item
-	})
+		currentEditRows.value = currentEditRows.value.filter((item) => !ids.includes(item.id))
+		currentEditColumns.value = currentEditColumns.value.filter(
+			(item) => !ids.includes(item.rid)
+		)
+		tableData.value = tableData.value.map((item) => {
+			if (ids.includes(item.id)) {
+				delete item.__enableEdit
+			}
+			return item
+		})
+	} else {
+		currentEditRow.value = null
+		currentEditRows.value = []
+		currentEditColumns.value = []
+
+		currentEidtEls.value?.forEach((el) => {
+			const td = el.closest('td')
+			if (td) {
+				td.classList.remove('has-changed')
+			}
+		})
+
+		tableData.value = tableData.value.map((item) => {
+			delete item.__enableEdit
+			return item
+		})
+	}
+
 	setGroupWidth(true)
-	getList()
+	reload && getList()
 }
 
 const setGroupWidth = (isReset = false, column = null) => {
@@ -874,7 +894,7 @@ onUnmounted(() => {
 
 defineExpose({
 	clear: () => onClear(),
-	cancelEdit: () => onTableRowEditCancel(),
+	cancelEdit: (ids, reload = true) => onTableRowEditCancel(ids, reload),
 	disabled: (bool = true) => {
 		nextTick(() => {
 			disableTable.value = bool

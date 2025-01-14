@@ -438,6 +438,12 @@ defineExpose({
 			i {
 				opacity: 1;
 			}
+
+			:deep(.akvts-loading-transition span),
+			:deep(.akvts-loading-transition svg),
+			:deep(.akvts-loading-transition small::after) {
+				color: var(--z-nav-font-color);
+			}
 		}
 
 		&.active {

@@ -4,3 +4,10 @@
 		<GridLayout></GridLayout>
 	</div>
 </template>
+<route>
+    {
+        meta: {
+            title: '',
+        },
+    }
+</route>
