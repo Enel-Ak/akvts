@@ -1077,10 +1077,10 @@ defineExpose({
 		align-items: flex-start;
 		margin-right: v-bind(flexSize);
 		width: calc(100% / v-bind(columnCount) - v-bind(flexSize));
+	}
 
-		&.mg-bottom-0 {
-			margin-bottom: 0 !important;
-		}
+	.mg-bottom-0 {
+		margin-bottom: 0 !important;
 	}
 }
 </style>
