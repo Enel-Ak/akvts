@@ -285,7 +285,7 @@ watch(
 onBeforeMount(() => {
 	// 从 localStorage 读取历史记录
 	const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
-	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{path:""}')
+	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{"path":null}')
 	console.log('Labels History', history, historyCurrent)
 
 	if (history.length > 0) {

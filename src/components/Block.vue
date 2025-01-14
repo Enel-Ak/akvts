@@ -46,6 +46,7 @@ const props = defineProps({
 	delay: {type: Number, default: 16.7}, // 延迟执行高度计算
 	offset: {type: Array, default: () => [211, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
 	fixedOffset: {type: Number, default: 0}, // 固定高度偏移量
+	inheritHeight: {type: Boolean, default: false}, // 启用继承高度
 
 	isBack: {type: Boolean, default: false},
 })
@@ -92,6 +93,27 @@ const _offset = computed(() => {
 	]
 })
 
+const _height = computed(() => {
+	if (props.inheritHeight) {
+		if (blockRef.value?.parentNode) {
+			return blockRef.value?.parentNode.offsetHeight - _offset.value[1] - 35 + 'px'
+		}
+	}
+
+	if (props.height) {
+		if (typeof props.height === 'number') {
+			return props.height + 'px'
+		}
+
+		if (typeof props.height === 'string' && props.height.indexOf('px') === -1) {
+			return `${props.height}px`
+		}
+		return props.height
+	}
+
+	return 0
+})
+
 const onExpand = () => {
 	if (!props.enableExpand) return
 	expandBlock.value = !expandBlock.value
@@ -120,7 +142,7 @@ const onExpendContent = (isToggle = true) => {
 	if (!blockRef.value || !expandBlock.value) return
 
 	isExpand = true
-	const expandEl = blockRef.value.querySelector('.expand-content .el-scrollbar__view > *')
+	const expandEl = blockRef.value.querySelector('.expand-content > *')
 	if (!expandEl) return
 
 	if (isToggle) {
@@ -132,6 +154,7 @@ const onExpendContent = (isToggle = true) => {
 		const newHeight = ech > props.expandContentHeight ? props.expandContentHeight : ech
 
 		// 只有当高度真正改变时才触发事件
+
 		if (expendContentHeight.value !== newHeight) {
 			expendContentHeight.value = newHeight
 			emits('contentExpand', newHeight, expendContentOpen.value)
@@ -357,7 +380,7 @@ defineExpose({
 			class="block-content"
 			:class="{'auto-height': expandBlock && autoHeight, expand: expandBlock}"
 			:style="{
-				height: !expandBlock ? 0 : height > 0 ? `${height}px` : `${contextHeight}px`,
+				height: !expandBlock ? 0 : _height ? _height : `${contextHeight}px`,
 			}"
 		>
 			<div
@@ -366,29 +389,24 @@ defineExpose({
 				:class="{border: expendContentOpen}"
 				:style="{height: expendContentHeight + 'px'}"
 			>
-				<el-scrollbar :height="expendContentHeight" :always="true">
-					<slot name="expand"></slot>
-				</el-scrollbar>
+				<slot name="expand"></slot>
 			</div>
 
-			<el-scrollbar
-				ref="scrollRef"
-				class="block-scrollbar"
-				:height="
-					height > 0
-						? `${height}px`
+			<div
+				v-show="expandBlock"
+				class="block-component-body"
+				:style="{
+					height: _height
+						? _height
 						: `${
 								expendContentOpen
 									? contextHeight - expendContentHeight
 									: contextHeight
-						  }px`
-				"
-				always
+						  }px`,
+				}"
 			>
-				<div v-show="expandBlock" class="block-component-body">
-					<slot name="default"></slot>
-				</div>
-			</el-scrollbar>
+				<slot name="default"></slot>
+			</div>
 		</div>
 
 		<Icons v-if="!expandBlock" icon-name="More" class="more"></Icons>
@@ -525,6 +543,8 @@ defineExpose({
 
 	.expand-content {
 		// transition: all 0.15s linear;
+		overflow-y: auto;
+		overflow-x: hidden;
 		&.border {
 			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
 		}
@@ -540,6 +560,8 @@ defineExpose({
 		transition: height 0.15s linear, opacity 0.15s linear;
 
 		.block-component-body {
+			overflow-y: auto;
+			overflow-x: hidden;
 			padding: torem(15px);
 		}
 
