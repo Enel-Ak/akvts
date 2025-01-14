@@ -46,7 +46,7 @@ const props = defineProps({
 	delay: {type: Number, default: 16.7}, // 延迟执行高度计算
 	offset: {type: Array, default: () => [211, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
 	fixedOffset: {type: Number, default: 0}, // 固定高度偏移量
-	inheritHeight: {type: Boolean, default: false}, // 启用继承高度
+	inherit: {type: Boolean, default: false}, // 启用继承高度
 
 	isBack: {type: Boolean, default: false},
 })
@@ -94,12 +94,6 @@ const _offset = computed(() => {
 })
 
 const _height = computed(() => {
-	if (props.inheritHeight) {
-		if (blockRef.value?.parentNode) {
-			return blockRef.value?.parentNode.offsetHeight - _offset.value[1] - 35 + 'px'
-		}
-	}
-
 	if (props.height) {
 		if (typeof props.height === 'number') {
 			return props.height + 'px'
@@ -189,6 +183,14 @@ const initObserver = () => {
 			observer = new ResizeObserver((entries) => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
+					if (props.inherit) {
+						if (blockRef.value?.parentNode) {
+							contextHeight.value =
+								blockRef.value?.parentNode.offsetHeight - _offset.value[1] - 35
+						}
+						return
+					}
+
 					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
@@ -431,15 +433,16 @@ defineExpose({
 	transition: all 0.15s linear;
 
 	&.collapsed {
+		height: 100%;
 		width: v-bind(cw);
 		.block-title,
 		.more {
 			opacity: 0;
 			overflow: hidden;
 		}
-		.block-content {
-			height: 100% !important;
-		}
+		// .block-content {
+		// 	height: 100% !important;
+		// }
 
 		.collapsed-controller {
 			align-items: center;
