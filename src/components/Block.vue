@@ -557,7 +557,7 @@ defineExpose({
 			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
 		}
 		:deep(.search) {
-			padding: torem(10px) torem(15px) 0 torem(15px);
+			padding: torem(10px) torem(15px);
 		}
 		:deep(.el-form) {
 			> :last-child {
