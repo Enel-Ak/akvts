@@ -133,7 +133,7 @@ const onExpendContent = (isToggle = true) => {
 		// 只有当高度真正改变时才触发事件
 
 		if (expendContentHeight.value !== newHeight) {
-			expendContentHeight.value = newHeight + 1
+			expendContentHeight.value = expendContentOpen.value ? newHeight + 1 : newHeight
 			emits('contentExpand', newHeight, expendContentOpen.value)
 
 			// 使用 nextTick 确保 DOM 更新后再触发高度变化事件
@@ -374,6 +374,8 @@ defineExpose({
 					? _height
 					: enableFixedHeight
 					? `${contextHeight}px`
+					: inherit
+					? contextHeight + 'px'
 					: '100%',
 			}"
 		>
@@ -390,10 +392,14 @@ defineExpose({
 				v-show="expandBlock"
 				class="block-component-body"
 				:style="{
-					height: enableFixedHeight ? contextHeight - expendContentHeight + 'px' : 'auto',
+					height: enableFixedHeight
+						? contextHeight - expendContentHeight + 'px'
+						: inherit
+						? contextHeight + 'px'
+						: 'auto',
 				}"
 			>
-				<div class="content">
+				<div class="content" :style="{height: inherit ? contextHeight - 15 + 'px' : ''}">
 					<slot name="default"></slot>
 				</div>
 			</div>

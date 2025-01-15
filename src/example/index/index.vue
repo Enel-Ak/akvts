@@ -118,7 +118,7 @@ const onButtonClick = () => {
 <template>
 	<Block
 		title="测试组件"
-		:enableFixedHeight="false"
+		:enableFixedHeight="true"
 		:enableExpandButton="true"
 		:enableExpand="true"
 		:expandVertical="false"
@@ -147,7 +147,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -155,7 +157,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -163,7 +167,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -171,7 +177,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 			children: [{prop: 'cccd', label: '测试2', type: 'text'}],
 						// 		},
@@ -184,13 +192,13 @@ const onButtonClick = () => {
 							inputType: 'number',
 							disabled: false,
 						},
-						{
-							prop: 'age1',
-							label: '年龄',
-							type: 'text',
-							inputType: 'number',
-							disabled: false,
-						},
+						// {
+						// 	prop: 'age1',
+						// 	label: '年龄',
+						// 	type: 'text',
+						// 	inputType: 'number',
+						// 	disabled: false,
+						// },
 						// {
 						// 	prop: 'ag223e1',
 						// 	label: '年龄',
@@ -221,7 +229,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -229,7 +239,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -238,7 +250,9 @@ const onButtonClick = () => {
 						// 			type: 'text',
 						// 			full: true,
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -246,7 +260,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 		{
@@ -254,7 +270,9 @@ const onButtonClick = () => {
 						// 			label: '测试2',
 						// 			type: 'text',
 						// 			formItemProps: {
-						// 				rules: [{required: true, message: '分组校验', trigger: 'blur'}],
+						// 				rules: [
+						// 					{required: true, message: '分组校验', trigger: 'blur'},
+						// 				],
 						// 			},
 						// 		},
 						// 	],
