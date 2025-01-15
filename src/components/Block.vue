@@ -2,6 +2,7 @@
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, nextTick, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {useGuid} from '@/hooks'
+import {deleteLabel} from '@/hooks/useLabels'
 import Lock from './Lock.vue'
 
 const emits = defineEmits([
@@ -31,6 +32,7 @@ const props = defineProps({
 	enableExpandButton: {type: Boolean, default: false}, // 启用展开/收起按钮, 最右侧图标
 
 	enableBackButton: {type: Boolean, default: false}, // 启用返回按钮
+	enableCloseButton: {type: Boolean, default: true}, // 启用关闭按钮
 
 	expandContent: {type: Boolean, default: true}, // 默认展开/收起内容块
 	enableExpandContent: {type: Boolean, default: true}, // 启用展开/收起内容块按钮
@@ -157,6 +159,12 @@ const onBack = () => {
 	} else {
 		router.go(-1)
 	}
+}
+
+const onClose = () => {
+	deleteLabel({
+		path: router.currentRoute.value.fullPath,
+	})
 }
 
 const initObserver = () => {
@@ -339,7 +347,8 @@ defineExpose({
 				{{ isFullScreen ? '还原' : '全屏' }}
 			</el-button>
 
-			<el-button v-if="enableBackButton" @click.stop="onBack" size="small"> 返回 </el-button>
+			<el-button v-if="enableBackButton" @click.stop="onBack" size="small">返回</el-button>
+			<el-button v-if="enableCloseButton" @click.stop="onClose" size="small">关闭</el-button>
 
 			<el-button
 				link
@@ -535,6 +544,7 @@ defineExpose({
 		overflow-y: auto;
 		overflow-x: hidden;
 		position: relative;
+
 		&.border::after {
 			content: '';
 			bottom: 0;

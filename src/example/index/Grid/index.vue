@@ -25,7 +25,13 @@ const achart = {
 	<div class="grid grid-cols-4 gap-4">
 		<GridLayout>
 			<template #grid-default>
-				<Block title="柱状图1" :border="false" :inherit="true" :enableExpandContent="false">
+				<Block
+					title="柱状图1"
+					:border="false"
+					:inherit="true"
+					:enableExpandContent="false"
+					:enable-close-button="false"
+				>
 					<Charts :option="achart" />
 				</Block>
 			</template>
