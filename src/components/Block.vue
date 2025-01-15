@@ -191,7 +191,11 @@ const initObserver = () => {
 						if (isFullScreen.value) {
 							now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
 						}
-						contextHeight.value = now
+
+						if (now !== contextHeight.value) {
+							contextHeight.value = now
+						}
+
 						console.log('Block resize observer is running', contextHeight.value)
 					})
 
@@ -211,29 +215,15 @@ const init = () => {
 	}
 	if (props.expandContent) {
 		nextTick(() => {
-			// setTimeout(() => {
-			// frame.value = JSON.parse(localStorage.getItem('') || '[]')
 			onExpendContent(false)
 			nextTick(() => {
 				isExpand = false
 			})
-			// }, 32)
 		})
 	}
 }
 
 const cleanUp = () => {
-	// if (blockRef.value) {
-	// 	const el = blockRef.value.querySelector('.block-content')
-	// 	const btn = blockRef.value.querySelector('.block-title .expand')
-	// 	const more = el.nextElementSibling
-
-	// 	el.style.height = 0
-	// 	el.classList.remove('expand')
-	// 	btn?.classList.remove('open')
-	// 	more?.classList.remove('open')
-	// }
-
 	if (observer) {
 		console.log('Block resize observer is disconnected')
 		observer.disconnect()
@@ -372,10 +362,8 @@ defineExpose({
 					? 0
 					: _height
 					? _height
-					: enableFixedHeight
+					: enableFixedHeight || inherit
 					? `${contextHeight}px`
-					: inherit
-					? contextHeight + 'px'
 					: '100%',
 			}"
 		>
@@ -393,13 +381,13 @@ defineExpose({
 				class="block-component-body"
 				:style="{
 					height: enableFixedHeight
-						? contextHeight - expendContentHeight + 'px'
+						? `${contextHeight - expendContentHeight + (expendContentOpen ? -1 : 0)}px`
 						: inherit
-						? contextHeight + 'px'
+						? `${contextHeight}px`
 						: 'auto',
 				}"
 			>
-				<div class="content" :style="{height: inherit ? contextHeight - 15 + 'px' : ''}">
+				<div class="content" :style="{height: inherit ? `${contextHeight - 15}px` : ''}">
 					<slot name="default"></slot>
 				</div>
 			</div>

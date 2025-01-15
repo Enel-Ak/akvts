@@ -121,7 +121,7 @@ const onButtonClick = () => {
 		:enableFixedHeight="true"
 		:enableExpandButton="true"
 		:enableExpand="true"
-		:expandVertical="false"
+		:expandVertical="true"
 		@collapsed="collapsed = $event"
 	>
 		<template #expand>
