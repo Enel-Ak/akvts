@@ -119,6 +119,7 @@ const onExpendContent = (isToggle = true) => {
 
 	isExpand = true
 	const expandEl = blockRef.value.querySelector('.expand-content > *')
+
 	if (!expandEl) return
 
 	if (isToggle) {
@@ -174,8 +175,10 @@ const initObserver = () => {
 					}
 
 					const bodyHeight = document.body.offsetHeight - _offset.value[0] // Block title  and padding and header height
+
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
+
 						if (expendContentOpen.value) {
 							now += expendContentHeight.value
 						}
@@ -189,7 +192,7 @@ const initObserver = () => {
 							now = document.body.offsetHeight - _offset.value[1] // Block title height and padding
 						}
 						contextHeight.value = now
-						// console.log('Block resize observer is running', contextHeight.value)
+						console.log('Block resize observer is running', contextHeight.value)
 					})
 
 					!isExpand &&
@@ -197,7 +200,7 @@ const initObserver = () => {
 					isExpand = false
 				}, props.delay)
 			})
-			observer.observe(blockRef.value?.querySelector('.block-component-body'))
+			observer.observe(blockRef.value.querySelector('.block-component-body > .content'))
 		}
 	}
 }
@@ -365,7 +368,13 @@ defineExpose({
 			class="block-content"
 			:class="{'auto-height': expandBlock && autoHeight, expand: expandBlock}"
 			:style="{
-				height: !expandBlock ? 0 : _height ? _height : `${contextHeight}px`,
+				height: !expandBlock
+					? 0
+					: _height
+					? _height
+					: enableFixedHeight
+					? `${contextHeight}px`
+					: '100%',
 			}"
 		>
 			<div
@@ -381,16 +390,12 @@ defineExpose({
 				v-show="expandBlock"
 				class="block-component-body"
 				:style="{
-					height: _height
-						? _height
-						: `${
-								expendContentOpen
-									? contextHeight - expendContentHeight
-									: contextHeight
-						  }px`,
+					height: enableFixedHeight ? contextHeight - expendContentHeight + 'px' : 'auto',
 				}"
 			>
-				<slot name="default"></slot>
+				<div class="content">
+					<slot name="default"></slot>
+				</div>
 			</div>
 		</div>
 
