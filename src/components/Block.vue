@@ -133,7 +133,7 @@ const onExpendContent = (isToggle = true) => {
 		// 只有当高度真正改变时才触发事件
 
 		if (expendContentHeight.value !== newHeight) {
-			expendContentHeight.value = expendContentOpen.value ? newHeight + 1 : newHeight
+			expendContentHeight.value = newHeight
 			emits('contentExpand', newHeight, expendContentOpen.value)
 
 			// 使用 nextTick 确保 DOM 更新后再触发高度变化事件
@@ -534,8 +534,13 @@ defineExpose({
 		// transition: all 0.15s linear;
 		overflow-y: auto;
 		overflow-x: hidden;
-		&.border {
+		position: relative;
+		&.border::after {
+			content: '';
+			bottom: 0;
 			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
+			position: absolute;
+			width: 100%;
 		}
 		:deep(.search) {
 			padding: torem(12px) torem(15px) 0 torem(15px);
