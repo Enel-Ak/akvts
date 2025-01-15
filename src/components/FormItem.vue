@@ -698,6 +698,7 @@ defineExpose({
 								@change="onChange($event, item)"
 								@focus.stop="onFocus"
 								@blur.stop="onBlur(item)"
+								@keyup.enter="emits('enter')"
 								style="flex: 1"
 							>
 								<el-option
