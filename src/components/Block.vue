@@ -381,7 +381,7 @@ defineExpose({
 				class="block-component-body"
 				:style="{
 					height: enableFixedHeight
-						? `${contextHeight - expendContentHeight + (expendContentOpen ? -1 : 0)}px`
+						? `${contextHeight - expendContentHeight}px`
 						: inherit
 						? `${contextHeight}px`
 						: 'auto',
