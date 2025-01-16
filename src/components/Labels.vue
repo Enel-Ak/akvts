@@ -311,6 +311,7 @@ onBeforeMount(() => {
 		onClickLabel(current.value, false, !existingItem)
 	}
 })
+
 onMounted(() => {
 	window.addEventListener('deleteLabel', deleteLabel)
 	window.addEventListener('updateLabelTitle', updateLabelTitle)
@@ -333,6 +334,11 @@ defineExpose({
 				query: query(item),
 			})
 		}
+	},
+	clear: () => {
+		localStorage.removeItem('LABELS')
+		localStorage.removeItem('CURRENT_LABEL')
+		items.value = []
 	},
 })
 </script>
