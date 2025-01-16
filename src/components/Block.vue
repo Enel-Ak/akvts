@@ -389,7 +389,9 @@ defineExpose({
 				v-show="expandBlock"
 				class="block-component-body"
 				:style="{
-					height: enableFixedHeight
+					height: _height
+						? _height
+						: enableFixedHeight
 						? `${contextHeight - expendContentHeight}px`
 						: inherit
 						? `${contextHeight}px`
