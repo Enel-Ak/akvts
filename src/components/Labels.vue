@@ -152,8 +152,8 @@ const updateLabelTitle = (e) => {
 
 const deleteLabel = (e) => {
 	const {path} = e.detail
-	const item = items.value.find((f) => f.path === path)
-	console.log('Labels DeleteLabel', item)
+	const item = items.value.find((f) => f.path === decodeURI(path).trim())
+	console.log('Labels DeleteLabel', item, e)
 
 	onCancelItem(item)
 }
