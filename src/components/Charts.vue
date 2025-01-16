@@ -29,6 +29,10 @@ let chart = null
 let observer = null
 let observerTimer = null
 
+const setConfig = () => {
+	console.log(111)
+}
+
 const initChart = async () => {
 	if (!chartRef.value) return
 
@@ -125,6 +129,7 @@ onUnmounted(() => {
 			height: chartHeight,
 		}"
 		class="charts"
+		@click="setConfig"
 	></div>
 </template>
 <style scoped lang="scss">

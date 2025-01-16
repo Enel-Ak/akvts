@@ -17,6 +17,10 @@ const props = defineProps({
 			},
 		],
 	},
+	overflow: {
+		type: Array,
+		default: () => ['hidden', 'hidden'], // x, y
+	},
 })
 
 onMounted(() => {
@@ -34,7 +38,13 @@ onMounted(() => {
 				:gs-h="prop.h"
 				class="grid-stack-item"
 			>
-				<div class="grid-stack-item-content">
+				<div
+					class="grid-stack-item-content"
+					:style="{
+						overflowX: props.overflow[0],
+						overflowY: props.overflow[1],
+					}"
+				>
 					<slot :name="`grid-${prop.prop}`" :item="prop">
 						{{ prop.content }}
 					</slot>
@@ -50,6 +60,8 @@ onMounted(() => {
 	background: var(--z-bg-secondary);
 }
 .grid-stack-item-content {
+	border-radius: 5px;
 	background-color: var(--z-theme);
+	padding: 0 10px;
 }
 </style>

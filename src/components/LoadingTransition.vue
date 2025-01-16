@@ -30,18 +30,19 @@ const jc = computed(() => {
 })
 
 const _color = ref(props.color)
-const iconColor = computed(() => props.color)
+const _iconColor = ref(props.color)
 
 watch(
 	() => props.color,
 	(val) => {
 		_color.value = val
+		_iconColor.value = val
 	}
 )
 </script>
 <template>
 	<div class="akvts-loading-transition" :style="{justifyContent: jc}">
-		<Icons icon-name="Loading" :color="iconColor"></Icons>
+		<Icons icon-name="Loading" :color="_iconColor"></Icons>
 		<span>
 			<slot name="text">
 				{{ text }}
