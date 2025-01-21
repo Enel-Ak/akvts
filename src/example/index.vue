@@ -20,6 +20,7 @@ const nav = [
 			{id: 'bb', label: '工作通知', path: '/Grid', sort: 1, pid: 'b'},
 			{id: 'bbb', label: '代办通知', path: '/Block', sort: 2, pid: 'b'},
 			{id: 'bbbb', label: '消息通知', path: '/Flow', sort: 3, pid: 'b'},
+			{id: 'bbbbb', label: '虚拟表', path: '/TableVirtual', sort: 3, pid: 'b'},
 		],
 	},
 ]
@@ -33,6 +34,7 @@ onMounted(() => {
 	labelsRef.value.first(nav[0])
 	// setTimeout(() => {
 	// 	deleteLabel({path: '/Block'})
+	// labelsRef.value.clear()
 	// }, 5000)
 })
 </script>

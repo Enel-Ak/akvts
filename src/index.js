@@ -4,6 +4,7 @@ import Block from './components/Block.vue'
 import Form from './components/Form.vue'
 import FormItem from './components/FormItem.vue'
 import TableV2 from './components/TableV2.vue'
+import TableVirtual from './components/TableVirtual.vue'
 import Cascade from './components/Cascade.vue'
 import Dialog from './components/Dialog.vue'
 import Attachment from './components/Attachment.vue'
@@ -35,6 +36,7 @@ const components = {
 	Form,
 	FormItem,
 	TableV2,
+	TableVirtual,
 	Cascade,
 	Dialog,
 	Attachment,
@@ -74,6 +76,7 @@ export {
 	Form,
 	FormItem,
 	TableV2,
+	TableVirtual,
 	Cascade,
 	Dialog,
 	Attachment,
