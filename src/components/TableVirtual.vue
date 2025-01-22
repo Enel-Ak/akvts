@@ -11,7 +11,7 @@ import {
 	onDeactivated,
 } from 'vue'
 import {useThrottleFn} from '@vueuse/core'
-import {createMergedCellsManager} from '@/hooks/useMergedCells'
+import {useMergedCells} from '@/hooks/useMergedCells'
 import {useSelectionRange} from '@/hooks/useSelectionRange'
 
 // 核心配置参数
@@ -47,14 +47,23 @@ const cells = reactive(props.modelValue.cells)
 const id = `table-virtual-${Math.random().toString(16).slice(2)}`
 const initialized = ref(false)
 const containerRef = ref()
-const mergedCellsManager = ref(createMergedCellsManager())
 
 // hooks 模块
-const selectionRange = ref(null) // 框选范围
+const useMergedCellsHook = useMergedCells()
+const useSelectionRangeHook = reactive(
+	useSelectionRange(id, {
+		rowHeight: props.rowHeight,
+		colWidth: props.colWidth,
+		useMergedCellsHook,
+	})
+)
 
 // 滚动位置
 const scrollTop = ref(0)
 const scrollLeft = ref(0)
+
+// 保存滚动位置
+const savedScrollPosition = ref({top: 0, left: 0})
 
 // 计算可视区域大小
 const viewportHeight = ref(0)
@@ -144,7 +153,7 @@ const numberOffsetTop = computed(() => {
 })
 
 const getOffsetStyle = (cell) => {
-	return mergedCellsManager.value.getCellStyle(cell, {
+	return useMergedCellsHook.getCellStyle(cell, {
 		rowHeight: props.rowHeight,
 		colWidth: props.colWidth,
 		offsetTop: offsetTop.value,
@@ -154,7 +163,7 @@ const getOffsetStyle = (cell) => {
 
 const getMergedBuffer = () => {
 	const buffer = {rows: 0, cols: 0}
-	for (const [key, value] of Object.entries(mergedCellsManager.value.getMergedCells())) {
+	for (const [key, value] of Object.entries(useMergedCellsHook.getMergedCells())) {
 		buffer.rows = Math.max(buffer.rows, value.rowSpan)
 		buffer.cols = Math.max(buffer.cols, value.colSpan)
 	}
@@ -162,7 +171,7 @@ const getMergedBuffer = () => {
 }
 
 const isMergedCellStart = (cell) => {
-	const mergedCells = mergedCellsManager.value.getMergedCells()
+	const mergedCells = useMergedCellsHook.getMergedCells()
 	if (Object.keys(mergedCells).length === 0) {
 		return false
 	}
@@ -175,7 +184,20 @@ const onScroll = useThrottleFn((e) => {
 	const container = e.target
 	scrollTop.value = container.scrollTop
 	scrollLeft.value = container.scrollLeft
+	// 保存滚动位置
+	savedScrollPosition.value = {
+		top: container.scrollTop,
+		left: container.scrollLeft,
+	}
 }, 16) // 约60fps
+
+// 恢复滚动位置
+const restoreScrollPosition = () => {
+	if (!containerRef.value) return
+	const {top, left} = savedScrollPosition.value
+	containerRef.value.scrollTop = top
+	containerRef.value.scrollLeft = left
+}
 
 // 监听容器大小变化
 const updateViewportSize = () => {
@@ -189,60 +211,8 @@ const updateViewportSize = () => {
 	viewportWidth.value = rect.width
 }
 
-const init = () => {
-	initialized.value = true
-	nextTick(() => {
-		selectionRange.value = useSelectionRange(document.querySelector(`#${id}`), {
-			rowHeight: props.rowHeight,
-			colWidth: props.colWidth,
-		})
-		updateViewportSize()
-	})
-	window.addEventListener('resize', updateViewportSize)
-}
-
-const distroy = () => {
-	if (selectionRange.value) {
-		selectionRange.value.destroy()
-	}
-	window.removeEventListener('resize', updateViewportSize)
-}
-
-// 初始化
-onMounted(() => {
-	if (!initialized.value) {
-		init()
-	}
-	mergedCellsManager.value.addMergedCell(0, 0, 2, 2)
-	mergedCellsManager.value.addMergedCell(1, 5, 3, 3)
-})
-
-onActivated(() => {
-	if (initialized.value) {
-		return
-	}
-	updateViewportSize()
-})
-
-onDeactivated(() => distroy())
-
-onUnmounted(() => distroy())
-
 // 数据缓存处理
 const cellCache = new Map()
-
-// 获取单元格数据(支持异步)
-const getCellData = async (rowIndex, colIndex) => {
-	const key = `${rowIndex}-${colIndex}`
-	if (cellCache.has(key)) {
-		return cellCache.get(key)
-	}
-
-	// 模拟异步获取数据
-	const data = await fetchCellData(rowIndex, colIndex)
-	cellCache.set(key, data)
-	return data
-}
 
 // 清理不可见区域的缓存
 const cleanCache = () => {
@@ -261,6 +231,63 @@ const cleanCache = () => {
 		}
 	}
 }
+
+// 获取单元格数据(支持异步)
+const getCellData = async (rowIndex, colIndex) => {
+	const key = `${rowIndex}-${colIndex}`
+	if (cellCache.has(key)) {
+		return cellCache.get(key)
+	}
+
+	// 模拟异步获取数据
+	const data = await fetchCellData(rowIndex, colIndex)
+	cellCache.set(key, data)
+	return data
+}
+
+const init = () => {
+	updateViewportSize()
+	window.addEventListener('resize', updateViewportSize)
+	initialized.value = true
+	nextTick(() => {
+		restoreScrollPosition()
+	})
+}
+
+const distroy = () => {
+	window.removeEventListener('resize', updateViewportSize)
+}
+
+// 初始化
+onMounted(() => {
+	if (!initialized.value) {
+		init()
+	}
+	nextTick(() => {
+		useMergedCellsHook.addMergedCell(0, 0, 2, 2)
+		useMergedCellsHook.addMergedCell(1, 5, 3, 3)
+	})
+})
+
+onActivated(() => {
+	if (initialized.value) {
+		return
+	}
+	init()
+})
+
+onDeactivated(() => {
+	initialized.value = false
+	if (containerRef.value) {
+		savedScrollPosition.value = {
+			top: containerRef.value.scrollTop,
+			left: containerRef.value.scrollLeft,
+		}
+	}
+	window.removeEventListener('resize', updateViewportSize)
+})
+
+onUnmounted(() => distroy())
 
 // 定期清理缓存
 watch(visibleRange, cleanCache)
@@ -322,23 +349,24 @@ watch(visibleRange, cleanCache)
 			</div>
 
 			<!-- 添加选区框 -->
+
 			<div
-				v-if="selectionRange?.selecting || selectionRange?.getRanged"
+				v-if="useSelectionRangeHook.selecting || useSelectionRangeHook.ranged"
 				class="selection-box"
-				:class="selectionRange?.getRangeClass"
-				:style="selectionRange?.getRangeStyle"
+				:class="useSelectionRangeHook.rangeClass"
+				:style="useSelectionRangeHook.rangeStyle"
 			>
 				<div
-					v-if="selectionRange?.getRanged"
+					v-if="useSelectionRangeHook.ranged"
 					class="selection-handle"
-					@mousedown.stop="selectionRange?.drag"
+					@mousedown.stop="useSelectionRangeHook.drag"
 				></div>
 			</div>
 			<div
-				v-if="selectionRange?.selecting || selectionRange?.getRanged"
+				v-if="useSelectionRangeHook.selecting || useSelectionRangeHook.ranged"
 				class="selection-bg-box"
-				:class="selectionRange?.getRangeClass"
-				:style="selectionRange?.getRangeStyle"
+				:class="useSelectionRangeHook.rangeClass"
+				:style="useSelectionRangeHook.rangeStyle"
 			></div>
 		</div>
 	</div>

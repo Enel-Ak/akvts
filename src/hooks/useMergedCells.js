@@ -1,8 +1,10 @@
-// mergedCells.js
-// 存储合并单元格信息
-const mergedCells = new Map()
+import {reactive} from 'vue'
 
-export const createMergedCellsManager = () => {
+// mergedCells.js
+export const useMergedCells = () => {
+	// 存储合并单元格信息
+	const mergedCells = reactive(new Map())
+
 	// 添加合并单元格
 	const addMergedCell = (rowIndex, colIndex, rowSpan, colSpan) => {
 		mergedCells.set(`${rowIndex}-${colIndex}`, {
@@ -51,6 +53,7 @@ export const createMergedCellsManager = () => {
 					width: `${options.colWidth}px`,
 					opacity: 0,
 					visibility: 'hidden',
+					pointerEvents: 'none',
 				}
 			}
 		}
@@ -129,12 +132,12 @@ export const createMergedCellsManager = () => {
 	}
 
 	return {
-		addMergedCell,
 		getCellStyle,
-		shouldRenderCell,
 		getMergedCells,
+		addMergedCell,
+		findMergedCell,
 		clearMergedCells,
 		removeMergedCell,
-		findMergedCell,
+		shouldRenderCell,
 	}
 }
