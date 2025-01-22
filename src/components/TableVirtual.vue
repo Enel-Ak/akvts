@@ -17,7 +17,7 @@ import {useSelectionRange} from '@/hooks/useSelectionRange'
 // 核心配置参数
 /**
  * modelValue: {
- * 	cells: []
+ * 	celldata: []
  * }
  *
  */
@@ -34,14 +34,27 @@ const props = defineProps({
 	colWidth: {type: Number, default: 100},
 	// 缓冲区大小(额外渲染的行数)
 	buffer: {type: Number, default: 5},
-	// 行号
+
+	// 序号
 	enableNumber: {type: Boolean, default: true},
-	// 行号宽度
+	// 序号宽度
 	numberWidth: {type: Number, default: 35},
+
+	// 操作列
+	enableFn: {type: Boolean, default: true},
+	// 操作列宽度
+	fnWidth: {type: Number, default: 120},
 })
 
 // 配置参数
-const cells = reactive(props.modelValue.cells)
+const celldata = reactive(props.modelValue.celldata)
+const fns = reactive(props.modelValue.fns)
+
+// 数据保存
+const data = reactive({
+	config: {},
+	celldata: [],
+})
 
 // 容器
 const id = `table-virtual-${Math.random().toString(16).slice(2)}`
@@ -109,13 +122,39 @@ const visibleRows = computed(() => {
 const visibleCells = (row) => {
 	const {startCol, endCol} = visibleRange.value
 
-	return Array.from({length: endCol - startCol}, (_, index) => ({
-		id: `${row.index}-${startCol + index}`,
-		rowIndex: row.index,
-		colIndex: startCol + index,
-		// value: `R${row.index}C${startCol + index}`,
-		value: cells[row.index]?.[startCol + index] || '',
-	}))
+	return Array.from({length: endCol - startCol}, (_, index) => {
+		const currentRow = row.index
+		const currentCol = startCol + index
+
+		// 检查当前单元格是否是合并单元格的从属单元格
+		const mergedCell = useMergedCellsHook.findMergedCell(currentRow, currentCol)
+		const isMergedStart =
+			mergedCell && mergedCell.row === currentRow && mergedCell.col === currentCol
+		const originalValue = celldata[currentRow]?.[currentCol] || null
+
+		// 如果不是合并单元格，或者是合并单元格的起始位置，则显示值
+		let value = null
+		if (mergedCell) {
+			if (isMergedStart) {
+				value = originalValue
+			}
+		} else {
+			value = originalValue
+		}
+
+		if (!data.celldata[currentRow]) {
+			data.celldata[currentRow] = []
+		}
+
+		data.celldata[currentRow][currentCol] = value
+
+		return {
+			id: `${row.id}-${startCol + index}`,
+			rowIndex: currentRow,
+			colIndex: currentCol,
+			value,
+		}
+	})
 }
 
 // 计算偏移量
@@ -141,12 +180,12 @@ const visibleNumberRows = computed(() => {
 	}))
 })
 
-// 计算序号列偏移量（与内容完全对齐）
-const numberOffsetTop = computed(() => {
+// 计算自定义列偏移量（与内容完全对齐）
+const customOffsetTop = computed(() => {
 	// 确保起始行不会小于0
 	const startRow = Math.max(0, Math.floor(scrollTop.value / props.rowHeight))
 	// 处理顶部边界情况
-	if (scrollTop.value <= 0 || startRow === 0) {
+	if (scrollTop.value <= 0) {
 		return 0
 	}
 	return -(scrollTop.value - startRow * props.rowHeight)
@@ -189,6 +228,19 @@ const onScroll = useThrottleFn((e) => {
 		top: container.scrollTop,
 		left: container.scrollLeft,
 	}
+	// 修正快速滚动序号列错位
+	setTimeout(() => {
+		if (container.scrollTop === 0) {
+			scrollTop.value = 0
+			savedScrollPosition.value.top = 0
+		}
+
+		const maxScrollTop = container.scrollHeight - container.clientHeight
+		if (Math.abs(container.scrollTop - maxScrollTop) < 1) {
+			scrollTop.value = maxScrollTop
+			savedScrollPosition.value.top = maxScrollTop
+		}
+	}, 32)
 }, 16) // 约60fps
 
 // 恢复滚动位置
@@ -263,10 +315,6 @@ onMounted(() => {
 	if (!initialized.value) {
 		init()
 	}
-	nextTick(() => {
-		useMergedCellsHook.addMergedCell(0, 0, 2, 2)
-		useMergedCellsHook.addMergedCell(1, 5, 3, 3)
-	})
 })
 
 onActivated(() => {
@@ -291,10 +339,15 @@ onUnmounted(() => distroy())
 
 // 定期清理缓存
 watch(visibleRange, cleanCache)
+
+defineExpose({
+	mergeCells: useMergedCellsHook.addMergedCell,
+})
 </script>
 <template>
 	<div class="table-virtual-component">
-		<div class="custom-column">
+		<!-- 序号 -->
+		<div class="custom-column" v-if="enableNumber">
 			<div
 				class="virtual-phantom"
 				:style="{width: numberWidth + 'px', height: totalHeight + 'px'}"
@@ -302,7 +355,7 @@ watch(visibleRange, cleanCache)
 			<div
 				class="custom-column-content"
 				:style="{
-					transform: `translateY(${numberOffsetTop}px)`,
+					transform: `translateY(${customOffsetTop}px)`,
 
 					width: `${numberWidth}px`,
 				}"
@@ -368,6 +421,35 @@ watch(visibleRange, cleanCache)
 				:class="useSelectionRangeHook.rangeClass"
 				:style="useSelectionRangeHook.rangeStyle"
 			></div>
+		</div>
+
+		<!-- 操作 -->
+		<div class="custom-column" v-if="enableFn">
+			<div
+				class="virtual-phantom"
+				:style="{width: fnWidth + 'px', height: totalHeight + 'px'}"
+			></div>
+			<div
+				class="custom-column-content"
+				:style="{
+					transform: `translateY(${customOffsetTop}px)`,
+
+					width: `${fnWidth}px`,
+				}"
+			>
+				<template v-for="row of visibleRows" :key="row.id">
+					<div class="fns">
+						<el-link
+							v-for="fn in fns"
+							:type="fn.type"
+							size="small"
+							@click="() => fn.click(row, data.celldata[row.index])"
+						>
+							{{ fn.label }}
+						</el-link>
+					</div>
+				</template>
+			</div>
 		</div>
 	</div>
 </template>
@@ -484,6 +566,7 @@ watch(visibleRange, cleanCache)
 }
 
 .selection-bg-box {
+	border: none !important;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.7);
 	z-index: 1;
 }

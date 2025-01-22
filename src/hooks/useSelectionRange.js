@@ -148,8 +148,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return {
 			top: `${startRow * rowHeight}px`,
 			left: `${startCol * colWidth}px`,
-			height: `${(endRow - startRow + 1) * rowHeight}px`,
-			width: `${(endCol - startCol + 1) * colWidth}px`,
+			height: `${(endRow - startRow + 1) * rowHeight - 1}px`,
+			width: `${(endCol - startCol + 1) * colWidth - 1}px`,
 		}
 	})
 
