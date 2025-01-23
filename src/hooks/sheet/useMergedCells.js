@@ -1,7 +1,10 @@
 import {reactive} from 'vue'
 
 // mergedCells.js
-export const useMergedCells = () => {
+export const useMergedCells = (config) => {
+	// 基础配置
+	const {useResizeHook} = config
+
 	// 存储合并单元格信息
 	const mergedCells = reactive(new Map())
 
@@ -25,16 +28,41 @@ export const useMergedCells = () => {
 
 	// 获取单元格样式
 	const getCellStyle = (cell, options) => {
-		// 1. 检查是否是合并单元格的起始位置
 		const key = `${cell.rowIndex}-${cell.colIndex}`
-		if (mergedCells.has(key)) {
-			const merged = mergedCells.get(key)
+		const merged = mergedCells.get(key)
+
+		// 计算到当前行的总高度（包括之前所有行的实际高度）
+		let totalOffsetTop = 0
+		for (let i = 0; i < cell.rowIndex; i++) {
+			totalOffsetTop += useResizeHook.getRowHeight(i)
+		}
+
+		// 计算到当前列的总宽度
+		let totalOffsetLeft = 0
+		for (let i = 0; i < cell.colIndex; i++) {
+			totalOffsetLeft += useResizeHook.getColWidth(i)
+		}
+
+		// 计算合并单元格的总高度和总宽度
+		let totalHeight = 0
+		let totalWidth = 0
+		if (merged) {
+			for (let i = cell.rowIndex; i < cell.rowIndex + merged.rowSpan; i++) {
+				totalHeight += useResizeHook.getRowHeight(i)
+			}
+			for (let i = cell.colIndex; i < cell.colIndex + merged.colSpan; i++) {
+				totalWidth += useResizeHook.getColWidth(i)
+			}
+		}
+
+		// 1. 检查是否是合并单元格的起始位置
+		if (mergedCells.has(key) && merged) {
 			return {
-				height: `${merged.rowSpan * options.rowHeight}px`,
-				width: `${merged.colSpan * options.colWidth}px`,
+				height: `${totalHeight}px`,
+				width: `${totalWidth}px`,
 				position: 'fixed', // 改用fixed定位
-				top: `${cell.rowIndex * options.rowHeight - options.offsetTop}px`,
-				left: `${cell.colIndex * options.colWidth - options.offsetLeft}px`,
+				top: `${totalOffsetTop - options.offsetTop}px`,
+				left: `${totalOffsetLeft - options.offsetLeft}px`,
 				zIndex: 2,
 			}
 		}
@@ -42,6 +70,7 @@ export const useMergedCells = () => {
 		// 2. 检查是否在合并单元格范围内
 		for (const [mergedKey, value] of mergedCells.entries()) {
 			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
+
 			if (
 				cell.rowIndex >= mergedRow &&
 				cell.rowIndex < mergedRow + value.rowSpan &&
@@ -49,8 +78,8 @@ export const useMergedCells = () => {
 				cell.colIndex < mergedCol + value.colSpan
 			) {
 				return {
-					height: `${options.rowHeight}px`,
-					width: `${options.colWidth}px`,
+					height: `${useResizeHook.getRowHeight(cell.rowIndex)}px`,
+					width: `${useResizeHook.getColWidth(cell.colIndex)}px`,
 					opacity: 0,
 					visibility: 'hidden',
 					pointerEvents: 'none',
@@ -60,8 +89,8 @@ export const useMergedCells = () => {
 
 		// 3. 普通单元格样式
 		return {
-			height: `${options.rowHeight}px`,
-			width: `${options.colWidth}px`,
+			height: `${useResizeHook.getRowHeight(cell.rowIndex)}px`,
+			width: `${useResizeHook.getColWidth(cell.colIndex)}px`,
 		}
 	}
 

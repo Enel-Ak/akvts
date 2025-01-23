@@ -4,9 +4,10 @@ import {useEventListener} from '@vueuse/core'
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
 	let container = null
-	let useMergedCellsHook = null
+	let useMergedCellsHook = config.useMergedCellsHook
 	let rowHeight = config.rowHeight
 	let colWidth = config.colWidth
+	const useResizeHook = config.useResizeHook
 
 	// 选区状态管理
 	const selecting = ref(false)
@@ -26,11 +27,23 @@ export const useSelectionRange = (containerId, config = {}) => {
 		const x = e.clientX - rect.left + container.scrollLeft
 		const y = e.clientY - rect.top + container.scrollTop
 
-		const row = Math.floor(y / rowHeight)
+		// 使用累加方式找到正确的行
+		let currentHeight = 0
+		let row = 0
+		while (currentHeight <= y) {
+			const rowCurrentHeight = useResizeHook.getRowHeight(row)
+			if (currentHeight + rowCurrentHeight > y) {
+				break
+			}
+			currentHeight += rowCurrentHeight
+			row++
+		}
+
+		// 计算列位置
 		const col = Math.floor(x / colWidth)
 
 		// 检查是否在合并单元格内
-		const mergedCell = useMergedCellsHook?.findMergedCell?.(row, col)
+		const mergedCell = useMergedCellsHook.findMergedCell?.(row, col)
 		if (mergedCell) {
 			return {
 				row: mergedCell.row,
@@ -145,10 +158,26 @@ export const useSelectionRange = (containerId, config = {}) => {
 			endCol = Math.max(ranged.value.start.col, ranged.value.end.col)
 		}
 
+		console.log(123, startRow, endRow, startCol, endCol)
+
+		// 计算到当前行的总高度（包括之前所有行的实际高度）
+		let totalOffsetTop = 0
+		for (let i = 0; i < startRow; i++) {
+			totalOffsetTop += useResizeHook.getRowHeight(i)
+		}
+
+		// 计算合并单元格的总高度
+		let totleHeight = 0
+		for (let i = startRow; i <= endRow; i++) {
+			totleHeight += useResizeHook.getRowHeight(i)
+		}
+
 		return {
-			top: `${startRow * rowHeight}px`,
+			// top: `${startRow * rowHeight}px`,
+			top: `${totalOffsetTop}px`,
 			left: `${startCol * colWidth}px`,
-			height: `${(endRow - startRow + 1) * rowHeight - 1}px`,
+			// height: `${(endRow - startRow + 1) * rowHeight - 1}px`,
+			height: `${totleHeight}px`,
 			width: `${(endCol - startCol + 1) * colWidth - 1}px`,
 		}
 	})
@@ -206,6 +235,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 			// 扩展选区以包含所有相关的合并单元格
 			const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
+			if (expanded.startRow < 0 || expanded.startCol < 0) {
+				return
+			}
 
 			selectionEnd.value = {
 				row:
@@ -253,14 +285,18 @@ export const useSelectionRange = (containerId, config = {}) => {
 		const currentPos = getCellPosition(e)
 		if (!currentPos) return
 
-		// 更新选区的结束位置
-		selectionEnd.value = currentPos
-
 		// 获取当前选区范围
 		const startRow = Math.min(selectionStart.value.row, currentPos.row)
 		const endRow = Math.max(selectionStart.value.row, currentPos.row)
 		const startCol = Math.min(selectionStart.value.col, currentPos.col)
 		const endCol = Math.max(selectionStart.value.col, currentPos.col)
+
+		if (startRow < 0 || startCol < 0) {
+			return
+		}
+
+		// 更新选区的结束位置
+		selectionEnd.value = currentPos
 
 		// 扩展选区以包含所有相关的合并单元格
 		const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
@@ -298,8 +334,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 		selectionStart.value = {row: -1, col: -1}
 		selectionEnd.value = {row: -1, col: -1}
 		ranged.value = null
+	}
 
-		// 正确移除事件监听器
+	// 移除事件监听器
+	const destroy = () => {
+		clear()
 		if (container) {
 			container.removeEventListener('mousedown', handleMouseDown)
 			window.removeEventListener('mousemove', handleMouseMove)
@@ -316,10 +355,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 			console.error('请检查是否存在id为' + containerId + '的容器')
 			return
 		}
-
-		rowHeight = config.rowHeight
-		colWidth = config.colWidth
-		useMergedCellsHook = config.useMergedCellsHook
 
 		// 基本鼠标事件
 		useEventListener(container, 'mousedown', handleMouseDown)
@@ -344,11 +379,13 @@ export const useSelectionRange = (containerId, config = {}) => {
 		selectionStart,
 		selectionEnd,
 		ranged,
+
 		// 计算属性
 		rangeClass,
 		rangeStyle,
 
 		drag: handleDragStart,
-		distory: clear,
+		clear,
+		destroy,
 	}
 }
