@@ -3,13 +3,11 @@ import {onMounted, ref} from 'vue'
 
 const tableRef = ref()
 const config = {
-	celldata: [
-		['A1', 'B1', 'C1', 'D1', 'E1'],
-		['A2', 'B2', 'C2', 'D2', 'E2'],
-		['A3', 'B3', 'C3', 'D3', 'E3'],
-		['A4', 'B4', 'C4', 'D4', 'E4'],
-		['A5', 'B5', 'C5', 'D5', 'E5'],
-	],
+	celldata: Array.from({length: 100}, (_, r) => {
+		return Array.from({length: 26}, (_, c) => {
+			return `R${r + 1}-C${c + 1}`
+		})
+	}),
 	fns: [
 		// {
 		// 	label: '测试',
@@ -21,13 +19,11 @@ const config = {
 	],
 }
 const config2 = {
-	celldata: [
-		['A1', 'B1', 'C1', 'D1', 'E1'],
-		['A2', 'B2', 'C2', 'D2', 'E2'],
-		['A3', 'B3', 'C3', 'D3', 'E3'],
-		['A4', 'B4', 'C4', 'D4', 'E4'],
-		['A5', 'B5', 'C5', 'D5', 'E5'],
-	],
+	celldata: Array.from({length: 990}, (_, index) => {
+		return Array.from({length: 120}, (_, index) => {
+			return `R${index + 1}-C${index + 1}`
+		})
+	}),
 	fns: [
 		// {
 		// 	label: '测试',
@@ -47,7 +43,7 @@ onMounted(() => {
 <template>
 	<div style="height: 100%" class="df">
 		<AirSheet ref="tableRef" v-model="config"></AirSheet>
-		<AirSheet v-model="config2" :row-count="100" :col-count="26"></AirSheet>
+		<AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet>
 	</div>
 </template>
 <route>

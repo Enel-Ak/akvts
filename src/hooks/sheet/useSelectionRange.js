@@ -1,5 +1,6 @@
 import {computed, onMounted, ref, nextTick} from 'vue'
 import {useEventListener} from '@vueuse/core'
+import {startTimer, endTimer} from '../useTools'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
@@ -158,8 +159,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 			endCol = Math.max(ranged.value.start.col, ranged.value.end.col)
 		}
 
-		console.log(123, startRow, endRow, startCol, endCol)
-
 		// 计算到当前行的总高度（包括之前所有行的实际高度）
 		let totalOffsetTop = 0
 		for (let i = 0; i < startRow; i++) {
@@ -173,10 +172,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 
 		return {
-			// top: `${startRow * rowHeight}px`,
 			top: `${totalOffsetTop}px`,
 			left: `${startCol * colWidth}px`,
-			// height: `${(endRow - startRow + 1) * rowHeight - 1}px`,
 			height: `${totleHeight}px`,
 			width: `${(endCol - startCol + 1) * colWidth - 1}px`,
 		}

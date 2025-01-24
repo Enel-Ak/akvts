@@ -14,13 +14,15 @@ import {useThrottleFn} from '@vueuse/core'
 import {useMergedCells} from '@/hooks/sheet/useMergedCells'
 import {useSelectionRange} from '@/hooks/sheet/useSelectionRange'
 import {useResize} from '@/hooks/sheet/useResize'
+import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
+import {startTimer, endTimer} from '@/hooks/useTools'
 
 // 核心配置参数
 const props = defineProps({
 	modelValue: {type: Object, default: () => {}},
 
 	// 总行数
-	rowCount: {type: Number, default: 1000},
+	rowCount: {type: Number, default: 671087}, // 最大 671087
 	// 总列数
 	colCount: {type: Number, default: 240},
 	// 单元格高度
@@ -41,22 +43,16 @@ const props = defineProps({
 	fnWidth: {type: Number, default: 120},
 })
 
-// 配置参数
-const celldata = reactive(props.modelValue.celldata)
-const fns = reactive(props.modelValue.fns)
-
 // 保存数据
 const sheet = reactive({
 	config: {
-		rowCount: props.rowCount,
+		rowCount: props.rowCount > 671087 ? 671087 : props.rowCount,
 		colCount: props.colCount,
 	},
-	celldata: [],
+	celldata: props.modelValue.celldata,
+	fns: props.modelValue.fns,
 })
 
-// 数据缓存处理
-const cellCache = new Map()
-const rowCache = new Map()
 // 使用 RAF 优化渲染
 let rafId = null
 
@@ -69,20 +65,19 @@ const containerRef = ref()
 const scrollTop = ref(0)
 const scrollLeft = ref(0)
 
-// 保存滚动位置
-const savedScrollPosition = ref({top: 0, left: 0})
-
 // 计算可视区域大小
 const viewportHeight = ref(0)
 const viewportWidth = ref(0)
 
+// 保存滚动位置
+const savedScrollPosition = ref({top: 0, left: 0})
+
 // hooks 模块
-const useResizeHook = reactive(
-	useResize({
-		rowHeight: props.rowHeight,
-		colWidth: props.colWidth,
-	})
-)
+const useSheetRenderHook = useSheetRender(sheet)
+const useResizeHook = useResize({
+	rowHeight: props.rowHeight,
+	colWidth: props.colWidth,
+})
 const useMergedCellsHook = useMergedCells({
 	useResizeHook,
 })
@@ -94,16 +89,6 @@ const useSelectionRangeHook = reactive(
 		useResizeHook,
 	})
 )
-
-const scheduleUpdate = (callback) => {
-	cancelAnimationFrame(rafId)
-	rafId = requestAnimationFrame(callback)
-}
-
-// 添加行高缓存
-const rowHeightCache = new Map()
-const defaultRowHeight = props.rowHeight
-const defaultColWidth = props.colWidth
 
 // 计算总高度
 const totalHeight = computed(() => {
@@ -123,287 +108,136 @@ const totalWidth = computed(() => {
 	return width
 })
 
-// 计算最佳缓存行数
-const calculateOptimalBuffer = (startRow, visibleRows) => {
-	// 计算可见区域的平均行高
-	let totalVisibleHeight = 0
-	let visibleRowCount = 0
-
-	for (let i = startRow; i < Math.min(startRow + visibleRows, props.rowCount); i++) {
-		totalVisibleHeight += useResizeHook.getRowHeight(i)
-		visibleRowCount++
-	}
-
-	const averageRowHeight = totalVisibleHeight / visibleRowCount || defaultRowHeight
-
-	// 根据可视区域高度和平均行高计算理想的缓存行数
-	const optimalBuffer = Math.ceil(viewportHeight.value / averageRowHeight)
-
-	// 确保缓存行数不会太小或太大
-	return Math.max(5, Math.min(optimalBuffer, 15))
-}
-
-// 计算最佳缓存列数
-const calculateOptimalColBuffer = (startCol, visibleCols) => {
-	// 计算可见区域的平均列宽
-	let totalVisibleWidth = 0
-	let visibleColCount = 0
-
-	for (let i = startCol; i < Math.min(startCol + visibleCols, props.colCount); i++) {
-		totalVisibleWidth += useResizeHook.getColWidth(i)
-		visibleColCount++
-	}
-
-	const averageColWidth = totalVisibleWidth / visibleColCount || defaultColWidth
-
-	// 根据可视区域宽度和平均列宽计算理想的缓存列数
-	const optimalBuffer = Math.ceil(viewportWidth.value / averageColWidth)
-
-	// 确保缓存列数不会太小或太大
-	return Math.max(3, Math.min(optimalBuffer, 10))
-}
-
-// 计算可见行列范围
-const visibleRange = computed(() => {
-	// 行范围计算保持不变
-	const calculateRowRange = () => {
-		let startRow = 0
-		let accHeight = 0
-
-		// 向下累加直到找到起始行
-		while (startRow < props.rowCount) {
-			const rowHeight = useResizeHook.getRowHeight(startRow)
-			if (accHeight + rowHeight > scrollTop.value) {
-				break
-			}
-			accHeight += rowHeight
-			startRow++
-		}
-
-		// 计算可见行数
-		let visibleRows = 0
-		let visibleHeight = 0
-		let tempRow = startRow
-
-		while (tempRow < props.rowCount && visibleHeight < viewportHeight.value) {
-			visibleHeight += useResizeHook.getRowHeight(tempRow)
-			visibleRows++
-			tempRow++
-		}
-
-		// 计算最佳缓存行数
-		const optimalBuffer = calculateOptimalBuffer(startRow, visibleRows)
-
-		// 确保不会越界并留出上方缓冲空间
-		const finalStartRow = Math.max(0, startRow - optimalBuffer)
-
-		// 计算可见区域加缓冲区
-		let endRow = startRow
-		visibleHeight = 0
-		const targetHeight =
-			viewportHeight.value + useResizeHook.getRowHeight(startRow) * optimalBuffer * 2
-
-		// 累加高度直到超过目标高度
-		while (endRow < props.rowCount && visibleHeight < targetHeight) {
-			visibleHeight += useResizeHook.getRowHeight(endRow)
-			endRow++
-		}
-
-		// 确保至少有一个屏幕的内容加上缓冲区
-		const minRows = Math.ceil(viewportHeight.value / defaultRowHeight)
-
-		if (endRow - finalStartRow < minRows + optimalBuffer * 2) {
-			endRow = Math.min(props.rowCount - 1, finalStartRow + minRows + optimalBuffer * 2)
-		}
-
-		// 如果接近底部，确保显示所有剩余行并调整起始行
-		if (endRow >= props.rowCount - 1 - optimalBuffer) {
-			endRow = props.rowCount - 1
-			// 向上调整起始行以保持缓冲区大小一致
-			const totalVisibleRows = endRow - finalStartRow + 1
-			const newStartRow = Math.max(0, endRow - totalVisibleRows + 1)
-			return {startRow: newStartRow, endRow}
-		}
-
-		return {startRow: finalStartRow, endRow}
-	}
-
-	const {startRow, endRow} = calculateRowRange()
-
-	// 优化列范围计算
-	const calculateColRange = () => {
-		let startCol = 0
-		let accWidth = 0
-
-		// 向右累加直到找到起始列
-		while (startCol < props.colCount) {
-			const colWidth = useResizeHook.getColWidth(startCol)
-			if (accWidth + colWidth > scrollLeft.value) {
-				break
-			}
-			accWidth += colWidth
-			startCol++
-		}
-
-		// 计算可见列数
-		let visibleCols = 0
-		let visibleWidth = 0
-		let tempCol = startCol
-
-		while (tempCol < props.colCount && visibleWidth < viewportWidth.value) {
-			visibleWidth += useResizeHook.getColWidth(tempCol)
-			visibleCols++
-			tempCol++
-		}
-
-		// 计算最佳缓存列数
-		const optimalBuffer = calculateOptimalColBuffer(startCol, visibleCols)
-
-		// 确保不会越界并留出左侧缓冲空间
-		const finalStartCol = Math.max(0, startCol - optimalBuffer)
-
-		// 计算可见区域加缓冲区
-		let endCol = startCol
-		visibleWidth = 0
-		const targetWidth =
-			viewportWidth.value + useResizeHook.getColWidth(startCol) * optimalBuffer * 2
-
-		// 累加宽度直到超过目标宽度
-		while (endCol < props.colCount && visibleWidth < targetWidth) {
-			visibleWidth += useResizeHook.getColWidth(endCol)
-			endCol++
-		}
-
-		// 确保至少有一个屏幕的内容加上缓冲区
-		const minCols = Math.ceil(viewportWidth.value / defaultColWidth)
-
-		if (endCol - finalStartCol < minCols + optimalBuffer * 2) {
-			endCol = Math.min(props.colCount - 1, finalStartCol + minCols + optimalBuffer * 2)
-		}
-
-		// 如果接近右边界，确保显示所有剩余列并调整起始列
-		if (endCol >= props.colCount - 1 - optimalBuffer) {
-			endCol = props.colCount - 1
-			// 向左调整起始列以保持缓冲区大小一致
-			const totalVisibleCols = endCol - finalStartCol + 1
-			const newStartCol = Math.max(0, endCol - totalVisibleCols + 1)
-			return {startCol: newStartCol, endCol}
-		}
-
-		return {startCol: finalStartCol, endCol}
-	}
-
-	const {startCol, endCol} = calculateColRange()
-
-	return {startRow, endRow, startCol, endCol}
+// 可见范围的响应式引用
+const visibleRangeRef = ref({
+	startRow: 0,
+	endRow: 0,
+	startCol: 0,
+	endCol: 0,
+	buffer: {
+		startRow: 0,
+		endRow: 0,
+		startCol: 0,
+		endCol: 0,
+	},
 })
+
+// 更新可见范围
+const updateVisibleRange = async () => {
+	try {
+		const renderData = {
+			scrollTop: scrollTop.value,
+			scrollLeft: scrollLeft.value,
+			viewportHeight: viewportHeight.value,
+			viewportWidth: viewportWidth.value,
+			rowCount: props.rowCount,
+			colCount: props.colCount,
+			buffer: props.buffer,
+			defaultRowHeight: props.rowHeight,
+			defaultColWidth: props.colWidth,
+			rowHeights: useResizeHook.rowHeights,
+			colWidths: useResizeHook.colWidths,
+			mergedCells: useMergedCellsHook.getMergedCells(),
+		}
+
+		const result = await useSheetRenderHook.getRenderResult(renderData)
+
+		if (result) {
+			visibleRangeRef.value = result
+		}
+	} catch (error) {
+		console.error('计算可见范围失败:', error)
+	}
+}
+
+// 监听滚动位置变化
+watch([scrollTop, scrollLeft], () => updateVisibleRange(), {immediate: true})
+
+// 监听视口大小变化
+watch([viewportHeight, viewportWidth], () => updateVisibleRange())
 
 // 生成可见行数据
 const visibleRows = computed(() => {
 	const rows = []
-	const {startRow, endRow} = visibleRange.value
-	const start = Math.max(0, startRow - props.buffer)
-	const end = Math.min(props.rowCount - 1, endRow + props.buffer)
+	const {startRow, endRow, buffer} = visibleRangeRef.value
+	const start = Math.max(0, startRow)
+	const end = Math.min(props.rowCount, endRow)
 
 	for (let i = start; i <= end; i++) {
 		rows.push({
-			id: i,
-			index: i,
-			height: useResizeHook.getRowHeight(i),
+			rowIndex: i,
+			rowHeight: useResizeHook.getRowHeight(i),
 		})
 	}
 	return rows
 })
 
-// 计算可见单元格
-const visibleCellsMap = computed(() => {
-	const cells = {}
-	visibleRows.value.forEach((row) => {
-		const {startCol, endCol} = visibleRange.value
-		const start = Math.max(0, startCol - props.buffer)
-		const end = Math.min(props.colCount - 1, endCol + props.buffer)
+// 生成可见列数据
+const visibleCells = (row) => {
+	const cells = []
+	const {startCol, endCol, buffer} = visibleRangeRef.value
+	const start = Math.max(0, startCol)
+	const end = Math.min(props.colCount - 1, endCol)
 
-		cells[row.index] = Array.from({length: end - start + 1}, (_, index) => {
-			const currentRow = row.index
-			const currentCol = start + index
+	for (let i = start; i <= end; i++) {
+		// 检查当前单元格是否是合并单元格的从属单元格
+		const mergedCell = useMergedCellsHook.findMergedCell(row.rowIndex, i)
+		const isMergedStart = mergedCell && mergedCell.row === row.rowIndex && mergedCell.col === i
+		const originalValue = sheet.celldata[row.rowIndex]?.[i] || null
 
-			// 检查当前单元格是否是合并单元格的从属单元格
-			const mergedCell = useMergedCellsHook.findMergedCell(currentRow, currentCol)
-
-			const isMergedStart =
-				mergedCell && mergedCell.row === currentRow && mergedCell.col === currentCol
-			const originalValue = celldata[currentRow]?.[currentCol] || null
-
-			// 如果不是合并单元格，或者是合并单元格的起始位置，则显示值
-			let value = null
-			if (mergedCell) {
-				if (isMergedStart) {
-					value = originalValue
-				}
-			} else {
+		// 如果不是合并单元格，或者是合并单元格的起始位置，则显示值
+		let value = null
+		if (mergedCell) {
+			if (isMergedStart) {
 				value = originalValue
 			}
+		} else {
+			value = originalValue
+		}
 
-			if (!sheet.celldata[currentRow]) {
-				sheet.celldata[currentRow] = []
-			}
-			sheet.celldata[currentRow][currentCol] = value
+		if (!sheet.celldata[row.rowIndex]) {
+			sheet.celldata[row.rowIndex] = []
+		}
 
-			return {
-				id: `${row.id}-${start + index}`,
-				rowIndex: currentRow,
-				colIndex: currentCol,
-				value: value || `${row.index + 1}-${start + index + 1}`,
-				colWidth: useResizeHook.getColWidth(currentCol),
-				rowHeight: useResizeHook.getRowHeight(currentRow),
-			}
+		sheet.celldata[row.rowIndex][i] = value
+
+		cells.push({
+			rowIndex: row.rowIndex,
+			colIndex: i,
+
+			colWidth: useResizeHook.getColWidth(i),
+			rowHeight: row.rowHeight,
+			value: `R${row.rowIndex + 1}C${i + 1}`,
 		})
-	})
+	}
 	return cells
-})
-
-// 获取指定行的可见单元格
-const visibleCells = (row) => {
-	return visibleCellsMap.value[row.index] || []
 }
 
 // 计算偏移量
-const offsetTop = computed(() => {
-	let offset = 0
-	for (let i = 0; i < visibleRange.value.startRow; i++) {
-		offset += useResizeHook.getRowHeight(i)
+const offsetTop = ref(0)
+const offsetLeft = ref(0)
+const updateOffset = async (type, value) => {
+	const result = await useResizeHook.getRenderResult({
+		type,
+		[value]: visibleRangeRef.value[value],
+	})
+
+	if (type === 'offsetTop') {
+		offsetTop.value = result?.offset?.top || 0
+	} else if (type === 'offsetLeft') {
+		offsetLeft.value = result?.offset?.left || 0
 	}
-	return offset
-})
+}
+watch(
+	() => visibleRangeRef.value.startRow,
+	() => updateOffset('offsetTop', 'startRow')
+)
+watch(
+	() => visibleRangeRef.value.startCol,
+	() => updateOffset('offsetLeft', 'startCol')
+)
 
-const offsetLeft = computed(() => {
-	let offset = 0
-	for (let i = 0; i < visibleRange.value.startCol; i++) {
-		offset += useResizeHook.getColWidth(i)
-	}
-	return offset
-})
-
-// 计算自定义偏移量
-const customOffsetTop = computed(() => {
-	if (scrollTop.value <= 0) {
-		return 0
-	}
-
-	// 计算实际的偏移量
-	let totalHeight = 0
-	let currentRow = 0
-
-	while (currentRow < visibleRange.value.startRow && totalHeight <= scrollTop.value) {
-		totalHeight += useResizeHook.getRowHeight(currentRow)
-		currentRow++
-	}
-
-	// 返回精确的偏移量
-	return -(scrollTop.value - totalHeight)
-})
-
-const customOffsetLeft = computed(() => {
+const customOffsetLeft = () => {
 	if (scrollLeft.value <= 0) {
 		return 0
 	}
@@ -419,7 +253,7 @@ const customOffsetLeft = computed(() => {
 
 	// 返回精确的偏移量
 	return -(scrollLeft.value - totalWidth)
-})
+}
 
 // 生成列标题（A-Z, AA-AZ等）, 字母和序号缓存
 const columnTitleCache = new Map()
@@ -467,20 +301,9 @@ const visibleColumnTitles = computed(() => {
 // 计算自定义列偏移量（与内容完全对齐）
 const getOffsetStyle = (cell) => {
 	return useMergedCellsHook.getCellStyle(cell, {
-		rowHeight: cell.rowHeight,
-		colWidth: cell.colWidth,
-		offsetTop: offsetTop.value,
 		offsetLeft: offsetLeft.value,
+		offsetTop: offsetTop.value,
 	})
-}
-
-const getMergedBuffer = () => {
-	const buffer = {rows: 0, cols: 0}
-	for (const [key, value] of Object.entries(useMergedCellsHook.getMergedCells())) {
-		buffer.rows = Math.max(buffer.rows, value.rowSpan)
-		buffer.cols = Math.max(buffer.cols, value.colSpan)
-	}
-	return buffer
 }
 
 const isMergedCellStart = (cell) => {
@@ -489,11 +312,20 @@ const isMergedCellStart = (cell) => {
 		return false
 	}
 	const key = `${cell.rowIndex}-${cell.colIndex}`
+
 	return mergedCells.hasOwnProperty(key)
 }
 
 // 优化的滚动处理
+let scrollTimer = null
+let isAutoScrolling = false
 const onScroll = useThrottleFn((e) => {
+	// 如果是自动滚动，不处理
+	if (isAutoScrolling) {
+		return
+	}
+
+	clearTimeout(scrollTimer)
 	const container = e.target
 	const newScrollTop = container.scrollTop
 	const newScrollLeft = container.scrollLeft
@@ -501,36 +333,52 @@ const onScroll = useThrottleFn((e) => {
 	if (newScrollTop !== scrollTop.value || newScrollLeft !== scrollLeft.value) {
 		scrollTop.value = newScrollTop
 		scrollLeft.value = newScrollLeft
-		cleanCache()
+
+		// 修正最后一次位置并对齐到行
+		scrollTimer = setTimeout(() => {
+			const nt = containerRef.value.scrollTop
+			const nl = containerRef.value.scrollLeft
+
+			// 计算最近的行位置
+			let currentPos = 0
+			let targetRow = 0
+
+			// 找到当前滚动位置所在的行
+			while (currentPos <= nt && targetRow < props.rowCount) {
+				const rowHeight = useResizeHook.getRowHeight(targetRow)
+				if (nt < currentPos + rowHeight) {
+					// 始终对齐到当前行
+					break
+				}
+				currentPos += rowHeight
+				targetRow++
+			}
+
+			// 计算滚动距离
+			const distance = Math.abs(currentPos - nt)
+			// 根据距离动态计算动画时间，距离越远动画时间越长
+			const duration = Math.min(800, Math.max(400, distance * 2))
+
+			// 标记开始自动滚动
+			isAutoScrolling = true
+
+			// 平滑滚动到目标位置
+			containerRef.value.scrollTo({
+				top: currentPos,
+				left: nl,
+				behavior: 'smooth',
+			})
+
+			// 动画结束后更新状态
+			setTimeout(() => {
+				scrollTop.value = currentPos
+				scrollLeft.value = nl
+				savedScrollPosition.value = {top: currentPos, left: nl}
+				isAutoScrolling = false
+			}, duration)
+		}, 150) // 增加延迟时间，确保滚动完全停止
 	}
 }, 16)
-
-// 优化的缓存清理
-const cleanCache = () => {
-	const {startRow, endRow} = visibleRange.value
-	const bufferSize = props.buffer
-
-	// 更新可见区域的行缓存
-	for (let row = startRow - bufferSize; row <= endRow + bufferSize; row++) {
-		if (!rowCache.has(row) && row >= 0 && row < props.rowCount) {
-			const rowData = celldata?.filter((cell) => cell.r === row) || []
-			rowCache.set(row, rowData)
-		}
-	}
-
-	// 清理不可见区域的缓存
-	for (const [rowIndex] of rowCache) {
-		if (rowIndex < startRow - bufferSize || rowIndex > endRow + bufferSize) {
-			rowCache.delete(rowIndex)
-			// 清理相关的单元格缓存
-			for (const [key] of cellCache) {
-				if (key.startsWith(`${rowIndex}-`)) {
-					cellCache.delete(key)
-				}
-			}
-		}
-	}
-}
 
 // 恢复滚动位置
 const restoreScrollPosition = () => {
@@ -544,9 +392,6 @@ const restoreScrollPosition = () => {
 		container.scrollLeft = left
 		scrollTop.value = top
 		scrollLeft.value = left
-		scheduleUpdate(() => {
-			cleanCache()
-		})
 	}
 }
 
@@ -606,9 +451,6 @@ onDeactivated(() => {
 
 onUnmounted(() => destroy())
 
-// 定期清理缓存
-watch(visibleRange, cleanCache)
-
 defineExpose({
 	mergeCells: useMergedCellsHook.addMergedCell,
 })
@@ -619,11 +461,11 @@ defineExpose({
 		<div class="toolbar">工具栏</div>
 
 		<!-- 字母 -->
-		<div class="alphabet">
+		<!-- <div class="alphabet">
 			<div class="alphabet-placeholder" :style="{width: numberWidth + 1 + 'px'}"></div>
 			<div class="alphabet-content">
 				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
-				<div class="cells" :style="{transform: `translateX(${customOffsetLeft}px)`}">
+				<div class="cells" :style="{transform: `translateX(${customOffsetLeft()}px)`}">
 					<span
 						v-for="col of visibleColumnTitles"
 						:key="col.id"
@@ -638,7 +480,7 @@ defineExpose({
 					</span>
 				</div>
 			</div>
-		</div>
+		</div> -->
 
 		<!-- Sheet -->
 		<div class="sheet">
@@ -648,19 +490,15 @@ defineExpose({
 					class="virtual-phantom"
 					:style="{width: numberWidth + 'px', height: totalHeight + 'px'}"
 				></div>
-				<div
-					class="custom-column-content"
-					:style="{
-						transform: `translateY(${customOffsetTop}px)`,
-						width: `${numberWidth}px`,
-					}"
-				>
+				<div class="custom-column-content" :style="{width: `${numberWidth}px`}">
 					<template v-for="row of visibleRows" :key="row.id">
-						<div class="number" :style="{height: `${row.height}px`}">
-							{{ row.id + 1 }}
+						<div class="number" :style="{height: `${row.rowHeight}px`}">
+							<span>{{ row.rowIndex + 1 }}</span>
 							<div
 								class="resize-handle"
-								:class="{resizing: useResizeHook.resizingRow?.index === row.index}"
+								:class="{
+									resizing: useResizeHook.resizingRow?.index === row.rowIndex,
+								}"
 								@mousedown.stop="useResizeHook.startResize(row, $event, 'vertical')"
 							></div>
 						</div>
@@ -685,17 +523,34 @@ defineExpose({
 				>
 					<!-- 只渲染可视区域的单元格 -->
 					<template v-for="row of visibleRows" :key="row.id">
-						<div class="row" :style="{height: `${row.rowHeight}px`}">
+						<div class="row" :style="{height: `${row.height}px`}">
 							<template v-for="cell of visibleCells(row)" :key="cell.id">
 								<div
 									v-if="isMergedCellStart(cell)"
 									class="cell merged-cell-placeholder"
 									:style="{
-										width: `${cell.colWidth}px`,
 										height: `${cell.rowHeight}px`,
+										width: `${cell.colWidth}px`,
 									}"
-								></div>
-								<div class="cell" :style="getOffsetStyle(cell)">
+								>
+									<div
+										class="cell"
+										:class="{
+											merged: isMergedCellStart(cell),
+										}"
+										:style="getOffsetStyle(cell)"
+									>
+										{{ cell.value }}
+									</div>
+								</div>
+								<div
+									v-else
+									class="cell"
+									:class="{
+										merged: isMergedCellStart(cell),
+									}"
+									:style="getOffsetStyle(cell)"
+								>
 									{{ cell.value }}
 								</div>
 							</template>
@@ -725,7 +580,7 @@ defineExpose({
 			</div>
 
 			<!-- 操作 -->
-			<div class="custom-column" v-if="enableFn && fns.length">
+			<!-- <div class="custom-column" v-if="enableFn && fns.length">
 				<div
 					class="virtual-phantom"
 					:style="{width: fnWidth + 'px', height: totalHeight + 'px'}"
@@ -733,7 +588,7 @@ defineExpose({
 				<div
 					class="custom-column-content"
 					:style="{
-						transform: `translateY(${customOffsetTop}px)`,
+						transform: `translateY(${customOffsetTop()}px)`,
 						width: `${fnWidth}px`,
 					}"
 				>
@@ -743,14 +598,14 @@ defineExpose({
 								v-for="fn in fns"
 								:type="fn.type"
 								size="small"
-								@click="() => fn.click(row, sheet.celldata[row.index])"
+								@click="() => fn.click(row, sheet.celldata[row.rowIndex])"
 							>
 								{{ fn.label }}
 							</el-link>
 						</div>
 					</template>
 				</div>
-			</div>
+			</div> -->
 		</div>
 
 		<!-- 状态栏 -->
@@ -853,6 +708,11 @@ defineExpose({
 			display: flex;
 			justify-content: center;
 			position: relative;
+			span {
+				text-overflow: ellipsis;
+				overflow: hidden;
+				transform: scale(0.9);
+			}
 		}
 
 		.fns {
@@ -926,10 +786,8 @@ defineExpose({
 	.merged-cell-placeholder {
 		box-sizing: border-box;
 		border: 1px solid var(--z-border);
-		background: transparent;
-		pointer-events: none;
 		position: relative;
-		visibility: hidden;
+		overflow: visible;
 	}
 
 	.selection-box,

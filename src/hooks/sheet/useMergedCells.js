@@ -1,12 +1,9 @@
-import {reactive} from 'vue'
-
-// mergedCells.js
 export const useMergedCells = (config) => {
 	// 基础配置
 	const {useResizeHook} = config
 
 	// 存储合并单元格信息
-	const mergedCells = reactive(new Map())
+	const mergedCells = new Map()
 
 	// 添加合并单元格
 	const addMergedCell = (rowIndex, colIndex, rowSpan, colSpan) => {
@@ -27,43 +24,43 @@ export const useMergedCells = (config) => {
 	}
 
 	// 获取单元格样式
-	const getCellStyle = (cell, options) => {
+	const getCellStyle = (cell, config) => {
 		const key = `${cell.rowIndex}-${cell.colIndex}`
 		const merged = mergedCells.get(key)
 
-		// 计算到当前行的总高度（包括之前所有行的实际高度）
-		let totalOffsetTop = 0
-		for (let i = 0; i < cell.rowIndex; i++) {
-			totalOffsetTop += useResizeHook.getRowHeight(i)
-		}
+		// // 计算到当前行的总高度（包括之前所有行的实际高度）
+		// let totalOffsetTop = 0
+		// for (let i = 0; i < cell.rowIndex; i++) {
+		// 	totalOffsetTop += useResizeHook.getRowHeight(i)
+		// }
 
-		// 计算到当前列的总宽度
-		let totalOffsetLeft = 0
-		for (let i = 0; i < cell.colIndex; i++) {
-			totalOffsetLeft += useResizeHook.getColWidth(i)
-		}
+		// // 计算到当前列的总宽度
+		// let totalOffsetLeft = 0
+		// for (let i = 0; i < cell.colIndex; i++) {
+		// 	totalOffsetLeft += useResizeHook.getColWidth(i)
+		// }
 
-		// 计算合并单元格的总高度和总宽度
-		let totalHeight = 0
-		let totalWidth = 0
-		if (merged) {
-			for (let i = cell.rowIndex; i < cell.rowIndex + merged.rowSpan; i++) {
-				totalHeight += useResizeHook.getRowHeight(i)
-			}
-			for (let i = cell.colIndex; i < cell.colIndex + merged.colSpan; i++) {
-				totalWidth += useResizeHook.getColWidth(i)
-			}
-		}
+		// // 计算合并单元格的总高度和总宽度
+		// let totalHeight = 0
+		// let totalWidth = 0
+		// if (merged) {
+		// 	for (let i = cell.rowIndex; i < cell.rowIndex + merged.rowSpan; i++) {
+		// 		totalHeight += useResizeHook.getRowHeight(i)
+		// 	}
+		// 	for (let i = cell.colIndex; i < cell.colIndex + merged.colSpan; i++) {
+		// 		totalWidth += useResizeHook.getColWidth(i)
+		// 	}
+		// }
 
 		// 1. 检查是否是合并单元格的起始位置
-		if (mergedCells.has(key) && merged) {
+		if (merged) {
+			const {rowSpan, colSpan} = merged
 			return {
-				height: `${totalHeight}px`,
-				width: `${totalWidth}px`,
-				position: 'fixed', // 改用fixed定位
-				top: `${totalOffsetTop - options.offsetTop}px`,
-				left: `${totalOffsetLeft - options.offsetLeft}px`,
-				zIndex: 2,
+				height: `${cell.rowHeight * rowSpan}px`,
+				width: `${cell.colWidth * colSpan}px`,
+				position: 'absolute',
+				top: 0,
+				left: 0,
 			}
 		}
 
@@ -92,31 +89,6 @@ export const useMergedCells = (config) => {
 			height: `${useResizeHook.getRowHeight(cell.rowIndex)}px`,
 			width: `${useResizeHook.getColWidth(cell.colIndex)}px`,
 		}
-	}
-
-	// 检查单元格是否需要渲染
-	const shouldRenderCell = (rowIndex, colIndex) => {
-		// 如果是合并单元格的起始位置，显示它
-		const key = `${rowIndex}-${colIndex}`
-		if (mergedCells.has(key)) {
-			return true
-		}
-
-		// 检查是否在其他合并单元格范围内
-		for (const [mergedKey, value] of mergedCells.entries()) {
-			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
-			if (
-				rowIndex >= mergedRow &&
-				rowIndex < mergedRow + value.rowSpan &&
-				colIndex >= mergedCol &&
-				colIndex < mergedCol + value.colSpan
-			) {
-				return false
-			}
-		}
-		console.log('shouldRenderCell:', rowIndex, colIndex)
-
-		return true
 	}
 
 	// 清除合并单元格
@@ -167,6 +139,5 @@ export const useMergedCells = (config) => {
 		findMergedCell,
 		clearMergedCells,
 		removeMergedCell,
-		shouldRenderCell,
 	}
 }
