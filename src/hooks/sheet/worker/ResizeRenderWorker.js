@@ -32,10 +32,8 @@ self.onmessage = (event) => {
 	try {
 		let result = null
 		// 直接计算渲染结果
-		switch (type) {
-			case 'render_request':
-				result = renderResize(data)
-				break
+		if (type === 'render_request') {
+			result = renderResize(data)
 		}
 
 		// 发送响应

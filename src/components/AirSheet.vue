@@ -448,28 +448,6 @@ defineExpose({
 		<!-- 工具栏 -->
 		<div class="toolbar">工具栏</div>
 
-		<!-- 字母 -->
-		<!-- <div class="alphabet">
-			<div class="alphabet-placeholder" :style="{width: numberWidth + 1 + 'px'}"></div>
-			<div class="alphabet-content">
-				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
-				<div class="cells" :style="{transform: `translateX(${customOffsetLeft()}px)`}">
-					<span
-						v-for="col of visibleTitles"
-						:key="col.id"
-						:style="{width: col.width + 'px'}"
-					>
-						{{ col.title }}
-						<div
-							class="resize-handle"
-							:class="{resizing: useResizeHook.resizingCol?.index === col.index}"
-							@mousedown.stop="useResizeHook.startResize(col, $event, 'horizontal')"
-						></div>
-					</span>
-				</div>
-			</div>
-		</div> -->
-
 		<!-- Sheet -->
 		<div class="sheet">
 			<!-- 字母 -->
@@ -499,9 +477,19 @@ defineExpose({
 				>
 					<div class="row">
 						<template v-for="alphabet of visibleTitles">
-							<span :style="{width: alphabet.colWidth + 'px'}">
-								{{ alphabet.title }}
-							</span>
+							<div class="cell" :style="{width: alphabet.colWidth + 'px'}">
+								<span>{{ alphabet.title }}</span>
+								<div
+									class="resize-handle"
+									:class="{
+										resizing:
+											useResizeHook.resizingCol?.index === alphabet.colIndex,
+									}"
+									@mousedown.stop="
+										useResizeHook.startResize(alphabet, $event, 'horizontal')
+									"
+								></div>
+							</div>
 						</template>
 					</div>
 				</div>
@@ -792,10 +780,24 @@ defineExpose({
 				padding-bottom: 0;
 			}
 
-			span {
+			.cell {
 				border-right: 1px solid var(--z-line);
+				border-bottom: 0;
 				line-height: 16px;
+				position: relative;
 				text-align: center;
+
+				span {
+					flex: 1;
+				}
+
+				.resize-handle {
+					bottom: 0;
+					cursor: col-resize;
+					height: 100%;
+					right: -3px;
+					width: 6px;
+				}
 			}
 		}
 	}
@@ -803,6 +805,7 @@ defineExpose({
 	.alphabet-placeholder {
 		border: 1px solid var(--z-line);
 		background-color: var(--z-bg-secondary);
+		transition: opacity 0.15s linear;
 	}
 
 	.merged-cell-placeholder {
