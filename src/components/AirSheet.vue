@@ -227,7 +227,8 @@ const visibleCells = (row) => {
 
 			colWidth: useResizeHook.getColWidth(i),
 			rowHeight: row.rowHeight,
-			value: `R${row.rowIndex + 1}C${i + 1}`,
+			// value: `R${row.rowIndex + 1}C${i + 1}`,
+			value: sheet.celldata[row.rowIndex]?.[i] || null,
 		})
 	}
 	return cells
@@ -257,14 +258,11 @@ watch(
 	() => updateOffset('offsetLeft', 'startCol')
 )
 
-// 生成列标题（A-Z, AA-AZ等）, 字母和序号缓存
-const columnTitleCache = new Map()
-const rowNumberCache = new Map()
-
-// 序号和标题标题生成
-const getColumnTitle = (index) => {
-	if (columnTitleCache.has(index)) {
-		return columnTitleCache.get(index)
+// 生成列标题（A-Z, AA-AZ等）, 字母缓存
+const titleCache = new Map()
+const getTitle = (index) => {
+	if (titleCache.has(index)) {
+		return titleCache.get(index)
 	}
 
 	let title = ''
@@ -272,30 +270,23 @@ const getColumnTitle = (index) => {
 	while (num >= 0) {
 		title = String.fromCharCode(65 + (num % 26)) + title
 		num = Math.floor(num / 26) - 1
+		if (num === -1) break
 	}
-	columnTitleCache.set(index, title)
+	titleCache.set(index, title)
 	return title
 }
 
 // 计算当前可见的列标题
-const visibleColumnTitles = computed(() => {
+const visibleTitles = computed(() => {
 	const titles = []
 	const {startCol, endCol} = visibleRangeRef.value
-	const start = Math.max(0, startCol - props.buffer)
-	const end = Math.min(sheet.config.colCount - 1, endCol + props.buffer)
-
-	let currentLeft = 0
-
-	for (let col = start; col <= end; col++) {
-		const width = useResizeHook.getColWidth(col)
+	for (let col = startCol; col <= endCol; col++) {
+		const colWidth = useResizeHook.getColWidth(col)
 		titles.push({
-			id: col,
-			index: col,
-			title: getColumnTitle(col),
-			width,
-			left: currentLeft,
+			colIndex: col,
+			title: getTitle(col),
+			colWidth,
 		})
-		currentLeft += width
 	}
 	return titles
 })
@@ -326,6 +317,7 @@ const onScroll = useThrottleFn((e) => {
 		lastScroll.value = false
 		return
 	}
+
 	clearTimeout(scrollTimer)
 	const container = e.target
 	const newScrollTop = container.scrollTop
@@ -339,9 +331,17 @@ const onScroll = useThrottleFn((e) => {
 		scrollTop.value = newScrollTop
 		scrollLeft.value = newScrollLeft
 
-		alphabet.scrollTop = newScrollLeft
-		number.scrollTop = newScrollTop
-		fn.scrollTop = newScrollTop
+		if (alphabet) {
+			alphabet.scrollLeft = newScrollLeft
+		}
+
+		if (number) {
+			number.scrollTop = newScrollTop
+		}
+
+		if (fn) {
+			fn.scrollTop = newScrollTop
+		}
 
 		// 修正最后一次位置并对齐到行
 		scrollTimer = setTimeout(() => {
@@ -351,9 +351,17 @@ const onScroll = useThrottleFn((e) => {
 			scrollTop.value = nt
 			scrollLeft.value = nl
 
-			alphabet.scrollTop = nl
-			number.scrollTop = nt
-			fn.scrollTop = nt
+			if (alphabet) {
+				alphabet.scrollLeft = nl
+			}
+
+			if (number) {
+				number.scrollTop = nt
+			}
+
+			if (fn) {
+				fn.scrollTop = nt
+			}
 
 			savedScrollPosition.value = {top: nt, left: nl}
 		}, 150)
@@ -447,7 +455,7 @@ defineExpose({
 				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
 				<div class="cells" :style="{transform: `translateX(${customOffsetLeft()}px)`}">
 					<span
-						v-for="col of visibleColumnTitles"
+						v-for="col of visibleTitles"
 						:key="col.id"
 						:style="{width: col.width + 'px'}"
 					>
@@ -465,7 +473,14 @@ defineExpose({
 		<!-- Sheet -->
 		<div class="sheet">
 			<!-- 字母 -->
-			<div :style="{width: numberWidth + 'px'}"></div>
+			<div
+				v-if="enableNumber"
+				class="alphabet-placeholder brn bbn"
+				:style="{
+					opacity: lastScroll ? 1 : 0.15,
+					width: numberWidth + 'px',
+				}"
+			></div>
 			<div
 				ref="alphabetRef"
 				class="virtual-sheet custom alphabet"
@@ -479,19 +494,27 @@ defineExpose({
 				<div
 					class="virtual-content alphabet-cells"
 					:style="{
-						transform: `translate(-${offsetLeft}px, 0)`,
-						width: `${totalWidth}px`,
+						transform: `translate(${offsetLeft}px, 0)`,
 					}"
 				>
-					<template v-for="alphabet of visibleColumnTitles">
-						<span :style="{width: alphabet.width + 'px'}">
-							{{ alphabet.title }}
-						</span>
-					</template>
+					<div class="row">
+						<template v-for="alphabet of visibleTitles">
+							<span :style="{width: alphabet.colWidth + 'px'}">
+								{{ alphabet.title }}
+							</span>
+						</template>
+					</div>
 				</div>
 			</div>
 
-			<div :style="{width: fnWidth + 'px'}"></div>
+			<div
+				v-if="enableNumber"
+				class="alphabet-placeholder bln bbn"
+				:style="{
+					opacity: lastScroll ? 1 : 0.15,
+					width: fnWidth + 'px',
+				}"
+			></div>
 
 			<!-- 序号 -->
 			<div
@@ -729,13 +752,6 @@ defineExpose({
 		overflow: hidden;
 		transition: opacity 0.15s linear;
 
-		&.brn {
-			border-right: none;
-		}
-
-		&.bln {
-			border-left: none;
-		}
 		.number {
 			align-items: center;
 			border-bottom: 1px solid var(--z-line);
@@ -777,9 +793,16 @@ defineExpose({
 			}
 
 			span {
+				border-right: 1px solid var(--z-line);
 				line-height: 16px;
+				text-align: center;
 			}
 		}
+	}
+
+	.alphabet-placeholder {
+		border: 1px solid var(--z-line);
+		background-color: var(--z-bg-secondary);
 	}
 
 	.merged-cell-placeholder {
@@ -822,6 +845,22 @@ defineExpose({
 		background-color: rgba(var(--z-bg-secondary-rgb), 0.7);
 		z-index: 1;
 	}
+}
+
+.btn {
+	border-top: none !important;
+}
+
+.bbn {
+	border-bottom: none !important;
+}
+
+.brn {
+	border-right: none !important;
+}
+
+.bln {
+	border-left: none !important;
 }
 
 .resize-handle {
