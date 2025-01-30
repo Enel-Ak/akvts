@@ -99,21 +99,18 @@ export const useResize = (config = {}) => {
 			// 存储请求
 			renderRequests.set(requestId, {resolve, reject})
 
-			switch (type) {
-				// 发送渲染请求
-				case 'render_request':
-					worker.postMessage({
-						type: 'render_request',
-						requestId,
-						data: {
-							...data,
-							rowHeight,
-							rowHeights,
-							colWidth,
-							colWidths,
-						},
-					})
-					break
+			if (type === 'render_request') {
+				worker.postMessage({
+					type: 'render_request',
+					requestId,
+					data: {
+						...data,
+						rowHeight,
+						rowHeights,
+						colWidth,
+						colWidths,
+					},
+				})
 			}
 
 			// 设置超时处理
@@ -130,24 +127,20 @@ export const useResize = (config = {}) => {
 	worker.onmessage = (event) => {
 		const {type, data, requestId} = event.data
 
-		switch (type) {
-			case 'error':
-				console.error('Worker错误:', data)
-				// 处理错误情况下的请求
-				if (requestId && renderRequests.has(requestId)) {
-					const request = renderRequests.get(requestId)
-					renderRequests.delete(requestId)
-					request.reject(new Error(data))
-				}
-				break
-			default: {
-				// 处理渲染结果
+		if (type === 'error') {
+			console.error('Worker错误:', data)
+			// 处理错误情况下的请求
+			if (requestId && renderRequests.has(requestId)) {
 				const request = renderRequests.get(requestId)
-				if (request) {
-					renderRequests.delete(requestId)
-					request.resolve(data)
-				}
-				break
+				renderRequests.delete(requestId)
+				request.reject(new Error(data))
+			}
+		} else {
+			// 处理渲染结果
+			const request = renderRequests.get(requestId)
+			if (request) {
+				renderRequests.delete(requestId)
+				request.resolve(data)
 			}
 		}
 	}

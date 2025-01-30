@@ -22,9 +22,9 @@ const props = defineProps({
 	modelValue: {type: Object, default: () => {}},
 
 	// 总行数
-	rowCount: {type: Number, default: 671087}, // 最大 671087
+	rowCount: {type: Number, default: 100}, // 最大 671087
 	// 总列数
-	colCount: {type: Number, default: 240},
+	colCount: {type: Number, default: 13},
 	// 单元格高度
 	rowHeight: {type: Number, default: 25},
 	// 单元格宽度
@@ -43,23 +43,43 @@ const props = defineProps({
 	fnWidth: {type: Number, default: 120},
 })
 
+const maxRowCount = computed(() => {
+	if (props.modelValue?.celldata.length) {
+		return props.modelValue.celldata.length > props.rowCount
+			? props.modelValue.celldata.length
+			: props.rowCount
+	} else {
+		return props.rowCount > 671087 ? 671087 : props.rowCount
+	}
+})
+
+const maxColCount = computed(() => {
+	if (props.modelValue?.celldata.length) {
+		return props.modelValue.celldata
+			.map((d) => d.length)
+			.reduce((a, b) => Math.max(a, b), props.colCount)
+	} else {
+		return props.colCount > 240 ? 240 : props.colCount
+	}
+})
+
 // 保存数据
 const sheet = reactive({
 	config: {
-		rowCount: props.rowCount > 671087 ? 671087 : props.rowCount,
-		colCount: props.colCount,
+		rowCount: maxRowCount.value,
+		colCount: maxColCount.value,
 	},
 	celldata: props.modelValue.celldata,
 	fns: props.modelValue.fns,
 })
 
-// 使用 RAF 优化渲染
-let rafId = null
-
 // 容器
 const id = `air-sheet-${Math.random().toString(16).slice(2)}`
 const initialized = ref(false)
 const containerRef = ref()
+const alphabetRef = ref()
+const numberRef = ref()
+const fnRef = ref()
 
 // 滚动位置
 const scrollTop = ref(0)
@@ -93,7 +113,7 @@ const useSelectionRangeHook = reactive(
 // 计算总高度
 const totalHeight = computed(() => {
 	let height = 0
-	for (let i = 0; i < props.rowCount; i++) {
+	for (let i = 0; i < sheet.config.rowCount; i++) {
 		height += useResizeHook.getRowHeight(i)
 	}
 	return height
@@ -102,7 +122,7 @@ const totalHeight = computed(() => {
 // 计算总宽度
 const totalWidth = computed(() => {
 	let width = 0
-	for (let i = 0; i < props.colCount; i++) {
+	for (let i = 0; i < sheet.config.colCount; i++) {
 		width += useResizeHook.getColWidth(i)
 	}
 	return width
@@ -130,8 +150,8 @@ const updateVisibleRange = async () => {
 			scrollLeft: scrollLeft.value,
 			viewportHeight: viewportHeight.value,
 			viewportWidth: viewportWidth.value,
-			rowCount: props.rowCount,
-			colCount: props.colCount,
+			rowCount: sheet.config.rowCount,
+			colCount: sheet.config.colCount,
 			buffer: props.buffer,
 			defaultRowHeight: props.rowHeight,
 			defaultColWidth: props.colWidth,
@@ -161,7 +181,7 @@ const visibleRows = computed(() => {
 	const rows = []
 	const {startRow, endRow, buffer} = visibleRangeRef.value
 	const start = Math.max(0, startRow)
-	const end = Math.min(props.rowCount, endRow)
+	const end = Math.min(sheet.config.rowCount - 1, endRow)
 
 	for (let i = start; i <= end; i++) {
 		rows.push({
@@ -177,7 +197,7 @@ const visibleCells = (row) => {
 	const cells = []
 	const {startCol, endCol, buffer} = visibleRangeRef.value
 	const start = Math.max(0, startCol)
-	const end = Math.min(props.colCount - 1, endCol)
+	const end = Math.min(sheet.config.colCount - 1, endCol)
 
 	for (let i = start; i <= end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
@@ -237,24 +257,6 @@ watch(
 	() => updateOffset('offsetLeft', 'startCol')
 )
 
-const customOffsetLeft = () => {
-	if (scrollLeft.value <= 0) {
-		return 0
-	}
-
-	// 计算实际的偏移量
-	let totalWidth = 0
-	let currentCol = 0
-
-	while (currentCol < visibleRange.value.startCol && totalWidth <= scrollLeft.value) {
-		totalWidth += useResizeHook.getColWidth(currentCol)
-		currentCol++
-	}
-
-	// 返回精确的偏移量
-	return -(scrollLeft.value - totalWidth)
-}
-
 // 生成列标题（A-Z, AA-AZ等）, 字母和序号缓存
 const columnTitleCache = new Map()
 const rowNumberCache = new Map()
@@ -278,9 +280,9 @@ const getColumnTitle = (index) => {
 // 计算当前可见的列标题
 const visibleColumnTitles = computed(() => {
 	const titles = []
-	const {startCol, endCol} = visibleRange.value
+	const {startCol, endCol} = visibleRangeRef.value
 	const start = Math.max(0, startCol - props.buffer)
-	const end = Math.min(props.colCount - 1, endCol + props.buffer)
+	const end = Math.min(sheet.config.colCount - 1, endCol + props.buffer)
 
 	let currentLeft = 0
 
@@ -318,65 +320,43 @@ const isMergedCellStart = (cell) => {
 
 // 优化的滚动处理
 let scrollTimer = null
-let isAutoScrolling = false
+const lastScroll = ref(true)
 const onScroll = useThrottleFn((e) => {
-	// 如果是自动滚动，不处理
-	if (isAutoScrolling) {
+	if (lastScroll.value) {
+		lastScroll.value = false
 		return
 	}
-
 	clearTimeout(scrollTimer)
 	const container = e.target
 	const newScrollTop = container.scrollTop
 	const newScrollLeft = container.scrollLeft
 
+	const alphabet = alphabetRef.value
+	const number = numberRef.value
+	const fn = fnRef.value
+
 	if (newScrollTop !== scrollTop.value || newScrollLeft !== scrollLeft.value) {
 		scrollTop.value = newScrollTop
 		scrollLeft.value = newScrollLeft
 
+		alphabet.scrollTop = newScrollLeft
+		number.scrollTop = newScrollTop
+		fn.scrollTop = newScrollTop
+
 		// 修正最后一次位置并对齐到行
 		scrollTimer = setTimeout(() => {
+			lastScroll.value = true
 			const nt = containerRef.value.scrollTop
 			const nl = containerRef.value.scrollLeft
+			scrollTop.value = nt
+			scrollLeft.value = nl
 
-			// 计算最近的行位置
-			let currentPos = 0
-			let targetRow = 0
+			alphabet.scrollTop = nl
+			number.scrollTop = nt
+			fn.scrollTop = nt
 
-			// 找到当前滚动位置所在的行
-			while (currentPos <= nt && targetRow < props.rowCount) {
-				const rowHeight = useResizeHook.getRowHeight(targetRow)
-				if (nt < currentPos + rowHeight) {
-					// 始终对齐到当前行
-					break
-				}
-				currentPos += rowHeight
-				targetRow++
-			}
-
-			// 计算滚动距离
-			const distance = Math.abs(currentPos - nt)
-			// 根据距离动态计算动画时间，距离越远动画时间越长
-			const duration = Math.min(800, Math.max(400, distance * 2))
-
-			// 标记开始自动滚动
-			isAutoScrolling = true
-
-			// 平滑滚动到目标位置
-			containerRef.value.scrollTo({
-				top: currentPos,
-				left: nl,
-				behavior: 'smooth',
-			})
-
-			// 动画结束后更新状态
-			setTimeout(() => {
-				scrollTop.value = currentPos
-				scrollLeft.value = nl
-				savedScrollPosition.value = {top: currentPos, left: nl}
-				isAutoScrolling = false
-			}, duration)
-		}, 150) // 增加延迟时间，确保滚动完全停止
+			savedScrollPosition.value = {top: nt, left: nl}
+		}, 150)
 	}
 }, 16)
 
@@ -484,14 +464,54 @@ defineExpose({
 
 		<!-- Sheet -->
 		<div class="sheet">
-			<!-- 序号 -->
-			<div class="custom-column" v-if="enableNumber">
+			<!-- 字母 -->
+			<div :style="{width: numberWidth + 'px'}"></div>
+			<div
+				ref="alphabetRef"
+				class="virtual-sheet custom alphabet"
+				v-if="enableNumber"
+				:style="{
+					opacity: lastScroll ? 1 : 0.15,
+					width: `calc(100% - ${fnWidth + numberWidth}px)`,
+				}"
+			>
+				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
 				<div
-					class="virtual-phantom"
-					:style="{width: numberWidth + 'px', height: totalHeight + 'px'}"
-				></div>
-				<div class="custom-column-content" :style="{width: `${numberWidth}px`}">
-					<template v-for="row of visibleRows" :key="row.id">
+					class="virtual-content alphabet-cells"
+					:style="{
+						transform: `translate(-${offsetLeft}px, 0)`,
+						width: `${totalWidth}px`,
+					}"
+				>
+					<template v-for="alphabet of visibleColumnTitles">
+						<span :style="{width: alphabet.width + 'px'}">
+							{{ alphabet.title }}
+						</span>
+					</template>
+				</div>
+			</div>
+
+			<div :style="{width: fnWidth + 'px'}"></div>
+
+			<!-- 序号 -->
+			<div
+				ref="numberRef"
+				class="virtual-sheet custom brn"
+				v-if="enableNumber"
+				:style="{
+					opacity: lastScroll ? 1 : 0.15,
+					width: numberWidth + 'px',
+				}"
+			>
+				<div class="virtual-phantom" :style="{height: totalHeight + 'px'}"></div>
+				<div
+					class="virtual-content"
+					:style="{
+						transform: `translate(0, ${offsetTop}px)`,
+						width: `${numberWidth}px`,
+					}"
+				>
+					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<div class="number" :style="{height: `${row.rowHeight}px`}">
 							<span>{{ row.rowIndex + 1 }}</span>
 							<div
@@ -522,9 +542,9 @@ defineExpose({
 					}"
 				>
 					<!-- 只渲染可视区域的单元格 -->
-					<template v-for="row of visibleRows" :key="row.id">
+					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<div class="row" :style="{height: `${row.height}px`}">
-							<template v-for="cell of visibleCells(row)" :key="cell.id">
+							<template v-for="cell of visibleCells(row)" :key="cell.colIndex">
 								<div
 									v-if="isMergedCellStart(cell)"
 									class="cell merged-cell-placeholder"
@@ -580,32 +600,37 @@ defineExpose({
 			</div>
 
 			<!-- 操作 -->
-			<!-- <div class="custom-column" v-if="enableFn && fns.length">
+			<div
+				ref="fnRef"
+				class="virtual-sheet custom bln"
+				v-if="enableFn && sheet.fns?.length"
+				:style="{
+					opacity: lastScroll ? 1 : 0.15,
+					width: fnWidth + 'px',
+				}"
+			>
+				<div class="virtual-phantom" :style="{height: totalHeight + 'px'}"></div>
 				<div
-					class="virtual-phantom"
-					:style="{width: fnWidth + 'px', height: totalHeight + 'px'}"
-				></div>
-				<div
-					class="custom-column-content"
+					class="virtual-content"
 					:style="{
-						transform: `translateY(${customOffsetTop()}px)`,
+						transform: `translate(0, ${offsetTop}px)`,
 						width: `${fnWidth}px`,
 					}"
 				>
-					<template v-for="row of visibleRows" :key="row.id">
-						<div class="fns" :style="{height: `${rowHeight}px`}">
-							<el-link
-								v-for="fn in fns"
-								:type="fn.type"
-								size="small"
-								@click="() => fn.click(row, sheet.celldata[row.rowIndex])"
-							>
-								{{ fn.label }}
-							</el-link>
-						</div>
+					<template v-for="row of visibleRows" :key="row.rowIndex">
+						<slot name="fn" :row="row">
+							<div class="fns" :style="{height: `${rowHeight}px`}">
+								<span
+									v-for="fn in sheet.fns"
+									@click="() => fn.click(row, sheet.celldata[row.rowIndex])"
+								>
+									{{ fn.label }}
+								</span>
+							</div>
+						</slot>
 					</template>
 				</div>
-			</div> -->
+			</div>
 		</div>
 
 		<!-- 状态栏 -->
@@ -628,54 +653,6 @@ defineExpose({
 .toolbar {
 }
 
-.alphabet {
-	border: 1px solid var(--z-line);
-	border-bottom: 0;
-	background-color: var(--z-bg-secondary);
-	display: flex;
-	height: 20px;
-	line-height: 18px;
-	overflow: hidden;
-	position: relative;
-	user-select: none;
-
-	.alphabet-placeholder {
-		align-items: center;
-		background-color: var(--z-bg-secondary);
-		border-right: 1px solid var(--z-line);
-		display: flex;
-		flex: none;
-		justify-content: start;
-		position: relative;
-		z-index: 2;
-	}
-
-	.alphabet-content {
-		position: relative;
-		z-index: 1;
-	}
-
-	.cells {
-		display: flex;
-		position: absolute;
-		top: 0;
-		left: 0;
-		span {
-			border-right: 1px solid var(--z-line);
-			flex: none;
-			text-align: center;
-			position: relative;
-		}
-		.resize-handle {
-			bottom: 0;
-			cursor: col-resize;
-			right: -3px;
-			width: 6px;
-			height: 100%;
-		}
-	}
-}
-
 .statusbar {
 	border: 1px solid var(--z-line);
 	border-top: none;
@@ -690,18 +667,75 @@ defineExpose({
 
 .sheet {
 	display: flex;
+	flex-wrap: wrap;
 	height: 100%;
 	overflow: hidden;
 	position: relative;
 	width: 100%;
 
-	.custom-column {
-		border: 1px solid var(--z-line);
-		border-right: none;
-		background-color: var(--z-bg-secondary);
-		color: rgba(var(--z-font-color-rgb), 1);
-		user-select: none;
+	.main-content {
+		flex: 1;
+		position: relative;
+		overflow: visible;
+		min-width: 0;
+	}
 
+	.virtual-sheet {
+		border: 1px solid var(--z-line);
+		background-color: var(--z-theme);
+		display: flex;
+		flex: 1;
+		position: relative;
+		overflow: auto;
+		height: calc(100% - 18px);
+	}
+
+	.virtual-phantom {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: -1;
+	}
+
+	.virtual-content {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 2;
+		padding-bottom: 100px;
+	}
+
+	.row {
+		display: flex;
+		position: relative;
+	}
+
+	.cell {
+		align-items: center;
+		border-right: 1px solid var(--z-line);
+		border-bottom: 1px solid var(--z-line);
+		box-sizing: border-box;
+		color: var(--z-font-color);
+		display: flex;
+		padding: 0 4px;
+
+		overflow: hidden;
+		user-select: none;
+	}
+
+	.custom {
+		background-color: var(--z-bg-secondary);
+		flex: none;
+		overflow: hidden;
+		transition: opacity 0.15s linear;
+
+		&.brn {
+			border-right: none;
+		}
+
+		&.bln {
+			border-left: none;
+		}
 		.number {
 			align-items: center;
 			border-bottom: 1px solid var(--z-line);
@@ -722,65 +756,30 @@ defineExpose({
 			justify-content: center;
 			padding: 0 4px;
 
-			a {
+			span {
+				cursor: pointer;
+				color: var(--z-font-color);
 				text-decoration: none;
 			}
 		}
-	}
 
-	.custom-column-content {
-		position: relative;
-		top: 0;
-		left: 0;
-	}
+		.virtual-content {
+			padding-bottom: 120px;
+		}
 
-	.main-content {
-		flex: 1;
-		position: relative;
-		overflow: visible;
-		min-width: 0;
-	}
+		&.alphabet {
+			border-bottom: none;
+			height: 18px;
+			width: 100%;
 
-	.virtual-sheet {
-		border: 1px solid var(--z-line);
-		background-color: var(--z-theme);
-		display: flex;
-		position: relative;
-		overflow: auto;
-		height: 100%;
-		width: 100%;
-	}
+			.alphabet-cells {
+				padding-bottom: 0;
+			}
 
-	.virtual-phantom {
-		position: absolute;
-		left: 0;
-		top: 0;
-		z-index: -1;
-	}
-
-	.virtual-content {
-		position: absolute;
-		left: 0;
-		top: 0;
-		z-index: 2;
-	}
-
-	.row {
-		display: flex;
-		position: relative;
-	}
-
-	.cell {
-		align-items: center;
-		border-right: 1px solid var(--z-line);
-		border-bottom: 1px solid var(--z-line);
-		box-sizing: border-box;
-		color: var(--z-font-color);
-		display: flex;
-		padding: 0 4px;
-
-		overflow: hidden;
-		user-select: none;
+			span {
+				line-height: 16px;
+			}
+		}
 	}
 
 	.merged-cell-placeholder {

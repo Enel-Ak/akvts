@@ -28,30 +28,6 @@ export const useMergedCells = (config) => {
 		const key = `${cell.rowIndex}-${cell.colIndex}`
 		const merged = mergedCells.get(key)
 
-		// // 计算到当前行的总高度（包括之前所有行的实际高度）
-		// let totalOffsetTop = 0
-		// for (let i = 0; i < cell.rowIndex; i++) {
-		// 	totalOffsetTop += useResizeHook.getRowHeight(i)
-		// }
-
-		// // 计算到当前列的总宽度
-		// let totalOffsetLeft = 0
-		// for (let i = 0; i < cell.colIndex; i++) {
-		// 	totalOffsetLeft += useResizeHook.getColWidth(i)
-		// }
-
-		// // 计算合并单元格的总高度和总宽度
-		// let totalHeight = 0
-		// let totalWidth = 0
-		// if (merged) {
-		// 	for (let i = cell.rowIndex; i < cell.rowIndex + merged.rowSpan; i++) {
-		// 		totalHeight += useResizeHook.getRowHeight(i)
-		// 	}
-		// 	for (let i = cell.colIndex; i < cell.colIndex + merged.colSpan; i++) {
-		// 		totalWidth += useResizeHook.getColWidth(i)
-		// 	}
-		// }
-
 		// 1. 检查是否是合并单元格的起始位置
 		if (merged) {
 			const {rowSpan, colSpan} = merged

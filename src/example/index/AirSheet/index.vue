@@ -3,19 +3,19 @@ import {onMounted, ref} from 'vue'
 
 const tableRef = ref()
 const config = {
-	celldata: Array.from({length: 100}, (_, r) => {
+	celldata: Array.from({length: 999}, (_, r) => {
 		return Array.from({length: 26}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
 		})
 	}),
 	fns: [
-		// {
-		// 	label: '测试',
-		// 	type: 'primary',
-		// 	click: (row, rowData) => {
-		// 		console.log(row, rowData)
-		// 	},
-		// },
+		{
+			label: '测试',
+			type: 'primary',
+			click: (row, rowData) => {
+				console.log(row, rowData)
+			},
+		},
 	],
 }
 const config2 = {
