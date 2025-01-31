@@ -1,6 +1,6 @@
 export const useMergedCells = (config) => {
 	// 基础配置
-	const {useResizeHook} = config
+	const {useResizeHook, renderRange} = config
 
 	// 存储合并单元格信息
 	const mergedCells = new Map()
@@ -12,6 +12,7 @@ export const useMergedCells = (config) => {
 			colSpan,
 		})
 		console.log('添加合并单元格:', mergedCells)
+		renderRange()
 	}
 
 	// 获取所有合并单元格

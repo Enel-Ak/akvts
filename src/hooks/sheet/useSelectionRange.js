@@ -4,7 +4,7 @@ import {useEventListener} from '@vueuse/core'
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
 	let container = null
-	const {maxRowCount, maxColCount, useMergedCellsHook} = config
+	const {maxRowCount, maxColCount, useMergedCellsHook, renderRange} = config
 	const useResizeHook = config.useResizeHook
 
 	// 选区状态管理
@@ -189,8 +189,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return {
 			top: `${totalOffsetTop}px`,
 			left: `${totaloffsetLeft}px`,
-			height: `${totleHeight}px`,
-			width: `${totleWidth}px`,
+			height: `${totleHeight - 1}px`,
+			width: `${totleWidth - 1}px`,
 		}
 	})
 
@@ -377,10 +377,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 				mergedCell,
 			}
 			selectionEnd.value = {
-				row: mergedCell.row + mergedCell.rowspan - 1,
-				col: mergedCell.col + mergedCell.colspan - 1,
+				row: mergedCell.row + mergedCell.rowSpan - 1,
+				col: mergedCell.col + mergedCell.colSpan - 1,
 			}
 		}
+		console.log('设置选区范围', selectionStart.value, selectionEnd.value, mergedCell)
 		handleMouseUp()
 	}
 
@@ -400,6 +401,35 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 		return start
 	}
+
+	const selectionClass = computed(() => {
+		return (row, col) => {
+			// 扩展选区以包含所有相关的合并单元格
+			const {row: startRow, col: startCol} = selectionStart.value
+			const {row: endRow, col: endCol} = selectionEnd.value
+
+			// 先计算实际的起始和结束位置
+			const minRow = Math.min(startRow, endRow)
+			const maxRow = Math.max(startRow, endRow)
+			const minCol = Math.min(startCol, endCol)
+			const maxCol = Math.max(startCol, endCol)
+
+			// 使用实际的最小最大值来获取扩展范围
+			const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
+
+			if (row) {
+				const rowIndex = row.rowIndex
+				return rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
+			}
+
+			if (col) {
+				const colIndex = col.colIndex
+				return colIndex >= expanded.startCol && colIndex <= expanded.endCol
+			}
+
+			return false
+		}
+	})
 
 	// 初始化
 	const init = () => {
@@ -428,8 +458,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 		ranged,
 
 		// 计算属性
+		selectionClass,
 		rangeClass,
 		rangeStyle,
+		selectionStart,
+		selectionEnd,
 
 		//方法
 		getStartCell,

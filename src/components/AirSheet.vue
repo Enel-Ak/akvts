@@ -118,6 +118,7 @@ const useResizeHook = useResize({
 })
 const useMergedCellsHook = useMergedCells({
 	useResizeHook,
+	renderRange: () => updateVisibleRange(),
 })
 const useSelectionRangeHook = reactive(
 	useSelectionRange(id, {
@@ -125,6 +126,7 @@ const useSelectionRangeHook = reactive(
 		maxColCount: maxColCount.value,
 		useMergedCellsHook,
 		useResizeHook,
+		renderRange: () => updateVisibleRange(),
 	})
 )
 const useEditHook = useEdit(id, {
@@ -514,6 +516,9 @@ defineExpose({
 							<div
 								class="cell alphabet-cell"
 								:style="{width: alphabet.colWidth + 'px'}"
+								:class="{
+									selection: useSelectionRangeHook.selectionClass(null, alphabet),
+								}"
 								@click="onClickAlphabet(alphabet)"
 							>
 								<span>{{ alphabet.title }}</span>
@@ -566,6 +571,9 @@ defineExpose({
 						<div
 							class="number"
 							:style="{height: `${row.rowHeight}px`}"
+							:class="{
+								selection: useSelectionRangeHook.selectionClass(row),
+							}"
 							@click="onClickNumber(row)"
 						>
 							<span>{{ row.rowIndex + 1 }}</span>
@@ -781,6 +789,11 @@ defineExpose({
 		z-index: 2;
 		padding-bottom: 1px;
 		padding-right: 1px;
+
+		.selection {
+			color: var(--z-nav-font-active);
+			background-color: rgba(var(--z-main-rgb), 1);
+		}
 	}
 
 	.row {
@@ -991,7 +1004,7 @@ defineExpose({
 
 .grid-lines-col {
 	position: absolute;
-	top: 0;
+	top: 1px;
 	left: 0;
 	width: 1px;
 	background-color: var(--z-main);

@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {nextTick, onMounted, ref} from 'vue'
 
 const tableRef = ref()
 const config = {
@@ -40,6 +40,12 @@ onMounted(() => {
 	tableRef.value.setMergeCell(12, 4, 4, 4)
 	tableRef.value.setMergeCell(16, 5, 4, 4)
 	tableRef.value.setMergeCell(45, 7, 2, 4)
+
+	// setTimeout(() => {
+	// 	tableRef.value.setMergeCell(0, 0, 2, 4)
+
+	// 	tableRef.value.setRange(0, 0, 2, 4)
+	// }, 1000)
 
 	// tableRef.value.mergeCells(1, 3, 3, 3)
 })
