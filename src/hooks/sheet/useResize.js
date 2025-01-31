@@ -1,5 +1,8 @@
-import {ref} from 'vue'
+import {nextTick, ref} from 'vue'
 export const useResize = (config = {}) => {
+	// 获取配置
+	const {rowHeight, colWidth, renderRange} = config
+
 	// 创建渲染worker
 	const worker = new Worker(new URL('./worker/ResizeRenderWorker.js', import.meta.url), {
 		type: 'module',
@@ -11,16 +14,20 @@ export const useResize = (config = {}) => {
 
 	const isResizing = ref(false) // 是否正在调整大小
 
-	let resizingRow = null // 当前调整的行
-	const startY = ref(0) // 开始拖动时的Y坐标
-	const startHeight = ref(0) // 开始拖动时的行高
+	const resizingRow = ref(null) // 当前调整的行
+	let startY = 0 // 开始拖动时的Y坐标
+	let startHeight = 0 // 开始拖动时的行高
 
-	let resizingCol = null // 当前调整的列
-	const startX = ref(0) // 开始拖动时的X坐标
-	const startWidth = ref(0) // 开始拖动时的列宽
+	const resizingCol = ref(null) // 当前调整的列
+	let startX = 0 // 开始拖动时的X坐标
+	let startWidth = 0 // 开始拖动时的列宽
 
-	let rowHeight = config.rowHeight
-	let colWidth = config.colWidth
+	let resizingEl = null
+	let resizingElRect = null
+	let sheetContainer = null
+	let sheetRect = null
+	let guideLineRow = null
+	let guideLineCol = null
 
 	// 获取行的实际高度
 	const getRowHeight = (index) => {
@@ -35,16 +42,23 @@ export const useResize = (config = {}) => {
 	// 开始调整行高
 	const startResize = (item, e, direction = 'vertical') => {
 		e.preventDefault()
+
 		isResizing.value = true
 
+		let el = direction === 'vertical' ? '.number' : '.cell'
+
+		resizingEl = e.target.closest(el)
+		sheetContainer = resizingEl.closest('.sheet')
+		sheetRect = sheetContainer.getBoundingClientRect()
+
 		if (direction === 'vertical') {
-			resizingRow = item
-			startY.value = e.clientY
-			startHeight.value = getRowHeight(item.index)
-		} else {
-			resizingCol = item
-			startX.value = e.clientX
-			startWidth.value = getColWidth(item.index)
+			resizingRow.value = item
+			startY = e.clientY
+			startHeight = getRowHeight(item.rowIndex)
+		} else if (direction === 'horizontal') {
+			resizingCol.value = item
+			startX = e.clientX
+			startWidth = getColWidth(item.colIndex)
 		}
 
 		document.addEventListener('mousemove', onResize)
@@ -54,35 +68,96 @@ export const useResize = (config = {}) => {
 	// 调整大小（行高或列宽）
 	const onResize = (e) => {
 		if (!isResizing.value) return
+		const scrollLeft = sheetContainer.scrollLeft
 
-		if (resizingRow) {
-			const deltaY = e.clientY - startY.value
-			const newHeight = Math.max(25, startHeight.value + deltaY) // 最小高度25px
-			rowHeights[resizingRow.index] = newHeight
+		// 获取元素和容器的位置信息
+		resizingElRect = resizingEl.getBoundingClientRect()
+
+		if (resizingRow.value) {
+			const deltaY = e.clientY - startY
+			const newHeight = Math.max(25, startHeight + deltaY) // 最小高度25px
+
+			// 使用 requestAnimationFrame 优化性能
+			requestAnimationFrame(() => {
+				resizingEl.style.height = `${newHeight}px`
+				if (guideLineRow) {
+					guideLineRow.style.zIndex = 3
+					if (deltaY > 0) {
+						guideLineRow.style.top = `${
+							resizingElRect.top - sheetRect.top + newHeight - 1.75
+						}px`
+					} else {
+						// 修正位置
+						setTimeout(() => {
+							guideLineRow.style.top = `${
+								resizingElRect.top - sheetRect.top + newHeight - 1.75
+							}px`
+						}, 16)
+					}
+				} else {
+					guideLineRow = sheetContainer.querySelector('.grid-lines-row')
+				}
+			})
+
+			// 更新行高
+			resizingRow.value._newHeight = newHeight
 		}
 
-		if (resizingCol) {
-			const deltaX = e.clientX - startX.value
-			const newWidth = Math.max(100, startWidth.value + deltaX) // 最小宽度100px
-			colWidths[resizingCol.index] = newWidth
+		if (resizingCol.value) {
+			const deltaX = e.clientX - startX
+			const newWidth = Math.max(100, startWidth + deltaX) // 最小宽度100px
+
+			// 使用 requestAnimationFrame 优化性能
+			requestAnimationFrame(() => {
+				resizingEl.style.width = `${newWidth}px`
+				if (guideLineCol) {
+					guideLineCol.style.zIndex = 3
+					if (deltaX > 0) {
+						guideLineCol.style.left = `${
+							resizingElRect.left - sheetRect.left + newWidth - 1.75
+						}px`
+					} else {
+						// 修正位置
+						setTimeout(() => {
+							guideLineCol.style.left = `${
+								resizingElRect.left - sheetRect.left + newWidth - 1.75
+							}px`
+						}, 16)
+					}
+				} else {
+					guideLineCol = sheetContainer.querySelector('.grid-lines-col')
+				}
+			})
+
+			// 更新列宽
+			resizingCol.value._newWidth = newWidth
 		}
 	}
 
 	// 停止调整
 	const stopResize = () => {
 		if (isResizing.value) {
-			if (resizingRow) {
-				const finalHeight = rowHeights[resizingRow.index]
+			if (resizingRow.value) {
+				rowHeights[resizingRow.value.rowIndex] = resizingRow.value._newHeight
+				delete resizingRow.value._newHeight
 			}
 
-			if (resizingCol) {
-				const finalWidth = colWidths[resizingCol.index]
+			if (resizingCol.value) {
+				colWidths[resizingCol.value.colIndex] = resizingCol.value._newWidth
+				delete resizingCol.value._newWidth
 			}
+			renderRange()
 		}
 
 		isResizing.value = false
-		resizingRow = null
-		resizingCol = null
+		resizingEl = null
+		sheetContainer = null
+		resizingElRect = null
+		sheetRect = null
+		resizingRow.value = null
+		resizingCol.value = null
+		guideLineRow = null
+		guideLineCol = null
 
 		document.removeEventListener('mousemove', onResize)
 		document.removeEventListener('mouseup', stopResize)
@@ -146,6 +221,9 @@ export const useResize = (config = {}) => {
 	}
 
 	return {
+		isResizing,
+		resizingRow,
+		resizingCol,
 		getRenderResult,
 		startResize,
 		getRowHeight,

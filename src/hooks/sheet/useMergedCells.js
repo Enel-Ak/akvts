@@ -30,10 +30,21 @@ export const useMergedCells = (config) => {
 
 		// 1. 检查是否是合并单元格的起始位置
 		if (merged) {
+			let rowHeight = 0
+			let colWidth = 0
 			const {rowSpan, colSpan} = merged
+
+			for (let i = cell.rowIndex; i < cell.rowIndex + rowSpan; i++) {
+				rowHeight += useResizeHook.getRowHeight(i)
+			}
+
+			for (let i = cell.colIndex; i < cell.colIndex + colSpan; i++) {
+				colWidth += useResizeHook.getColWidth(i)
+			}
+
 			return {
-				height: `${cell.rowHeight * rowSpan}px`,
-				width: `${cell.colWidth * colSpan}px`,
+				height: `${rowHeight}px`,
+				width: `${colWidth}px`,
 				position: 'absolute',
 				top: 0,
 				left: 0,

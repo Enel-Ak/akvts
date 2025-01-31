@@ -15,7 +15,6 @@ import {useMergedCells} from '@/hooks/sheet/useMergedCells'
 import {useSelectionRange} from '@/hooks/sheet/useSelectionRange'
 import {useResize} from '@/hooks/sheet/useResize'
 import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
-import {startTimer, endTimer} from '@/hooks/useTools'
 
 // 核心配置参数
 const props = defineProps({
@@ -97,6 +96,9 @@ const useSheetRenderHook = useSheetRender(sheet)
 const useResizeHook = useResize({
 	rowHeight: props.rowHeight,
 	colWidth: props.colWidth,
+	renderRange: () => updateVisibleRange(),
+	useMergedCellsHook: () => useMergedCellsHook,
+	useSelectionRangeHook: () => useSelectionRangeHook,
 })
 const useMergedCellsHook = useMergedCells({
 	useResizeHook,
@@ -159,7 +161,6 @@ const updateVisibleRange = async () => {
 			colWidths: useResizeHook.colWidths,
 			mergedCells: useMergedCellsHook.getMergedCells(),
 		}
-
 		const result = await useSheetRenderHook.getRenderResult(renderData)
 
 		if (result) {
@@ -187,6 +188,7 @@ const visibleRows = computed(() => {
 		rows.push({
 			rowIndex: i,
 			rowHeight: useResizeHook.getRowHeight(i),
+			config: {},
 		})
 	}
 	return rows
@@ -219,16 +221,13 @@ const visibleCells = (row) => {
 			sheet.celldata[row.rowIndex] = []
 		}
 
-		sheet.celldata[row.rowIndex][i] = value
-
 		cells.push({
 			rowIndex: row.rowIndex,
 			colIndex: i,
-
+			rowHeight: useResizeHook.getRowHeight(row.rowIndex),
 			colWidth: useResizeHook.getColWidth(i),
-			rowHeight: row.rowHeight,
-			// value: `R${row.rowIndex + 1}C${i + 1}`,
-			value: sheet.celldata[row.rowIndex]?.[i] || null,
+			value,
+			config: {},
 		})
 	}
 	return cells
@@ -462,10 +461,11 @@ defineExpose({
 			<div
 				ref="alphabetRef"
 				class="virtual-sheet custom alphabet"
-				v-if="enableNumber"
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
-					width: `calc(100% - ${fnWidth + numberWidth}px)`,
+					width: `calc(100% - ${enableFn && sheet.fns?.length ? fnWidth : 0}px - ${
+						enableNumber ? numberWidth : 0
+					}px)`,
 				}"
 			>
 				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
@@ -483,7 +483,9 @@ defineExpose({
 									class="resize-handle"
 									:class="{
 										resizing:
-											useResizeHook.resizingCol?.index === alphabet.colIndex,
+											useResizeHook.isResizing &&
+											useResizeHook.resizingCol.value?.colIndex ===
+												alphabet.colIndex,
 									}"
 									@mousedown.stop="
 										useResizeHook.startResize(alphabet, $event, 'horizontal')
@@ -496,7 +498,7 @@ defineExpose({
 			</div>
 
 			<div
-				v-if="enableNumber"
+				v-if="enableFn && sheet.fns?.length"
 				class="alphabet-placeholder bln bbn"
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
@@ -525,10 +527,13 @@ defineExpose({
 					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<div class="number" :style="{height: `${row.rowHeight}px`}">
 							<span>{{ row.rowIndex + 1 }}</span>
+
 							<div
 								class="resize-handle"
 								:class="{
-									resizing: useResizeHook.resizingRow?.index === row.rowIndex,
+									resizing:
+										useResizeHook.isResizing &&
+										useResizeHook.resizingRow.value?.rowIndex === row.rowIndex,
 								}"
 								@mousedown.stop="useResizeHook.startResize(row, $event, 'vertical')"
 							></div>
@@ -642,6 +647,24 @@ defineExpose({
 					</template>
 				</div>
 			</div>
+
+			<!-- 行辅助线 -->
+			<div
+				v-if="useResizeHook.isResizing.value && useResizeHook.resizingRow.value"
+				class="grid-lines-row"
+				:style="{
+					width: totalWidth + 'px',
+				}"
+			></div>
+
+			<!-- 列辅助线 -->
+			<div
+				v-if="useResizeHook.isResizing.value && useResizeHook.resizingCol.value"
+				class="grid-lines-col"
+				:style="{
+					height: totalHeight + 'px',
+				}"
+			></div>
 		</div>
 
 		<!-- 状态栏 -->
@@ -784,10 +807,12 @@ defineExpose({
 				border-right: 1px solid var(--z-line);
 				border-bottom: 0;
 				line-height: 16px;
+				overflow: visible;
 				position: relative;
 				text-align: center;
 
 				span {
+					font-size: 12px;
 					flex: 1;
 				}
 
@@ -878,7 +903,28 @@ defineExpose({
 	&.resizing,
 	&:hover {
 		background-color: var(--z-main);
-		opacity: 0.8;
+		opacity: 1;
 	}
+}
+
+.grid-lines-row {
+	position: absolute;
+	top: 0;
+	left: 1px;
+	height: 1px;
+	background-color: var(--z-main);
+	pointer-events: none;
+	z-index: -1;
+}
+
+.grid-lines-col {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1px;
+	background-color: var(--z-main);
+	height: 100%;
+	pointer-events: none;
+	z-index: -1;
 }
 </style>

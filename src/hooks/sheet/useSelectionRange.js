@@ -1,13 +1,10 @@
 import {computed, onMounted, ref, nextTick} from 'vue'
 import {useEventListener} from '@vueuse/core'
-import {startTimer, endTimer} from '../useTools'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
 	let container = null
-	let useMergedCellsHook = config.useMergedCellsHook
-	let rowHeight = config.rowHeight
-	let colWidth = config.colWidth
+	const {useMergedCellsHook, rowHeight, colWidth} = config
 	const useResizeHook = config.useResizeHook
 
 	// 选区状态管理
@@ -171,11 +168,16 @@ export const useSelectionRange = (containerId, config = {}) => {
 			totleHeight += useResizeHook.getRowHeight(i)
 		}
 
+		let totleWidth = 0
+		for (let i = startCol; i <= endCol; i++) {
+			totleWidth += useResizeHook.getColWidth(i)
+		}
+
 		return {
 			top: `${totalOffsetTop}px`,
 			left: `${startCol * colWidth}px`,
 			height: `${totleHeight}px`,
-			width: `${(endCol - startCol + 1) * colWidth - 1}px`,
+			width: `${totleWidth}px`,
 		}
 	})
 
