@@ -40,6 +40,8 @@ const props = defineProps({
 	enableFn: {type: Boolean, default: true},
 	// 操作列宽度
 	fnWidth: {type: Number, default: 120},
+
+	height: {type: [Number, String], default: 0},
 })
 
 const maxRowCount = computed(() => {
@@ -74,6 +76,19 @@ const sheet = reactive({
 
 // 容器
 const id = `air-sheet-${Math.random().toString(16).slice(2)}`
+const containerHeight = computed(() => {
+	if (typeof props.height === 'number') {
+		if (props.height === 0) {
+			return '100%'
+		}
+		return `${props.height}px`
+	} else {
+		if (!props.height.includes('px')) {
+			return props.height + 'px'
+		}
+		return props.height.replace(/\D+/g, 'px')
+	}
+})
 const initialized = ref(false)
 const containerRef = ref()
 const alphabetRef = ref()
@@ -394,6 +409,18 @@ const updateViewportSize = () => {
 	viewportWidth.value = rect.width
 }
 
+// 点击序号
+const onClickNumber = (row) => {
+	console.log('点击序号', row)
+	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1)
+}
+
+// 点击字母
+const onClickAlphabet = (col) => {
+	console.log('点击字母', col)
+	useSelectionRangeHook.setRange(0, col.colIndex, sheet.config.rowCount - 1, col.colIndex)
+}
+
 const init = () => {
 	updateViewportSize()
 	window.addEventListener('resize', updateViewportSize)
@@ -443,12 +470,12 @@ defineExpose({
 })
 </script>
 <template>
-	<div class="air-sheet-component">
+	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar">工具栏</div>
 
 		<!-- Sheet -->
-		<div class="sheet">
+		<div class="sheet" :style="{height: containerHeight}">
 			<!-- 字母 -->
 			<div
 				v-if="enableNumber"
@@ -475,9 +502,13 @@ defineExpose({
 						transform: `translate(${offsetLeft}px, 0)`,
 					}"
 				>
-					<div class="row">
+					<div class="row alphabet-row">
 						<template v-for="alphabet of visibleTitles">
-							<div class="cell" :style="{width: alphabet.colWidth + 'px'}">
+							<div
+								class="cell alphabet-cell"
+								:style="{width: alphabet.colWidth + 'px'}"
+								@click="onClickAlphabet(alphabet)"
+							>
 								<span>{{ alphabet.title }}</span>
 								<div
 									class="resize-handle"
@@ -490,13 +521,13 @@ defineExpose({
 									@mousedown.stop="
 										useResizeHook.startResize(alphabet, $event, 'horizontal')
 									"
+									@click.stop
 								></div>
 							</div>
 						</template>
 					</div>
 				</div>
 			</div>
-
 			<div
 				v-if="enableFn && sheet.fns?.length"
 				class="alphabet-placeholder bln bbn"
@@ -525,7 +556,11 @@ defineExpose({
 					}"
 				>
 					<template v-for="row of visibleRows" :key="row.rowIndex">
-						<div class="number" :style="{height: `${row.rowHeight}px`}">
+						<div
+							class="number"
+							:style="{height: `${row.rowHeight}px`}"
+							@click="onClickNumber(row)"
+						>
 							<span>{{ row.rowIndex + 1 }}</span>
 
 							<div
@@ -536,6 +571,7 @@ defineExpose({
 										useResizeHook.resizingRow.value?.rowIndex === row.rowIndex,
 								}"
 								@mousedown.stop="useResizeHook.startResize(row, $event, 'vertical')"
+								@click.stop
 							></div>
 						</div>
 					</template>
@@ -678,7 +714,6 @@ defineExpose({
 .air-sheet-component {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
 	overflow: hidden;
 	position: relative;
 	width: 100%;
@@ -702,7 +737,6 @@ defineExpose({
 .sheet {
 	display: flex;
 	flex-wrap: wrap;
-	height: 100%;
 	overflow: hidden;
 	position: relative;
 	width: 100%;
@@ -767,6 +801,7 @@ defineExpose({
 		.number {
 			align-items: center;
 			border-bottom: 1px solid var(--z-line);
+			cursor: pointer;
 			display: flex;
 			justify-content: center;
 			position: relative;
@@ -804,6 +839,10 @@ defineExpose({
 				padding-bottom: 0;
 			}
 
+			.alphabet-cell {
+				cursor: pointer;
+			}
+
 			.cell {
 				border-right: 1px solid var(--z-line);
 				border-bottom: 0;
@@ -831,6 +870,7 @@ defineExpose({
 	.alphabet-placeholder {
 		border: 1px solid var(--z-line);
 		background-color: var(--z-bg-secondary);
+		height: 18px;
 		transition: opacity 0.15s linear;
 	}
 
@@ -893,12 +933,13 @@ defineExpose({
 }
 
 .resize-handle {
+	bottom: -3px;
+	cursor: row-resize;
+	height: 6px;
 	position: absolute;
 	right: 0;
-	bottom: -3px;
+	transition: all 0.15s linear;
 	width: 100%;
-	height: 6px;
-	cursor: row-resize;
 	z-index: 1;
 
 	&.resizing,

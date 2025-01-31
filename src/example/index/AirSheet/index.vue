@@ -9,13 +9,13 @@ const config = {
 		})
 	}),
 	fns: [
-		{
-			label: '测试',
-			type: 'primary',
-			click: (row, rowData) => {
-				console.log(row, rowData)
-			},
-		},
+		// {
+		// 	label: '测试',
+		// 	type: 'primary',
+		// 	click: (row, rowData) => {
+		// 		console.log(row, rowData)
+		// 	},
+		// },
 	],
 }
 const config2 = {
@@ -47,7 +47,8 @@ onMounted(() => {
 <template>
 	<div style="height: 100%" class="df">
 		<AirSheet ref="tableRef" v-model="config"></AirSheet>
-		<AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet>
+
+		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>
 </template>
 <route>
