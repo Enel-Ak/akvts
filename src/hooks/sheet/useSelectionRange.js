@@ -437,12 +437,18 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 			if (row) {
 				const rowIndex = row.rowIndex
-				return rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
+				if (selecting.value || isDragging.value) {
+					return rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
+				}
+				return rowIndex >= startRow && rowIndex <= endRow
 			}
 
 			if (col) {
 				const colIndex = col.colIndex
-				return colIndex >= expanded.startCol && colIndex <= expanded.endCol
+				if (selecting.value || isDragging.value) {
+					return colIndex >= expanded.startCol && colIndex <= expanded.endCol
+				}
+				return colIndex >= startCol && colIndex <= endCol
 			}
 
 			return false

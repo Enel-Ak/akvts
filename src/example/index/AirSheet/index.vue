@@ -10,8 +10,7 @@ const config = {
 	}),
 	fns: [
 		{
-			label: '测试',
-			type: 'primary',
+			label: '操作',
 			click: (row, rowData) => {
 				console.log(row, rowData)
 			},

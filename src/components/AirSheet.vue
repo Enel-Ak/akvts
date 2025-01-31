@@ -688,7 +688,13 @@ defineExpose({
 				>
 					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<slot name="fn" :row="row">
-							<div class="fns" :style="{height: `${row.rowHeight}px`}">
+							<div
+								class="fns"
+								:class="{
+									selection: useSelectionRangeHook.selectionClass(row),
+								}"
+								:style="{height: `${row.rowHeight}px`}"
+							>
 								<span
 									v-for="fn in sheet.fns"
 									@click="() => fn.click(row, sheet.celldata[row.rowIndex])"
@@ -721,7 +727,7 @@ defineExpose({
 		</div>
 
 		<!-- 状态栏 -->
-		<div class="statusbar">
+		<div class="statusbar" :style="{opacity: lastScroll ? 1 : 0.15}">
 			<span>总行数: {{ sheet.config.rowCount }}</span>
 			<span>总列数: {{ sheet.config.colCount }}</span>
 		</div>
@@ -745,6 +751,7 @@ defineExpose({
 	background-color: var(--z-bg-secondary);
 	display: flex;
 	padding: 5px;
+	transition: all 0.15s linear;
 	> span {
 		font-size: 12px;
 		padding-right: 10px;
@@ -863,7 +870,14 @@ defineExpose({
 			span {
 				cursor: pointer;
 				color: var(--z-font-color);
+				margin: 0 5px;
 				text-decoration: none;
+			}
+
+			&.selection {
+				span {
+					color: var(--z-nav-font-active);
+				}
 			}
 		}
 
