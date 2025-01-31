@@ -1,7 +1,7 @@
-import {nextTick, ref} from 'vue'
+import {ref} from 'vue'
 export const useResize = (config = {}) => {
 	// 获取配置
-	const {rowHeight, colWidth, renderRange} = config
+	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
 
 	// 创建渲染worker
 	const worker = new Worker(new URL('./worker/ResizeRenderWorker.js', import.meta.url), {
@@ -68,7 +68,6 @@ export const useResize = (config = {}) => {
 	// 调整大小（行高或列宽）
 	const onResize = (e) => {
 		if (!isResizing.value) return
-		const scrollLeft = sheetContainer.scrollLeft
 
 		// 获取元素和容器的位置信息
 		resizingElRect = resizingEl.getBoundingClientRect()
@@ -146,6 +145,8 @@ export const useResize = (config = {}) => {
 				colWidths[resizingCol.value.colIndex] = resizingCol.value._newWidth
 				delete resizingCol.value._newWidth
 			}
+
+			useSelectionRangeHook().selecting = true
 			renderRange()
 		}
 

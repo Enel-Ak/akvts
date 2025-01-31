@@ -37,8 +37,17 @@ export const useSelectionRange = (containerId, config = {}) => {
 			row++
 		}
 
-		// 计算列位置
-		const col = Math.floor(x / colWidth)
+		// 使用累加方式计算列位置
+		let currentWidth = 0
+		let col = 0
+		while (currentWidth <= x) {
+			const colCurrentWidth = useResizeHook.getColWidth(col)
+			if (currentWidth + colCurrentWidth > x) {
+				break
+			}
+			currentWidth += colCurrentWidth
+			col++
+		}
 
 		// 检查是否在合并单元格内
 		const mergedCell = useMergedCellsHook.findMergedCell?.(row, col)
@@ -49,7 +58,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 				mergedCell,
 			}
 		}
-
 		return {row, col}
 	}
 
@@ -162,6 +170,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 			totalOffsetTop += useResizeHook.getRowHeight(i)
 		}
 
+		let totaloffsetLeft = 0
+		for (let i = 0; i < startCol; i++) {
+			totaloffsetLeft += useResizeHook.getColWidth(i)
+		}
+
 		// 计算合并单元格的总高度
 		let totleHeight = 0
 		for (let i = startRow; i <= endRow; i++) {
@@ -175,7 +188,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		return {
 			top: `${totalOffsetTop}px`,
-			left: `${startCol * colWidth}px`,
+			left: `${totaloffsetLeft}px`,
 			height: `${totleHeight}px`,
 			width: `${totleWidth}px`,
 		}

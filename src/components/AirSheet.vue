@@ -736,7 +736,8 @@ defineExpose({
 		left: 0;
 		top: 0;
 		z-index: 2;
-		padding-bottom: 100px;
+		padding-bottom: 1px;
+		padding-right: 1px;
 	}
 
 	.row {
