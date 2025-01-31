@@ -792,6 +792,7 @@ defineExpose({
 
 		.selection {
 			color: var(--z-nav-font-active);
+			border-bottom: 1px solid var(--z-main-rgb) !important;
 			background-color: rgba(var(--z-main-rgb), 1);
 		}
 	}
@@ -883,6 +884,10 @@ defineExpose({
 			.alphabet-cell {
 				cursor: pointer;
 				align-items: center;
+
+				&.selection {
+					border-right: 1px solid var(--z-main);
+				}
 			}
 
 			.cell {
