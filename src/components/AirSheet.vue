@@ -15,6 +15,7 @@ import {useMergedCells} from '@/hooks/sheet/useMergedCells'
 import {useSelectionRange} from '@/hooks/sheet/useSelectionRange'
 import {useResize} from '@/hooks/sheet/useResize'
 import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
+import {useEdit} from '@/hooks/sheet/useEdit.js'
 
 // 核心配置参数
 const props = defineProps({
@@ -126,6 +127,12 @@ const useSelectionRangeHook = reactive(
 		useResizeHook,
 	})
 )
+const useEditHook = useEdit(id, {
+	sheet,
+	useResizeHook,
+	useSelectionRangeHook,
+	renderRange: () => updateVisibleRange(),
+})
 
 // 计算总高度
 const totalHeight = computed(() => {
@@ -606,25 +613,27 @@ defineExpose({
 									}"
 								>
 									<div
-										class="cell"
+										v-html="useEditHook.formattedValue(cell.value)"
+										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
 										:class="{
 											merged: isMergedCellStart(cell),
 										}"
 										:style="getOffsetStyle(cell)"
-									>
-										{{ cell.value }}
-									</div>
+										class="cell"
+										@dblclick="useEditHook.startEdit($event, cell)"
+									></div>
 								</div>
 								<div
 									v-else
-									class="cell"
+									v-html="useEditHook.formattedValue(cell.value)"
+									:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
 									:class="{
 										merged: isMergedCellStart(cell),
 									}"
 									:style="getOffsetStyle(cell)"
-								>
-									{{ cell.value }}
-								</div>
+									@dblclick="useEditHook.startEdit($event, cell)"
+									class="cell"
+								></div>
 							</template>
 						</div>
 					</template>
@@ -671,7 +680,7 @@ defineExpose({
 				>
 					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<slot name="fn" :row="row">
-							<div class="fns" :style="{height: `${rowHeight}px`}">
+							<div class="fns" :style="{height: `${row.rowHeight}px`}">
 								<span
 									v-for="fn in sheet.fns"
 									@click="() => fn.click(row, sheet.celldata[row.rowIndex])"
@@ -780,16 +789,34 @@ defineExpose({
 	}
 
 	.cell {
-		align-items: center;
+		align-items: flex-start;
 		border-right: 1px solid var(--z-line);
 		border-bottom: 1px solid var(--z-line);
 		box-sizing: border-box;
 		color: var(--z-font-color);
 		display: flex;
+		flex-direction: column;
+		justify-content: center;
 		padding: 0 4px;
 
 		overflow: hidden;
 		user-select: none;
+
+		> :deep(div) {
+			line-height: 1;
+			&:first-child {
+				padding-top: 2px;
+			}
+
+			&:last-child {
+				padding-bottom: 2px;
+			}
+		}
+
+		&:focus {
+			background-color: var(--z-theme);
+			outline: none;
+		}
 	}
 
 	.custom {
@@ -833,6 +860,7 @@ defineExpose({
 		&.alphabet {
 			border-bottom: none;
 			height: 18px;
+
 			width: 100%;
 
 			.alphabet-cells {
@@ -841,6 +869,7 @@ defineExpose({
 
 			.alphabet-cell {
 				cursor: pointer;
+				align-items: center;
 			}
 
 			.cell {
@@ -879,6 +908,7 @@ defineExpose({
 		border: 1px solid var(--z-border);
 		position: relative;
 		overflow: visible;
+		z-index: 1;
 	}
 
 	.selection-box,

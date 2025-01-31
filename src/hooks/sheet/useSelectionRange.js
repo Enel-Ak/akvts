@@ -384,6 +384,23 @@ export const useSelectionRange = (containerId, config = {}) => {
 		handleMouseUp()
 	}
 
+	// 获取框选范围的起始单元格
+	const getStartCell = () => {
+		if (!ranged.value) return null
+
+		const {start} = ranged.value
+		// 检查是否在合并单元格内
+		const mergedCell = useMergedCellsHook.findMergedCell?.(start.row, start.col)
+		if (mergedCell) {
+			return {
+				row: mergedCell.row,
+				col: mergedCell.col,
+				mergedCell,
+			}
+		}
+		return start
+	}
+
 	// 初始化
 	const init = () => {
 		container = document.querySelector(`#${containerId}`)
@@ -415,6 +432,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		rangeStyle,
 
 		//方法
+		getStartCell,
 		setRange,
 		drag: handleDragStart,
 		clear,

@@ -34,6 +34,10 @@ export const useResize = (config = {}) => {
 		return rowHeights[index] || rowHeight
 	}
 
+	const setRowHeight = (index, height) => {
+		rowHeights[index] = height
+	}
+
 	// 获取列的实际宽度
 	const getColWidth = (index) => {
 		return colWidths[index] || colWidth
@@ -228,6 +232,7 @@ export const useResize = (config = {}) => {
 		getRenderResult,
 		startResize,
 		getRowHeight,
+		setRowHeight,
 		getColWidth,
 		rowHeights,
 		colWidths,

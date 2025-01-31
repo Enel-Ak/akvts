@@ -9,13 +9,13 @@ const config = {
 		})
 	}),
 	fns: [
-		// {
-		// 	label: '测试',
-		// 	type: 'primary',
-		// 	click: (row, rowData) => {
-		// 		console.log(row, rowData)
-		// 	},
-		// },
+		{
+			label: '测试',
+			type: 'primary',
+			click: (row, rowData) => {
+				console.log(row, rowData)
+			},
+		},
 	],
 }
 const config2 = {
