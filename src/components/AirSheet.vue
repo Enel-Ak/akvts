@@ -105,8 +105,8 @@ const useMergedCellsHook = useMergedCells({
 })
 const useSelectionRangeHook = reactive(
 	useSelectionRange(id, {
-		rowHeight: props.rowHeight,
-		colWidth: props.colWidth,
+		maxRowCount: maxRowCount.value,
+		maxColCount: maxColCount.value,
 		useMergedCellsHook,
 		useResizeHook,
 	})
@@ -394,7 +394,6 @@ const updateViewportSize = () => {
 	viewportWidth.value = rect.width
 }
 
-// 优化的缓存清理
 const init = () => {
 	updateViewportSize()
 	window.addEventListener('resize', updateViewportSize)
@@ -439,7 +438,8 @@ onDeactivated(() => {
 onUnmounted(() => destroy())
 
 defineExpose({
-	mergeCells: useMergedCellsHook.addMergedCell,
+	setRange: useSelectionRangeHook.setRange,
+	setMergeCell: useMergedCellsHook.addMergedCell,
 })
 </script>
 <template>

@@ -36,9 +36,10 @@ const config2 = {
 }
 
 onMounted(() => {
-	tableRef.value.mergeCells(12, 4, 4, 4)
-	tableRef.value.mergeCells(16, 5, 4, 4)
-	tableRef.value.mergeCells(45, 7, 2, 4)
+	tableRef.value.setRange(0, 0, 0, 0)
+	tableRef.value.setMergeCell(12, 4, 4, 4)
+	tableRef.value.setMergeCell(16, 5, 4, 4)
+	tableRef.value.setMergeCell(45, 7, 2, 4)
 
 	// tableRef.value.mergeCells(1, 3, 3, 3)
 })

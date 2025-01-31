@@ -4,7 +4,7 @@ import {useEventListener} from '@vueuse/core'
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
 	let container = null
-	const {useMergedCellsHook, rowHeight, colWidth} = config
+	const {maxRowCount, maxColCount, useMergedCellsHook} = config
 	const useResizeHook = config.useResizeHook
 
 	// 选区状态管理
@@ -194,6 +194,16 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	})
 
+	// 限制范围在最大值内
+	const limitRange = (pos) => {
+		if (!pos) return pos
+		return {
+			row: Math.min(Math.max(0, pos.row), maxRowCount - 1),
+			col: Math.min(Math.max(0, pos.col), maxColCount - 1),
+			mergedCell: pos.mergedCell,
+		}
+	}
+
 	// 事件处理
 	const handleMouseDown = (e) => {
 		if (e.button !== 0) return // 只处理左键点击
@@ -222,41 +232,58 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const handleMouseMove = (e) => {
 		if (!selecting.value) return
 
-		const currentPos = getCellPosition(e)
-		if (
-			!currentPos ||
-			typeof currentPos.row === 'undefined' ||
-			typeof currentPos.col === 'undefined'
-		)
-			return
+		// 检查是否超过点击阈值
+		if (!isDragging.value) {
+			const deltaX = Math.abs(e.clientX - mouseDownPos.value.x)
+			const deltaY = Math.abs(e.clientY - mouseDownPos.value.y)
 
-		const deltaX = Math.abs(e.clientX - mouseDownPos.value.x)
-		const deltaY = Math.abs(e.clientY - mouseDownPos.value.y)
-
-		// 判断是否超过点击阈值
-		if (!isDragging.value && (deltaX > clickThreshold || deltaY > clickThreshold)) {
-			isDragging.value = true
-		}
-
-		if (isDragging.value) {
-			// 获取当前选区范围
-			const startRow = Math.min(selectionStart.value.row, currentPos.row)
-			const endRow = Math.max(selectionStart.value.row, currentPos.row)
-			const startCol = Math.min(selectionStart.value.col, currentPos.col)
-			const endCol = Math.max(selectionStart.value.col, currentPos.col)
-
-			// 扩展选区以包含所有相关的合并单元格
-			const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
-			if (expanded.startRow < 0 || expanded.startCol < 0) {
+			if (deltaX > clickThreshold || deltaY > clickThreshold) {
+				isDragging.value = true
+			} else {
 				return
 			}
+		}
 
-			selectionEnd.value = {
-				row:
-					currentPos.row < selectionStart.value.row ? expanded.startRow : expanded.endRow,
-				col:
-					currentPos.col < selectionStart.value.col ? expanded.startCol : expanded.endCol,
-			}
+		const pos = getCellPosition(e)
+		if (!pos) return
+
+		// 限制选区范围
+		selectionEnd.value = limitRange(pos)
+	}
+
+	// 处理拖拽移动
+	const handleDragMove = (e) => {
+		if (!isRangeDragging.value || !selecting.value) return
+
+		const currentPos = limitRange(getCellPosition(e))
+		if (!currentPos) return
+
+		// 获取当前选区范围
+		const startRow = Math.min(selectionStart.value.row, currentPos.row)
+		const endRow = Math.max(selectionStart.value.row, currentPos.row)
+		const startCol = Math.min(selectionStart.value.col, currentPos.col)
+		const endCol = Math.max(selectionStart.value.col, currentPos.col)
+
+		if (startRow < 0 || startCol < 0) {
+			return
+		}
+
+		// 更新选区的结束位置
+		selectionEnd.value = currentPos
+
+		// 扩展选区以包含所有相关的合并单元格
+		const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
+
+		// 更新选区，确保不超过最大范围
+		ranged.value = {
+			start: {
+				row: Math.max(0, expanded.startRow),
+				col: Math.max(0, expanded.startCol),
+			},
+			end: {
+				row: Math.min(expanded.endRow, maxRowCount - 1),
+				col: Math.min(expanded.endCol, maxColCount - 1),
+			},
 		}
 	}
 
@@ -288,42 +315,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		selectionStart.value = {...ranged.value.start}
 		// 设置拖拽点为结束点
 		selectionEnd.value = pos
-	}
-
-	// 处理拖拽移动
-	const handleDragMove = (e) => {
-		if (!isRangeDragging.value || !selecting.value) return
-
-		const currentPos = getCellPosition(e)
-		if (!currentPos) return
-
-		// 获取当前选区范围
-		const startRow = Math.min(selectionStart.value.row, currentPos.row)
-		const endRow = Math.max(selectionStart.value.row, currentPos.row)
-		const startCol = Math.min(selectionStart.value.col, currentPos.col)
-		const endCol = Math.max(selectionStart.value.col, currentPos.col)
-
-		if (startRow < 0 || startCol < 0) {
-			return
-		}
-
-		// 更新选区的结束位置
-		selectionEnd.value = currentPos
-
-		// 扩展选区以包含所有相关的合并单元格
-		const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
-
-		// 更新选区
-		ranged.value = {
-			start: {
-				row: expanded.startRow,
-				col: expanded.startCol,
-			},
-			end: {
-				row: expanded.endRow,
-				col: expanded.endCol,
-			},
-		}
 	}
 
 	// 处理拖拽结束
@@ -360,6 +351,39 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	}
 
+	// 设置选区范围
+	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol) => {
+		selecting.value = true
+		ranged.value = true
+
+		// 设置选区起始位置
+		selectionStart.value = {
+			row: startRow,
+			col: startCol,
+		}
+
+		// 设置选区结束位置
+		selectionEnd.value = {
+			row: endRow,
+			col: endCol,
+		}
+
+		// 检查是否在合并单元格内
+		const mergedCell = useMergedCellsHook.findMergedCell?.(startRow, startCol)
+		if (mergedCell) {
+			selectionStart.value = {
+				row: mergedCell.row,
+				col: mergedCell.col,
+				mergedCell,
+			}
+			selectionEnd.value = {
+				row: mergedCell.row + mergedCell.rowspan - 1,
+				col: mergedCell.col + mergedCell.colspan - 1,
+			}
+		}
+		handleMouseUp()
+	}
+
 	// 初始化
 	const init = () => {
 		container = document.querySelector(`#${containerId}`)
@@ -378,24 +402,20 @@ export const useSelectionRange = (containerId, config = {}) => {
 		document.addEventListener('mouseup', handleDragEnd)
 	}
 
-	onMounted(() => {
-		nextTick(() => init())
-	})
+	onMounted(() => nextTick(() => init()))
 
 	return {
 		// 状态
 		selecting,
 		isDragging,
-		isRangeDragging,
-		mouseDownPos,
-		selectionStart,
-		selectionEnd,
 		ranged,
 
 		// 计算属性
 		rangeClass,
 		rangeStyle,
 
+		//方法
+		setRange,
 		drag: handleDragStart,
 		clear,
 		destroy,
