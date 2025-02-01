@@ -19,7 +19,7 @@ export const useEdit = (id, config) => {
 		const rowIndex = cell.row ?? cell.rowIndex
 		const colIndex = cell.col ?? cell.colIndex
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
-		const originalValue = cellEl.innerText
+		const originalValue = cellEl?.innerText
 
 		if (cellEl.getAttribute('contenteditable')) return
 
@@ -54,7 +54,9 @@ export const useEdit = (id, config) => {
 			if (cellEl.innerText === '') {
 				cellEl.innerText = originalValue
 			}
-			sheet.celldata[rowIndex][colIndex] = cellEl.innerText
+
+			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
+
 			setRowHeight()
 
 			cellEl.removeAttribute('contenteditable')

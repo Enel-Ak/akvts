@@ -16,6 +16,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const selectionEnd = ref({row: -1, col: -1})
 	const ranged = ref(null)
 
+	// 计算序号、字母样式缓存
+	const selectionClassMap = new Map()
+
 	// 点击阈值
 	const clickThreshold = 5
 
@@ -191,6 +194,58 @@ export const useSelectionRange = (containerId, config = {}) => {
 			left: `${totaloffsetLeft}px`,
 			height: `${totleHeight - 1}px`,
 			width: `${totleWidth - 1}px`,
+		}
+	})
+
+	const selectionClass = computed(() => {
+		return (row, col) => {
+			const rowIndex = row?.rowIndex
+			const colIndex = col?.colIndex
+
+			// 扩展选区以包含所有相关的合并单元格
+			const {row: startRow, col: startCol} = selectionStart.value
+			const {row: endRow, col: endCol} = selectionEnd.value
+
+			// 先计算实际的起始和结束位置
+			const minRow = Math.min(startRow, endRow)
+			const maxRow = Math.max(startRow, endRow)
+			const minCol = Math.min(startCol, endCol)
+			const maxCol = Math.max(startCol, endCol)
+
+			if (rowIndex !== undefined && selectionClassMap.get(`r${rowIndex}`)) {
+				selectionClassMap.delete(`r${rowIndex}`)
+				return true
+			}
+
+			if (colIndex !== undefined && selectionClassMap.get(`c${colIndex}`)) {
+				selectionClassMap.delete(`c${colIndex}`)
+				return true
+			}
+
+			// 使用实际的最小最大值来获取扩展范围
+			const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
+
+			let bool = false
+
+			if (row) {
+				bool = rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
+				if (bool) {
+					for (let i = expanded.startRow; i <= expanded.endRow; i++) {
+						selectionClassMap.set(`r${i}`, true)
+					}
+				}
+			}
+
+			if (col) {
+				bool = colIndex >= expanded.startCol && colIndex <= expanded.endCol
+				if (bool) {
+					for (let i = expanded.startCol; i <= expanded.endCol; i++) {
+						selectionClassMap.set(`c${i}`, true)
+					}
+				}
+			}
+
+			return bool
 		}
 	})
 
@@ -374,6 +429,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		selecting.value = true
 		ranged.value = true
 
+		selectionClassMap.clear()
+
 		// 设置选区起始位置
 		selectionStart.value = {
 			row: startRow,
@@ -400,6 +457,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			}
 		}
 		console.log('设置选区范围', selectionStart.value, selectionEnd.value, mergedCell)
+
 		handleMouseUp()
 	}
 
@@ -419,35 +477,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 		return start
 	}
-
-	const selectionClass = computed(() => {
-		return (row, col) => {
-			// 扩展选区以包含所有相关的合并单元格
-			const {row: startRow, col: startCol} = selectionStart.value
-			const {row: endRow, col: endCol} = selectionEnd.value
-
-			// 先计算实际的起始和结束位置
-			const minRow = Math.min(startRow, endRow)
-			const maxRow = Math.max(startRow, endRow)
-			const minCol = Math.min(startCol, endCol)
-			const maxCol = Math.max(startCol, endCol)
-
-			// 使用实际的最小最大值来获取扩展范围
-			const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
-
-			if (row) {
-				const rowIndex = row.rowIndex
-				return rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
-			}
-
-			if (col) {
-				const colIndex = col.colIndex
-				return colIndex >= expanded.startCol && colIndex <= expanded.endCol
-			}
-
-			return false
-		}
-	})
 
 	// 初始化
 	const init = () => {

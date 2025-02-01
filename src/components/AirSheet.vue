@@ -67,14 +67,28 @@ const maxColCount = computed(() => {
 
 // 保存数据
 const sheet = reactive({
-	...props.modelValue,
 	config: {
 		mergedCells: true, // 合并单元格
-		...props.modelValue.config,
 		rowCount: maxRowCount.value,
 		colCount: maxColCount.value,
 	},
+	celldata: new Map(),
+	fns: props.modelValue.fns || [],
 })
+
+// 初始数据处理
+const sliceSize = 1000
+const initialData = () => {
+	if (props.modelValue?.celldata) {
+		const celldata = props.modelValue.celldata
+		const count = Math.ceil(props.modelValue.celldata.length / sliceSize)
+		for (let i = 0; i < count; i++) {
+			for (let j = i * sliceSize; j < (i + 1) * sliceSize; j++) {
+				sheet.celldata.set(j, celldata[j] || [])
+			}
+		}
+	}
+}
 
 // 容器
 const id = `air-sheet-${Math.random().toString(16).slice(2)}`
@@ -230,7 +244,7 @@ const visibleCells = (row) => {
 		// 检查当前单元格是否是合并单元格的从属单元格
 		const mergedCell = useMergedCellsHook.findMergedCell(row.rowIndex, i)
 		const isMergedStart = mergedCell && mergedCell.row === row.rowIndex && mergedCell.col === i
-		const originalValue = sheet.celldata[row.rowIndex]?.[i] || null
+		const originalValue = sheet.celldata.get(row.rowIndex)?.[i] || null
 
 		// 如果不是合并单元格，或者是合并单元格的起始位置，则显示值
 		let value = null
@@ -242,8 +256,8 @@ const visibleCells = (row) => {
 			value = originalValue
 		}
 
-		if (!sheet.celldata[row.rowIndex]) {
-			sheet.celldata[row.rowIndex] = []
+		if (!sheet.celldata.get(row.rowIndex)) {
+			sheet.celldata.set(row.rowIndex, [])
 		}
 
 		cells.push({
@@ -333,25 +347,25 @@ const isMergedCellStart = (cell) => {
 	return mergedCells.hasOwnProperty(key)
 }
 
-// 优化的滚动处理
+// 滚动处理
 let scrollTimer = null
 const lastScroll = ref(true)
-const onScroll = useThrottleFn((e) => {
-	if (lastScroll.value) {
-		lastScroll.value = false
-		return
-	}
+const onScroll = useThrottleFn(
+	(e) => {
+		if (lastScroll.value) {
+			lastScroll.value = false
+			return
+		}
 
-	clearTimeout(scrollTimer)
-	const container = e.target
-	const newScrollTop = container.scrollTop
-	const newScrollLeft = container.scrollLeft
+		clearTimeout(scrollTimer)
+		const container = e.target
+		const newScrollTop = container.scrollTop
+		const newScrollLeft = container.scrollLeft
 
-	const alphabet = alphabetRef.value
-	const number = numberRef.value
-	const fn = fnRef.value
+		const alphabet = alphabetRef.value
+		const number = numberRef.value
+		const fn = fnRef.value
 
-	if (newScrollTop !== scrollTop.value || newScrollLeft !== scrollLeft.value) {
 		scrollTop.value = newScrollTop
 		scrollLeft.value = newScrollLeft
 
@@ -388,9 +402,10 @@ const onScroll = useThrottleFn((e) => {
 			}
 
 			savedScrollPosition.value = {top: nt, left: nl}
-		}, 150)
-	}
-}, 16)
+		}, 300)
+	},
+	{throttle: 16}
+)
 
 // 恢复滚动位置
 const restoreScrollPosition = () => {
@@ -405,6 +420,7 @@ const restoreScrollPosition = () => {
 		scrollTop.value = top
 		scrollLeft.value = left
 	}
+	lastScroll.value = true
 }
 
 // 监听容器大小变化
@@ -452,6 +468,7 @@ const onMergeClick = () => {
 }
 
 const init = () => {
+	initialData()
 	updateViewportSize()
 	window.addEventListener('resize', updateViewportSize)
 	initialized.value = true
@@ -489,6 +506,7 @@ onDeactivated(() => {
 			left: containerRef.value.scrollLeft,
 		}
 	}
+	celldata.clear()
 	window.removeEventListener('resize', updateViewportSize)
 })
 
@@ -725,7 +743,7 @@ defineExpose({
 							>
 								<span
 									v-for="fn in sheet.fns"
-									@click="() => fn.click(row, sheet.celldata[row.rowIndex])"
+									@click="() => fn.click(row, sheet.celldata.get(row.rowIndex))"
 								>
 									{{ fn.label }}
 								</span>
@@ -863,8 +881,7 @@ defineExpose({
 
 		.selection {
 			color: var(--z-nav-font-active);
-			border-bottom: 1px solid var(--z-main-rgb) !important;
-			background-color: rgba(var(--z-main-rgb), 1);
+			background-color: rgba(var(--z-main-rgb), 0.9);
 		}
 	}
 
@@ -962,10 +979,6 @@ defineExpose({
 			.alphabet-cell {
 				cursor: pointer;
 				align-items: center;
-
-				&.selection {
-					border-right: 1px solid var(--z-main);
-				}
 			}
 
 			.cell {
