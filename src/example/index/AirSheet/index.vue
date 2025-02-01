@@ -9,12 +9,12 @@ const config = {
 		})
 	}),
 	fns: [
-		{
-			label: '操作',
-			click: (row, rowData) => {
-				console.log(row, rowData)
-			},
-		},
+		// {
+		// 	label: '操作',
+		// 	click: (row, rowData) => {
+		// 		console.log(row, rowData)
+		// 	},
+		// },
 	],
 }
 const config2 = {
