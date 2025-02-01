@@ -7,10 +7,45 @@ export const useMergedCells = (config) => {
 
 	// 添加合并单元格
 	const addMergedCell = (rowIndex, colIndex, rowSpan, colSpan) => {
-		mergedCells.set(`${rowIndex}-${colIndex}`, {
-			rowSpan,
-			colSpan,
-		})
+		const currentKey = `${rowIndex}-${colIndex}`
+		const existingMerge = mergedCells.get(currentKey)
+
+		// 检查是否是相同位置的框选
+		if (existingMerge) {
+			// 如果是相同位置，检查大小是否相同
+			if (existingMerge.rowSpan === rowSpan && existingMerge.colSpan === colSpan) {
+				// 相同位置且相同大小，则取消合并
+				mergedCells.delete(currentKey)
+			} else {
+				// 相同位置但大小不同，删除旧合并并创建新合并
+				mergedCells.delete(currentKey)
+				// 检查新区域是否有其他合并单元格
+				for (let r = rowIndex; r < rowIndex + rowSpan; r++) {
+					for (let c = colIndex; c < colIndex + colSpan; c++) {
+						if (r === rowIndex && c === colIndex) continue
+						const otherMerge = findMergedCell(r, c)
+						if (otherMerge) {
+							mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
+						}
+					}
+				}
+				// 创建新合并
+				mergedCells.set(currentKey, {rowSpan, colSpan})
+			}
+		} else {
+			// 如果是新位置，检查新区域内是否有已存在的合并单元格
+			for (let r = rowIndex; r < rowIndex + rowSpan; r++) {
+				for (let c = colIndex; c < colIndex + colSpan; c++) {
+					const otherMerge = findMergedCell(r, c)
+					if (otherMerge) {
+						mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
+					}
+				}
+			}
+			// 创建新合并
+			mergedCells.set(currentKey, {rowSpan, colSpan})
+		}
+
 		console.log('添加合并单元格:', mergedCells)
 		renderRange()
 	}

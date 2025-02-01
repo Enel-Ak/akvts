@@ -67,12 +67,13 @@ const maxColCount = computed(() => {
 
 // 保存数据
 const sheet = reactive({
+	...props.modelValue,
 	config: {
+		mergedCells: true, // 合并单元格
+		...props.modelValue.config,
 		rowCount: maxRowCount.value,
 		colCount: maxColCount.value,
 	},
-	celldata: props.modelValue.celldata,
-	fns: props.modelValue.fns,
 })
 
 // 容器
@@ -430,6 +431,26 @@ const onClickAlphabet = (col) => {
 	useSelectionRangeHook.setRange(0, col.colIndex, sheet.config.rowCount - 1, col.colIndex)
 }
 
+// 点击合并
+const onMergeClick = () => {
+	console.log('点击合并', useSelectionRangeHook.ranged)
+	const ranged = useSelectionRangeHook.ranged
+	if (!ranged) return
+	console.log(ranged.start, ranged.end)
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const startCol = Math.min(ranged.start.col, ranged.end.col)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+	useMergedCellsHook.addMergedCell(
+		startRow,
+		startCol,
+		endRow - startRow + 1,
+		endCol - startCol + 1
+	)
+}
+
 const init = () => {
 	updateViewportSize()
 	window.addEventListener('resize', updateViewportSize)
@@ -481,7 +502,14 @@ defineExpose({
 <template>
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
-		<div class="toolbar">工具栏</div>
+		<div class="toolbar" :style="{opacity: lastScroll ? 1 : 0.15}">
+			<div class="group">
+				<div class="item" @click="onMergeClick">
+					<Icons icon-name="Merge"></Icons>
+					<span>合并</span>
+				</div>
+			</div>
+		</div>
 
 		<!-- Sheet -->
 		<div class="sheet" :style="{height: containerHeight}">
@@ -743,6 +771,42 @@ defineExpose({
 }
 
 .toolbar {
+	align-items: flex-start;
+	border: 1px solid var(--z-line);
+	border-bottom: none;
+	background-color: var(--z-bg-secondary);
+	display: flex;
+	justify-content: space-between;
+	transition: all 0.15s linear;
+	.group {
+		border-right: 1px solid var(--z-line);
+		display: flex;
+		padding: 4px 0;
+	}
+
+	.item {
+		align-items: center;
+		border-radius: 2px;
+		cursor: pointer;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		margin: 0 4px;
+		padding: 4px;
+		transition: all 0.15s linear;
+		span {
+			font-size: 12px;
+			padding: 4px 0 0 0;
+		}
+
+		&:hover {
+			background-color: var(--z-main);
+			color: var(--z-nav-font-active);
+			:deep(svg) {
+				color: var(--z-nav-font-active) !important;
+			}
+		}
+	}
 }
 
 .statusbar {
@@ -907,7 +971,7 @@ defineExpose({
 			.cell {
 				border-right: 1px solid var(--z-line);
 				border-bottom: 0;
-				line-height: 16px;
+				line-height: 18px;
 				overflow: visible;
 				position: relative;
 				text-align: center;
