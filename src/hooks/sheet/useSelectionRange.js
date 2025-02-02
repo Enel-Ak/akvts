@@ -362,10 +362,26 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	const handleMouseUp = () => {
 		if (selecting.value) {
+			// 获取当前选区范围
+			const startRow = Math.min(selectionStart.value.row, selectionEnd.value.row)
+			const endRow = Math.max(selectionStart.value.row, selectionEnd.value.row)
+			const startCol = Math.min(selectionStart.value.col, selectionEnd.value.col)
+			const endCol = Math.max(selectionStart.value.col, selectionEnd.value.col)
+
+			// 扩展选区以包含所有相关的合并单元格
+			const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
+
 			ranged.value = {
-				start: {...selectionStart.value},
-				end: {...selectionEnd.value},
+				start: {
+					row: expanded.startRow,
+					col: expanded.startCol,
+				},
+				end: {
+					row: expanded.endRow,
+					col: expanded.endCol,
+				},
 			}
+
 			// 结束选择状态
 			selecting.value = false
 			isDragging.value = false
