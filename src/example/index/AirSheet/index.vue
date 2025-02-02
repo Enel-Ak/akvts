@@ -3,6 +3,13 @@ import {nextTick, onMounted, ref} from 'vue'
 
 const tableRef = ref()
 const config = {
+	config: {
+		cellStyle: {
+			'0-0': {
+				a: 'right',
+			},
+		},
+	},
 	celldata: Array.from({length: 1000}, (_, r) => {
 		return Array.from({length: 100}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
@@ -35,10 +42,9 @@ const config2 = {
 }
 
 onMounted(() => {
-	tableRef.value.setRange(0, 0, 0, 0)
-	// tableRef.value.setMergeCell(12, 4, 4, 4)
-	// tableRef.value.setMergeCell(16, 5, 4, 4)
-	// tableRef.value.setMergeCell(45, 7, 2, 4)
+	tableRef.value.setMergeCell(12, 4, 4, 4)
+	tableRef.value.setMergeCell(16, 5, 4, 4)
+	tableRef.value.setMergeCell(45, 7, 2, 4)
 
 	// setTimeout(() => {
 	// 	tableRef.value.setMergeCell(0, 0, 2, 4)

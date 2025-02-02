@@ -1,6 +1,7 @@
+import {useStyle} from './useStyle'
 export const useMergedCells = (config) => {
 	// 基础配置
-	const {useResizeHook, renderRange} = config
+	const {sheet, useResizeHook, renderRange} = config
 
 	// 存储合并单元格信息
 	const mergedCells = new Map()
@@ -60,9 +61,12 @@ export const useMergedCells = (config) => {
 	}
 
 	// 获取单元格样式
-	const getCellStyle = (cell, config) => {
+	const getCellStyle = (cell) => {
 		const key = `${cell.rowIndex}-${cell.colIndex}`
 		const merged = mergedCells.get(key)
+
+		// cellStyle
+		const style = useStyle(sheet.config.cellStyle[key])
 
 		// 1. 检查是否是合并单元格的起始位置
 		if (merged) {
@@ -84,6 +88,7 @@ export const useMergedCells = (config) => {
 				position: 'absolute',
 				top: 0,
 				left: 0,
+				...style,
 			}
 		}
 
@@ -111,6 +116,7 @@ export const useMergedCells = (config) => {
 		return {
 			height: `${useResizeHook.getRowHeight(cell.rowIndex)}px`,
 			width: `${useResizeHook.getColWidth(cell.colIndex)}px`,
+			...style,
 		}
 	}
 

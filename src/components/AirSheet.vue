@@ -68,7 +68,13 @@ const maxColCount = computed(() => {
 // 保存数据
 const sheet = reactive({
 	config: {
-		mergedCells: true, // 合并单元格
+		merge: true, // 合并单元格
+		align: true, // 对齐方式
+		border: true, // 边框
+
+		cellStyle: {
+			...props.modelValue?.config.cellStyle,
+		},
 		rowCount: maxRowCount.value,
 		colCount: maxColCount.value,
 	},
@@ -135,6 +141,7 @@ const useResizeHook = useResize({
 	useSelectionRangeHook: () => useSelectionRangeHook,
 })
 const useMergedCellsHook = useMergedCells({
+	sheet,
 	useResizeHook,
 	renderRange: () => updateVisibleRange(),
 })
@@ -474,12 +481,41 @@ const onClickAlphabet = (e, col) => {
 	}, 0)
 }
 
+// 设置单元格样式, 工具栏共用,
+const setCellStyle = (type, val, fn) => {
+	const ranged = useSelectionRangeHook.ranged
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const startCol = Math.min(ranged.start.col, ranged.end.col)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+	for (let i = startRow; i <= endRow; i++) {
+		for (let j = startCol; j <= endCol; j++) {
+			if (fn && typeof fn === 'function') {
+				fn(i, j, {startRow, startCol, endRow, endCol})
+			} else {
+				if (!sheet.config.cellStyle[`${i}-${j}`]) {
+					sheet.config.cellStyle[`${i}-${j}`] = {}
+				}
+
+				if (
+					sheet.config.cellStyle[`${i}-${j}`][type] &&
+					sheet.config.cellStyle[`${i}-${j}`][type] === val
+				) {
+					delete sheet.config.cellStyle[`${i}-${j}`][type]
+					continue
+				}
+				sheet.config.cellStyle[`${i}-${j}`][type] = val
+			}
+		}
+	}
+}
+
 // 点击合并
 const onMergeClick = () => {
-	console.log('点击合并', useSelectionRangeHook.ranged)
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
-	console.log(ranged.start, ranged.end)
 
 	const startRow = Math.min(ranged.start.row, ranged.end.row)
 	const startCol = Math.min(ranged.start.col, ranged.end.col)
@@ -493,6 +529,53 @@ const onMergeClick = () => {
 		endCol - startCol + 1
 	)
 }
+
+// 点击边框
+const onBorderClick = (border = true) => {
+	setCellStyle('b', null, (r, c, {startRow, startCol, endRow, endCol}) => {
+		// 删除边框样式
+		if (!border) {
+			if (sheet.config.cellStyle[`${r}-${c}`]) {
+				delete sheet.config.cellStyle[`${r}-${c}`].b
+				// 如果没有其他样式，删除整个样式对象
+				if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
+					delete sheet.config.cellStyle[`${r}-${c}`]
+				}
+			}
+			return
+		}
+
+		// 如果没有cellStyle对象，创建一个
+		if (!sheet.config.cellStyle[`${r}-${c}`]) {
+			sheet.config.cellStyle[`${r}-${c}`] = {}
+		}
+
+		// 第一行第一列的交叉单元格
+		if (r === startRow && c === startCol) {
+			sheet.config.cellStyle[`${r}-${c}`].b = 'cross'
+			return
+		}
+
+		// 第一行
+		if (r === startRow) {
+			sheet.config.cellStyle[`${r}-${c}`].b = 'top'
+			return
+		}
+
+		// 第一列
+		if (c === startCol) {
+			sheet.config.cellStyle[`${r}-${c}`].b = 'left'
+			return
+		}
+
+		// 其他内部单元格
+		if (r <= endRow && c <= endCol) {
+			sheet.config.cellStyle[`${r}-${c}`].b = 'all'
+		}
+	})
+}
+// 点击对齐
+const onAlignClick = (align) => setCellStyle('a', align)
 
 const init = () => {
 	initialData()
@@ -514,6 +597,7 @@ const destroy = () => {
 
 // 初始化
 onMounted(() => {
+	useSelectionRangeHook.setRange(0, 0, 0, 0)
 	if (!initialized.value) {
 		init()
 	}
@@ -548,10 +632,34 @@ defineExpose({
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar" :style="{opacity: lastScroll ? 1 : 0.15}">
-			<div class="group">
+			<div class="group" v-if="sheet.config.align">
+				<div class="item" @click="onAlignClick('left')">
+					<Icons icon-name="AlignLeft"></Icons>
+					<span>左对齐</span>
+				</div>
+				<div class="item" @click="onAlignClick('center')">
+					<Icons icon-name="AlignCenter"></Icons>
+					<span>居中</span>
+				</div>
+				<div class="item" @click="onAlignClick('right')">
+					<Icons icon-name="AlignRight"></Icons>
+					<span>右对齐</span>
+				</div>
+			</div>
+			<div class="group" v-if="sheet.config.merge">
 				<div class="item" @click="onMergeClick">
 					<Icons icon-name="Merge"></Icons>
 					<span>合并</span>
+				</div>
+			</div>
+			<div class="group" v-if="sheet.config.border">
+				<div class="item" @click="onBorderClick">
+					<Icons icon-name="Border"></Icons>
+					<span>边框</span>
+				</div>
+				<div class="item" @click="onBorderClick(false)">
+					<Icons icon-name="UnBorder"></Icons>
+					<span>无边框</span>
 				</div>
 			</div>
 		</div>
@@ -821,12 +929,13 @@ defineExpose({
 	border-bottom: none;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-start;
 	transition: all 0.15s linear;
+	user-select: none;
 	.group {
 		border-right: 1px solid var(--z-line);
 		display: flex;
-		padding: 4px 0;
+		padding: 4px 4px 4px 0;
 	}
 
 	.item {
@@ -836,19 +945,20 @@ defineExpose({
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-start;
-		margin: 0 4px;
+		margin: 0 0 0 4px;
 		padding: 4px;
 		transition: all 0.15s linear;
 		span {
 			font-size: 12px;
 			padding: 4px 0 0 0;
+			transform: scale(0.9);
 		}
 
 		&:hover {
-			background-color: var(--z-main);
-			color: var(--z-nav-font-active);
+			background-color: var(--z-sheet-virtual);
+			color: var(--z-font-color);
 			:deep(svg) {
-				color: var(--z-nav-font-active) !important;
+				color: var(--z-font-color) !important;
 			}
 		}
 	}
