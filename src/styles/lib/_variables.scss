@@ -24,6 +24,8 @@
 		--z-danger: rgb(245, 108, 108);
 		--z-error: rgb(245, 108, 108);
 
+		--z-sheet-virtual: rgb(232, 230, 255);
+
 		// --------------------------------------------
 		--z-theme-rgb: 255, 255, 255;
 
@@ -46,6 +48,8 @@
 		--z-warning-rgb: 230, 162, 60;
 		--z-danger-rgb: 245, 108, 108;
 		--z-error-rgb: 245, 108, 108;
+
+		--z-sheet-virtual-rgb: 232, 230, 255;
 	}
 
 	body.dark {
@@ -71,6 +75,8 @@
 		--z-danger: rgb(245, 108, 108);
 		--z-error: rgb(245, 108, 108);
 
+		--z-sheet-virtual: rgb(48, 48, 48);
+
 		// --------------------------------------------
 
 		--z-theme-rgb: 24, 24, 24;
@@ -94,5 +100,7 @@
 		--z-warning-rgb: 230, 162, 60;
 		--z-danger-rgb: 245, 108, 108;
 		--z-error-rgb: 245, 108, 108;
+
+		--z-sheet-virtual-rgb: 48, 48, 48;
 	}
 }

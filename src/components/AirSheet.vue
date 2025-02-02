@@ -84,6 +84,9 @@ const initialData = () => {
 		const count = Math.ceil(props.modelValue.celldata.length / sliceSize)
 		for (let i = 0; i < count; i++) {
 			for (let j = i * sliceSize; j < (i + 1) * sliceSize; j++) {
+				if (sheet.celldata.has(j) && j !== 0) {
+					continue
+				}
 				sheet.celldata.set(j, celldata[j] || [])
 			}
 		}
@@ -436,15 +439,39 @@ const updateViewportSize = () => {
 }
 
 // 点击序号
-const onClickNumber = (row) => {
-	console.log('点击序号', row)
-	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1)
+const onClickNumber = (e, row) => {
+	const target = e.currentTarget
+	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1, true)
+	setTimeout(() => {
+		target.parentNode.querySelectorAll('.selection').forEach((item) => {
+			item.classList.remove('selection')
+		})
+		target.classList.add('selection')
+		document
+			.querySelector('.alphabet-cells')
+			.querySelectorAll('.alphabet-cell')
+			.forEach((item) => {
+				item.classList.add('selection')
+			})
+	}, 0)
 }
 
 // 点击字母
-const onClickAlphabet = (col) => {
-	console.log('点击字母', col)
+const onClickAlphabet = (e, col) => {
+	const target = e.currentTarget
 	useSelectionRangeHook.setRange(0, col.colIndex, sheet.config.rowCount - 1, col.colIndex)
+	setTimeout(() => {
+		target.parentNode.querySelectorAll('.selection').forEach((item) => {
+			item.classList.remove('selection')
+		})
+		target.classList.add('selection')
+		document
+			.querySelector('.number-cells')
+			.querySelectorAll('.number-cell')
+			.forEach((item) => {
+				item.classList.add('selection')
+			})
+	}, 0)
 }
 
 // 点击合并
@@ -481,6 +508,7 @@ const destroy = () => {
 	if (useSelectionRangeHook) {
 		useSelectionRangeHook.destroy()
 	}
+	sheet.celldata?.clear()
 	window.removeEventListener('resize', updateViewportSize)
 }
 
@@ -506,7 +534,6 @@ onDeactivated(() => {
 			left: containerRef.value.scrollLeft,
 		}
 	}
-	celldata.clear()
 	window.removeEventListener('resize', updateViewportSize)
 })
 
@@ -565,7 +592,7 @@ defineExpose({
 								:class="{
 									selection: useSelectionRangeHook.selectionClass(null, alphabet),
 								}"
-								@click="onClickAlphabet(alphabet)"
+								@click="onClickAlphabet($event, alphabet)"
 							>
 								<span>{{ alphabet.title }}</span>
 								<div
@@ -607,7 +634,7 @@ defineExpose({
 			>
 				<div class="virtual-phantom" :style="{height: totalHeight + 'px'}"></div>
 				<div
-					class="virtual-content"
+					class="virtual-content number-cells"
 					:style="{
 						transform: `translate(0, ${offsetTop}px)`,
 						width: `${numberWidth}px`,
@@ -615,12 +642,12 @@ defineExpose({
 				>
 					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<div
-							class="number"
+							class="number-cell"
 							:style="{height: `${row.rowHeight}px`}"
 							:class="{
 								selection: useSelectionRangeHook.selectionClass(row),
 							}"
-							@click="onClickNumber(row)"
+							@click="onClickNumber($event, row)"
 						>
 							<span>{{ row.rowIndex + 1 }}</span>
 
@@ -792,7 +819,7 @@ defineExpose({
 	align-items: flex-start;
 	border: 1px solid var(--z-line);
 	border-bottom: none;
-	background-color: var(--z-bg-secondary);
+	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	justify-content: space-between;
 	transition: all 0.15s linear;
@@ -830,7 +857,7 @@ defineExpose({
 .statusbar {
 	border: 1px solid var(--z-line);
 	border-top: none;
-	background-color: var(--z-bg-secondary);
+	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	padding: 5px;
 	transition: all 0.15s linear;
@@ -880,8 +907,8 @@ defineExpose({
 		padding-right: 1px;
 
 		.selection {
-			color: var(--z-nav-font-active);
-			background-color: rgba(var(--z-main-rgb), 0.9);
+			color: var(--z-font-color);
+			background-color: rgba(var(--z-sheet-virtual-rgb), 1);
 		}
 	}
 
@@ -922,12 +949,12 @@ defineExpose({
 	}
 
 	.custom {
-		background-color: var(--z-bg-secondary);
+		background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 		flex: none;
 		overflow: hidden;
 		transition: opacity 0.15s linear;
 
-		.number {
+		.number-cell {
 			align-items: center;
 			border-bottom: 1px solid var(--z-line);
 			cursor: pointer;
@@ -957,7 +984,7 @@ defineExpose({
 
 			&.selection {
 				span {
-					color: var(--z-nav-font-active);
+					// color: var(--z-font-color);
 				}
 			}
 		}

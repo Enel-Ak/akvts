@@ -197,6 +197,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	})
 
+	// 计算选区序号和字母样式
 	const selectionClass = computed(() => {
 		return (row, col) => {
 			const rowIndex = row?.rowIndex
@@ -244,7 +245,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 					}
 				}
 			}
-
 			return bool
 		}
 	})
@@ -425,7 +425,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	}
 
 	// 设置选区范围
-	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol) => {
+	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol, force = false) => {
 		selecting.value = true
 		ranged.value = true
 
@@ -441,6 +441,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 		selectionEnd.value = {
 			row: endRow,
 			col: endCol,
+		}
+
+		if (force) {
+			handleMouseUp()
+			return
 		}
 
 		// 检查是否在合并单元格内

@@ -49,7 +49,7 @@ export const useResize = (config = {}) => {
 
 		isResizing.value = true
 
-		let el = direction === 'vertical' ? '.number' : '.cell'
+		let el = direction === 'vertical' ? '.number-cell' : '.alphabet-cell'
 
 		resizingEl = e.target.closest(el)
 		sheetContainer = resizingEl.closest('.sheet')

@@ -24,10 +24,28 @@ export const useEdit = (id, config) => {
 		if (cellEl.getAttribute('contenteditable')) return
 
 		cellEl.setAttribute('contenteditable', 'true')
+
+		// 允许的特殊按键：退格键、删除键、方向键等
+		const allowedKeys = [
+			'Backspace',
+			'Delete',
+			'ArrowLeft',
+			'ArrowRight',
+			'ArrowUp',
+			'ArrowDown',
+		]
+
+		const pattern = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>/?\\|`~ ]$/
+
+		if (e.type !== 'dblclick' && !allowedKeys.includes(e.key) && !pattern.test(e.key)) {
+			return
+		}
+
 		// 未双击, 直接输入清空所有内容
 		if (cell.rowIndex === undefined) {
 			cellEl.innerText = ''
 		}
+
 		cellEl.focus()
 
 		// 将光标移到文本末尾
