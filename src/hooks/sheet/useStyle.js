@@ -32,24 +32,24 @@ export const useStyle = (cellStyle) => {
 				break
 			case 'b':
 				if (value === 'cross') {
-					style[border('all')] = '2px solid #000'
+					style[border('all')] = '1px solid #000'
 				}
 
 				if (value === 'top') {
-					style[border('top')] = '2px solid #000'
-					style[border('bottom')] = '2px solid #000'
-					style[border('right')] = '2px solid #000'
+					style[border('top')] = '1px solid #000'
+					style[border('bottom')] = '1px solid #000'
+					style[border('right')] = '1px solid #000'
 				}
 
 				if (value === 'left') {
-					style[border('left')] = '2px solid #000'
-					style[border('right')] = '2px solid #000'
-					style[border('bottom')] = '2px solid #000'
+					style[border('left')] = '1px solid #000'
+					style[border('right')] = '1px solid #000'
+					style[border('bottom')] = '1px solid #000'
 				}
 
 				if (value === 'all') {
-					style[border('right')] = '2px solid #000'
-					style[border('bottom')] = '2px solid #000'
+					style[border('right')] = '1px solid #000'
+					style[border('bottom')] = '1px solid #000'
 				}
 
 				break
