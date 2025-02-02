@@ -90,9 +90,6 @@ const initialData = () => {
 		const count = Math.ceil(props.modelValue.celldata.length / sliceSize)
 		for (let i = 0; i < count; i++) {
 			for (let j = i * sliceSize; j < (i + 1) * sliceSize; j++) {
-				if (sheet.celldata.has(j) && j !== 0) {
-					continue
-				}
 				sheet.celldata.set(j, celldata[j] || [])
 			}
 		}
@@ -574,25 +571,49 @@ const onBorderClick = (border = true) => {
 		}
 	})
 }
+
 // 点击对齐
 const onAlignClick = (align) => setCellStyle('a', align)
 
 const init = () => {
 	initialData()
 	updateViewportSize()
+
+	useResizeHook.init()
+	useSheetRenderHook.init()
+	useSelectionRangeHook.init()
+	useEditHook.init()
+
 	window.addEventListener('resize', updateViewportSize)
-	initialized.value = true
+
 	nextTick(() => {
 		restoreScrollPosition()
+		initialized.value = true
 	})
 }
 
 const destroy = () => {
+	if (useSheetRenderHook) {
+		useSheetRenderHook.destroy()
+	}
+
 	if (useSelectionRangeHook) {
 		useSelectionRangeHook.destroy()
 	}
-	sheet.celldata?.clear()
+
+	if (useEditHook) {
+		useEditHook.destroy()
+	}
+
+	if (useResizeHook) {
+		useResizeHook.destroy()
+	}
+
 	window.removeEventListener('resize', updateViewportSize)
+}
+
+const clearData = () => {
+	sheet.celldata.clear()
 }
 
 // 初始化
@@ -621,9 +642,14 @@ onDeactivated(() => {
 	window.removeEventListener('resize', updateViewportSize)
 })
 
-onUnmounted(() => destroy())
+onUnmounted(() => {
+	destroy()
+	clearData()
+})
 
 defineExpose({
+	destroy,
+	clearData,
 	setRange: useSelectionRangeHook.setRange,
 	setMergeCell: useMergedCellsHook.addMergedCell,
 })

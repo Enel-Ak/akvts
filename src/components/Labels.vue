@@ -1,5 +1,5 @@
 <script setup>
-import {nextTick, ref, computed, watch, onBeforeMount, onMounted, onUnmounted, reactive} from 'vue'
+import {nextTick, ref, computed, watch, onBeforeMount, onMounted, onUnmounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import useGuid from '@/hooks/useGuid'
 
@@ -100,6 +100,7 @@ const onCloseLabelAll = () => {
 const onCancelItem = (item) => {
 	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 	items.value.splice(index, 1)
+
 	nextTick(() => {
 		if (current.value[props.keys[0]] === item[props.keys[0]]) {
 			const nextItem = items.value[index] || items.value[index - 1]
@@ -154,7 +155,6 @@ const deleteLabel = (e) => {
 	const {path} = e.detail
 	const item = items.value.find((f) => f.path === decodeURI(path).trim())
 	console.log('Labels DeleteLabel', item, e)
-
 	onCancelItem(item)
 }
 

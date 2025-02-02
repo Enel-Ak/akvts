@@ -1,8 +1,12 @@
 <script setup>
-import {onMounted, ref, provide, inject} from 'vue'
+import {onMounted, ref, provide, inject, computed, watch} from 'vue'
 import {deleteLabel} from '../hooks/useLabels'
 import useGuid from '@/hooks/useGuid'
+import {useKeepAlive} from '@/store/useKeepAlive'
 
+const keepAlive = useKeepAlive()
+const includeKeepAlive = ref([])
+const excludeKeepAlive = ref([])
 const containerExpand = ref(true)
 const hid = ref(useGuid())
 const pid = ref(useGuid())
@@ -28,6 +32,22 @@ const nav = [
 const labelsRef = ref()
 const currentItemId = ref('')
 const parentId = ref('')
+
+watch(
+	() => keepAlive.getInclude,
+	(val) => {
+		includeKeepAlive.value = val
+	},
+	{deep: true, immediate: true}
+)
+
+watch(
+	() => keepAlive.getExclude,
+	(val) => {
+		excludeKeepAlive.value = val
+	},
+	{deep: true, immediate: true}
+)
 
 onMounted(() => {
 	currentItemId.value = nav[0].id
@@ -61,7 +81,11 @@ onMounted(() => {
 		<router-view v-slot="{Component}">
 			<Transition name="fade" mode="out-in" appear>
 				<keep-alive>
-					<component :is="Component" :key="$route.fullPath" />
+					<component
+						:is="Component"
+						:key="$route.fullPath"
+						:name="$route.path.split('/').pop() || 'index'"
+					/>
 				</keep-alive>
 			</Transition>
 		</router-view>

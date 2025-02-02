@@ -1,4 +1,4 @@
-import {onActivated, onDeactivated, onMounted} from 'vue'
+import {nextTick, onActivated, onDeactivated, onMounted} from 'vue'
 export const useEdit = (id, config) => {
 	const {sheet, renderRange, useResizeHook, useSelectionRangeHook} = config
 	let initialized = false
@@ -112,9 +112,9 @@ export const useEdit = (id, config) => {
 		document.addEventListener('keydown', startEdit)
 	}
 
-	onMounted(() => init())
-	onActivated(() => init())
-	onDeactivated(() => destroy())
+	// onMounted(() => init())
+	// onActivated(() => init())
+	// onDeactivated(() => destroy())
 
 	return {
 		init,

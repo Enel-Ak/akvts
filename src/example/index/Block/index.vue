@@ -1,4 +1,5 @@
 <script setup>
+import {onDeactivated} from 'vue'
 import {useRouter} from 'vue-router'
 const router = useRouter()
 const onClick = () => {

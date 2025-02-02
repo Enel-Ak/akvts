@@ -1,7 +1,7 @@
 <script setup>
-import {nextTick, onMounted, ref} from 'vue'
+import {nextTick, onDeactivated, onMounted, ref} from 'vue'
 
-const tableRef = ref()
+const sheetRef = ref()
 const config = {
 	config: {
 		cellStyle: {
@@ -42,22 +42,22 @@ const config2 = {
 }
 
 onMounted(() => {
-	tableRef.value.setMergeCell(12, 4, 4, 4)
-	tableRef.value.setMergeCell(16, 5, 4, 4)
-	tableRef.value.setMergeCell(45, 7, 2, 4)
+	sheetRef.value.setMergeCell(12, 4, 4, 4)
+	sheetRef.value.setMergeCell(16, 5, 4, 4)
+	sheetRef.value.setMergeCell(45, 7, 2, 4)
 
 	// setTimeout(() => {
-	// 	tableRef.value.setMergeCell(0, 0, 2, 4)
+	// 	sheetRef.value.setMergeCell(0, 0, 2, 4)
 
-	// 	tableRef.value.setRange(0, 0, 2, 4)
+	// 	sheetRef.value.setRange(0, 0, 2, 4)
 	// }, 1000)
 
-	// tableRef.value.mergeCells(1, 3, 3, 3)
+	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
 </script>
 <template>
 	<div style="height: 100%" class="df">
-		<AirSheet ref="tableRef" v-model="config"></AirSheet>
+		<AirSheet ref="sheetRef" v-model="config"></AirSheet>
 
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>

@@ -2,9 +2,7 @@ import {ref} from 'vue'
 
 export const useSheetRender = (sheet) => {
 	// 创建渲染worker
-	const worker = new Worker(new URL('./worker/SheetRenderWorker.js', import.meta.url), {
-		type: 'module',
-	})
+	let worker = null
 
 	// 渲染结果缓存
 	const renderResult = ref(null)
@@ -15,6 +13,7 @@ export const useSheetRender = (sheet) => {
 
 	// 获取渲染结果
 	const getRenderResult = (data) => {
+		if (!worker) return
 		return new Promise((resolve, reject) => {
 			const requestId = ++renderRequestId
 
@@ -38,35 +37,47 @@ export const useSheetRender = (sheet) => {
 		})
 	}
 
-	// 监听worker消息
-	worker.onmessage = (event) => {
-		const {type, data, requestId} = event.data
-
-		switch (type) {
-			case 'render_response': {
-				// 处理渲染结果
-				const request = renderRequests.get(requestId)
-
-				if (request) {
-					renderRequests.delete(requestId)
-					renderResult.value = data
-					request.resolve(data)
-				}
-				break
-			}
-			case 'error':
-				console.error('Worker错误:', data)
-				// 处理错误情况下的请求
-				if (requestId && renderRequests.has(requestId)) {
-					const request = renderRequests.get(requestId)
-					renderRequests.delete(requestId)
-					request.reject(new Error(data))
-				}
-				break
-		}
+	const destroy = () => {
+		worker.terminate()
+		renderRequests.clear()
 	}
 
+	const init = () => {
+		worker = new Worker(new URL('./worker/SheetRenderWorker.js', import.meta.url), {
+			type: 'module',
+		})
+		// 监听worker消息
+
+		worker.onmessage = (event) => {
+			const {type, data, requestId} = event.data
+
+			switch (type) {
+				case 'render_response': {
+					// 处理渲染结果
+					const request = renderRequests.get(requestId)
+
+					if (request) {
+						renderRequests.delete(requestId)
+						renderResult.value = data
+						request.resolve(data)
+					}
+					break
+				}
+				case 'error':
+					console.error('Worker错误:', data)
+					// 处理错误情况下的请求
+					if (requestId && renderRequests.has(requestId)) {
+						const request = renderRequests.get(requestId)
+						renderRequests.delete(requestId)
+						request.reject(new Error(data))
+					}
+					break
+			}
+		}
+	}
 	return {
 		getRenderResult,
+		init,
+		destroy,
 	}
 }

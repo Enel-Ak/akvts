@@ -16,6 +16,7 @@ export const useGlobal = defineStore('useGlobal', {
 				res: 0,
 				err: 0,
 			},
+			include: [],
 		}
 	},
 	getters: {
@@ -36,6 +37,7 @@ export const useGlobal = defineStore('useGlobal', {
 		getIsNoPage: (state) => state.isNoPage,
 		getTheme: (state) => state.theme,
 		getPermissions: (state) => state.permissions,
+		getInclude: (state) => state.include,
 	},
 	actions: {
 		cancelAbort() {
@@ -63,6 +65,12 @@ export const useGlobal = defineStore('useGlobal', {
 			this.theme = theme
 			document.body.setAttribute('class', theme)
 			localStorage.setItem('theme', theme)
+		},
+		setInclude(name) {
+			this.include.push(name)
+		},
+		setExclude(name) {
+			this.include = this.include.filter((item) => item !== name)
 		},
 	},
 })

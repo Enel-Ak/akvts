@@ -417,29 +417,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	}
 
-	// 清除选区的方法
-	const clear = () => {
-		selecting.value = false
-		isDragging.value = false
-		isRangeDragging.value = false
-		mouseDownPos.value = {x: 0, y: 0}
-		selectionStart.value = {row: -1, col: -1}
-		selectionEnd.value = {row: -1, col: -1}
-		ranged.value = null
-	}
-
-	// 移除事件监听器
-	const destroy = () => {
-		clear()
-		if (container) {
-			container.removeEventListener('mousedown', handleMouseDown)
-			window.removeEventListener('mousemove', handleMouseMove)
-			window.removeEventListener('mouseup', handleMouseUp)
-			document.removeEventListener('mousemove', handleDragMove)
-			document.removeEventListener('mouseup', handleDragEnd)
-		}
-	}
-
 	// 设置选区范围
 	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol, force = false) => {
 		selecting.value = true
@@ -499,6 +476,29 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return start
 	}
 
+	// 清除选区的方法
+	const clear = () => {
+		selecting.value = false
+		isDragging.value = false
+		isRangeDragging.value = false
+		mouseDownPos.value = {x: 0, y: 0}
+		selectionStart.value = {row: -1, col: -1}
+		selectionEnd.value = {row: -1, col: -1}
+		ranged.value = null
+	}
+
+	// 移除事件监听器
+	const destroy = () => {
+		clear()
+		if (container) {
+			container.removeEventListener('mousedown', handleMouseDown)
+			window.removeEventListener('mousemove', handleMouseMove)
+			window.removeEventListener('mouseup', handleMouseUp)
+			document.removeEventListener('mousemove', handleDragMove)
+			document.removeEventListener('mouseup', handleDragEnd)
+		}
+	}
+
 	// 初始化
 	const init = () => {
 		container = document.querySelector(`#${containerId}`)
@@ -517,8 +517,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		document.addEventListener('mouseup', handleDragEnd)
 	}
 
-	onMounted(() => nextTick(() => init()))
-
 	return {
 		// 状态
 		selecting,
@@ -533,6 +531,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		selectionEnd,
 
 		//方法
+		init,
 		getStartCell,
 		setRange,
 		drag: handleDragStart,

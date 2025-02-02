@@ -4,9 +4,7 @@ export const useResize = (config = {}) => {
 	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
 
 	// 创建渲染worker
-	const worker = new Worker(new URL('./worker/ResizeRenderWorker.js', import.meta.url), {
-		type: 'module',
-	})
+	let worker = null
 
 	// 行高调整相关
 	const rowHeights = {} // 存储自定义行高
@@ -173,6 +171,7 @@ export const useResize = (config = {}) => {
 	const renderRequests = new Map()
 
 	const getRenderResult = (data, type = 'render_request') => {
+		if (!worker) return
 		return new Promise((resolve, reject) => {
 			const requestId = ++renderRequestId
 
@@ -203,29 +202,40 @@ export const useResize = (config = {}) => {
 		})
 	}
 
-	// 监听worker消息
-	worker.onmessage = (event) => {
-		const {type, data, requestId} = event.data
+	const destroy = () => {
+		worker.terminate()
+		renderRequests.clear()
+	}
 
-		if (type === 'error') {
-			console.error('Worker错误:', data)
-			// 处理错误情况下的请求
-			if (requestId && renderRequests.has(requestId)) {
+	const init = () => {
+		worker = new Worker(new URL('./worker/ResizeRenderWorker.js', import.meta.url), {
+			type: 'module',
+		})
+		// 监听worker消息
+		worker.onmessage = (event) => {
+			const {type, data, requestId} = event.data
+
+			if (type === 'error') {
+				console.error('Worker错误:', data)
+				// 处理错误情况下的请求
+				if (requestId && renderRequests.has(requestId)) {
+					const request = renderRequests.get(requestId)
+					renderRequests.delete(requestId)
+					request.reject(new Error(data))
+				}
+			} else {
+				// 处理渲染结果
 				const request = renderRequests.get(requestId)
-				renderRequests.delete(requestId)
-				request.reject(new Error(data))
-			}
-		} else {
-			// 处理渲染结果
-			const request = renderRequests.get(requestId)
-			if (request) {
-				renderRequests.delete(requestId)
-				request.resolve(data)
+				if (request) {
+					renderRequests.delete(requestId)
+					request.resolve(data)
+				}
 			}
 		}
 	}
 
 	return {
+		init,
 		isResizing,
 		resizingRow,
 		resizingCol,
@@ -236,5 +246,6 @@ export const useResize = (config = {}) => {
 		getColWidth,
 		rowHeights,
 		colWidths,
+		destroy,
 	}
 }
