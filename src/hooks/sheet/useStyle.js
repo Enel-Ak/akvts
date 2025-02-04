@@ -25,33 +25,40 @@ export const useStyle = (cellStyle) => {
 	}
 
 	Object.entries(cellStyle).forEach(([key, value]) => {
+		let line = '1px solid #000'
 		switch (key) {
 			case 'a':
 				style['align-items'] = alignItems(value)
 				style['text-align'] = value
 				break
-			case 'b':
+			case 'b': {
 				if (value === 'cross') {
-					style[border('all')] = '1px solid #000'
+					style[border('all')] = line
+				} else if (value === 'top') {
+					style[border('top')] = line
+					style[border('bottom')] = line
+					style[border('right')] = line
+				} else if (value === 'left') {
+					style[border('left')] = line
+					style[border('right')] = line
+					style[border('bottom')] = line
+				} else if (value === 'all') {
+					style[border('right')] = line
+					style[border('bottom')] = line
 				}
-
-				if (value === 'top') {
-					style[border('top')] = '1px solid #000'
-					style[border('bottom')] = '1px solid #000'
-					style[border('right')] = '1px solid #000'
-				}
-
-				if (value === 'left') {
-					style[border('left')] = '1px solid #000'
-					style[border('right')] = '1px solid #000'
-					style[border('bottom')] = '1px solid #000'
-				}
-
-				if (value === 'all') {
-					style[border('right')] = '1px solid #000'
-					style[border('bottom')] = '1px solid #000'
-				}
-
+				break
+			}
+			case 'bt':
+				style[border('top')] = line
+				break
+			case 'bl':
+				style[border('left')] = line
+				break
+			case 'br':
+				style[border('right')] = line
+				break
+			case 'bb':
+				style[border('bottom')] = line
 				break
 			default:
 				style[key] = value

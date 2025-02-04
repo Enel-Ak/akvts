@@ -528,12 +528,17 @@ const onMergeClick = () => {
 }
 
 // 点击边框
-const onBorderClick = (border = true) => {
+const onBorderClick = (border = true, direction = null) => {
 	setCellStyle('b', null, (r, c, {startRow, startCol, endRow, endCol}) => {
 		// 删除边框样式
-		if (!border) {
+		if (!border && !direction) {
+			// 无边框
 			if (sheet.config.cellStyle[`${r}-${c}`]) {
 				delete sheet.config.cellStyle[`${r}-${c}`].b
+				delete sheet.config.cellStyle[`${r}-${c}`].bt
+				delete sheet.config.cellStyle[`${r}-${c}`].bb
+				delete sheet.config.cellStyle[`${r}-${c}`].bl
+				delete sheet.config.cellStyle[`${r}-${c}`].br
 				// 如果没有其他样式，删除整个样式对象
 				if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
 					delete sheet.config.cellStyle[`${r}-${c}`]
@@ -542,9 +547,32 @@ const onBorderClick = (border = true) => {
 			return
 		}
 
+		if (border && !direction) {
+			// 点边框时删除其他边框
+			try {
+				delete sheet.config.cellStyle[`${r}-${c}`].bt
+				delete sheet.config.cellStyle[`${r}-${c}`].bb
+				delete sheet.config.cellStyle[`${r}-${c}`].bl
+				delete sheet.config.cellStyle[`${r}-${c}`].br
+			} catch {}
+		}
+
 		// 如果没有cellStyle对象，创建一个
 		if (!sheet.config.cellStyle[`${r}-${c}`]) {
 			sheet.config.cellStyle[`${r}-${c}`] = {}
+		}
+
+		if (border === null && direction) {
+			if (direction === 'top') {
+				sheet.config.cellStyle[`${r}-${c}`].bt = 'borderTop'
+			} else if (direction === 'bottom') {
+				sheet.config.cellStyle[`${r}-${c}`].bb = 'borderBottom'
+			} else if (direction === 'left') {
+				sheet.config.cellStyle[`${r}-${c}`].bl = 'borderLeft'
+			} else if (direction === 'right') {
+				sheet.config.cellStyle[`${r}-${c}`].br = 'borderRight'
+			}
+			return
 		}
 
 		// 第一行第一列的交叉单元格
@@ -686,6 +714,22 @@ defineExpose({
 				<div class="item" @click="onBorderClick(false)">
 					<Icons icon-name="UnBorder"></Icons>
 					<span>无边框</span>
+				</div>
+				<div class="item" @click="onBorderClick(null, 'top')">
+					<Icons icon-name="BorderTop"></Icons>
+					<span>上边框</span>
+				</div>
+				<div class="item" @click="onBorderClick(null, 'bottom')">
+					<Icons icon-name="BorderBottom"></Icons>
+					<span>下边框</span>
+				</div>
+				<div class="item" @click="onBorderClick(null, 'left')">
+					<Icons icon-name="BorderLeft"></Icons>
+					<span>左边框</span>
+				</div>
+				<div class="item" @click="onBorderClick(null, 'right')">
+					<Icons icon-name="BorderRight"></Icons>
+					<span>右边框</span>
 				</div>
 			</div>
 		</div>
