@@ -6,7 +6,7 @@ export function useHistory(sheet, config) {
 	const history = ref(new Map())
 	const currentIndex = ref(-1)
 	const maxHistory = 50 // 最大历史记录数
-	const {useMergedCellsHook} = config
+	const {renderRange, useMergedCellsHook} = config
 
 	// 准备修改前保存当前状态
 	const saveHistory = () => {
@@ -40,6 +40,7 @@ export function useHistory(sheet, config) {
 			mergedCells.set(key, value)
 		)
 		useMergedCellsHook.setMergedCells(mergedCells)
+		renderRange()
 	}
 
 	// 判断是否可以撤销/重做

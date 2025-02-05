@@ -26,7 +26,7 @@ const props = defineProps({
 	modelValue: {type: Object, default: () => {}},
 
 	// 总行数
-	rowCount: {type: Number, default: 20}, // 最大 671087
+	rowCount: {type: Number, default: 10}, // 最大 671087
 	// 总列数
 	colCount: {type: Number, default: 10},
 	// 单元格高度
@@ -174,6 +174,7 @@ const useEditHook = useEdit(id, {
 })
 const useHistoryHook = useHistory(sheet, {
 	useMergedCellsHook,
+	renderRange: () => updateVisibleRange(),
 })
 const useCopyHook = useCopy({
 	sheet,
@@ -328,8 +329,6 @@ const offsetLeft = ref(0)
 // 滚动条宽度补偿
 const scrollbarWidth = ref(0)
 const updateOffset = async (type, value) => {
-	console.log(type, value, visibleRangeRef.value)
-
 	const result = await useResizeHook.getRenderResult({
 		type,
 		[value]: visibleRangeRef.value[value],
