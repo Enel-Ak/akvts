@@ -41,6 +41,12 @@ const calculateVisibleRange = (data) => {
 	const calculateRowRange = () => {
 		let startRow = 0
 		let accHeight = 0
+		let totalHeight = 0
+
+		// 计算总高度
+		for (let i = 0; i < rowCount; i++) {
+			totalHeight += rowHeights?.[i] || defaultRowHeight
+		}
 
 		// 找到起始行
 		while (startRow < rowCount) {
@@ -52,23 +58,44 @@ const calculateVisibleRange = (data) => {
 			startRow++
 		}
 
+		// 添加上方缓冲区
+		const bufferRows = buffer
+		startRow = Math.max(0, startRow - bufferRows)
+
 		let endRow = startRow
 		let visibleHeight = 0
 
-		// 计算可见行数
-		while (endRow < rowCount && visibleHeight < viewportHeight) {
+		// 计算可见行数，增加底部缓冲区
+		while (
+			endRow < rowCount &&
+			visibleHeight < viewportHeight + defaultRowHeight * bufferRows
+		) {
 			const rowHeight = rowHeights?.[endRow] || defaultRowHeight
 			visibleHeight += rowHeight
 			endRow++
 		}
 
-		return {startRow, endRow}
+		// 特殊处理：如果接近底部，确保显示所有数据
+		if (scrollTop + viewportHeight >= totalHeight - viewportHeight / 2) {
+			endRow = rowCount
+		}
+
+		// 确保不超出总行数
+		endRow = Math.min(rowCount, endRow + bufferRows)
+
+		return {startRow, endRow, totalHeight}
 	}
 
 	// 计算列范围
 	const calculateColRange = () => {
 		let startCol = 0
 		let accWidth = 0
+		let totalWidth = 0
+
+		// 计算总宽度
+		for (let i = 0; i < colCount; i++) {
+			totalWidth += colWidths?.[i] || defaultColWidth
+		}
 
 		// 找到起始列
 		while (startCol < colCount) {
@@ -80,17 +107,29 @@ const calculateVisibleRange = (data) => {
 			startCol++
 		}
 
+		// 添加左侧缓冲区
+		const bufferCols = buffer
+		startCol = Math.max(0, startCol - bufferCols)
+
 		let endCol = startCol
 		let visibleWidth = 0
 
-		// 计算可见列数
-		while (endCol < colCount && visibleWidth < viewportWidth) {
+		// 计算可见列数，增加右侧缓冲区
+		while (endCol < colCount && visibleWidth < viewportWidth + defaultColWidth * bufferCols) {
 			const colWidth = colWidths?.[endCol] || defaultColWidth
 			visibleWidth += colWidth
 			endCol++
 		}
 
-		return {startCol, endCol}
+		// 特殊处理：如果接近右边界，确保显示所有列
+		if (scrollLeft + viewportWidth >= totalWidth - viewportWidth / 2) {
+			endCol = colCount
+		}
+
+		// 确保不超出总列数
+		endCol = Math.min(colCount, endCol + bufferCols)
+
+		return {startCol, endCol, totalWidth}
 	}
 
 	const rowRange = calculateRowRange()

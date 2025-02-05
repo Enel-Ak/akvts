@@ -1,4 +1,4 @@
-import {ref} from 'vue'
+import {reactive, ref} from 'vue'
 export const useResize = (config = {}) => {
 	// 获取配置
 	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
@@ -7,8 +7,8 @@ export const useResize = (config = {}) => {
 	let worker = null
 
 	// 行高调整相关
-	const rowHeights = {} // 存储自定义行高
-	const colWidths = {} // 存储自定义列宽
+	const rowHeights = reactive({}) // 存储自定义行高
+	const colWidths = reactive({}) // 存储自定义列宽
 
 	const isResizing = ref(false) // 是否正在调整大小
 
@@ -39,6 +39,12 @@ export const useResize = (config = {}) => {
 
 	const setRowHeight = (index, height) => {
 		rowHeights[index] = height
+		renderRange()
+	}
+
+	const setColWidth = (index, width) => {
+		colWidths[index] = width
+		renderRange()
 	}
 
 	// 开始调整行高
@@ -185,9 +191,9 @@ export const useResize = (config = {}) => {
 					data: {
 						...data,
 						rowHeight,
-						rowHeights,
+						rowHeights: JSON.parse(JSON.stringify(rowHeights)),
 						colWidth,
-						colWidths,
+						colWidths: JSON.parse(JSON.stringify(colWidths)),
 					},
 				})
 			}
@@ -242,8 +248,9 @@ export const useResize = (config = {}) => {
 		getRenderResult,
 		startResize,
 		getRowHeight,
-		setRowHeight,
 		getColWidth,
+		setRowHeight,
+		setColWidth,
 		rowHeights,
 		colWidths,
 		destroy,
