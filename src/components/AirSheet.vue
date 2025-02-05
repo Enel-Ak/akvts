@@ -16,6 +16,7 @@ import {useSelectionRange} from '@/hooks/sheet/useSelectionRange'
 import {useResize} from '@/hooks/sheet/useResize'
 import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
 import {useEdit} from '@/hooks/sheet/useEdit.js'
+import {useHistory} from '@/hooks/sheet/useHistory'
 
 // 核心配置参数
 const props = defineProps({
@@ -45,26 +46,6 @@ const props = defineProps({
 	height: {type: [Number, String], default: 0},
 })
 
-const maxRowCount = computed(() => {
-	if (props.modelValue?.celldata.length) {
-		return props.modelValue.celldata.length > props.rowCount
-			? props.modelValue.celldata.length
-			: props.rowCount
-	} else {
-		return props.rowCount > 671087 ? 671087 : props.rowCount
-	}
-})
-
-const maxColCount = computed(() => {
-	if (props.modelValue?.celldata.length) {
-		return props.modelValue.celldata
-			.map((d) => d.length)
-			.reduce((a, b) => Math.max(a, b), props.colCount)
-	} else {
-		return props.colCount > 240 ? 240 : props.colCount
-	}
-})
-
 // 保存数据
 const sheet = reactive({
 	config: {
@@ -72,14 +53,42 @@ const sheet = reactive({
 		align: true, // 对齐方式
 		border: true, // 边框
 
+		mergedCells: {},
 		cellStyle: {
 			...props.modelValue?.config.cellStyle,
 		},
-		rowCount: maxRowCount.value,
-		colCount: maxColCount.value,
+		rowCount: 0,
+		colCount: 0,
 	},
 	celldata: new Map(),
-	fns: props.modelValue.fns || [],
+	fns: props.modelValue?.fns || [],
+})
+
+const maxRowCount = computed(() => {
+	let rowCount = 0
+	if (props.modelValue?.celldata) {
+		rowCount =
+			props.modelValue?.celldata.length > props.rowCount
+				? props.modelValue?.celldata.length
+				: props.rowCount
+	} else {
+		rowCount = props.rowCount > 671087 ? 671087 : props.rowCount
+	}
+	sheet.config.rowCount = rowCount
+	return rowCount
+})
+
+const maxColCount = computed(() => {
+	let colCount = 0
+	if (props.modelValue?.celldata) {
+		colCount = props.modelValue.celldata
+			.map((d) => d.length)
+			.reduce((a, b) => Math.max(a, b), props.colCount)
+	} else {
+		colCount = props.colCount > 240 ? 240 : props.colCount
+	}
+	sheet.config.colCount = colCount
+	return colCount
 })
 
 // 初始数据处理
@@ -94,6 +103,7 @@ const initialData = () => {
 			}
 		}
 	}
+	useHistoryHook.saveHistory()
 }
 
 // 容器
@@ -158,6 +168,11 @@ const useEditHook = useEdit(id, {
 	renderRange: () => updateVisibleRange(),
 })
 
+// 初始化history
+const useHistoryHook = useHistory(sheet, {
+	useMergedCellsHook,
+})
+
 // 计算总高度
 const totalHeight = computed(() => {
 	let height = 0
@@ -205,8 +220,9 @@ const updateVisibleRange = async () => {
 			defaultColWidth: props.colWidth,
 			rowHeights: useResizeHook.rowHeights,
 			colWidths: useResizeHook.colWidths,
-			mergedCells: useMergedCellsHook.getMergedCells(),
+			mergedCells: JSON.parse(JSON.stringify(sheet.config.mergedCells)),
 		}
+
 		const result = await useSheetRenderHook.getRenderResult(renderData)
 
 		if (result) {
@@ -345,7 +361,8 @@ const getOffsetStyle = (cell) => {
 }
 
 const isMergedCellStart = (cell) => {
-	const mergedCells = useMergedCellsHook.getMergedCells()
+	// const mergedCells = useMergedCellsHook.getMergedCells()
+	const mergedCells = sheet.config.mergedCells
 	if (Object.keys(mergedCells).length === 0) {
 		return false
 	}
@@ -463,7 +480,7 @@ const onClickNumber = (e, row) => {
 // 点击字母
 const onClickAlphabet = (e, col) => {
 	const target = e.currentTarget
-	useSelectionRangeHook.setRange(0, col.colIndex, sheet.config.rowCount - 1, col.colIndex)
+	useSelectionRangeHook.setRange(0, col.colIndex, sheet.config.rowCount - 1, col.colIndex, true)
 	setTimeout(() => {
 		target.parentNode.querySelectorAll('.selection').forEach((item) => {
 			item.classList.remove('selection')
@@ -480,8 +497,9 @@ const onClickAlphabet = (e, col) => {
 
 // 设置单元格样式, 工具栏共用,
 const setCellStyle = (type, val, fn) => {
-	const ranged = useSelectionRangeHook.ranged
+	useHistoryHook.saveHistory()
 
+	const ranged = useSelectionRangeHook.ranged
 	const startRow = Math.min(ranged.start.row, ranged.end.row)
 	const startCol = Math.min(ranged.start.col, ranged.end.col)
 	const endRow = Math.max(ranged.start.row, ranged.end.row)
@@ -509,8 +527,9 @@ const setCellStyle = (type, val, fn) => {
 	}
 }
 
-// 点击合并
+// 合并
 const onMergeClick = () => {
+	useHistoryHook.saveHistory()
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
@@ -527,7 +546,7 @@ const onMergeClick = () => {
 	)
 }
 
-// 点击边框
+// 边框
 const onBorderClick = (border = true, direction = null) => {
 	setCellStyle('b', null, (r, c, {startRow, startCol, endRow, endCol}) => {
 		// 删除边框样式
@@ -600,24 +619,226 @@ const onBorderClick = (border = true, direction = null) => {
 	})
 }
 
-// 点击对齐
-const onAlignClick = (align) => setCellStyle('a', align)
+// 对齐
+const onAlignClick = (align) => {
+	setCellStyle('a', align)
+}
+
+// 添加行
+const onAddRowClick = () => {
+	useHistoryHook.saveHistory()
+	const ranged = useSelectionRangeHook.ranged
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const insertRowIndex = endRow + 1
+
+	// 创建新的Map
+	const newMap = new Map()
+
+	// 遍历原Map，根据行号决定是否需要移动位置
+	sheet.celldata.forEach((value, key) => {
+		if (key < insertRowIndex) {
+			// 插入行之前的数据保持不变
+			newMap.set(key, value)
+		} else {
+			// 插入行之后的数据行号加1
+			newMap.set(key + 1, value)
+		}
+	})
+
+	// 插入新行
+	newMap.set(insertRowIndex, reactive([]))
+
+	// 更新sheet.celldata
+	sheet.celldata = newMap
+	sheet.config.rowCount++
+}
+
+// 添加列
+const onAddColumnClick = () => {
+	useHistoryHook.saveHistory()
+	const ranged = useSelectionRangeHook.ranged
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+	const insertColIndex = endCol + 1
+
+	// 创建新的Map
+	const newMap = new Map()
+
+	// 遍历原Map，处理每一行的数据
+	sheet.celldata.forEach((rowData, rowIndex) => {
+		// 创建新的行数据数组
+		const newRowData = []
+
+		// 遍历原行数据，根据列索引决定是否需要移动位置
+		rowData.forEach((cellData, colIndex) => {
+			if (colIndex < insertColIndex) {
+				// 插入列之前的数据保持不变
+				newRowData[colIndex] = cellData
+			} else {
+				// 插入列之后的数据列号加1
+				newRowData[colIndex + 1] = cellData
+			}
+		})
+
+		// 在插入位置添加空单元格
+		newRowData[insertColIndex] = ''
+
+		// 将处理后的行数据添加到新Map中
+		newMap.set(rowIndex, reactive(newRowData))
+	})
+
+	// 更新sheet.celldata
+	sheet.celldata = newMap
+	sheet.config.colCount++
+}
+
+// 删除行
+const onRemoveRowClick = () => {
+	useHistoryHook.saveHistory()
+	const ranged = useSelectionRangeHook.ranged
+
+	if (!ranged) return
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const deleteCount = endRow - startRow + 1
+
+	// 创建新的Map
+	const newMap = new Map()
+
+	// 遍历原Map，跳过要删除的行，其他行的行号相应调整
+	sheet.celldata.forEach((value, key) => {
+		if (key < startRow) {
+			// 删除行之前的数据保持不变
+			newMap.set(key, value)
+		} else if (key > endRow) {
+			// 删除行之后的数据行号减去删除的行数
+			newMap.set(key - deleteCount, value)
+		}
+	})
+
+	// 更新合并单元格的位置
+	// const mergedCells = useMergedCellsHook.getMergedCells()
+	const mergedCells = sheet.config.mergedCells
+	const newMergedCells = new Map()
+	Object.keys(mergedCells).forEach((key) => {
+		const [row, col] = key.split('-').map(Number)
+		const {rowSpan, colSpan} = mergedCells[key]
+
+		if (row < startRow) {
+			// 在删除行之前的合并单元格
+			if (row + rowSpan > startRow) {
+				// 如果合并单元格跨越了删除范围，需要减少 rowSpan
+				const overlap = Math.min(endRow - startRow + 1, row + rowSpan - startRow)
+				newMergedCells.set(key, {
+					rowSpan: rowSpan - overlap,
+					colSpan,
+				})
+			} else {
+				// 合并单元格完全在删除范围之前，保持不变
+				newMergedCells.set(key, mergedCells[key])
+			}
+		} else if (row > endRow) {
+			// 在删除行之后的合并单元格需要更新行号
+			newMergedCells.set(`${row - deleteCount}-${col}`, {
+				rowSpan,
+				colSpan,
+			})
+		}
+		// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
+	})
+
+	useMergedCellsHook.setMergedCells(newMergedCells)
+
+	// 更新sheet.celldata
+	// useSelectionRangeHook.clear()
+	sheet.celldata = newMap
+	sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
+}
+
+// 删除列
+const onRemoveColumnClick = () => {
+	useHistoryHook.saveHistory()
+	const ranged = useSelectionRangeHook.ranged
+
+	if (!ranged) return
+
+	const startCol = Math.min(ranged.start.col, ranged.end.col)
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+	const deleteCount = endCol - startCol + 1
+
+	// 创建新的Map
+	const newMap = new Map()
+
+	// 遍历原Map，处理每一行的数据
+	sheet.celldata.forEach((rowData, rowIndex) => {
+		// 创建新的行数据数组
+		const newRowData = []
+
+		// 遍历原行数据，跳过要删除的列，其他列的列号相应调整
+		rowData.forEach((cellData, colIndex) => {
+			if (colIndex < startCol) {
+				// 删除列之前的数据保持不变
+				newRowData[colIndex] = cellData
+			} else if (colIndex > endCol) {
+				// 删除列之后的数据列号减去删除的列数
+				newRowData[colIndex - (endCol - startCol + 1)] = cellData
+			}
+		})
+
+		// 将处理后的行数据添加到新Map中
+		newMap.set(rowIndex, reactive(newRowData))
+	})
+
+	// 更新合并单元格的位置
+	// const mergedCells = useMergedCellsHook.getMergedCells()
+	const mergedCells = sheet.config.mergedCells
+	const newMergedCells = new Map()
+	Object.keys(mergedCells).forEach((key) => {
+		const [row, col] = key.split('-').map(Number)
+		const {rowSpan, colSpan} = mergedCells[key]
+
+		if (col < startCol) {
+			// 在删除列之前的合并单元格
+			if (col + colSpan > startCol) {
+				// 如果合并单元格跨越了删除范围，需要减少 rowSpan
+				const overlap = Math.min(endCol - startCol + 1, col + colSpan - startCol)
+				newMergedCells.set(key, {
+					rowSpan: rowSpan,
+					colSpan: colSpan - overlap,
+				})
+			} else {
+				// 合并单元格完全在删除范围之前，保持不变
+				newMergedCells.set(key, mergedCells[key])
+			}
+		} else if (col > endCol) {
+			// 在删除列之后的合并单元格需要更新行号
+			newMergedCells.set(`${row}-${col - deleteCount}`, {
+				rowSpan,
+				colSpan,
+			})
+		}
+	})
+
+	useMergedCellsHook.setMergedCells(newMergedCells)
+
+	// 更新sheet.celldata
+	sheet.celldata = newMap
+	sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
+}
 
 const init = () => {
 	initialData()
 	updateViewportSize()
 
 	useResizeHook.init()
+	useMergedCellsHook.init()
 	useSheetRenderHook.init()
 	useSelectionRangeHook.init()
 	useEditHook.init()
 
+	initialized.value = true
 	window.addEventListener('resize', updateViewportSize)
-
-	nextTick(() => {
-		restoreScrollPosition()
-		initialized.value = true
-	})
+	nextTick(() => restoreScrollPosition())
 }
 
 const destroy = () => {
@@ -732,6 +953,32 @@ defineExpose({
 					<span>右边框</span>
 				</div>
 			</div>
+
+			<div class="group">
+				<div class="item" @click="onAddRowClick">
+					<Icons icon-name="AddRow"></Icons>
+					<span>添加行</span>
+				</div>
+				<div class="item" @click="onAddColumnClick">
+					<Icons icon-name="AddColumn"></Icons>
+					<span>添加列</span>
+				</div>
+				<div class="item" @click="onRemoveRowClick">
+					<Icons icon-name="RemoveRow"></Icons>
+					<span>删除行</span>
+				</div>
+				<div class="item" @click="onRemoveColumnClick">
+					<Icons icon-name="RemoveColumn"></Icons>
+					<span>删除列</span>
+				</div>
+			</div>
+
+			<div class="group" v-if="useHistoryHook.canUndo()">
+				<div class="item" @click="useHistoryHook.undo">
+					<Icons icon-name="Undo"></Icons>
+					<span>撤销</span>
+				</div>
+			</div>
 		</div>
 
 		<!-- Sheet -->
@@ -768,7 +1015,10 @@ defineExpose({
 								class="cell alphabet-cell"
 								:style="{width: alphabet.colWidth + 'px'}"
 								:class="{
-									selection: useSelectionRangeHook.selectionClass(null, alphabet),
+									selection: useSelectionRangeHook.setSelectionClass(
+										null,
+										alphabet
+									),
 								}"
 								@click="onClickAlphabet($event, alphabet)"
 							>
@@ -823,7 +1073,7 @@ defineExpose({
 							class="number-cell"
 							:style="{height: `${row.rowHeight}px`}"
 							:class="{
-								selection: useSelectionRangeHook.selectionClass(row),
+								selection: useSelectionRangeHook.setSelectionClass(row),
 							}"
 							@click="onClickNumber($event, row)"
 						>
@@ -942,7 +1192,7 @@ defineExpose({
 							<div
 								class="fns"
 								:class="{
-									selection: useSelectionRangeHook.selectionClass(row),
+									selection: useSelectionRangeHook.setSelectionClass(row),
 								}"
 								:style="{height: `${row.rowHeight}px`}"
 							>

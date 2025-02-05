@@ -11,7 +11,7 @@ const config = {
 		},
 	},
 	celldata: Array.from({length: 1000}, (_, r) => {
-		return Array.from({length: 100}, (_, c) => {
+		return Array.from({length: 240}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
 		})
 	}),
@@ -44,7 +44,6 @@ const config2 = {
 onMounted(() => {
 	sheetRef.value.setMergeCell(12, 4, 4, 4)
 	sheetRef.value.setMergeCell(16, 5, 4, 4)
-	sheetRef.value.setMergeCell(45, 7, 2, 4)
 
 	// setTimeout(() => {
 	// 	sheetRef.value.setMergeCell(0, 0, 2, 4)

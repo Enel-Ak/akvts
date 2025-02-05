@@ -1,4 +1,3 @@
-import {nextTick, onActivated, onDeactivated, onMounted} from 'vue'
 export const useEdit = (id, config) => {
 	const {sheet, renderRange, useResizeHook, useSelectionRangeHook} = config
 	let initialized = false

@@ -1,8 +1,9 @@
-import {computed, onMounted, ref, nextTick} from 'vue'
+import {computed, ref} from 'vue'
 import {useEventListener} from '@vueuse/core'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
+	let worker = null
 	let container = null
 	const {maxRowCount, maxColCount, useMergedCellsHook, renderRange} = config
 	const useResizeHook = config.useResizeHook
@@ -198,56 +199,54 @@ export const useSelectionRange = (containerId, config = {}) => {
 	})
 
 	// 计算选区序号和字母样式
-	const selectionClass = computed(() => {
-		return (row, col) => {
-			const rowIndex = row?.rowIndex
-			const colIndex = col?.colIndex
+	const setSelectionClass = (row, col) => {
+		const rowIndex = row?.rowIndex
+		const colIndex = col?.colIndex
 
-			// 扩展选区以包含所有相关的合并单元格
-			const {row: startRow, col: startCol} = selectionStart.value
-			const {row: endRow, col: endCol} = selectionEnd.value
+		// 扩展选区以包含所有相关的合并单元格
+		const {row: startRow, col: startCol} = selectionStart.value
+		const {row: endRow, col: endCol} = selectionEnd.value
 
-			// 先计算实际的起始和结束位置
-			const minRow = Math.min(startRow, endRow)
-			const maxRow = Math.max(startRow, endRow)
-			const minCol = Math.min(startCol, endCol)
-			const maxCol = Math.max(startCol, endCol)
+		// 先计算实际的起始和结束位置
+		const minRow = Math.min(startRow, endRow)
+		const maxRow = Math.max(startRow, endRow)
+		const minCol = Math.min(startCol, endCol)
+		const maxCol = Math.max(startCol, endCol)
 
-			if (rowIndex !== undefined && selectionClassMap.get(`r${rowIndex}`)) {
-				selectionClassMap.delete(`r${rowIndex}`)
-				return true
-			}
-
-			if (colIndex !== undefined && selectionClassMap.get(`c${colIndex}`)) {
-				selectionClassMap.delete(`c${colIndex}`)
-				return true
-			}
-
-			// 使用实际的最小最大值来获取扩展范围
-			const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
-
-			let bool = false
-
-			if (row) {
-				bool = rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
-				if (bool) {
-					for (let i = expanded.startRow; i <= expanded.endRow; i++) {
-						selectionClassMap.set(`r${i}`, true)
-					}
-				}
-			}
-
-			if (col) {
-				bool = colIndex >= expanded.startCol && colIndex <= expanded.endCol
-				if (bool) {
-					for (let i = expanded.startCol; i <= expanded.endCol; i++) {
-						selectionClassMap.set(`c${i}`, true)
-					}
-				}
-			}
-			return bool
+		if (rowIndex !== undefined && selectionClassMap.get(`r${rowIndex}`)) {
+			selectionClassMap.delete(`r${rowIndex}`)
+			return true
 		}
-	})
+
+		if (colIndex !== undefined && selectionClassMap.get(`c${colIndex}`)) {
+			selectionClassMap.delete(`c${colIndex}`)
+			return true
+		}
+
+		// 使用实际的最小最大值来获取扩展范围
+		const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
+
+		let bool = false
+
+		if (row) {
+			bool = rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
+			if (bool) {
+				for (let i = expanded.startRow; i <= expanded.endRow; i++) {
+					selectionClassMap.set(`r${i}`, true)
+				}
+			}
+		}
+
+		if (col) {
+			bool = colIndex >= expanded.startCol && colIndex <= expanded.endCol
+			if (bool) {
+				for (let i = expanded.startCol; i <= expanded.endCol; i++) {
+					selectionClassMap.set(`c${i}`, true)
+				}
+			}
+		}
+		return bool
+	}
 
 	// 限制范围在最大值内
 	const limitRange = (pos) => {
@@ -420,30 +419,12 @@ export const useSelectionRange = (containerId, config = {}) => {
 	// 设置选区范围
 	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol, force = false) => {
 		selecting.value = true
-		ranged.value = true
 
 		selectionClassMap.clear()
 
-		// 设置选区起始位置
-		selectionStart.value = {
-			row: startRow,
-			col: startCol,
-		}
-
-		// 设置选区结束位置
-		selectionEnd.value = {
-			row: endRow,
-			col: endCol,
-		}
-
-		if (force) {
-			handleMouseUp()
-			return
-		}
-
 		// 检查是否在合并单元格内
 		const mergedCell = useMergedCellsHook.findMergedCell?.(startRow, startCol)
-		if (mergedCell) {
+		if (mergedCell && !force) {
 			selectionStart.value = {
 				row: mergedCell.row,
 				col: mergedCell.col,
@@ -452,11 +433,35 @@ export const useSelectionRange = (containerId, config = {}) => {
 			selectionEnd.value = {
 				row: mergedCell.row + mergedCell.rowSpan - 1,
 				col: mergedCell.col + mergedCell.colSpan - 1,
+				mergedCell,
+			}
+		} else {
+			// 设置选区起始位置
+			selectionStart.value = {
+				row: startRow,
+				col: startCol,
+			}
+
+			// 设置选区结束位置
+			selectionEnd.value = {
+				row: endRow,
+				col: endCol,
 			}
 		}
-		console.log('设置选区范围', selectionStart.value, selectionEnd.value, mergedCell)
 
-		handleMouseUp()
+		console.log('设置选区范围', selectionStart.value, selectionEnd.value, mergedCell)
+		selecting.value = false
+
+		ranged.value = {
+			start: {
+				row: selectionStart.value.row,
+				col: selectionStart.value.col,
+			},
+			end: {
+				row: selectionEnd.value.row,
+				col: selectionEnd.value.col,
+			},
+		}
 	}
 
 	// 获取框选范围的起始单元格
@@ -491,6 +496,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const destroy = () => {
 		clear()
 		if (container) {
+			worker.terminate()
 			container.removeEventListener('mousedown', handleMouseDown)
 			window.removeEventListener('mousemove', handleMouseMove)
 			window.removeEventListener('mouseup', handleMouseUp)
@@ -506,6 +512,10 @@ export const useSelectionRange = (containerId, config = {}) => {
 			console.error('请检查是否存在id为' + containerId + '的容器')
 			return
 		}
+
+		worker = new Worker(new URL('./worker/SelectionRangeWorker.js', import.meta.url), {
+			type: 'module',
+		})
 
 		// 基本鼠标事件
 		useEventListener(container, 'mousedown', handleMouseDown)
@@ -524,7 +534,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		ranged,
 
 		// 计算属性
-		selectionClass,
 		rangeClass,
 		rangeStyle,
 		selectionStart,
@@ -534,6 +543,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		init,
 		getStartCell,
 		setRange,
+		setSelectionClass,
 		drag: handleDragStart,
 		clear,
 		destroy,

@@ -4,7 +4,7 @@ export const useMergedCells = (config) => {
 	const {sheet, useResizeHook, renderRange} = config
 
 	// 存储合并单元格信息
-	const mergedCells = new Map()
+	let mergedCells = new Map()
 
 	// 添加合并单元格
 	const addMergedCell = (rowIndex, colIndex, rowSpan, colSpan) => {
@@ -48,6 +48,7 @@ export const useMergedCells = (config) => {
 		}
 
 		console.log('添加合并单元格:', mergedCells)
+		sheet.config.mergedCells = getMergedCells()
 		renderRange()
 	}
 
@@ -58,6 +59,12 @@ export const useMergedCells = (config) => {
 			result[key] = value
 		}
 		return result
+	}
+
+	// 设置合并单元格
+	const setMergedCells = (cellMap) => {
+		mergedCells = cellMap
+		sheet.config.mergedCells = getMergedCells()
 	}
 
 	// 获取单元格样式
@@ -161,9 +168,15 @@ export const useMergedCells = (config) => {
 		return null
 	}
 
+	const init = () => {
+		sheet.config.mergedCells = getMergedCells()
+	}
+
 	return {
+		init,
 		getCellStyle,
 		getMergedCells,
+		setMergedCells,
 		addMergedCell,
 		findMergedCell,
 		clearMergedCells,
