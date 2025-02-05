@@ -1,28 +1,28 @@
 import {useStyle} from './useStyle'
 export const useMergedCells = (config) => {
 	// 基础配置
-	const {sheet, useResizeHook, renderRange} = config
+	const {sheet, useResizeHook, renderRange, rowHeight, colWidth} = config
 
 	// 存储合并单元格信息
 	let mergedCells = new Map()
 
 	// 添加合并单元格
-	const addMergedCell = (rowIndex, colIndex, rowSpan, colSpan) => {
+	const addMergedCell = (rowIndex, colIndex, rowspan, colspan) => {
 		const currentKey = `${rowIndex}-${colIndex}`
 		const existingMerge = mergedCells.get(currentKey)
 
 		// 检查是否是相同位置的框选
 		if (existingMerge) {
 			// 如果是相同位置，检查大小是否相同
-			if (existingMerge.rowSpan === rowSpan && existingMerge.colSpan === colSpan) {
+			if (existingMerge.rowspan === rowspan && existingMerge.colspan === colspan) {
 				// 相同位置且相同大小，则取消合并
 				mergedCells.delete(currentKey)
 			} else {
 				// 相同位置但大小不同，删除旧合并并创建新合并
 				mergedCells.delete(currentKey)
 				// 检查新区域是否有其他合并单元格
-				for (let r = rowIndex; r < rowIndex + rowSpan; r++) {
-					for (let c = colIndex; c < colIndex + colSpan; c++) {
+				for (let r = rowIndex; r < rowIndex + rowspan; r++) {
+					for (let c = colIndex; c < colIndex + colspan; c++) {
 						if (r === rowIndex && c === colIndex) continue
 						const otherMerge = findMergedCell(r, c)
 						if (otherMerge) {
@@ -31,12 +31,12 @@ export const useMergedCells = (config) => {
 					}
 				}
 				// 创建新合并
-				mergedCells.set(currentKey, {rowSpan, colSpan})
+				mergedCells.set(currentKey, {rowspan, colspan})
 			}
 		} else {
 			// 如果是新位置，检查新区域内是否有已存在的合并单元格
-			for (let r = rowIndex; r < rowIndex + rowSpan; r++) {
-				for (let c = colIndex; c < colIndex + colSpan; c++) {
+			for (let r = rowIndex; r < rowIndex + rowspan; r++) {
+				for (let c = colIndex; c < colIndex + colspan; c++) {
 					const otherMerge = findMergedCell(r, c)
 					if (otherMerge) {
 						mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
@@ -44,7 +44,7 @@ export const useMergedCells = (config) => {
 				}
 			}
 			// 创建新合并
-			mergedCells.set(currentKey, {rowSpan, colSpan})
+			mergedCells.set(currentKey, {rowspan, colspan})
 		}
 
 		console.log('添加合并单元格:', mergedCells)
@@ -77,21 +77,21 @@ export const useMergedCells = (config) => {
 
 		// 1. 检查是否是合并单元格的起始位置
 		if (merged) {
-			let rowHeight = 0
-			let colWidth = 0
-			const {rowSpan, colSpan} = merged
+			let rh = 0
+			let cw = 0
+			const {rowspan, colspan} = merged
 
-			for (let i = cell.rowIndex; i < cell.rowIndex + rowSpan; i++) {
-				rowHeight += useResizeHook.getRowHeight(i)
+			for (let i = cell.rowIndex; i < cell.rowIndex + rowspan; i++) {
+				rh += useResizeHook.getRowHeight(i)
 			}
 
-			for (let i = cell.colIndex; i < cell.colIndex + colSpan; i++) {
-				colWidth += useResizeHook.getColWidth(i)
+			for (let i = cell.colIndex; i < cell.colIndex + colspan; i++) {
+				cw += useResizeHook.getColWidth(i)
 			}
 
 			return {
-				height: `${rowHeight}px`,
-				width: `${colWidth}px`,
+				height: `${rh || rowHeight}px`,
+				width: `${cw || colWidth}px`,
 				position: 'absolute',
 				top: 0,
 				left: 0,
@@ -105,9 +105,9 @@ export const useMergedCells = (config) => {
 
 			if (
 				cell.rowIndex >= mergedRow &&
-				cell.rowIndex < mergedRow + value.rowSpan &&
+				cell.rowIndex < mergedRow + value.rowspan &&
 				cell.colIndex >= mergedCol &&
-				cell.colIndex < mergedCol + value.colSpan
+				cell.colIndex < mergedCol + value.colspan
 			) {
 				return {
 					height: `${useResizeHook.getRowHeight(cell.rowIndex)}px`,
@@ -153,9 +153,9 @@ export const useMergedCells = (config) => {
 			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
 			if (
 				rowIndex >= mergedRow &&
-				rowIndex < mergedRow + value.rowSpan &&
+				rowIndex < mergedRow + value.rowspan &&
 				colIndex >= mergedCol &&
-				colIndex < mergedCol + value.colSpan
+				colIndex < mergedCol + value.colspan
 			) {
 				return {
 					row: mergedRow,

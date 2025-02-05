@@ -20,7 +20,7 @@ export const useEdit = (id, config) => {
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
 		const originalValue = cellEl?.innerText
 
-		if (cellEl.getAttribute('contenteditable')) return
+		if (!cellEl || cellEl.getAttribute('contenteditable')) return
 
 		cellEl.setAttribute('contenteditable', 'true')
 
@@ -45,8 +45,6 @@ export const useEdit = (id, config) => {
 			cellEl.innerText = ''
 		}
 
-		cellEl.focus()
-
 		// 将光标移到文本末尾
 		const range = document.createRange()
 		const selection = window.getSelection()
@@ -54,6 +52,8 @@ export const useEdit = (id, config) => {
 		range.collapse(false)
 		selection.removeAllRanges()
 		selection.addRange(range)
+
+		cellEl.focus()
 
 		const setRowHeight = () => {
 			let height = 0
@@ -71,9 +71,7 @@ export const useEdit = (id, config) => {
 			if (cellEl.innerText === '') {
 				cellEl.innerText = originalValue
 			}
-
 			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
-
 			setRowHeight()
 
 			cellEl.removeAttribute('contenteditable')
@@ -91,6 +89,10 @@ export const useEdit = (id, config) => {
 			html += `<div>${item}</div>`
 		}
 		return html
+	}
+
+	const setCellValue = (rowIndex, colIndex, value) => {
+		sheet.celldata.get(rowIndex)[colIndex] = value
 	}
 
 	const destroy = () => {
@@ -120,5 +122,6 @@ export const useEdit = (id, config) => {
 		destroy,
 		startEdit,
 		formattedValue,
+		setCellValue,
 	}
 }

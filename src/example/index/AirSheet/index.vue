@@ -10,18 +10,19 @@ const config = {
 			},
 		},
 	},
-	celldata: Array.from({length: 1000}, (_, r) => {
-		return Array.from({length: 240}, (_, c) => {
-			return `R${r + 1}-C${c + 1}`
-		})
-	}),
+	// celldata: Array.from({length: 1000}, (_, r) => {
+	// 	return Array.from({length: 240}, (_, c) => {
+	// 		return `R${r + 1}-C${c + 1}`
+	// 	})
+	// }),
+	celldata: [],
 	fns: [
-		// {
-		// 	label: '操作',
-		// 	click: (row, rowData) => {
-		// 		console.log(row, rowData)
-		// 	},
-		// },
+		{
+			label: '操作',
+			click: (row, rowData) => {
+				console.log(row, rowData)
+			},
+		},
 	],
 }
 const config2 = {
@@ -42,15 +43,13 @@ const config2 = {
 }
 
 onMounted(() => {
-	sheetRef.value.setMergeCell(12, 4, 4, 4)
-	sheetRef.value.setMergeCell(16, 5, 4, 4)
-
+	// sheetRef.value.setMergeCell(12, 4, 4, 4)
+	// sheetRef.value.setMergeCell(16, 5, 4, 4)
+	// // sheetRef.value.setCellValue(0, 0, 'hello')
 	// setTimeout(() => {
 	// 	sheetRef.value.setMergeCell(0, 0, 2, 4)
-
 	// 	sheetRef.value.setRange(0, 0, 2, 4)
 	// }, 1000)
-
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
 </script>

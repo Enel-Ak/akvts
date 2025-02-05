@@ -104,11 +104,11 @@ const calculateVisibleRange = (data) => {
 	for (let [key, value] of Object.entries(mergedCells)) {
 		const [rowIndex, colIndex] = key.split('-').map(Number)
 
-		if (startRow - rowIndex < value.rowSpan && startRow >= rowIndex) {
+		if (startRow - rowIndex < value.rowspan && startRow >= rowIndex) {
 			startRow = rowIndex
 		}
 
-		if (startCol - colIndex < value.colSpan && startCol >= colIndex) {
+		if (startCol - colIndex < value.colspan && startCol >= colIndex) {
 			startCol = colIndex
 		}
 	}

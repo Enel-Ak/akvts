@@ -17,15 +17,18 @@ import {useResize} from '@/hooks/sheet/useResize'
 import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
 import {useEdit} from '@/hooks/sheet/useEdit.js'
 import {useHistory} from '@/hooks/sheet/useHistory'
+import {useCopy} from '@/hooks/sheet/useCopy'
+
+const emits = defineEmits(['update:modelValue', 'cellInput'])
 
 // 核心配置参数
 const props = defineProps({
 	modelValue: {type: Object, default: () => {}},
 
 	// 总行数
-	rowCount: {type: Number, default: 100}, // 最大 671087
+	rowCount: {type: Number, default: 20}, // 最大 671087
 	// 总列数
-	colCount: {type: Number, default: 13},
+	colCount: {type: Number, default: 10},
 	// 单元格高度
 	rowHeight: {type: Number, default: 25},
 	// 单元格宽度
@@ -149,6 +152,8 @@ const useResizeHook = useResize({
 })
 const useMergedCellsHook = useMergedCells({
 	sheet,
+	rowHeight: props.rowHeight,
+	colWidth: props.colWidth,
 	useResizeHook,
 	renderRange: () => updateVisibleRange(),
 })
@@ -167,10 +172,14 @@ const useEditHook = useEdit(id, {
 	useSelectionRangeHook,
 	renderRange: () => updateVisibleRange(),
 })
-
-// 初始化history
 const useHistoryHook = useHistory(sheet, {
 	useMergedCellsHook,
+})
+const useCopyHook = useCopy({
+	sheet,
+	useMergedCellsHook,
+	useSelectionRangeHook,
+	renderRange: () => updateVisibleRange(),
 })
 
 // 计算总高度
@@ -237,16 +246,34 @@ const updateVisibleRange = async () => {
 watch([scrollTop, scrollLeft], () => updateVisibleRange(), {immediate: true})
 
 // 监听视口大小变化
-watch([viewportHeight, viewportWidth], () => updateVisibleRange())
+let observer = null
+let observerTimer = null
+const observeView = () => {
+	observer = new ResizeObserver((entries) => {
+		if (observerTimer) {
+			clearTimeout(observerTimer)
+		}
+		observerTimer = setTimeout(() => {
+			entries.forEach((entry) => {
+				viewportHeight.value = entry.contentRect.height
+				viewportWidth.value = entry.contentRect.width
+				lastScroll.value = true
+				updateVisibleRange()
+			})
+		}, 16)
+	})
+
+	observer.observe(containerRef.value)
+}
 
 // 生成可见行数据
 const visibleRows = computed(() => {
 	const rows = []
 	const {startRow, endRow, buffer} = visibleRangeRef.value
 	const start = Math.max(0, startRow)
-	const end = Math.min(sheet.config.rowCount - 1, endRow)
+	const end = Math.min(sheet.config.rowCount, endRow)
 
-	for (let i = start; i <= end; i++) {
+	for (let i = start; i < end; i++) {
 		rows.push({
 			rowIndex: i,
 			rowHeight: useResizeHook.getRowHeight(i),
@@ -261,9 +288,9 @@ const visibleCells = (row) => {
 	const cells = []
 	const {startCol, endCol, buffer} = visibleRangeRef.value
 	const start = Math.max(0, startCol)
-	const end = Math.min(sheet.config.colCount - 1, endCol)
+	const end = Math.min(sheet.config.colCount, endCol)
 
-	for (let i = start; i <= end; i++) {
+	for (let i = start; i < end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
 		const mergedCell = useMergedCellsHook.findMergedCell(row.rowIndex, i)
 		const isMergedStart = mergedCell && mergedCell.row === row.rowIndex && mergedCell.col === i
@@ -298,7 +325,11 @@ const visibleCells = (row) => {
 // 计算偏移量
 const offsetTop = ref(0)
 const offsetLeft = ref(0)
+// 滚动条宽度补偿
+const scrollbarWidth = ref(0)
 const updateOffset = async (type, value) => {
+	console.log(type, value, visibleRangeRef.value)
+
 	const result = await useResizeHook.getRenderResult({
 		type,
 		[value]: visibleRangeRef.value[value],
@@ -310,10 +341,12 @@ const updateOffset = async (type, value) => {
 		offsetLeft.value = result?.offset?.left || 0
 	}
 }
+
 watch(
 	() => visibleRangeRef.value.startRow,
 	() => updateOffset('offsetTop', 'startRow')
 )
+
 watch(
 	() => visibleRangeRef.value.startCol,
 	() => updateOffset('offsetLeft', 'startCol')
@@ -341,7 +374,10 @@ const getTitle = (index) => {
 const visibleTitles = computed(() => {
 	const titles = []
 	const {startCol, endCol} = visibleRangeRef.value
-	for (let col = startCol; col <= endCol; col++) {
+	const start = Math.max(0, startCol)
+	const end = Math.min(sheet.config.colCount, endCol)
+
+	for (let col = start; col < end; col++) {
 		const colWidth = useResizeHook.getColWidth(col)
 		titles.push({
 			colIndex: col,
@@ -651,6 +687,8 @@ const onAddRowClick = () => {
 	// 更新sheet.celldata
 	sheet.celldata = newMap
 	sheet.config.rowCount++
+
+	updateVisibleRange()
 }
 
 // 添加列
@@ -689,6 +727,8 @@ const onAddColumnClick = () => {
 	// 更新sheet.celldata
 	sheet.celldata = newMap
 	sheet.config.colCount++
+
+	updateVisibleRange()
 }
 
 // 删除行
@@ -722,16 +762,16 @@ const onRemoveRowClick = () => {
 	const newMergedCells = new Map()
 	Object.keys(mergedCells).forEach((key) => {
 		const [row, col] = key.split('-').map(Number)
-		const {rowSpan, colSpan} = mergedCells[key]
+		const {rowspan, colspan} = mergedCells[key]
 
 		if (row < startRow) {
 			// 在删除行之前的合并单元格
-			if (row + rowSpan > startRow) {
-				// 如果合并单元格跨越了删除范围，需要减少 rowSpan
-				const overlap = Math.min(endRow - startRow + 1, row + rowSpan - startRow)
+			if (row + rowspan > startRow) {
+				// 如果合并单元格跨越了删除范围，需要减少 rowspan
+				const overlap = Math.min(endRow - startRow + 1, row + rowspan - startRow)
 				newMergedCells.set(key, {
-					rowSpan: rowSpan - overlap,
-					colSpan,
+					rowspan: rowspan - overlap,
+					colspan,
 				})
 			} else {
 				// 合并单元格完全在删除范围之前，保持不变
@@ -740,8 +780,8 @@ const onRemoveRowClick = () => {
 		} else if (row > endRow) {
 			// 在删除行之后的合并单元格需要更新行号
 			newMergedCells.set(`${row - deleteCount}-${col}`, {
-				rowSpan,
-				colSpan,
+				rowspan,
+				colspan,
 			})
 		}
 		// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
@@ -753,6 +793,8 @@ const onRemoveRowClick = () => {
 	// useSelectionRangeHook.clear()
 	sheet.celldata = newMap
 	sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
+
+	updateVisibleRange()
 }
 
 // 删除列
@@ -795,16 +837,16 @@ const onRemoveColumnClick = () => {
 	const newMergedCells = new Map()
 	Object.keys(mergedCells).forEach((key) => {
 		const [row, col] = key.split('-').map(Number)
-		const {rowSpan, colSpan} = mergedCells[key]
+		const {rowspan, colspan} = mergedCells[key]
 
 		if (col < startCol) {
 			// 在删除列之前的合并单元格
-			if (col + colSpan > startCol) {
-				// 如果合并单元格跨越了删除范围，需要减少 rowSpan
-				const overlap = Math.min(endCol - startCol + 1, col + colSpan - startCol)
+			if (col + colspan > startCol) {
+				// 如果合并单元格跨越了删除范围，需要减少 rowspan
+				const overlap = Math.min(endCol - startCol + 1, col + colspan - startCol)
 				newMergedCells.set(key, {
-					rowSpan: rowSpan,
-					colSpan: colSpan - overlap,
+					rowspan: rowspan,
+					colspan: colspan - overlap,
 				})
 			} else {
 				// 合并单元格完全在删除范围之前，保持不变
@@ -813,8 +855,8 @@ const onRemoveColumnClick = () => {
 		} else if (col > endCol) {
 			// 在删除列之后的合并单元格需要更新行号
 			newMergedCells.set(`${row}-${col - deleteCount}`, {
-				rowSpan,
-				colSpan,
+				rowspan,
+				colspan,
 			})
 		}
 	})
@@ -824,6 +866,18 @@ const onRemoveColumnClick = () => {
 	// 更新sheet.celldata
 	sheet.celldata = newMap
 	sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
+
+	updateVisibleRange()
+}
+
+// 单元格编辑失去焦点后
+const onCellInput = (event, cell) => {
+	useHistoryHook.saveHistory()
+	setTimeout(() => {
+		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
+		emits('cellInput', val, cell) // 新值，旧值
+		console.log('单元格编辑', val, cell)
+	}, 0)
 }
 
 const init = () => {
@@ -835,10 +889,27 @@ const init = () => {
 	useSheetRenderHook.init()
 	useSelectionRangeHook.init()
 	useEditHook.init()
+	useCopyHook.init()
 
 	initialized.value = true
 	window.addEventListener('resize', updateViewportSize)
-	nextTick(() => restoreScrollPosition())
+	observeView()
+
+	// 计算滚动条宽度
+	const outer = document.createElement('div')
+	outer.style.visibility = 'hidden'
+	outer.style.overflow = 'scroll'
+	document.body.appendChild(outer)
+
+	const inner = document.createElement('div')
+	outer.appendChild(inner)
+
+	scrollbarWidth.value = outer.offsetWidth - inner.offsetWidth
+	outer.parentNode.removeChild(outer)
+
+	nextTick(() => {
+		restoreScrollPosition()
+	})
 }
 
 const destroy = () => {
@@ -901,6 +972,7 @@ defineExpose({
 	clearData,
 	setRange: useSelectionRangeHook.setRange,
 	setMergeCell: useMergedCellsHook.addMergedCell,
+	setCellValue: useEditHook.setCellValue,
 })
 </script>
 <template>
@@ -994,12 +1066,12 @@ defineExpose({
 			></div>
 			<div
 				ref="alphabetRef"
-				class="virtual-sheet custom alphabet"
+				class="virtual-sheet custom alphabet brn"
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
 					width: `calc(100% - ${enableFn && sheet.fns?.length ? fnWidth : 0}px - ${
 						enableNumber ? numberWidth : 0
-					}px)`,
+					}px - ${scrollbarWidth}px)`,
 				}"
 			>
 				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
@@ -1042,11 +1114,13 @@ defineExpose({
 				</div>
 			</div>
 			<div
-				v-if="enableFn && sheet.fns?.length"
 				class="alphabet-placeholder bln bbn"
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
-					width: fnWidth + 'px',
+					width:
+						enableFn && sheet.fns?.length
+							? fnWidth + scrollbarWidth + 'px'
+							: scrollbarWidth + 'px',
 				}"
 			></div>
 
@@ -1141,6 +1215,7 @@ defineExpose({
 									}"
 									:style="getOffsetStyle(cell)"
 									@dblclick="useEditHook.startEdit($event, cell)"
+									@blur="onCellInput($event, cell)"
 									class="cell"
 								></div>
 							</template>
@@ -1464,7 +1539,7 @@ defineExpose({
 
 	.alphabet-placeholder {
 		border: 1px solid var(--z-line);
-		background-color: var(--z-bg-secondary);
+		background-color: rgba(var(--z-bg-secondary-rbg), 0.3);
 		height: 18px;
 		transition: opacity 0.15s linear;
 	}

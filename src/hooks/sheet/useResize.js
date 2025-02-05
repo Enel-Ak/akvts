@@ -32,13 +32,13 @@ export const useResize = (config = {}) => {
 		return rowHeights[index] || rowHeight
 	}
 
-	const setRowHeight = (index, height) => {
-		rowHeights[index] = height
-	}
-
 	// 获取列的实际宽度
 	const getColWidth = (index) => {
 		return colWidths[index] || colWidth
+	}
+
+	const setRowHeight = (index, height) => {
+		rowHeights[index] = height
 	}
 
 	// 开始调整行高
