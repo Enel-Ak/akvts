@@ -122,7 +122,7 @@ export function useHistory(config) {
 	}
 
 	// 判断是否可以撤销/重做
-	const canUndo = () => history.length > 0
+	const canUndo = () => history.length > 1
 
 	const destroy = () => {
 		history.length = 0

@@ -68,33 +68,6 @@ const sheet = reactive({
 })
 const fns = ref(props.modelValue.fns || [])
 
-const maxRowCount = computed(() => {
-	let rowCount = 0
-	if (props.modelValue?.celldata) {
-		rowCount =
-			props.modelValue?.celldata.length > props.rowCount
-				? props.modelValue?.celldata.length
-				: props.rowCount
-	} else {
-		rowCount = props.rowCount > 671087 ? 671087 : props.rowCount
-	}
-	sheet.config.rowCount = rowCount
-	return rowCount
-})
-
-const maxColCount = computed(() => {
-	let colCount = 0
-	if (props.modelValue?.celldata) {
-		colCount = props.modelValue.celldata
-			.map((d) => d.length)
-			.reduce((a, b) => Math.max(a, b), props.colCount)
-	} else {
-		colCount = props.colCount > 240 ? 240 : props.colCount
-	}
-	sheet.config.colCount = colCount
-	return colCount
-})
-
 // 初始数据处理
 const sliceSize = 1000
 const initialData = () => {
@@ -160,8 +133,9 @@ const useMergedCellsHook = useMergedCells({
 })
 const useSelectionRangeHook = reactive(
 	useSelectionRange(id, {
-		maxRowCount: maxRowCount.value,
-		maxColCount: maxColCount.value,
+		sheet,
+		rowHeight: props.rowHeight,
+		colWidth: props.colWidth,
 		useMergedCellsHook,
 		useResizeHook,
 		renderRange: () => updateVisibleRange(),
@@ -411,15 +385,22 @@ const isMergedCellStart = (cell) => {
 
 // 滚动处理
 let scrollTimer = null
+let historyRange = null
 const lastScroll = ref(false)
 const onScroll = useThrottleFn(
 	(e) => {
+		if (!historyRange) {
+			historyRange = useSelectionRangeHook.ranged
+			useSelectionRangeHook.clear()
+		}
+
 		if (lastScroll.value) {
 			lastScroll.value = false
 			return
 		}
 
 		clearTimeout(scrollTimer)
+
 		const container = e.target
 		const newScrollTop = container.scrollTop
 		const newScrollLeft = container.scrollLeft
@@ -443,7 +424,7 @@ const onScroll = useThrottleFn(
 			fn.scrollTop = newScrollTop
 		}
 
-		// 修正最后一次位置并对齐到行
+		//修正最后一次位置并对齐到行
 		scrollTimer = setTimeout(() => {
 			lastScroll.value = true
 			const nt = containerRef.value.scrollTop
@@ -462,9 +443,15 @@ const onScroll = useThrottleFn(
 			if (fn) {
 				fn.scrollTop = nt
 			}
-
 			savedScrollPosition.value = {top: nt, left: nl}
-		}, 300)
+			useSelectionRangeHook.setRange(
+				historyRange.start.row,
+				historyRange.start.col,
+				historyRange.end.row,
+				historyRange.end.col
+			)
+			historyRange = null
+		}, 150)
 	},
 	{throttle: 16}
 )
@@ -518,8 +505,9 @@ const onClickNumber = (e, row) => {
 
 // 点击字母
 const onClickAlphabet = (e, col) => {
-	const target = e.currentTarget
-	useSelectionRangeHook.setRange(0, col.colIndex, sheet.config.rowCount - 1, col.colIndex, true)
+	const target = e.target.closest('.alphabet-cell')
+	const colIndex = target.getAttribute('data-col')
+	useSelectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
 	setTimeout(() => {
 		target.parentNode.querySelectorAll('.selection').forEach((item) => {
 			item.classList.remove('selection')
@@ -907,6 +895,27 @@ const init = () => {
 	initialData()
 	updateViewportSize()
 
+	let rowCount = 0
+	if (props.modelValue?.celldata) {
+		rowCount =
+			props.modelValue?.celldata.length > props.rowCount
+				? props.modelValue?.celldata.length
+				: props.rowCount
+	} else {
+		rowCount = props.rowCount > 671087 ? 671087 : props.rowCount
+	}
+	sheet.config.rowCount = rowCount
+
+	let colCount = 0
+	if (props.modelValue?.celldata) {
+		colCount = props.modelValue.celldata
+			.map((d) => d.length)
+			.reduce((a, b) => Math.max(a, b), props.colCount)
+	} else {
+		colCount = props.colCount > 240 ? 240 : props.colCount
+	}
+	sheet.config.colCount = colCount
+
 	useResizeHook.init()
 	useMergedCellsHook.init()
 	useSheetRenderHook.init()
@@ -1105,10 +1114,11 @@ defineExpose({
 						transform: `translate(${offsetLeft}px, 0)`,
 					}"
 				>
-					<div class="row alphabet-row">
+					<div class="row alphabet-row" @click="onClickAlphabet($event)">
 						<template v-for="alphabet of visibleTitles">
 							<div
 								class="cell alphabet-cell"
+								:data-col="alphabet.colIndex"
 								:style="{width: alphabet.colWidth + 'px'}"
 								:class="{
 									selection: useSelectionRangeHook.setSelectionClass(
@@ -1116,7 +1126,6 @@ defineExpose({
 										alphabet
 									),
 								}"
-								@click="onClickAlphabet($event, alphabet)"
 							>
 								<span>{{ alphabet.title }}</span>
 								<div
@@ -1349,7 +1358,7 @@ defineExpose({
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	justify-content: flex-start;
-	transition: all 0.15s linear;
+	// transition: all 0.15s linear;
 	user-select: none;
 	.group {
 		border-right: 1px solid var(--z-line);
@@ -1366,7 +1375,7 @@ defineExpose({
 		justify-content: flex-start;
 		margin: 0 0 0 4px;
 		padding: 4px;
-		transition: all 0.15s linear;
+		// transition: all 0.15s linear;
 		span {
 			font-size: 12px;
 			padding: 4px 0 0 0;
@@ -1389,7 +1398,7 @@ defineExpose({
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	padding: 5px;
-	transition: all 0.15s linear;
+	// transition: all 0.15s linear;
 	> span {
 		font-size: 12px;
 		padding-right: 10px;
@@ -1483,7 +1492,7 @@ defineExpose({
 		background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 		flex: none;
 		overflow: hidden;
-		transition: opacity 0.15s linear;
+		// transition: opacity 0.15s linear;
 
 		.number-cell {
 			align-items: center;
@@ -1567,7 +1576,7 @@ defineExpose({
 		border: 1px solid var(--z-line);
 		background-color: rgba(var(--z-bg-secondary-rbg), 0.3);
 		height: 18px;
-		transition: opacity 0.15s linear;
+		// transition: opacity 0.15s linear;
 	}
 
 	.merged-cell-placeholder {
@@ -1583,7 +1592,7 @@ defineExpose({
 		position: absolute;
 		pointer-events: none;
 		z-index: 3;
-		transition: background-color 0.1s;
+		// transition: background-color 0.1s;
 		will-change: top, left, width, height;
 
 		&.selection-single {
@@ -1636,7 +1645,7 @@ defineExpose({
 	height: 6px;
 	position: absolute;
 	right: 0;
-	transition: all 0.15s linear;
+	// transition: all 0.15s linear;
 	width: 100%;
 	z-index: 1;
 

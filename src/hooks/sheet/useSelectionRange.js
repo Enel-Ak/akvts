@@ -1,21 +1,23 @@
-import {computed, ref} from 'vue'
+import {computed, ref, shallowRef, watch} from 'vue'
 import {useEventListener} from '@vueuse/core'
+import {debounce} from 'lodash-es'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
 	let worker = null
 	let container = null
-	const {maxRowCount, maxColCount, useMergedCellsHook, renderRange} = config
-	const useResizeHook = config.useResizeHook
+	const {sheet, rowHeight, colWidth, useMergedCellsHook, useResizeHook, renderRange} = config
+	const budgetTotalHeight = ref(0)
+	const budgetTotalWidth = ref(0)
 
 	// 选区状态管理
 	const selecting = ref(false)
 	const isDragging = ref(false)
 	const isRangeDragging = ref(false)
 	const mouseDownPos = ref({x: 0, y: 0})
-	const selectionStart = ref({row: -1, col: -1})
-	const selectionEnd = ref({row: -1, col: -1})
-	const ranged = ref(null)
+	const selectionStart = shallowRef({row: -1, col: -1})
+	const selectionEnd = shallowRef({row: -1, col: -1})
+	const ranged = shallowRef({start: {row: -1, col: -1}, end: {row: -1, col: -1}})
 
 	// 计算序号、字母样式缓存
 	const selectionClassMap = new Map()
@@ -113,6 +115,23 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	}
 
+	watch(
+		() => [sheet.config.rowCount, sheet.config.colCount],
+		(value) => {
+			worker.postMessage({
+				type: 'resize',
+				data: {
+					rowHeights: useResizeHook.rowHeights,
+					colWidths: useResizeHook.colWidths,
+					rowCount: value[0],
+					colCount: value[1],
+					rowHeight,
+					colWidth,
+				},
+			})
+		}
+	)
+
 	// 计算选区类型
 	const rangeClass = computed(() => {
 		if (!selecting.value && !ranged.value) return ''
@@ -168,31 +187,35 @@ export const useSelectionRange = (containerId, config = {}) => {
 			endCol = Math.max(ranged.value.start.col, ranged.value.end.col)
 		}
 
-		// 计算到当前行的总高度（包括之前所有行的实际高度）
 		let totalOffsetTop = 0
-		if (startRow > 0) {
-			for (let i = 0; i < startRow; i++) {
-				totalOffsetTop += useResizeHook.getRowHeight(i)
-			}
-		}
-
-		// 计算到当前列的总宽度（包括之前所有列的实际宽度）
 		let totaloffsetLeft = 0
-		if (startCol > 0) {
-			for (let i = 0; i < startCol; i++) {
-				totaloffsetLeft += useResizeHook.getColWidth(i)
+		let totleHeight = 0
+		let totleWidth = 0
+
+		if (endRow === sheet.config.rowCount - 1) {
+			totleHeight = budgetTotalHeight.value
+		} else {
+			for (let i = 0; i <= endRow; i++) {
+				const height = useResizeHook.getRowHeight(i)
+				if (i < startRow) {
+					totalOffsetTop += height
+				} else if (i >= startRow) {
+					totleHeight += height
+				}
 			}
 		}
 
-		// 计算合并单元格的总高度
-		let totleHeight = 0
-		for (let i = startRow; i <= endRow; i++) {
-			totleHeight += useResizeHook.getRowHeight(i)
-		}
-
-		let totleWidth = 0
-		for (let i = startCol; i <= endCol; i++) {
-			totleWidth += useResizeHook.getColWidth(i)
+		if (endCol === sheet.config.colCount - 1) {
+			totleWidth = budgetTotalWidth.value
+		} else {
+			for (let i = 0; i <= endCol; i++) {
+				const width = useResizeHook.getColWidth(i)
+				if (i < startCol) {
+					totaloffsetLeft += width
+				} else if (i >= startCol) {
+					totleWidth += width
+				}
+			}
 		}
 
 		return {
@@ -257,8 +280,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const limitRange = (pos) => {
 		if (!pos) return pos
 		return {
-			row: Math.min(Math.max(0, pos.row), maxRowCount),
-			col: Math.min(Math.max(0, pos.col), maxColCount),
+			row: Math.min(Math.max(0, pos.row), sheet.config.rowCount),
+			col: Math.min(Math.max(0, pos.col), sheet.config.colCount),
 			mergedCell: pos.mergedCell,
 		}
 	}
@@ -269,7 +292,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		const pos = getCellPosition(e)
 
-		if (pos.row > maxRowCount - 1 || pos.col > maxColCount - 1) return
+		if (pos.row > sheet.config.rowCount - 1 || pos.col > sheet.config.colCount - 1) return
 
 		mouseDownPos.value = {x: e.clientX, y: e.clientY}
 		selecting.value = true
@@ -308,7 +331,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 
 		const currentPos = limitRange(getCellPosition(e))
-		if (!currentPos || currentPos.row > maxRowCount - 1 || currentPos.col > maxColCount - 1)
+		if (
+			!currentPos ||
+			currentPos.row > sheet.config.rowCount - 1 ||
+			currentPos.col > sheet.config.colCount - 1
+		)
 			return
 
 		// 获取当前选区范围
@@ -368,7 +395,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		// 获取拖拽起始位置的单元格
 		const pos = limitRange(getCellPosition(e))
-		if (!pos || pos.row > maxRowCount - 1 || pos.col > maxColCount - 1) return
+		if (!pos || pos.row > sheet.config.rowCount - 1 || pos.col > sheet.config.colCount - 1)
+			return
 
 		// 保存当前选区作为起始点
 		selectionStart.value = {...ranged.value.start}
@@ -381,7 +409,11 @@ export const useSelectionRange = (containerId, config = {}) => {
 		if (!isRangeDragging.value || !selecting.value) return
 
 		const currentPos = limitRange(getCellPosition(e))
-		if (!currentPos || currentPos.row > maxRowCount - 1 || currentPos.col > maxColCount - 1)
+		if (
+			!currentPos ||
+			currentPos.row > sheet.config.rowCount - 1 ||
+			currentPos.col > sheet.config.colCount - 1
+		)
 			return
 
 		// 获取当前选区范围
@@ -410,8 +442,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 				col: Math.max(0, expanded.startCol),
 			},
 			end: {
-				row: Math.min(maxRowCount - 1, expanded.endRow),
-				col: Math.min(maxColCount - 1, expanded.endCol),
+				row: Math.min(sheet.config.rowCount - 1, expanded.endRow),
+				col: Math.min(sheet.config.colCount - 1, expanded.endCol),
 			},
 		}
 	}
@@ -429,8 +461,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	// 设置选区范围
 	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol, force = false) => {
-		selecting.value = true
-
 		selectionClassMap.clear()
 
 		// 检查是否在合并单元格内
@@ -447,32 +477,29 @@ export const useSelectionRange = (containerId, config = {}) => {
 				mergedCell,
 			}
 		} else {
-			// 设置选区起始位置
-			selectionStart.value = {
-				row: startRow,
-				col: startCol,
-			}
-
-			// 设置选区结束位置
-			selectionEnd.value = {
-				row: endRow,
-				col: endCol,
-			}
+			// 批量更新选区范围
+			Promise.resolve().then(() => {
+				selectionStart.value = {
+					row: startRow,
+					col: startCol,
+				}
+				selectionEnd.value = {
+					row: endRow,
+					col: endCol,
+				}
+				ranged.value = {
+					start: {
+						row: startRow,
+						col: startCol,
+					},
+					end: {
+						row: endRow,
+						col: endCol,
+					},
+				}
+			})
 		}
-
 		console.log('设置选区范围', selectionStart.value, selectionEnd.value, mergedCell)
-		selecting.value = false
-
-		ranged.value = {
-			start: {
-				row: selectionStart.value.row,
-				col: selectionStart.value.col,
-			},
-			end: {
-				row: selectionEnd.value.row,
-				col: selectionEnd.value.col,
-			},
-		}
 	}
 
 	// 获取框选范围的起始单元格
@@ -527,6 +554,12 @@ export const useSelectionRange = (containerId, config = {}) => {
 		worker = new Worker(new URL('./worker/SelectionRangeWorker.js', import.meta.url), {
 			type: 'module',
 		})
+
+		worker.onmessage = (e) => {
+			const {type, data} = e.data
+			budgetTotalWidth.value = data.totalWidth
+			budgetTotalHeight.value = data.totalHeight
+		}
 
 		// 基本鼠标事件
 		useEventListener(container, 'mousedown', handleMouseDown)
