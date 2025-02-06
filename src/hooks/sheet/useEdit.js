@@ -1,3 +1,4 @@
+import {nextTick} from 'vue'
 export const useEdit = (id, config) => {
 	const {sheet, renderRange, useResizeHook, useSelectionRangeHook} = config
 	let initialized = false
@@ -64,7 +65,6 @@ export const useEdit = (id, config) => {
 			if (height > useResizeHook.getRowHeight(rowIndex)) {
 				useResizeHook.setRowHeight(rowIndex, height)
 			}
-			renderRange()
 		}
 
 		const blur = () => {

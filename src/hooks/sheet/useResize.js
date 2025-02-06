@@ -7,8 +7,8 @@ export const useResize = (config = {}) => {
 	let worker = null
 
 	// 行高调整相关
-	const rowHeights = reactive({}) // 存储自定义行高
-	const colWidths = reactive({}) // 存储自定义列宽
+	const rowHeights = {} // 存储自定义行高
+	const colWidths = {} // 存储自定义列宽
 
 	const isResizing = ref(false) // 是否正在调整大小
 

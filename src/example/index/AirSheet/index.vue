@@ -10,20 +10,12 @@ const config = {
 			},
 		},
 	},
-	// celldata: Array.from({length: 1000}, (_, r) => {
-	// 	return Array.from({length: 240}, (_, c) => {
-	// 		return `R${r + 1}-C${c + 1}`
-	// 	})
-	// }),
-	celldata: [],
-	fns: [
-		{
-			label: '操作',
-			click: (row, rowData) => {
-				console.log(row, rowData)
-			},
-		},
-	],
+	celldata: Array.from({length: 670000}, (_, r) => {
+		return Array.from({length: 100}, (_, c) => {
+			return `R${r + 1}-C${c + 1}`
+		})
+	}),
+	// celldata: [],
 }
 const config2 = {
 	celldata: Array.from({length: 100}, (_, index) => {
@@ -42,6 +34,15 @@ const config2 = {
 	],
 }
 
+const fns = [
+	// {
+	// 	label: '操作',
+	// 	click: (row, rowData) => {
+	// 		console.log(row, rowData)
+	// 	},
+	// },
+]
+
 onMounted(() => {
 	// sheetRef.value.setMergeCell(12, 4, 4, 4)
 	// sheetRef.value.setMergeCell(16, 5, 4, 4)
@@ -55,7 +56,7 @@ onMounted(() => {
 </script>
 <template>
 	<div style="height: 100%" class="df">
-		<AirSheet ref="sheetRef" v-model="config"></AirSheet>
+		<AirSheet ref="sheetRef" v-model="config" :fns="fns"></AirSheet>
 
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>

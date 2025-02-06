@@ -34,7 +34,7 @@ const props = defineProps({
 	// 单元格宽度
 	colWidth: {type: Number, default: 100},
 	// 缓冲区大小(额外渲染的行数)
-	buffer: {type: Number, default: 5},
+	buffer: {type: Number, default: 10},
 
 	// 序号
 	enableNumber: {type: Boolean, default: true},
@@ -45,6 +45,7 @@ const props = defineProps({
 	enableFn: {type: Boolean, default: true},
 	// 操作列宽度
 	fnWidth: {type: Number, default: 120},
+	fns: {type: Array, default: () => []},
 
 	height: {type: [Number, String], default: 0},
 })
@@ -64,8 +65,8 @@ const sheet = reactive({
 		colCount: 0,
 	},
 	celldata: new Map(),
-	fns: props.modelValue?.fns || [],
 })
+const fns = ref(props.modelValue.fns || [])
 
 const maxRowCount = computed(() => {
 	let rowCount = 0
@@ -172,8 +173,10 @@ const useEditHook = useEdit(id, {
 	useSelectionRangeHook,
 	renderRange: () => updateVisibleRange(),
 })
-const useHistoryHook = useHistory(sheet, {
+const useHistoryHook = useHistory({
+	sheet,
 	useMergedCellsHook,
+	useSelectionRangeHook,
 	renderRange: () => updateVisibleRange(),
 })
 const useCopyHook = useCopy({
@@ -228,8 +231,8 @@ const updateVisibleRange = async () => {
 			buffer: props.buffer,
 			defaultRowHeight: props.rowHeight,
 			defaultColWidth: props.colWidth,
-			rowHeights: JSON.parse(JSON.stringify(useResizeHook.rowHeights)),
-			colWidths: JSON.parse(JSON.stringify(useResizeHook.colWidths)),
+			rowHeights: useResizeHook.rowHeights,
+			colWidths: useResizeHook.colWidths,
 			mergedCells: JSON.parse(JSON.stringify(sheet.config.mergedCells)),
 		}
 
@@ -408,7 +411,7 @@ const isMergedCellStart = (cell) => {
 
 // 滚动处理
 let scrollTimer = null
-const lastScroll = ref(true)
+const lastScroll = ref(false)
 const onScroll = useThrottleFn(
 	(e) => {
 		if (lastScroll.value) {
@@ -497,6 +500,7 @@ const updateViewportSize = () => {
 // 点击序号
 const onClickNumber = (e, row) => {
 	const target = e.currentTarget
+
 	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1, true)
 	setTimeout(() => {
 		target.parentNode.querySelectorAll('.selection').forEach((item) => {
@@ -661,7 +665,6 @@ const onAlignClick = (align) => {
 
 // 添加行
 const onAddRowClick = () => {
-	useHistoryHook.saveHistory()
 	const ranged = useSelectionRangeHook.ranged
 	const endRow = Math.max(ranged.start.row, ranged.end.row)
 	const insertRowIndex = endRow + 1
@@ -687,12 +690,26 @@ const onAddRowClick = () => {
 	sheet.celldata = newMap
 	sheet.config.rowCount++
 
+	useHistoryHook.saveHistory(
+		{
+			rowIndex: insertRowIndex,
+			rowspan: 0,
+		},
+		'addRow'
+	)
+	useSelectionRangeHook.setRange(
+		insertRowIndex,
+		0,
+		insertRowIndex,
+		sheet.config.colCount - 1,
+		true
+	)
 	updateVisibleRange()
 }
 
 // 添加列
 const onAddColumnClick = () => {
-	useHistoryHook.saveHistory()
+	useHistoryHook.saveHistory({}, 'addCol')
 	const ranged = useSelectionRangeHook.ranged
 	const endCol = Math.max(ranged.start.col, ranged.end.col)
 	const insertColIndex = endCol + 1
@@ -727,6 +744,13 @@ const onAddColumnClick = () => {
 	sheet.celldata = newMap
 	sheet.config.colCount++
 
+	useHistoryHook.saveHistory(
+		{
+			colIndex: insertColIndex,
+			colspan: 0,
+		},
+		'addCol'
+	)
 	updateVisibleRange()
 }
 
@@ -871,7 +895,7 @@ const onRemoveColumnClick = () => {
 
 // 单元格编辑失去焦点后
 const onCellInput = (event, cell) => {
-	useHistoryHook.saveHistory()
+	useHistoryHook.saveHistory(cell)
 	setTimeout(() => {
 		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
 		emits('cellInput', val, cell) // 新值，旧值
@@ -889,6 +913,7 @@ const init = () => {
 	useSelectionRangeHook.init()
 	useEditHook.init()
 	useCopyHook.init()
+	useHistoryHook.init()
 
 	initialized.value = true
 	window.addEventListener('resize', updateViewportSize)
@@ -1068,7 +1093,7 @@ defineExpose({
 				class="virtual-sheet custom alphabet brn"
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
-					width: `calc(100% - ${enableFn && sheet.fns?.length ? fnWidth : 0}px - ${
+					width: `calc(100% - ${enableFn && fns?.length ? fnWidth : 0}px - ${
 						enableNumber ? numberWidth : 0
 					}px - ${scrollbarWidth}px)`,
 				}"
@@ -1117,7 +1142,7 @@ defineExpose({
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
 					width:
-						enableFn && sheet.fns?.length
+						enableFn && fns?.length
 							? fnWidth + scrollbarWidth + 'px'
 							: scrollbarWidth + 'px',
 				}"
@@ -1247,7 +1272,7 @@ defineExpose({
 			<div
 				ref="fnRef"
 				class="virtual-sheet custom bln"
-				v-if="enableFn && sheet.fns?.length"
+				v-if="enableFn && fns?.length"
 				:style="{
 					opacity: lastScroll ? 1 : 0.15,
 					width: fnWidth + 'px',
@@ -1271,7 +1296,7 @@ defineExpose({
 								:style="{height: `${row.rowHeight}px`}"
 							>
 								<span
-									v-for="fn in sheet.fns"
+									v-for="fn in fns"
 									@click="() => fn.click(row, sheet.celldata.get(row.rowIndex))"
 								>
 									{{ fn.label }}
@@ -1393,6 +1418,7 @@ defineExpose({
 		position: relative;
 		overflow: auto;
 		height: calc(100% - 18px);
+		will-change: opacity, transform, scroll-position;
 	}
 
 	.virtual-phantom {
@@ -1409,6 +1435,7 @@ defineExpose({
 		z-index: 2;
 		padding-bottom: 1px;
 		padding-right: 1px;
+		will-change: transform, contents;
 
 		.selection {
 			color: var(--z-font-color);
@@ -1557,6 +1584,7 @@ defineExpose({
 		pointer-events: none;
 		z-index: 3;
 		transition: background-color 0.1s;
+		will-change: top, left, width, height;
 
 		&.selection-single {
 			border: 2px solid var(--z-main);

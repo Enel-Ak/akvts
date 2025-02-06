@@ -170,13 +170,18 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		// 计算到当前行的总高度（包括之前所有行的实际高度）
 		let totalOffsetTop = 0
-		for (let i = 0; i < startRow; i++) {
-			totalOffsetTop += useResizeHook.getRowHeight(i)
+		if (startRow > 0) {
+			for (let i = 0; i < startRow; i++) {
+				totalOffsetTop += useResizeHook.getRowHeight(i)
+			}
 		}
 
+		// 计算到当前列的总宽度（包括之前所有列的实际宽度）
 		let totaloffsetLeft = 0
-		for (let i = 0; i < startCol; i++) {
-			totaloffsetLeft += useResizeHook.getColWidth(i)
+		if (startCol > 0) {
+			for (let i = 0; i < startCol; i++) {
+				totaloffsetLeft += useResizeHook.getColWidth(i)
+			}
 		}
 
 		// 计算合并单元格的总高度
