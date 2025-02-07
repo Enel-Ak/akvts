@@ -697,7 +697,6 @@ const onAddRowClick = () => {
 
 // 添加列
 const onAddColumnClick = () => {
-	useHistoryHook.saveHistory({}, 'addCol')
 	const ranged = useSelectionRangeHook.ranged
 	const endCol = Math.max(ranged.start.col, ranged.end.col)
 	const insertColIndex = endCol + 1
@@ -739,14 +738,19 @@ const onAddColumnClick = () => {
 		},
 		'addCol'
 	)
+	useSelectionRangeHook.setRange(
+		0,
+		insertColIndex,
+		sheet.config.rowCount - 1,
+		insertColIndex,
+		true
+	)
 	updateVisibleRange()
 }
 
 // 删除行
 const onRemoveRowClick = () => {
-	useHistoryHook.saveHistory()
 	const ranged = useSelectionRangeHook.ranged
-
 	if (!ranged) return
 
 	const startRow = Math.min(ranged.start.row, ranged.end.row)
@@ -799,6 +803,15 @@ const onRemoveRowClick = () => {
 	})
 
 	useMergedCellsHook.setMergedCells(newMergedCells)
+
+	useHistoryHook.saveHistory(
+		{
+			startRow,
+			endRow,
+			value: sheet.celldata.get(startRow),
+		},
+		'removeRow'
+	)
 
 	// 更新sheet.celldata
 	// useSelectionRangeHook.clear()

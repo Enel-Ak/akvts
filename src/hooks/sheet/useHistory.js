@@ -29,6 +29,10 @@ export function useHistory(config) {
 						state.addCol.set(`${cell.colIndex}`, {colspan: cell.colspan})
 					}
 					break
+				case 'removeRow':
+					console.log(12, cell)
+
+					break
 			}
 		}
 
@@ -91,20 +95,21 @@ export function useHistory(config) {
 
 			if (state.addCol.size > 0) {
 				// 获取被删除的列
-				const deletedRows = [...state.addRow]
+				const deletedCols = [...state.addCol]
 					.map(([key]) => Number(key))
 					.sort((a, b) => a - b)
-				if (deletedRows.length > 0) {
+
+				if (deletedCols.length > 0) {
 					const newCelldata = new Map()
 					sheet.celldata.forEach((_, rowIndex) => {
-						let rowData = sheet.celldata.get(rowIndex)
-						deletedRows.forEach((_, deletedColIndex) => {
-							rowData.splice(deletedColIndex, 1)
+						let colData = sheet.celldata.get(rowIndex)
+						deletedCols.forEach((colIndex) => {
+							colData.splice(colIndex, 1)
 						})
-						newCelldata.set(rowIndex, rowData)
+						newCelldata.set(rowIndex, colData)
 					})
 					sheet.celldata = newCelldata
-					sheet.config.colCount -= deletedRows.length
+					sheet.config.colCount -= deletedCols.length
 				}
 			}
 
