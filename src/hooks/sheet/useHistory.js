@@ -73,7 +73,7 @@ export function useHistory(config) {
 						await processMapInBatches(state.celldata, (rowIndex, rowData) => {
 							const [r, c] = rowIndex.split('-').map(Number)
 							sheet.celldata.get(r)[c] = rowData
-							useSelectionRangeHook.setRange(r, c, r, c, true)
+							// useSelectionRangeHook.setRange(r, c, r, c, true)
 						})
 						state.celldata.clear()
 					} catch (error) {
@@ -96,6 +96,8 @@ export function useHistory(config) {
 						})
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
+
+						sheet.config.rowCount -= state.addRow.rowspan + 1
 						state.addRow = null
 					} catch (error) {
 						console.error('撤销添加行失败:', error)
@@ -122,6 +124,7 @@ export function useHistory(config) {
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
+						sheet.config.colCount -= state.addCol.colspan + 1
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)
@@ -154,6 +157,7 @@ export function useHistory(config) {
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
+						sheet.config.rowCount += state.removeRow.size - 1
 						state.removeRow.clear()
 					} catch (error) {
 						console.error('撤销删除行失败:', error)
