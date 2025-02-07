@@ -1,37 +1,46 @@
 import {cloneDeep} from 'lodash'
+import {reactive} from 'vue'
 export function useHistory(config) {
-	const {sheet, renderRange, useMergedCellsHook, useSelectionRangeHook} = config
+	const {
+		sheet,
+		loading,
+		loadingText,
+		renderRange,
+		processMapInBatches,
+		useMergedCellsHook,
+		useSelectionRangeHook,
+	} = config
 	const history = []
 	const max = 50
 
 	// 准备修改前保存当前状态
-	const saveHistory = (cell = null, type = 'edit') => {
+	const saveHistory = (data = null, type = 'edit') => {
 		// 保存完整的 sheet 状态
 		const state = {
 			config: cloneDeep(sheet.config),
 			celldata: new Map(),
-			addRow: new Map(),
-			addCol: new Map(),
+			addRow: null,
+			addCol: null,
+			removeRow: new Map(),
+			removeCol: new Map(),
 		}
 
-		if (cell) {
+		if (data) {
 			switch (type) {
 				case 'edit':
-					state.celldata.set(`${cell.rowIndex}-${cell.colIndex}`, cell.value)
+					state.celldata.set(`${data.rowIndex}-${data.colIndex}`, data.value)
 					break
 				case 'addRow':
-					for (let i = cell.rowIndex; i <= cell.rowIndex + cell.rowspan; i++) {
-						state.addRow.set(`${i}`, {rowspan: cell.rowspan})
-					}
+					state.addRow = data
 					break
 				case 'addCol':
-					for (let i = cell.colIndex; i <= cell.colIndex + cell.colspan; i++) {
-						state.addCol.set(`${cell.colIndex}`, {colspan: cell.colspan})
-					}
+					state.addCol = data
 					break
 				case 'removeRow':
-					console.log(12, cell)
-
+					state.removeRow = data
+					break
+				case 'removeCol':
+					state.removeCol = data
 					break
 			}
 		}
@@ -46,83 +55,159 @@ export function useHistory(config) {
 	}
 
 	// 撤销
-	const undo = () => {
+	const undo = async () => {
 		if (!canUndo()) return
 
 		if (history.length > 0) {
-			const state = history.pop()
+			try {
+				const state = history.pop()
 
-			// 更新配置
-			sheet.config = state.config
+				loading.value = true
 
-			// 更新单元格数据
-			if (state.celldata.size > 0) {
-				;[...state.celldata].forEach((arr) => {
-					const [rowIndex, colIndex] = arr[0].split('-')
-					const startRow = Number(rowIndex)
-					const startCol = Number(colIndex)
-					sheet.celldata.get(startRow)[startCol] = arr[1]
-					useSelectionRangeHook.setRange(startRow, startCol, startRow, startCol, true)
-				})
-			}
+				// 撤销修改配置
+				sheet.config = state.config
 
-			if (state.addRow.size > 0) {
-				// 获取被删除的行
-				const deletedRows = [...state.addRow]
-					.map(([key]) => Number(key))
-					.sort((a, b) => a - b)
-				if (deletedRows.length > 0) {
-					const insertRowIndex = deletedRows[0] // 获取插入的位置
-
-					// 创建新的 Map 来存储更新后的数据
-					const newCelldata = new Map()
-
-					sheet.celldata.forEach((rowData, rowIndex) => {
-						if (rowIndex < insertRowIndex) {
-							// 处理插入位置之前的行（保持不变）
-							newCelldata.set(rowIndex, rowData)
-						} else if (rowIndex > insertRowIndex) {
-							// 处理插入位置之后的行（向上移动一行）
-							newCelldata.set(rowIndex - 1, rowData)
-						}
-					})
-
-					// 更新 sheet.celldata
-					sheet.celldata = newCelldata
-					sheet.config.rowCount--
-				}
-			}
-
-			if (state.addCol.size > 0) {
-				// 获取被删除的列
-				const deletedCols = [...state.addCol]
-					.map(([key]) => Number(key))
-					.sort((a, b) => a - b)
-
-				if (deletedCols.length > 0) {
-					const newCelldata = new Map()
-					sheet.celldata.forEach((_, rowIndex) => {
-						let colData = sheet.celldata.get(rowIndex)
-						deletedCols.forEach((colIndex) => {
-							colData.splice(colIndex, 1)
+				// 撤销单元格修改
+				if (state.celldata.size > 0) {
+					try {
+						await processMapInBatches(state.celldata, (rowIndex, rowData) => {
+							const [r, c] = rowIndex.split('-').map(Number)
+							sheet.celldata.get(r)[c] = rowData
+							useSelectionRangeHook.setRange(r, c, r, c, true)
 						})
-						newCelldata.set(rowIndex, colData)
-					})
-					sheet.celldata = newCelldata
-					sheet.config.colCount -= deletedCols.length
+						state.celldata.clear()
+					} catch (error) {
+						console.error('撤销单元格修改失败:', error)
+						loading.value = false
+					}
 				}
-			}
 
-			// 更新合并单元格
-			if (state.config.mergedCells) {
-				const mergedCells = new Map()
-				Object.entries(state.config.mergedCells).forEach(([key, value]) =>
-					mergedCells.set(key, value)
-				)
-				useMergedCellsHook.setMergedCells(mergedCells)
-			}
+				// 撤销添加行
+				if (state.addRow) {
+					const newMap = new Map()
+					try {
+						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+							if (rowIndex < state.addRow.rowIndex) {
+								newMap.set(rowIndex, rowData)
+							} else if (rowIndex > state.addRow.rowIndex) {
+								newMap.set(rowIndex - 1, rowData)
+							}
+							// 跳过添加的行，不添加到新Map中
+						})
+						// 更新 sheet.celldata
+						sheet.celldata = newMap
+						state.addRow = null
+					} catch (error) {
+						console.error('撤销添加行失败:', error)
+						loading.value = false
+					}
+				}
 
-			renderRange()
+				// 撤销添加列
+				if (state.addCol) {
+					const newMap = new Map()
+					try {
+						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+							// 创建新的行数据数组
+							const newRowData = []
+							// 遍历原数据，跳过要删除的列
+							rowData.forEach((cellData, index) => {
+								if (index !== state.addCol.colIndex) {
+									newRowData.push(cellData)
+								}
+							})
+							// 更新到新Map
+							newMap.set(rowIndex, reactive(newRowData))
+						})
+
+						// 更新 sheet.celldata
+						sheet.celldata = newMap
+						state.addCol = null
+					} catch (error) {
+						console.error('撤销添加列失败:', error)
+						loading.value = false
+					}
+				}
+
+				// 撤销删除行
+				if (state.removeRow.size > 0) {
+					// 恢复删除的行
+					const entries = Array.from(state.removeRow.entries())
+					// 按行号排序，确保从小到大恢复
+					const sortedEntries = entries.sort(
+						([keyA], [keyB]) => Number(keyA) - Number(keyB)
+					)
+
+					// 创建新的数据结构
+					const newMap = new Map()
+
+					try {
+						// 先复制现有数据
+						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+							newMap.set(rowIndex, rowData)
+						})
+
+						// 恢复删除的行
+						sortedEntries.forEach(([key, row]) => {
+							newMap.set(Number(row.rowIndex), reactive(row.value))
+						})
+
+						// 更新 sheet.celldata
+						sheet.celldata = newMap
+						state.removeRow.clear()
+					} catch (error) {
+						console.error('撤销删除行失败:', error)
+						loading.value = false
+					}
+				}
+
+				// 撤销删除列
+				if (state.removeCol.size > 0) {
+					try {
+						// 恢复删除的列
+						await processMapInBatches(state.removeCol, (rowIndex, rowData) => {
+							// 获取当前行的数据并转换为数组
+							let currentRowData = Array.from(sheet.celldata.get(rowIndex) || [])
+
+							// 按列索引排序，从小到大恢复
+							const sortedData = rowData.sort((a, b) => a.colIndex - b.colIndex)
+
+							// 一次性扩展数组长度
+							const maxColIndex = sortedData[sortedData.length - 1].colIndex
+							if (currentRowData.length < maxColIndex) {
+								currentRowData.length = maxColIndex + 1
+								currentRowData.fill(null, currentRowData.length)
+							}
+
+							// 一次性插入所有值
+							sortedData.forEach(({colIndex, value}) => {
+								currentRowData.splice(colIndex, 0, value)
+							})
+
+							// 更新到 sheet.celldata
+							sheet.celldata.set(rowIndex, reactive(currentRowData))
+						})
+						state.removeCol.clear()
+					} catch (error) {
+						console.error('撤销删除列失败:', error)
+						loading.value = false
+					}
+				}
+
+				// 更新合并单元格
+				if (state.config.mergedCells) {
+					const mergedCells = new Map()
+					Object.entries(state.config.mergedCells).forEach(([key, value]) =>
+						mergedCells.set(key, value)
+					)
+					useMergedCellsHook.setMergedCells(mergedCells)
+				}
+			} catch (error) {
+				console.error('处理数据时出错:', error)
+			} finally {
+				loading.value = false
+				loadingText.value = '处理完成'
+			}
 		}
 	}
 
