@@ -11,6 +11,7 @@ export const useSheetRender = (config) => {
 	// 渲染请求队列
 	let renderRequestId = 0
 	const renderRequests = new Map()
+	const limit = 30000
 
 	// 获取渲染结果
 	const getRenderResult = (data) => {
@@ -23,7 +24,7 @@ export const useSheetRender = (config) => {
 
 			requestAnimationFrame(() => {
 				// 发送渲染请求
-				if (sheet.config.rowCount >= 10000) {
+				if (sheet.config.rowCount >= limit) {
 					loadingProgress.value = -1
 					loadingText.value = `数据量较大,请稍后...`
 					loading.value = true

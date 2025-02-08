@@ -82,6 +82,7 @@ const sheet = reactive({
 })
 
 const fns = ref(props.modelValue.fns || [])
+const limit = 30000
 
 // 初始数据处理
 const initialData = () => {
@@ -90,7 +91,7 @@ const initialData = () => {
 	const celldata = props.modelValue.celldata
 	const total = celldata.length
 
-	if (total >= 10000) {
+	if (total >= limit) {
 		loading.value = true
 		loadingText.value = '正在加载数据...'
 	}
@@ -733,7 +734,7 @@ const onAddRowClick = async () => {
 	const endRow = Math.max(ranged.start.row, ranged.end.row)
 	const insertRowIndex = endRow + 1
 
-	if (sheet.celldata.size >= 10000) {
+	if (sheet.celldata.size >= limit) {
 		loading.value = true
 		loadingText.value = '正在处理数据...'
 	}
@@ -780,7 +781,7 @@ const onAddColumnClick = async () => {
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
-	if (sheet.celldata.size >= 10000) {
+	if (sheet.celldata.size >= limit) {
 		loading.value = true
 		loadingText.value = '正在处理数据...'
 	}
@@ -852,7 +853,7 @@ const onRemoveRowClick = async () => {
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
-	if (sheet.celldata.size >= 10000) {
+	if (sheet.celldata.size >= limit) {
 		loading.value = true
 		loadingText.value = '正在处理数据...'
 	}
@@ -935,14 +936,14 @@ const onRemoveRowClick = async () => {
 
 // 删除列
 const onRemoveColumnClick = async () => {
-	if (!sheet.config.removeCol) {
+	if (!sheet.config.removeColumn) {
 		ElMessage.warning('请先在配置中开启删除列功能')
 		return
 	}
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
-	if (sheet.celldata.size >= 10000) {
+	if (sheet.celldata.size >= limit) {
 		loading.value = true
 		loadingText.value = '正在处理数据...'
 	}
@@ -1630,7 +1631,7 @@ defineExpose({
 		</div>
 
 		<!-- 遮罩 -->
-		<div v-if="loading" class="mask">
+		<div class="mask" :class="{active: loading}">
 			<div>
 				<Icons icon-name="Loading" class="loading-animation"></Icons>
 				<span>{{ loadingText }}</span>
@@ -2005,10 +2006,17 @@ defineExpose({
 	display: flex;
 	justify-content: center;
 	position: absolute;
+	transition: all 0.15s linear;
+	opacity: 0;
 	top: 0;
 	left: 0;
 	width: 100%;
 	height: 100%;
+	z-index: -1;
+	&.active {
+		opacity: 1;
+		z-index: 101;
+	}
 
 	div {
 		align-items: center;
