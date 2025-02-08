@@ -87,10 +87,12 @@ export const useEdit = (id, config) => {
 				cellEl.innerText = originalValue
 			}
 			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
-			setRowHeight()
-
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
+			setTimeout(() => {
+				setRowHeight()
+				useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
+			}, 0)
 		}
 
 		cellEl.addEventListener('blur', blur)
