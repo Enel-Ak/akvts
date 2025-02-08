@@ -1,5 +1,5 @@
 import {cloneDeep} from 'lodash'
-import {reactive} from 'vue'
+import {nextTick, reactive} from 'vue'
 export function useHistory(config) {
 	const {
 		sheet,
@@ -60,10 +60,9 @@ export function useHistory(config) {
 
 		if (history.length > 0) {
 			try {
-				const state = history.pop()
-
 				loading.value = true
 
+				const state = history.pop()
 				// 撤销修改配置
 				sheet.config = state.config
 

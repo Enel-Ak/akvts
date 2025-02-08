@@ -362,6 +362,7 @@ const visibleCells = (row) => {
 // 计算偏移量
 const offsetTop = ref(0)
 const offsetLeft = ref(0)
+
 // 滚动条宽度补偿
 const scrollbarWidth = ref(0)
 const updateOffset = async (type, value) => {
@@ -444,30 +445,31 @@ const isMergedCellStart = (cell) => {
 
 // 滚动处理
 let scrollTimer = null
-let historyRange = null
+let rafId = null
 const lastScroll = ref(false)
-const onScroll = useThrottleFn(
-	(e) => {
-		if (!historyRange) {
-			historyRange = useSelectionRangeHook.ranged
-			useSelectionRangeHook.clear()
-		}
+const onScroll = async (e) => {
+	if (lastScroll.value) {
+		lastScroll.value = false
+		return
+	}
+	console.log(useSelectionRangeHook.ranged.end.row, useSelectionRangeHook.ranged.end.col)
 
-		if (lastScroll.value) {
-			lastScroll.value = false
-			return
-		}
+	// 清除之前的定时器和动画帧
+	clearTimeout(scrollTimer)
+	if (rafId) {
+		cancelAnimationFrame(rafId)
+	}
 
-		clearTimeout(scrollTimer)
+	const container = e.target
+	const newScrollTop = container.scrollTop
+	const newScrollLeft = container.scrollLeft
 
-		const container = e.target
-		const newScrollTop = container.scrollTop
-		const newScrollLeft = container.scrollLeft
+	const alphabet = alphabetRef.value
+	const number = numberRef.value
+	const fn = fnRef.value
 
-		const alphabet = alphabetRef.value
-		const number = numberRef.value
-		const fn = fnRef.value
-
+	// 使用 requestAnimationFrame 进行滚动同步
+	rafId = requestAnimationFrame(() => {
 		scrollTop.value = newScrollTop
 		scrollLeft.value = newScrollLeft
 
@@ -482,12 +484,15 @@ const onScroll = useThrottleFn(
 		if (fn) {
 			fn.scrollTop = newScrollTop
 		}
+	})
 
-		//修正最后一次位置并对齐到行
-		scrollTimer = setTimeout(() => {
-			lastScroll.value = true
-			const nt = containerRef.value.scrollTop
-			const nl = containerRef.value.scrollLeft
+	// 使用防抖处理最后一次滚动位置
+	scrollTimer = setTimeout(() => {
+		lastScroll.value = true
+		const nt = containerRef.value.scrollTop
+		const nl = containerRef.value.scrollLeft
+
+		rafId = requestAnimationFrame(() => {
 			scrollTop.value = nt
 			scrollLeft.value = nl
 
@@ -503,17 +508,9 @@ const onScroll = useThrottleFn(
 				fn.scrollTop = nt
 			}
 			savedScrollPosition.value = {top: nt, left: nl}
-			useSelectionRangeHook.setRange(
-				historyRange.start.row,
-				historyRange.start.col,
-				historyRange.end.row,
-				historyRange.end.col
-			)
-			historyRange = null
-		}, 300)
-	},
-	{throttle: 16}
-)
+		})
+	}, 150) // 减少延迟时间以提高响应速度
+}
 
 // 恢复滚动位置
 const restoreScrollPosition = () => {
@@ -546,7 +543,6 @@ const updateViewportSize = () => {
 // 点击序号
 const onClickNumber = (e, row) => {
 	const target = e.currentTarget
-
 	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1, true)
 	setTimeout(() => {
 		target.parentNode.querySelectorAll('.selection').forEach((item) => {
@@ -565,7 +561,7 @@ const onClickNumber = (e, row) => {
 // 点击字母
 const onClickAlphabet = (e, col) => {
 	const target = e.target.closest('.alphabet-cell')
-	const colIndex = target.getAttribute('data-col')
+	const colIndex = Number(target.getAttribute('data-col'))
 	useSelectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
 	setTimeout(() => {
 		target.parentNode.querySelectorAll('.selection').forEach((item) => {
@@ -1129,7 +1125,13 @@ defineExpose({
 <template>
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
-		<div class="toolbar" :style="{opacity: lastScroll ? 1 : 0.15}">
+		<div class="toolbar" :style="{}">
+			<div class="group" v-if="useHistoryHook.canUndo()">
+				<div class="item" @click="useHistoryHook.undo">
+					<Icons icon-name="Undo"></Icons>
+					<span>撤销</span>
+				</div>
+			</div>
 			<div class="group" v-if="sheet.config.align">
 				<div class="item" @click="onAlignClick('left')">
 					<Icons icon-name="AlignLeft"></Icons>
@@ -1195,13 +1197,6 @@ defineExpose({
 					<span>删除列</span>
 				</div>
 			</div>
-
-			<div class="group" v-if="useHistoryHook.canUndo()">
-				<div class="item" @click="useHistoryHook.undo">
-					<Icons icon-name="Undo"></Icons>
-					<span>撤销</span>
-				</div>
-			</div>
 		</div>
 
 		<!-- Sheet -->
@@ -1211,7 +1206,6 @@ defineExpose({
 				v-if="enableNumber"
 				class="alphabet-placeholder brn bbn"
 				:style="{
-					opacity: lastScroll ? 1 : 0.15,
 					width: numberWidth + 'px',
 				}"
 			></div>
@@ -1219,7 +1213,6 @@ defineExpose({
 				ref="alphabetRef"
 				class="virtual-sheet custom alphabet brn"
 				:style="{
-					opacity: lastScroll ? 1 : 0.15,
 					width: `calc(100% - ${enableFn && fns?.length ? fnWidth : 0}px - ${
 						enableNumber ? numberWidth : 0
 					}px - ${scrollbarWidth}px)`,
@@ -1267,7 +1260,6 @@ defineExpose({
 			<div
 				class="alphabet-placeholder bln bbn"
 				:style="{
-					opacity: lastScroll ? 1 : 0.15,
 					width:
 						enableFn && fns?.length
 							? fnWidth + scrollbarWidth + 'px'
@@ -1281,7 +1273,6 @@ defineExpose({
 				class="virtual-sheet custom brn"
 				v-if="enableNumber"
 				:style="{
-					opacity: lastScroll ? 1 : 0.15,
 					width: numberWidth + 'px',
 				}"
 			>
@@ -1354,7 +1345,7 @@ defineExpose({
 										}"
 										:style="getOffsetStyle(cell)"
 										class="cell"
-										@dblclick="useEditHook.startEdit($event, cell)"
+										@dblclick.stop="useEditHook.startEdit($event, cell)"
 									></div>
 								</div>
 								<div
@@ -1365,7 +1356,7 @@ defineExpose({
 										merged: isMergedCellStart(cell),
 									}"
 									:style="getOffsetStyle(cell)"
-									@dblclick="useEditHook.startEdit($event, cell)"
+									@dblclick.stop="useEditHook.startEdit($event, cell)"
 									@blur="onCellInput($event, cell)"
 									class="cell"
 								></div>
@@ -1401,7 +1392,6 @@ defineExpose({
 				class="virtual-sheet custom bln"
 				v-if="enableFn && fns?.length"
 				:style="{
-					opacity: lastScroll ? 1 : 0.15,
 					width: fnWidth + 'px',
 				}"
 			>
@@ -1454,7 +1444,7 @@ defineExpose({
 		</div>
 
 		<!-- 状态栏 -->
-		<div class="statusbar" :style="{opacity: lastScroll ? 1 : 0.15}">
+		<div class="statusbar" :style="{}">
 			<span>总行数: {{ sheet.config.rowCount }}</span>
 			<span>总列数: {{ sheet.config.colCount }}</span>
 		</div>
@@ -1626,9 +1616,10 @@ defineExpose({
 			justify-content: center;
 			position: relative;
 			span {
+				color: rgba(var(--z-font-color-rgb), 1);
 				text-overflow: ellipsis;
 				overflow: hidden;
-				transform: scale(0.9);
+				transform: scale(0.85);
 			}
 		}
 

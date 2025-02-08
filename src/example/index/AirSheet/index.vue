@@ -10,8 +10,8 @@ const config = {
 			},
 		},
 	},
-	celldata: Array.from({length: 60}, (_, r) => {
-		return Array.from({length: 13}, (_, c) => {
+	celldata: Array.from({length: 600}, (_, r) => {
+		return Array.from({length: 100}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
 		})
 	}),

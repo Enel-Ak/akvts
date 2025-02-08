@@ -1,6 +1,5 @@
-import {computed, ref, shallowRef, watch} from 'vue'
+import {computed, ref, shallowRef, watch, nextTick} from 'vue'
 import {useEventListener} from '@vueuse/core'
-import {debounce} from 'lodash-es'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
@@ -148,7 +147,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 	// 计算选区样式
 	const rangeStyle = computed(() => {
 		if (!selecting.value && !ranged.value) return {}
-
 		let startRow, endRow, startCol, endCol
 
 		if (selecting.value && isDragging.value) {
@@ -290,6 +288,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const handleMouseDown = (e) => {
 		if (e.button !== 0) return // 只处理左键点击
 
+		// 只处理带有cell类的元素
+		if (!e.target.classList.contains('cell')) return
+
 		const pos = getCellPosition(e)
 
 		if (pos.row > sheet.config.rowCount - 1 || pos.col > sheet.config.colCount - 1) return
@@ -358,31 +359,31 @@ export const useSelectionRange = (containerId, config = {}) => {
 	}
 
 	const handleMouseUp = () => {
-		if (selecting.value) {
-			// 获取当前选区范围
-			const startRow = Math.min(selectionStart.value.row, selectionEnd.value.row)
-			const endRow = Math.max(selectionStart.value.row, selectionEnd.value.row)
-			const startCol = Math.min(selectionStart.value.col, selectionEnd.value.col)
-			const endCol = Math.max(selectionStart.value.col, selectionEnd.value.col)
+		if (!selecting.value) return
 
-			// 扩展选区以包含所有相关的合并单元格
-			const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
+		// 获取当前选区范围
+		const startRow = Math.min(selectionStart.value.row, selectionEnd.value.row)
+		const endRow = Math.max(selectionStart.value.row, selectionEnd.value.row)
+		const startCol = Math.min(selectionStart.value.col, selectionEnd.value.col)
+		const endCol = Math.max(selectionStart.value.col, selectionEnd.value.col)
 
-			ranged.value = {
-				start: {
-					row: expanded.startRow,
-					col: expanded.startCol,
-				},
-				end: {
-					row: expanded.endRow,
-					col: expanded.endCol,
-				},
-			}
+		// 扩展选区以包含所有相关的合并单元格
+		const expanded = getExpandedRange(startRow, endRow, startCol, endCol)
 
-			// 结束选择状态
-			selecting.value = false
-			isDragging.value = false
+		ranged.value = {
+			start: {
+				row: expanded.startRow,
+				col: expanded.startCol,
+			},
+			end: {
+				row: expanded.endRow,
+				col: expanded.endCol,
+			},
 		}
+
+		// 结束选择状态
+		selecting.value = false
+		isDragging.value = false
 	}
 
 	// 处理拖拽开始
@@ -450,17 +451,17 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	// 处理拖拽结束
 	const handleDragEnd = () => {
-		if (isRangeDragging.value) {
-			isRangeDragging.value = false
-			selecting.value = false
-			// 保持最终的选区状态
-			selectionStart.value = {...ranged.value.start}
-			selectionEnd.value = {...ranged.value.end}
-		}
+		if (!isRangeDragging.value) return
+
+		isRangeDragging.value = false
+		selecting.value = false
+		// 保持最终的选区状态
+		selectionStart.value = {...ranged.value.start}
+		selectionEnd.value = {...ranged.value.end}
 	}
 
 	// 设置选区范围
-	const setRange = (startRow, startCol, endRow = startRow, endCol = startCol, force = false) => {
+	const setRange = async (startRow, startCol, endRow = 0, endCol = 0, force = false) => {
 		selectionClassMap.clear()
 
 		// 检查是否在合并单元格内
@@ -476,30 +477,19 @@ export const useSelectionRange = (containerId, config = {}) => {
 				col: mergedCell.col + mergedCell.colspan - 1,
 				mergedCell,
 			}
-		} else {
-			// 批量更新选区范围
-			Promise.resolve().then(() => {
-				selectionStart.value = {
-					row: startRow,
-					col: startCol,
-				}
-				selectionEnd.value = {
-					row: endRow,
-					col: endCol,
-				}
-				ranged.value = {
-					start: {
-						row: startRow,
-						col: startCol,
-					},
-					end: {
-						row: endRow,
-						col: endCol,
-					},
-				}
-			})
 		}
-		console.log('设置选区范围', selectionStart.value, selectionEnd.value, mergedCell)
+		ranged.value = {
+			start: {
+				row: startRow,
+				col: startCol,
+			},
+			end: {
+				row: endRow,
+				col: endCol,
+			},
+		}
+
+		console.log('设置选区范围', ranged.value)
 	}
 
 	// 获取框选范围的起始单元格
