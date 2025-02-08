@@ -10,12 +10,12 @@ const config = {
 			},
 		},
 	},
-	celldata: Array.from({length: 100}, (_, r) => {
-		return Array.from({length: 120}, (_, c) => {
-			return `R${r + 1}-C${c + 1}`
-		})
-	}),
-	// celldata: [],
+	// celldata: Array.from({length: 100}, (_, r) => {
+	// 	return Array.from({length: 120}, (_, c) => {
+	// 		return `R${r + 1}-C${c + 1}`
+	// 	})
+	// }),
+	celldata: [],
 }
 const config2 = {
 	celldata: Array.from({length: 100}, (_, index) => {
