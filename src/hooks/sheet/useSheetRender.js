@@ -3,7 +3,7 @@ import {ref} from 'vue'
 export const useSheetRender = (config) => {
 	// 创建渲染worker
 	let worker = null
-	const {sheet, loading, loadingText} = config
+	const {sheet, loading, loadingText, loadingProgress} = config
 
 	// 渲染结果缓存
 	const renderResult = ref(null)
@@ -24,6 +24,7 @@ export const useSheetRender = (config) => {
 			requestAnimationFrame(() => {
 				// 发送渲染请求
 				if (sheet.config.rowCount >= 10000) {
+					loadingProgress.value = -1
 					loadingText.value = `数据量较大,请稍后...`
 					loading.value = true
 				}

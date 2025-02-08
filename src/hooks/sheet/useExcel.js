@@ -1,0 +1,180 @@
+import {ref} from 'vue'
+import ExcelJS from 'exceljs'
+
+export const useExcel = (config = {}) => {
+	const {
+		loading,
+		loadingText,
+		loadingProgress,
+		useEditHook,
+		useMergedCellsHook,
+		useSelectionRangeHook,
+	} = config
+	const importing = ref(false)
+	const exporting = ref(false)
+
+	// 处理单元格值
+	const processCellValue = (cell) => {
+		if (!cell || cell.value === null || cell.value === undefined) {
+			return ''
+		}
+
+		// 处理不同类型的单元格值
+		switch (cell.type) {
+			case ExcelJS.ValueType.String:
+				return cell.text || ''
+			case ExcelJS.ValueType.Number:
+				return cell.value.toString()
+			case ExcelJS.ValueType.Boolean:
+				return cell.value.toString()
+			case ExcelJS.ValueType.Date:
+				return cell.value.toLocaleString()
+			case ExcelJS.ValueType.Formula:
+				// 优先使用计算结果
+				if (cell.result !== undefined && cell.result !== null) {
+					return cell.result.toString()
+				}
+				// 如果没有计算结果，使用公式值
+				return cell.value.toString()
+			case ExcelJS.ValueType.RichText:
+				return cell.text || ''
+			default:
+				// 处理对象类型的值
+				if (typeof cell.value === 'object') {
+					return cell.text || ''
+				}
+				return (cell.value || '').toString()
+		}
+	}
+
+	// 分批处理数据
+	const processBatch = (worksheet, rowCount, colCount, startRow, startCol, batchSize = 100) => {
+		return new Promise((resolve) => {
+			let currentRow = 1
+			let currentCol = 1
+			const totalCells = rowCount * colCount
+			let processedCells = 0
+
+			const processNextBatch = () => {
+				let cellsInBatch = 0
+				while (currentRow <= rowCount && cellsInBatch < batchSize) {
+					const row = worksheet.getRow(currentRow)
+
+					while (currentCol <= colCount && cellsInBatch < batchSize) {
+						const cell = row.getCell(currentCol)
+						const value = processCellValue(cell)
+
+						useEditHook.setCellValue(
+							currentRow - 1 + startRow,
+							currentCol - 1 + startCol,
+							value,
+							true
+						)
+
+						currentCol++
+						cellsInBatch++
+						processedCells++
+					}
+
+					if (currentCol > colCount) {
+						currentCol = 1
+						currentRow++
+					}
+				}
+
+				// 更新进度
+				const progress = Math.floor((processedCells / totalCells) * 100)
+				loadingText.value = `正在导入Excel文件...`
+				loadingProgress.value = progress
+
+				if (currentRow <= rowCount) {
+					requestAnimationFrame(processNextBatch)
+				} else {
+					resolve()
+				}
+			}
+
+			requestAnimationFrame(processNextBatch)
+		})
+	}
+
+	// 读取Excel文件
+	const readExcelFile = async (file) => {
+		if (!file) return
+
+		try {
+			importing.value = true
+			loadingText.value = '正在导入Excel文件...'
+			loading.value = true
+
+			const workbook = new ExcelJS.Workbook()
+			const arrayBuffer = await file.arrayBuffer()
+			await workbook.xlsx.load(arrayBuffer)
+
+			// 获取第一个工作表
+			const worksheet = workbook.worksheets[0]
+			if (!worksheet) {
+				throw new Error('Excel文件为空')
+			}
+
+			// 获取数据范围
+			const rowCount = worksheet.lastRow?.number || worksheet.rowCount
+			const colCount = worksheet.lastColumn?.number || worksheet.columnCount
+
+			console.log('行数:', rowCount, '列数:', colCount)
+
+			if (!rowCount || !colCount) {
+				throw new Error('Excel文件没有数据')
+			}
+
+			const ranged = useSelectionRangeHook.ranged
+			if (!ranged) {
+				throw new Error('无效的数据范围')
+			}
+
+			// const startRow = Math.min(ranged.start.row, ranged.end.row)
+			// const startCol = Math.min(ranged.start.col, ranged.end.col)
+			const startRow = 0
+			const startCol = 0
+
+			// 分批处理数据
+			await processBatch(worksheet, rowCount, colCount, startRow, startCol)
+
+			// 处理合并单元格
+			if (worksheet._merges) {
+				Object.entries(worksheet._merges).forEach(([key, merge]) => {
+					if (typeof merge !== 'object' || !merge.top) return
+
+					const row = merge.top - 1 + startRow
+					const col = merge.left - 1 + startCol
+					const rowspan = merge.bottom - merge.top + 1
+					const colspan = merge.right - merge.left + 1
+
+					useMergedCellsHook.setMergeCell(row, col, rowspan, colspan)
+				})
+			}
+
+			return {success: true}
+		} catch (error) {
+			console.error('Excel导入失败:', error)
+			return {
+				success: false,
+				error: error.message,
+			}
+		} finally {
+			importing.value = false
+			loading.value = false
+			loadingText.value = ''
+		}
+	}
+
+	// 导出Excel文件
+	const exportExcel = () => {}
+
+	return {
+		importing,
+		exporting,
+		readExcelFile,
+		exportExcel,
+	}
+}

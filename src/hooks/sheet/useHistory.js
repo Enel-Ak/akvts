@@ -5,6 +5,7 @@ export function useHistory(config) {
 		sheet,
 		loading,
 		loadingText,
+		loadingProgress,
 		renderRange,
 		processMapInBatches,
 		useMergedCellsHook,
@@ -67,6 +68,7 @@ export function useHistory(config) {
 		if (history.length > 0) {
 			try {
 				loading.value = true
+				loadingProgress.value = -1
 
 				const state = history.pop()
 				// 撤销修改配置
@@ -78,7 +80,7 @@ export function useHistory(config) {
 						await processMapInBatches(state.celldata, (rowIndex, rowData) => {
 							const [r, c] = rowIndex.split('-').map(Number)
 							sheet.celldata.get(r)[c] = rowData
-							// useSelectionRangeHook.setRange(r, c, r, c, true)
+							useSelectionRangeHook.setRange(r, c, r, c, true)
 						})
 						state.celldata.clear()
 					} catch (error) {
@@ -162,7 +164,6 @@ export function useHistory(config) {
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
-						sheet.config.rowCount += state.removeRow.size - 1
 						state.removeRow.clear()
 					} catch (error) {
 						console.error('撤销删除行失败:', error)

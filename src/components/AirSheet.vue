@@ -17,6 +17,7 @@ import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
 import {useEdit} from '@/hooks/sheet/useEdit.js'
 import {useHistory} from '@/hooks/sheet/useHistory'
 import {useCopy} from '@/hooks/sheet/useCopy'
+import {useExcel} from '@/hooks/sheet/useExcel'
 
 const emits = defineEmits(['update:modelValue', 'cellInput'])
 
@@ -96,7 +97,8 @@ const initialData = () => {
 
 		if (processed < total) {
 			if (processed % batchSize === 0) {
-				loadingText.value = `正在加载数据... ${Math.floor((processed / total) * 100)}%`
+				loadingText.value = `正在加载数据...`
+				loadingProgress.value = Math.floor((processed / total) * 100)
 			}
 			requestAnimationFrame(processBatch)
 		} else {
@@ -125,6 +127,7 @@ const containerHeight = computed(() => {
 const initialized = ref(false)
 const loading = ref(false)
 const loadingText = ref('数据量较大, 请稍等...')
+const loadingProgress = ref(0)
 const containerRef = ref()
 const alphabetRef = ref()
 const numberRef = ref()
@@ -142,7 +145,7 @@ const viewportWidth = ref(0)
 const savedScrollPosition = ref({top: 0, left: 0})
 
 // hooks 模块
-const useSheetRenderHook = useSheetRender({sheet, loading, loadingText})
+const useSheetRenderHook = useSheetRender({sheet, loading, loadingText, loadingProgress})
 const useResizeHook = useResize({
 	rowHeight: props.rowHeight,
 	colWidth: props.colWidth,
@@ -176,6 +179,7 @@ const useEditHook = useEdit(id, {
 const useHistoryHook = useHistory({
 	loading,
 	loadingText,
+	loadingProgress,
 	sheet,
 	useMergedCellsHook,
 	useSelectionRangeHook,
@@ -189,6 +193,14 @@ const useCopyHook = useCopy({
 	useSelectionRangeHook,
 	useHistoryHook,
 	renderRange: () => updateVisibleRange(),
+})
+const {importing, readExcelFile} = useExcel({
+	loading,
+	loadingText,
+	loadingProgress,
+	useEditHook,
+	useMergedCellsHook,
+	useSelectionRangeHook,
 })
 
 // 计算总高度
@@ -239,7 +251,8 @@ const processMapInBatches = (map, callback, batchSize = 5000) => {
 
 			if (processed < total) {
 				if (processed % batchSize !== 0) {
-					loadingText.value = `正在处理数据... ${Math.floor((processed / total) * 100)}%`
+					loadingText.value = `正在处理数据...`
+					loadingProgress.value = Math.floor((processed / total) * 100)
 				}
 				requestAnimationFrame(processBatch)
 			} else {
@@ -969,6 +982,18 @@ const onRemoveColumnClick = async () => {
 	}
 }
 
+// 导入Excel
+const onImportClick = async (event) => {
+	const file = event.target.files[0]
+	if (!file) return
+	const result = await readExcelFile(file)
+	if (result.success) {
+		console.log('Excel导入成功', sheet.celldata)
+		event.target.value = null
+		updateVisibleRange()
+	}
+}
+
 // 单元格编辑失去焦点后
 const onCellInput = (event, cell) => {
 	useHistoryHook.saveHistory(cell)
@@ -1167,9 +1192,10 @@ defineExpose({
 			</div>
 
 			<div class="group">
-				<div class="item" @click="onImportClick">
+				<div class="item import">
 					<Icons icon-name="Import"></Icons>
 					<span>导入Excel</span>
+					<input type="file" @change="onImportClick" />
 				</div>
 				<div class="item" @click="onExportClick">
 					<Icons icon-name="Export"></Icons>
@@ -1444,8 +1470,11 @@ defineExpose({
 
 		<!-- 遮罩 -->
 		<div v-if="loading" class="mask">
-			<Icons icon-name="Loading" class="loading-animation"></Icons>
-			<div>{{ loadingText }}</div>
+			<div>
+				<Icons icon-name="Loading" class="loading-animation"></Icons>
+				<span>{{ loadingText }}</span>
+				<span v-if="loadingProgress !== -1">{{ loadingProgress }}%</span>
+			</div>
 		</div>
 	</div>
 </template>
@@ -1483,6 +1512,7 @@ defineExpose({
 		justify-content: flex-start;
 		margin: 0 0 0 4px;
 		padding: 4px;
+		position: relative;
 		// transition: all 0.15s linear;
 		span {
 			font-size: 12px;
@@ -1495,6 +1525,20 @@ defineExpose({
 			color: var(--z-font-color);
 			:deep(svg) {
 				color: var(--z-font-color) !important;
+			}
+		}
+
+		&.import {
+			overflow: hidden;
+			input {
+				cursor: pointer;
+				position: absolute;
+				left: 0;
+				top: 0;
+				bottom: 0;
+				right: 0;
+				opacity: 0.01;
+				transform: scale(2);
 			}
 		}
 	}
@@ -1581,7 +1625,7 @@ defineExpose({
 
 		> :deep(div) {
 			line-height: 1;
-			&:not(.merged) {
+			&:not(.merged, .resize-handle) {
 				pointer-events: none;
 			}
 
@@ -1800,9 +1844,23 @@ defineExpose({
 	left: 0;
 	width: 100%;
 	height: 100%;
+
 	div {
+		align-items: center;
 		color: var(--z-font-color);
+		display: flex;
+		flex: 1;
 		margin-left: 5px;
+		justify-content: center;
+		white-space: nowrap;
+		span {
+			margin-left: 5px;
+		}
+		span:nth-child(3) {
+			flex: none;
+			text-align: right;
+			width: torem(30px);
+		}
 	}
 }
 </style>

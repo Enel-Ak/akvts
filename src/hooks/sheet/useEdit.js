@@ -1,4 +1,5 @@
-import {nextTick} from 'vue'
+import {reactive} from 'vue'
+
 export const useEdit = (id, config) => {
 	const {sheet, renderRange, useResizeHook, useSelectionRangeHook} = config
 	let initialized = false
@@ -91,8 +92,19 @@ export const useEdit = (id, config) => {
 		return html
 	}
 
-	const setCellValue = (rowIndex, colIndex, value) => {
+	const setCellValue = (rowIndex, colIndex, value, create = false) => {
 		if (sheet.celldata.get(rowIndex)) {
+			if (colIndex > sheet.config.colCount) {
+				sheet.config.colCount = colIndex + 1
+			}
+			sheet.celldata.get(rowIndex)[colIndex] = value
+		} else if (create) {
+			if (!sheet.celldata.get(rowIndex)) {
+				sheet.celldata.set(rowIndex, reactive([]))
+				if (rowIndex > sheet.config.rowCount) {
+					sheet.config.rowCount = rowIndex + 1
+				}
+			}
 			sheet.celldata.get(rowIndex)[colIndex] = value
 		}
 	}

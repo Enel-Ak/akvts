@@ -1,5 +1,4 @@
 import {computed, ref, shallowRef, watch, nextTick} from 'vue'
-import {useEventListener} from '@vueuse/core'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
@@ -553,9 +552,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 
 		// 基本鼠标事件
-		useEventListener(container, 'mousedown', handleMouseDown)
-		useEventListener(window, 'mousemove', handleMouseMove)
-		useEventListener(window, 'mouseup', handleMouseUp)
+		container.addEventListener('mousedown', handleMouseDown)
+		window.addEventListener('mousemove', handleMouseMove)
+		window.addEventListener('mouseup', handleMouseUp)
 
 		// 拖拽相关事件
 		document.addEventListener('mousemove', handleDragMove)
