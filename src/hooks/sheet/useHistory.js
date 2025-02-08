@@ -28,7 +28,13 @@ export function useHistory(config) {
 		if (data) {
 			switch (type) {
 				case 'edit':
-					state.celldata.set(`${data.rowIndex}-${data.colIndex}`, data.value)
+					if (Array.isArray(data)) {
+						data.forEach((item) => {
+							state.celldata.set(`${item.rowIndex}-${item.colIndex}`, item.value)
+						})
+					} else {
+						state.celldata.set(`${data.rowIndex}-${data.colIndex}`, data.value)
+					}
 					break
 				case 'addRow':
 					state.addRow = data

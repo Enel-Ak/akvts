@@ -10,7 +10,7 @@ const config = {
 			},
 		},
 	},
-	celldata: Array.from({length: 600}, (_, r) => {
+	celldata: Array.from({length: 600000}, (_, r) => {
 		return Array.from({length: 100}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
 		})
@@ -44,13 +44,14 @@ const fns = [
 ]
 
 onMounted(() => {
-	// sheetRef.value.setMergeCell(12, 4, 4, 4)
-	// sheetRef.value.setMergeCell(16, 5, 4, 4)
-	// // sheetRef.value.setCellValue(0, 0, 'hello')
-	// setTimeout(() => {
-	// 	sheetRef.value.setMergeCell(0, 0, 2, 4)
-	// 	sheetRef.value.setRange(0, 0, 2, 4)
-	// }, 1000)
+	sheetRef.value.setMergeCell(5, 4, 4, 4)
+	sheetRef.value.setMergeCell(1, 5, 4, 4)
+	// sheetRef.value.setCellValue(0, 0, 'hello')
+	setTimeout(() => {
+		sheetRef.value.setMergeCell(0, 0, 2, 4)
+		// sheetRef.value.setRange(0, 0, 2, 4)
+		// config.value.celldata[0][0] = '123'
+	}, 1000)
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
 </script>

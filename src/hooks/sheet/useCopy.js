@@ -1,7 +1,7 @@
 import {nextTick} from 'vue'
 
 export function useCopy(config) {
-	const {sheet, useMergedCellsHook, useSelectionRangeHook, renderRange} = config
+	const {sheet, useMergedCellsHook, useSelectionRangeHook, useHistoryHook, renderRange} = config
 
 	const handleKeyDown = (event) => {
 		// 复制 Ctrl+C / Command+C
@@ -170,14 +170,24 @@ export function useCopy(config) {
 		}
 
 		if (pasteData.data.length) {
+			const oldCellData = []
 			pasteData.data.forEach((row, rowIndex) => {
 				row.forEach((cell, colIndex) => {
+					const oldCell = sheet.celldata.get(baseRow + rowIndex)?.[baseCol + colIndex]
 					if (!sheet.celldata.get(baseRow + rowIndex)) {
 						sheet.celldata.set(baseRow + rowIndex, [])
 					}
+
+					oldCellData.push({
+						rowIndex: baseRow + rowIndex,
+						colIndex: baseCol + colIndex,
+						value: oldCell,
+					})
 					sheet.celldata.get(baseRow + rowIndex)[baseCol + colIndex] = cell
 				})
 			})
+
+			useHistoryHook.saveHistory(oldCellData, 'edit')
 
 			pasteData.merges.forEach((merge) => {
 				useMergedCellsHook.addMergedCell(merge.r, merge.c, merge.rs, merge.cs)

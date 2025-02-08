@@ -142,7 +142,7 @@ const viewportWidth = ref(0)
 const savedScrollPosition = ref({top: 0, left: 0})
 
 // hooks 模块
-const useSheetRenderHook = useSheetRender(sheet)
+const useSheetRenderHook = useSheetRender({sheet, loading, loadingText})
 const useResizeHook = useResize({
 	rowHeight: props.rowHeight,
 	colWidth: props.colWidth,
@@ -452,7 +452,6 @@ const onScroll = async (e) => {
 		lastScroll.value = false
 		return
 	}
-	console.log(useSelectionRangeHook.ranged.end.row, useSelectionRangeHook.ranged.end.col)
 
 	// 清除之前的定时器和动画帧
 	clearTimeout(scrollTimer)
@@ -1180,7 +1179,12 @@ defineExpose({
 
 			<div class="group flx"></div>
 
-			<div class="group brn">
+			<div
+				class="group brn"
+				:style="{
+					opacity: !useHistoryHook.canUndo() ? 0.3 : 1,
+				}"
+			>
 				<div class="item" @click="useHistoryHook.undo">
 					<Icons icon-name="Undo"></Icons>
 					<span>撤销</span>
@@ -1577,7 +1581,9 @@ defineExpose({
 
 		> :deep(div) {
 			line-height: 1;
-			pointer-events: none;
+			&:not(.merged) {
+				pointer-events: none;
+			}
 
 			&:first-child {
 				padding-top: 2px;

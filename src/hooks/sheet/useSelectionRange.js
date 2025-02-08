@@ -18,9 +18,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const selectionEnd = shallowRef({row: -1, col: -1})
 	const ranged = shallowRef({start: {row: -1, col: -1}, end: {row: -1, col: -1}})
 
-	// 计算序号、字母样式缓存
-	const selectionClassMap = new Map()
-
 	// 点击阈值
 	const clickThreshold = 5
 
@@ -229,9 +226,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		const rowIndex = row?.rowIndex
 		const colIndex = col?.colIndex
 
-		// 清除之前的所有选中状态
-		selectionClassMap.clear()
-
 		// 判断是否在拖拽或框选状态
 		const isSelecting = selecting.value || isDragging.value || isRangeDragging.value
 
@@ -260,30 +254,27 @@ export const useSelectionRange = (containerId, config = {}) => {
 		const minCol = Math.min(startCol, endCol)
 		const maxCol = Math.max(startCol, endCol)
 
+		if (maxRow === sheet.config.rowCount - 1) {
+			return minCol === maxCol && minCol === colIndex && maxCol === colIndex
+		}
+
+		if (maxCol === sheet.config.colCount - 1) {
+			return minRow === maxRow && minRow === rowIndex && maxRow === rowIndex
+		}
+
 		// 获取扩展范围（考虑合并单元格）
-		const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
+		// const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
 
-		let bool = false
-
+		// 直接判断是否在范围内
 		if (row) {
-			bool = rowIndex >= expanded.startRow && rowIndex <= expanded.endRow
-			if (bool) {
-				for (let i = expanded.startRow; i <= expanded.endRow; i++) {
-					selectionClassMap.set(`r${i}`, true)
-				}
-			}
+			return rowIndex >= minRow && rowIndex <= maxRow
 		}
 
 		if (col) {
-			bool = colIndex >= expanded.startCol && colIndex <= expanded.endCol
-			if (bool) {
-				for (let i = expanded.startCol; i <= expanded.endCol; i++) {
-					selectionClassMap.set(`c${i}`, true)
-				}
-			}
+			return colIndex >= minCol && colIndex <= maxCol
 		}
 
-		return bool
+		return false
 	}
 
 	// 限制范围在最大值内
@@ -474,8 +465,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	// 设置选区范围
 	const setRange = async (startRow, startCol, endRow = 0, endCol = 0, force = false) => {
-		selectionClassMap.clear()
-
 		// 检查是否在合并单元格内
 		const mergedCell = useMergedCellsHook.findMergedCell?.(startRow, startCol)
 		if (mergedCell && !force) {

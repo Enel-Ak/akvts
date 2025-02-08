@@ -92,7 +92,9 @@ export const useEdit = (id, config) => {
 	}
 
 	const setCellValue = (rowIndex, colIndex, value) => {
-		sheet.celldata.get(rowIndex)[colIndex] = value
+		if (sheet.celldata.get(rowIndex)) {
+			sheet.celldata.get(rowIndex)[colIndex] = value
+		}
 	}
 
 	const destroy = () => {

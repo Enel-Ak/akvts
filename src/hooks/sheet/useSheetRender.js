@@ -1,8 +1,9 @@
 import {ref} from 'vue'
 
-export const useSheetRender = (sheet) => {
+export const useSheetRender = (config) => {
 	// 创建渲染worker
 	let worker = null
+	const {sheet, loading, loadingText} = config
 
 	// 渲染结果缓存
 	const renderResult = ref(null)
@@ -22,6 +23,10 @@ export const useSheetRender = (sheet) => {
 
 			requestAnimationFrame(() => {
 				// 发送渲染请求
+				if (sheet.config.rowCount >= 10000) {
+					loadingText.value = `数据量较大,请稍后...`
+					loading.value = true
+				}
 				worker.postMessage({
 					type: 'render_request',
 					requestId,
@@ -49,19 +54,24 @@ export const useSheetRender = (sheet) => {
 			type: 'module',
 		})
 		// 监听worker消息
-
+		let completedTimer = null
 		worker.onmessage = (event) => {
 			const {type, data, requestId} = event.data
-
 			switch (type) {
 				case 'render_response': {
 					// 处理渲染结果
 					const request = renderRequests.get(requestId)
-
 					if (request) {
+						clearTimeout(completedTimer)
 						renderRequests.delete(requestId)
 						renderResult.value = data
 						request.resolve(data)
+
+						completedTimer = setTimeout(() => {
+							if (renderRequests.size === 0 && loading.value) {
+								loading.value = false
+							}
+						}, 100)
 					}
 					break
 				}
