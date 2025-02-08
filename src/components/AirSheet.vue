@@ -1678,11 +1678,11 @@ defineExpose({
 		span {
 			font-size: 12px;
 			padding: 4px 0 0 0;
-			transform: scale(0.9);
+			transform: scale(0.85);
 		}
 
 		&:hover {
-			background-color: var(--z-sheet-virtual);
+			background-color: var(--z-sheet-active);
 			color: var(--z-font-color);
 			:deep(svg) {
 				color: var(--z-font-color) !important;
@@ -1761,7 +1761,7 @@ defineExpose({
 
 		.selection {
 			color: var(--z-font-color);
-			background-color: rgba(var(--z-sheet-virtual-rgb), 1);
+			background-color: rgba(var(--z-sheet-active-rgb), 1);
 		}
 	}
 
