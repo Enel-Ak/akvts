@@ -18,6 +18,7 @@ import {useEdit} from '@/hooks/sheet/useEdit.js'
 import {useHistory} from '@/hooks/sheet/useHistory'
 import {useCopy} from '@/hooks/sheet/useCopy'
 import {useExcel} from '@/hooks/sheet/useExcel'
+import {useTools} from '@/hooks/sheet/useTools'
 import {ElMessage} from 'element-plus'
 
 const emits = defineEmits(['update:modelValue', 'cellInput'])
@@ -54,9 +55,10 @@ const props = defineProps({
 // 保存数据
 const sheet = reactive({
 	config: {
-		bold: true,
-		italic: true,
-		underline: true,
+		bold: true, // 加粗
+		strikethrough: true, // 删除线
+		italic: true, // 斜体
+		underline: true, // 下划线
 		merge: true, // 合并单元格
 		align: true, // 对齐方式
 		border: true, // 边框
@@ -218,6 +220,7 @@ const {importing, exportExcel, readExcelFile} = useExcel({
 	useMergedCellsHook,
 	useSelectionRangeHook,
 })
+const useToolsHook = useTools({})
 
 // 计算总高度
 const totalHeight = computed(() => {
@@ -581,8 +584,10 @@ const onClickAlphabet = async (e, col) => {
 }
 
 // 设置单元格样式, 工具栏共用,
-const setCellStyle = (type, val, fn) => {
-	useHistoryHook.saveHistory()
+const setCellStyle = (type, val, fn, save = true) => {
+	if (save) {
+		useHistoryHook.saveHistory()
+	}
 
 	const ranged = useSelectionRangeHook.ranged
 	const startRow = Math.min(ranged.start.row, ranged.end.row)
@@ -610,6 +615,46 @@ const setCellStyle = (type, val, fn) => {
 			}
 		}
 	}
+}
+
+// 字体
+const onChangeFont = (e) => {
+	const font = e.target.value
+	setCellStyle('font', font)
+}
+
+// 字号
+const onChangeFontSize = (e) => {
+	const size = e.target.value
+	setCellStyle('size', size)
+}
+
+// 颜色
+let fontSaved = false
+const onInputFontColor = (e) => {
+	if (!fontSaved) {
+		useHistoryHook.saveHistory()
+		fontSaved = true
+	}
+	const color = e.target.value
+	setCellStyle('color', color, null, false)
+}
+const onChangeFontColor = (e) => {
+	fontSaved = false
+}
+
+// 填充
+let fillSaved = false
+const onInputFillColor = (e) => {
+	if (!fillSaved) {
+		useHistoryHook.saveHistory()
+		fillSaved = true
+	}
+	const color = e.target.value
+	setCellStyle('bg', color, null, false)
+}
+const onChangeFillColor = (e) => {
+	fillSaved = false
 }
 
 // 合并
@@ -706,7 +751,7 @@ const onBorderClick = (border = true, direction = null) => {
 
 // 对齐
 const onAlignClick = (align) => {
-	setCellStyle('a', align)
+	setCellStyle('align', align)
 }
 
 // 加粗
@@ -722,6 +767,10 @@ const onItalicClick = () => {
 // 下划线
 const onUnderlineClick = () => {
 	setCellStyle('underline', true)
+}
+
+const onStrikethroughClick = () => {
+	setCellStyle('strikethrough', true)
 }
 
 // 添加行
@@ -1239,9 +1288,54 @@ defineExpose({
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar" :style="{}">
+			<div class="group h-full">
+				<div class="item font">
+					<select value="STSong" @change="onChangeFont($event)">
+						<option
+							v-for="[key, value] of Object.entries(useToolsHook.fonts)"
+							:key="value"
+							:value="value"
+						>
+							{{ key }}
+						</option>
+					</select>
+					<select value="13" @change="onChangeFontSize($event)">
+						<option v-for="size in useToolsHook.fontSize" :key="size" :value="size">
+							{{ size }}
+						</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="group">
+				<div class="item color">
+					<Icons icon-name="Font"></Icons>
+					<span>颜色</span>
+					<input
+						type="color"
+						@input="onInputFontColor($event)"
+						@change="onChangeFontColor($event)"
+					/>
+				</div>
+				<div class="item color">
+					<Icons icon-name="FillColor"></Icons>
+					<span>填充</span>
+					<input
+						type="color"
+						@input="onInputFillColor($event)"
+						@change="onChangeFillColor($event)"
+					/>
+				</div>
+			</div>
+
 			<div
 				class="group"
-				v-if="sheet.config.bold || sheet.config.italic || sheet.config.underline"
+				v-if="
+					sheet.config.bold ||
+					sheet.config.italic ||
+					sheet.config.underline ||
+					sheet.config.strikethrough
+				"
 			>
 				<div v-if="sheet.config.bold" class="item" @click="onBoldClick">
 					<Icons icon-name="Bold"></Icons>
@@ -1254,6 +1348,10 @@ defineExpose({
 				<div v-if="sheet.config.underline" class="item" @click="onUnderlineClick">
 					<Icons icon-name="Underline"></Icons>
 					<span>下划线</span>
+				</div>
+				<div v-if="sheet.config.strikethrough" class="item" @click="onStrikethroughClick">
+					<Icons icon-name="Strikethrough"></Icons>
+					<span>删除线</span>
 				</div>
 			</div>
 
@@ -1486,7 +1584,7 @@ defineExpose({
 			</div>
 
 			<!-- 主体 -->
-			<div ref="containerRef" :id="id" class="virtual-sheet" @scroll="onScroll">
+			<div ref="containerRef" :id="id" class="virtual-sheet sheet-main" @scroll="onScroll">
 				<!-- 虚拟滚动占位 -->
 				<div
 					class="virtual-phantom"
@@ -1655,13 +1753,13 @@ defineExpose({
 	border-bottom: none;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: flex-start;
 	// transition: all 0.15s linear;
 	user-select: none;
 	.group {
 		border-right: 1px solid var(--z-line);
 		display: flex;
-		height: 100%;
 		padding: 4px 4px 4px 0;
 	}
 
@@ -1673,6 +1771,7 @@ defineExpose({
 		flex-direction: column;
 		justify-content: flex-start;
 		margin: 0 0 0 4px;
+		overflow: hidden;
 		padding: 4px;
 		position: relative;
 		// transition: all 0.15s linear;
@@ -1690,8 +1789,41 @@ defineExpose({
 			}
 		}
 
+		&.font {
+			flex-wrap: wrap;
+			flex-direction: row;
+			select {
+				border: 1px solid var(--z-line);
+				flex: 1;
+				padding: 2px;
+				&:nth-child(1) {
+					border-radius: 4px 0 0 4px;
+				}
+				&:nth-child(2) {
+					border-radius: 0 4px 4px 0;
+					margin-left: -1px;
+				}
+			}
+			&:hover {
+				background-color: transparent;
+			}
+		}
+
 		&.import {
 			overflow: hidden;
+			input {
+				cursor: pointer;
+				position: absolute;
+				left: 0;
+				top: 0;
+				bottom: 0;
+				right: 0;
+				opacity: 0.01;
+				transform: scale(2);
+			}
+		}
+
+		&.color {
 			input {
 				cursor: pointer;
 				position: absolute;
@@ -1764,6 +1896,11 @@ defineExpose({
 			color: var(--z-font-color);
 			background-color: rgba(var(--z-sheet-active-rgb), 1);
 		}
+	}
+
+	.sheet-main {
+		font-size: 13px;
+		font-family: STSong, serif;
 	}
 
 	.row {

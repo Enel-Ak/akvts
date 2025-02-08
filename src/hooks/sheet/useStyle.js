@@ -39,10 +39,27 @@ export const useStyle = (cellStyle) => {
 		return value === true ? 'italic' : 'normal'
 	}
 
+	// 删除线
+	const strikethrough = (value) => {
+		return value === true ? 'line-through' : 'normal'
+	}
+
 	Object.entries(cellStyle).forEach(([key, value]) => {
 		let line = '1px solid #000'
 		switch (key) {
-			case 'a':
+			case 'font':
+				style['font-family'] = value
+				break
+			case 'size':
+				style['font-size'] = value + 'px'
+				break
+			case 'color':
+				style['color'] = value
+				break
+			case 'bg':
+				style['background-color'] = value
+				break
+			case 'align':
 				style['align-items'] = alignItems(value)
 				style['text-align'] = value
 				break
@@ -83,6 +100,9 @@ export const useStyle = (cellStyle) => {
 				break
 			case 'italic':
 				style['font-style'] = italic(value)
+				break
+			case 'strikethrough':
+				style['text-decoration'] = strikethrough(value)
 				break
 			default:
 				style[key] = value

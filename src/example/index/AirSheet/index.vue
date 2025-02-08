@@ -6,7 +6,7 @@ const config = {
 	config: {
 		cellStyle: {
 			'0-0': {
-				a: 'right',
+				align: 'right',
 			},
 		},
 	},
@@ -70,7 +70,7 @@ const onClick = () => {
 <route>
 	{
 		meta: {
-			title: '虚拟表',
+			title: 'AirSheet',
 		},
 	}
 </route>

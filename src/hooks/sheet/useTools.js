@@ -1,21 +1,19 @@
 export const useTools = (config) => {
-	let worker = null
-	const {sheet} = config
-
-	const destroy = () => {
-		if (!worker) return
-		worker.terminate()
-		worker = null
+	// 预置字体列表
+	const fonts = {
+		宋体: 'STSong',
+		简宋: 'SimSong-Regular',
+		楷体: 'STKaiti',
+		黑体: 'STHeitiTC-Medium',
+		Arial: 'Arial',
+		Helvetica: 'Helvetica',
+		'Times New Roman': 'Times New Roman',
+		'Courier New': 'Courier New',
 	}
-
-	const init = () => {
-		worker = new Worker(new URL('./worker.js', import.meta.url), {
-			type: 'module',
-		})
-	}
+	const fontSize = [12, 13, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]
 
 	return {
-		init,
-		destroy,
+		fonts,
+		fontSize,
 	}
 }
