@@ -648,6 +648,7 @@ let fillSaved = false
 const onInputFillColor = (e) => {
 	if (!fillSaved) {
 		useHistoryHook.saveHistory()
+		onBorderClick(true, null, false)
 		fillSaved = true
 	}
 	const color = e.target.value
@@ -677,76 +678,81 @@ const onMergeClick = () => {
 }
 
 // 边框
-const onBorderClick = (border = true, direction = null) => {
-	setCellStyle('b', null, (r, c, {startRow, startCol, endRow, endCol}) => {
-		// 删除边框样式
-		if (!border && !direction) {
-			// 无边框
-			if (sheet.config.cellStyle[`${r}-${c}`]) {
-				delete sheet.config.cellStyle[`${r}-${c}`].b
-				delete sheet.config.cellStyle[`${r}-${c}`].bt
-				delete sheet.config.cellStyle[`${r}-${c}`].bb
-				delete sheet.config.cellStyle[`${r}-${c}`].bl
-				delete sheet.config.cellStyle[`${r}-${c}`].br
-				// 如果没有其他样式，删除整个样式对象
-				if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
-					delete sheet.config.cellStyle[`${r}-${c}`]
+const onBorderClick = (border = true, direction = null, save = true) => {
+	setCellStyle(
+		'b',
+		null,
+		(r, c, {startRow, startCol, endRow, endCol}) => {
+			// 删除边框样式
+			if (!border && !direction) {
+				// 无边框
+				if (sheet.config.cellStyle[`${r}-${c}`]) {
+					delete sheet.config.cellStyle[`${r}-${c}`].b
+					delete sheet.config.cellStyle[`${r}-${c}`].bt
+					delete sheet.config.cellStyle[`${r}-${c}`].bb
+					delete sheet.config.cellStyle[`${r}-${c}`].bl
+					delete sheet.config.cellStyle[`${r}-${c}`].br
+					// 如果没有其他样式，删除整个样式对象
+					if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
+						delete sheet.config.cellStyle[`${r}-${c}`]
+					}
 				}
+				return
 			}
-			return
-		}
 
-		if (border && !direction) {
-			// 点边框时删除其他边框
-			try {
-				delete sheet.config.cellStyle[`${r}-${c}`].bt
-				delete sheet.config.cellStyle[`${r}-${c}`].bb
-				delete sheet.config.cellStyle[`${r}-${c}`].bl
-				delete sheet.config.cellStyle[`${r}-${c}`].br
-			} catch {}
-		}
-
-		// 如果没有cellStyle对象，创建一个
-		if (!sheet.config.cellStyle[`${r}-${c}`]) {
-			sheet.config.cellStyle[`${r}-${c}`] = {}
-		}
-
-		if (border === null && direction) {
-			if (direction === 'top') {
-				sheet.config.cellStyle[`${r}-${c}`].bt = 'borderTop'
-			} else if (direction === 'bottom') {
-				sheet.config.cellStyle[`${r}-${c}`].bb = 'borderBottom'
-			} else if (direction === 'left') {
-				sheet.config.cellStyle[`${r}-${c}`].bl = 'borderLeft'
-			} else if (direction === 'right') {
-				sheet.config.cellStyle[`${r}-${c}`].br = 'borderRight'
+			if (border && !direction) {
+				// 点边框时删除其他边框
+				try {
+					delete sheet.config.cellStyle[`${r}-${c}`].bt
+					delete sheet.config.cellStyle[`${r}-${c}`].bb
+					delete sheet.config.cellStyle[`${r}-${c}`].bl
+					delete sheet.config.cellStyle[`${r}-${c}`].br
+				} catch {}
 			}
-			return
-		}
 
-		// 第一行第一列的交叉单元格
-		if (r === startRow && c === startCol) {
-			sheet.config.cellStyle[`${r}-${c}`].b = 'cross'
-			return
-		}
+			// 如果没有cellStyle对象，创建一个
+			if (!sheet.config.cellStyle[`${r}-${c}`]) {
+				sheet.config.cellStyle[`${r}-${c}`] = {}
+			}
 
-		// 第一行
-		if (r === startRow) {
-			sheet.config.cellStyle[`${r}-${c}`].b = 'top'
-			return
-		}
+			if (border === null && direction) {
+				if (direction === 'top') {
+					sheet.config.cellStyle[`${r}-${c}`].bt = 'borderTop'
+				} else if (direction === 'bottom') {
+					sheet.config.cellStyle[`${r}-${c}`].bb = 'borderBottom'
+				} else if (direction === 'left') {
+					sheet.config.cellStyle[`${r}-${c}`].bl = 'borderLeft'
+				} else if (direction === 'right') {
+					sheet.config.cellStyle[`${r}-${c}`].br = 'borderRight'
+				}
+				return
+			}
 
-		// 第一列
-		if (c === startCol) {
-			sheet.config.cellStyle[`${r}-${c}`].b = 'left'
-			return
-		}
+			// 第一行第一列的交叉单元格
+			if (r === startRow && c === startCol) {
+				sheet.config.cellStyle[`${r}-${c}`].b = 'cross'
+				return
+			}
 
-		// 其他内部单元格
-		if (r <= endRow && c <= endCol) {
-			sheet.config.cellStyle[`${r}-${c}`].b = 'all'
-		}
-	})
+			// 第一行
+			if (r === startRow) {
+				sheet.config.cellStyle[`${r}-${c}`].b = 'top'
+				return
+			}
+
+			// 第一列
+			if (c === startCol) {
+				sheet.config.cellStyle[`${r}-${c}`].b = 'left'
+				return
+			}
+
+			// 其他内部单元格
+			if (r <= endRow && c <= endCol) {
+				sheet.config.cellStyle[`${r}-${c}`].b = 'all'
+			}
+		},
+		save
+	)
 }
 
 // 对齐

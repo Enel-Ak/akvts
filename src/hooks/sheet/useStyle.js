@@ -1,5 +1,7 @@
 export const useStyle = (cellStyle) => {
 	let style = {}
+	let line = `1px solid #000`
+
 	if (!cellStyle) return style
 
 	// 对齐
@@ -45,7 +47,6 @@ export const useStyle = (cellStyle) => {
 	}
 
 	Object.entries(cellStyle).forEach(([key, value]) => {
-		let line = '1px solid #000'
 		switch (key) {
 			case 'font':
 				style['font-family'] = value
