@@ -2,6 +2,9 @@
 let renderState = {
 	isRunning: false,
 	data: null,
+	cache: new Map(), // 添加缓存
+	chunkSize: 100, // 分块大小
+	lastVisibleRange: null, // 上次可见范围
 }
 
 // 计算缓冲区范围
@@ -18,6 +21,24 @@ const calculateBufferRange = (startRow, endRow, startCol, endCol, buffer) => {
 		startCol: bufferStartCol,
 		endCol: bufferEndCol,
 	}
+}
+
+// 分块计算函数
+const calculateChunkedRange = (startRow, endRow, startCol, endCol) => {
+	const chunks = []
+	for (let row = startRow; row < endRow; row += renderState.chunkSize) {
+		for (let col = startCol; col < endCol; col += renderState.chunkSize) {
+			const chunkEndRow = Math.min(row + renderState.chunkSize, endRow)
+			const chunkEndCol = Math.min(col + renderState.chunkSize, endCol)
+			chunks.push({
+				startRow: row,
+				endRow: chunkEndRow,
+				startCol: col,
+				endCol: chunkEndCol,
+			})
+		}
+	}
+	return chunks
 }
 
 // 计算可见范围
@@ -155,9 +176,13 @@ const calculateVisibleRange = (data) => {
 	// 计算缓冲区
 	const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
 
+	// 分块计算
+	const chunks = calculateChunkedRange(startRow, endRow, startCol, endCol)
+
 	return {
 		visible: {startRow, endRow, startCol, endCol},
 		buffer: bufferRange,
+		chunks,
 	}
 }
 
@@ -171,6 +196,7 @@ const calculateRender = (data) => {
 		startCol: range.visible.startCol,
 		endCol: range.visible.endCol,
 		buffer: range.buffer,
+		chunks: range.chunks,
 	}
 }
 

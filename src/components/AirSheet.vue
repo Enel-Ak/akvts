@@ -10,7 +10,6 @@ import {
 	reactive,
 	onDeactivated,
 } from 'vue'
-import {useThrottleFn} from '@vueuse/core'
 import {useMergedCells} from '@/hooks/sheet/useMergedCells'
 import {useSelectionRange} from '@/hooks/sheet/useSelectionRange'
 import {useResize} from '@/hooks/sheet/useResize'
@@ -81,7 +80,7 @@ const initialData = () => {
 		loadingText.value = '正在加载数据...'
 	}
 
-	const batchSize = 5000
+	const batchSize = 3000
 	let processed = 0
 
 	function processBatch() {
@@ -188,6 +187,7 @@ const useCopyHook = useCopy({
 	sheet,
 	useMergedCellsHook,
 	useSelectionRangeHook,
+	useHistoryHook,
 	renderRange: () => updateVisibleRange(),
 })
 
@@ -542,39 +542,14 @@ const updateViewportSize = () => {
 
 // 点击序号
 const onClickNumber = (e, row) => {
-	const target = e.currentTarget
 	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1, true)
-	setTimeout(() => {
-		target.parentNode.querySelectorAll('.selection').forEach((item) => {
-			item.classList.remove('selection')
-		})
-		target.classList.add('selection')
-		document
-			.querySelector('.alphabet-cells')
-			.querySelectorAll('.alphabet-cell')
-			.forEach((item) => {
-				item.classList.add('selection')
-			})
-	}, 0)
 }
 
 // 点击字母
-const onClickAlphabet = (e, col) => {
+const onClickAlphabet = async (e, col) => {
 	const target = e.target.closest('.alphabet-cell')
 	const colIndex = Number(target.getAttribute('data-col'))
 	useSelectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
-	setTimeout(() => {
-		target.parentNode.querySelectorAll('.selection').forEach((item) => {
-			item.classList.remove('selection')
-		})
-		target.classList.add('selection')
-		document
-			.querySelector('.number-cells')
-			.querySelectorAll('.number-cell')
-			.forEach((item) => {
-				item.classList.add('selection')
-			})
-	}, 0)
 }
 
 // 设置单元格样式, 工具栏共用,
@@ -1126,12 +1101,6 @@ defineExpose({
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar" :style="{}">
-			<div class="group" v-if="useHistoryHook.canUndo()">
-				<div class="item" @click="useHistoryHook.undo">
-					<Icons icon-name="Undo"></Icons>
-					<span>撤销</span>
-				</div>
-			</div>
 			<div class="group" v-if="sheet.config.align">
 				<div class="item" @click="onAlignClick('left')">
 					<Icons icon-name="AlignLeft"></Icons>
@@ -1195,6 +1164,26 @@ defineExpose({
 				<div class="item" @click="onRemoveColumnClick">
 					<Icons icon-name="RemoveColumn"></Icons>
 					<span>删除列</span>
+				</div>
+			</div>
+
+			<div class="group">
+				<div class="item" @click="onImportClick">
+					<Icons icon-name="Import"></Icons>
+					<span>导入Excel</span>
+				</div>
+				<div class="item" @click="onExportClick">
+					<Icons icon-name="Export"></Icons>
+					<span>导出Excel</span>
+				</div>
+			</div>
+
+			<div class="group flx"></div>
+
+			<div class="group brn">
+				<div class="item" @click="useHistoryHook.undo">
+					<Icons icon-name="Undo"></Icons>
+					<span>撤销</span>
 				</div>
 			</div>
 		</div>
@@ -1477,6 +1466,7 @@ defineExpose({
 	.group {
 		border-right: 1px solid var(--z-line);
 		display: flex;
+		height: 100%;
 		padding: 4px 4px 4px 0;
 	}
 
@@ -1587,6 +1577,8 @@ defineExpose({
 
 		> :deep(div) {
 			line-height: 1;
+			pointer-events: none;
+
 			&:first-child {
 				padding-top: 2px;
 			}

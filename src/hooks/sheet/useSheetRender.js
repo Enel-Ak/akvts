@@ -20,11 +20,13 @@ export const useSheetRender = (sheet) => {
 			// 存储请求
 			renderRequests.set(requestId, {resolve, reject})
 
-			// 发送渲染请求
-			worker.postMessage({
-				type: 'render_request',
-				requestId,
-				data,
+			requestAnimationFrame(() => {
+				// 发送渲染请求
+				worker.postMessage({
+					type: 'render_request',
+					requestId,
+					data,
+				})
 			})
 
 			// 设置超时处理
