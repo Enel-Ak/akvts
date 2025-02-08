@@ -229,27 +229,38 @@ export const useSelectionRange = (containerId, config = {}) => {
 		const rowIndex = row?.rowIndex
 		const colIndex = col?.colIndex
 
-		// 扩展选区以包含所有相关的合并单元格
-		const {row: startRow, col: startCol} = selectionStart.value
-		const {row: endRow, col: endCol} = selectionEnd.value
+		// 清除之前的所有选中状态
+		selectionClassMap.clear()
 
-		// 先计算实际的起始和结束位置
+		// 判断是否在拖拽或框选状态
+		const isSelecting = selecting.value || isDragging.value || isRangeDragging.value
+
+		let startRow, startCol, endRow, endCol
+
+		// 根据状态选择使用的范围
+		if (isSelecting) {
+			startRow = selectionStart.value.row
+			startCol = selectionStart.value.col
+			endRow = selectionEnd.value.row
+			endCol = selectionEnd.value.col
+		} else {
+			// 使用ranged.value，如果没有选区则直接返回
+			if (ranged.value.start.row === -1 || ranged.value.end.row === -1) {
+				return false
+			}
+			startRow = ranged.value.start.row
+			startCol = ranged.value.start.col
+			endRow = ranged.value.end.row
+			endCol = ranged.value.end.col
+		}
+
+		// 计算实际的起始和结束位置
 		const minRow = Math.min(startRow, endRow)
 		const maxRow = Math.max(startRow, endRow)
 		const minCol = Math.min(startCol, endCol)
 		const maxCol = Math.max(startCol, endCol)
 
-		if (rowIndex !== undefined && selectionClassMap.get(`r${rowIndex}`)) {
-			selectionClassMap.delete(`r${rowIndex}`)
-			return true
-		}
-
-		if (colIndex !== undefined && selectionClassMap.get(`c${colIndex}`)) {
-			selectionClassMap.delete(`c${colIndex}`)
-			return true
-		}
-
-		// 使用实际的最小最大值来获取扩展范围
+		// 获取扩展范围（考虑合并单元格）
 		const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
 
 		let bool = false
@@ -271,6 +282,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 				}
 			}
 		}
+
 		return bool
 	}
 
