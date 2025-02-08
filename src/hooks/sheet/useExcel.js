@@ -3,6 +3,7 @@ import ExcelJS from 'exceljs'
 
 export const useExcel = (config = {}) => {
 	const {
+		sheet,
 		loading,
 		loadingText,
 		loadingProgress,
@@ -168,8 +169,144 @@ export const useExcel = (config = {}) => {
 		}
 	}
 
+	// 处理Excel导出的批处理
+	const processExcelBatch = (
+		worksheet,
+		rowCount,
+		colCount,
+		startRow,
+		startCol,
+		batchSize = 100
+	) => {
+		return new Promise((resolve) => {
+			let currentRow = 1
+			let currentCol = 1
+			const totalCells = rowCount * colCount
+			let processedCells = 0
+
+			const processNextBatch = () => {
+				let cellsInBatch = 0
+				while (currentRow <= rowCount && cellsInBatch < batchSize) {
+					const excelRow = worksheet.getRow(currentRow)
+
+					while (currentCol <= colCount && cellsInBatch < batchSize) {
+						const value = useEditHook.getCellValue(
+							currentRow - 1 + startRow,
+							currentCol - 1 + startCol
+						)
+						const excelCell = excelRow.getCell(currentCol)
+
+						// 设置单元格值
+						if (typeof value === 'number') {
+							excelCell.value = value
+						} else if (value instanceof Date) {
+							excelCell.value = value
+						} else {
+							excelCell.value = value?.toString() || ''
+						}
+
+						currentCol++
+						cellsInBatch++
+						processedCells++
+					}
+
+					if (currentCol > colCount) {
+						currentCol = 1
+						currentRow++
+					}
+				}
+
+				// 更新进度
+				const progress = Math.floor((processedCells / totalCells) * 100)
+				loadingText.value = `正在导出Excel文件...`
+				loadingProgress.value = progress
+
+				if (currentRow <= rowCount) {
+					requestAnimationFrame(processNextBatch)
+				} else {
+					resolve()
+				}
+			}
+
+			requestAnimationFrame(processNextBatch)
+		})
+	}
+
 	// 导出Excel文件
-	const exportExcel = () => {}
+	const exportExcel = async (fileName = 'export.xlsx') => {
+		try {
+			exporting.value = true
+			loading.value = true
+			loadingText.value = '正在导出Excel文件...'
+			loadingProgress.value = 0
+
+			const workbook = new ExcelJS.Workbook()
+			const worksheet = workbook.addWorksheet('Sheet1')
+
+			// 获取数据范围
+			const ranged = useSelectionRangeHook.ranged
+			if (!ranged) {
+				throw new Error('无效的数据范围')
+			}
+
+			const startRow = 0
+			const endRow = sheet.config.rowCount - 1
+			const startCol = 0
+			const endCol = sheet.config.colCount - 1
+
+			const rowCount = endRow - startRow + 1
+			const colCount = endCol - startCol + 1
+
+			// 使用批处理导出数据
+			await processExcelBatch(worksheet, rowCount, colCount, startRow, startCol)
+
+			// 处理合并单元格
+			const mergedCells = useMergedCellsHook.getMergedCells()
+			console.log(1, mergedCells)
+
+			if (mergedCells && typeof mergedCells === 'object') {
+				Object.entries(mergedCells).forEach(([key, merge]) => {
+					const [row, col] = key.split('-').map(Number)
+					if (row >= startRow && row <= endRow && col >= startCol && col <= endCol) {
+						worksheet.mergeCells(
+							row - startRow + 1,
+							col - startCol + 1,
+							row - startRow + merge.rowspan,
+							col - startCol + merge.colspan
+						)
+					}
+				})
+			}
+
+			// 生成并下载文件
+			const buffer = await workbook.xlsx.writeBuffer()
+			const blob = new Blob([buffer], {
+				type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			})
+			const url = URL.createObjectURL(blob)
+
+			const link = document.createElement('a')
+			link.href = url
+			link.download = fileName
+			document.body.appendChild(link)
+			link.click()
+			document.body.removeChild(link)
+			URL.revokeObjectURL(url)
+
+			return {success: true}
+		} catch (error) {
+			console.error('Excel导出失败:', error)
+			return {
+				success: false,
+				error: error.message,
+			}
+		} finally {
+			exporting.value = false
+			loading.value = false
+			loadingText.value = ''
+			loadingProgress.value = 0
+		}
+	}
 
 	return {
 		importing,

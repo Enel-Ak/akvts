@@ -210,7 +210,7 @@ export function useHistory(config) {
 					Object.entries(state.config.mergedCells).forEach(([key, value]) =>
 						mergedCells.set(key, value)
 					)
-					useMergedCellsHook.setMergedCells(mergedCells)
+					useMergedCellsHook.setMergeCells(mergedCells)
 				}
 			} catch (error) {
 				console.error('处理数据时出错:', error)

@@ -7,7 +7,7 @@ export const useMergedCells = (config) => {
 	let mergedCells = new Map()
 
 	// 添加合并单元格
-	const addMergedCell = (rowIndex, colIndex, rowspan, colspan) => {
+	const setMergeCell = (rowIndex, colIndex, rowspan, colspan) => {
 		const currentKey = `${rowIndex}-${colIndex}`
 		const existingMerge = mergedCells.get(currentKey)
 
@@ -62,7 +62,7 @@ export const useMergedCells = (config) => {
 	}
 
 	// 设置合并单元格
-	const setMergedCells = (cellMap) => {
+	const setMergeCells = (cellMap) => {
 		mergedCells = cellMap
 		sheet.config.mergedCells = getMergedCells()
 	}
@@ -176,8 +176,8 @@ export const useMergedCells = (config) => {
 		init,
 		getCellStyle,
 		getMergedCells,
-		setMergedCells,
-		addMergedCell,
+		setMergeCells,
+		setMergeCell,
 		findMergedCell,
 		clearMergedCells,
 		removeMergedCell,

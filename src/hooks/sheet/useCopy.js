@@ -190,7 +190,7 @@ export function useCopy(config) {
 			useHistoryHook.saveHistory(oldCellData, 'edit')
 
 			pasteData.merges.forEach((merge) => {
-				useMergedCellsHook.addMergedCell(merge.r, merge.c, merge.rs, merge.cs)
+				useMergedCellsHook.setMergeCell(merge.r, merge.c, merge.rs, merge.cs)
 			})
 
 			useSelectionRangeHook.setRange(

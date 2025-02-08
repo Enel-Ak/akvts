@@ -194,7 +194,8 @@ const useCopyHook = useCopy({
 	useHistoryHook,
 	renderRange: () => updateVisibleRange(),
 })
-const {importing, readExcelFile} = useExcel({
+const {importing, exportExcel, readExcelFile} = useExcel({
+	sheet,
 	loading,
 	loadingText,
 	loadingProgress,
@@ -607,7 +608,7 @@ const onMergeClick = () => {
 	const endRow = Math.max(ranged.start.row, ranged.end.row)
 	const endCol = Math.max(ranged.start.col, ranged.end.col)
 
-	useMergedCellsHook.addMergedCell(
+	useMergedCellsHook.setMergeCell(
 		startRow,
 		startCol,
 		endRow - startRow + 1,
@@ -785,7 +786,7 @@ const onAddColumnClick = async () => {
 				})
 			}
 		})
-		useMergedCellsHook.setMergedCells(newMergedCells)
+		useMergedCellsHook.setMergeCells(newMergedCells)
 
 		// 保存历史记录
 		useHistoryHook.saveHistory(
@@ -867,7 +868,7 @@ const onRemoveRowClick = async () => {
 			}
 			// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
 		})
-		useMergedCellsHook.setMergedCells(newMergedCells)
+		useMergedCellsHook.setMergeCells(newMergedCells)
 
 		// 删除行相关的cellstyle
 		for (let i = startRow; i <= endRow; i++) {
@@ -958,7 +959,7 @@ const onRemoveColumnClick = async () => {
 				})
 			}
 		})
-		useMergedCellsHook.setMergedCells(newMergedCells)
+		useMergedCellsHook.setMergeCells(newMergedCells)
 
 		// 删除列相关的cellstyle
 		for (let i = startCol; i <= endCol; i++) {
@@ -991,6 +992,14 @@ const onImportClick = async (event) => {
 		console.log('Excel导入成功', sheet.celldata)
 		event.target.value = null
 		updateVisibleRange()
+	}
+}
+
+// 导出Excel
+const onExportClick = async () => {
+	const result = await exportExcel()
+	if (result.success) {
+		console.log('Excel导出成功')
 	}
 }
 
@@ -1117,7 +1126,7 @@ defineExpose({
 	destroy,
 	clearData,
 	setRange: useSelectionRangeHook.setRange,
-	setMergeCell: useMergedCellsHook.addMergedCell,
+	setMergeCell: useMergedCellsHook.setMergeCell,
 	setCellValue: useEditHook.setCellValue,
 })
 </script>

@@ -109,6 +109,13 @@ export const useEdit = (id, config) => {
 		}
 	}
 
+	const getCellValue = (rowIndex, colIndex) => {
+		if (sheet.celldata.get(rowIndex)) {
+			return sheet.celldata.get(rowIndex)[colIndex]
+		}
+		return ''
+	}
+
 	const destroy = () => {
 		initialized = false
 		container.removeEventListener('mouseenter', enterContainer)
@@ -137,5 +144,6 @@ export const useEdit = (id, config) => {
 		startEdit,
 		formattedValue,
 		setCellValue,
+		getCellValue,
 	}
 }
