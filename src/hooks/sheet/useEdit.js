@@ -1,4 +1,5 @@
 import {reactive} from 'vue'
+import {ElMessage} from 'element-plus'
 
 export const useEdit = (id, config) => {
 	const {sheet, renderRange, useResizeHook, useSelectionRangeHook} = config
@@ -19,6 +20,19 @@ export const useEdit = (id, config) => {
 
 		const rowIndex = cell.row ?? cell.rowIndex
 		const colIndex = cell.col ?? cell.colIndex
+
+		// 不允许编辑
+		if (!sheet.config.edit) {
+			ElMessage.warning('当前表格不支持编辑')
+			return
+		}
+
+		// 不允许编辑锁定的单元格
+		if (sheet.config.lockCells[`${rowIndex}-${colIndex}`]) {
+			ElMessage.warning(`单元格已锁定`)
+			return
+		}
+
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
 		const originalValue = cellEl?.innerText
 

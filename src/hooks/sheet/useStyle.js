@@ -24,6 +24,21 @@ export const useStyle = (cellStyle) => {
 		return map[position]
 	}
 
+	// 加粗
+	const bold = (value) => {
+		return value === true ? 'bold' : 'normal'
+	}
+
+	// 下划线
+	const underline = (value) => {
+		return value === true ? 'underline' : 'normal'
+	}
+
+	// 斜体
+	const italic = (value) => {
+		return value === true ? 'italic' : 'normal'
+	}
+
 	Object.entries(cellStyle).forEach(([key, value]) => {
 		let line = '1px solid #000'
 		switch (key) {
@@ -59,6 +74,15 @@ export const useStyle = (cellStyle) => {
 				break
 			case 'bb':
 				style[border('bottom')] = line
+				break
+			case 'bold':
+				style['font-weight'] = bold(value)
+				break
+			case 'underline':
+				style['text-decoration'] = underline(value)
+				break
+			case 'italic':
+				style['font-style'] = italic(value)
 				break
 			default:
 				style[key] = value

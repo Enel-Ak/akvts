@@ -220,6 +220,7 @@ export const useExcel = (config = {}) => {
 				const progress = Math.floor((processedCells / totalCells) * 100)
 				loadingText.value = `正在导出Excel文件...`
 				loadingProgress.value = progress
+				console.log('导出进度:', progress)
 
 				if (currentRow <= rowCount) {
 					requestAnimationFrame(processNextBatch)

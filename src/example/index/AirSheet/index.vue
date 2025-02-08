@@ -10,12 +10,12 @@ const config = {
 			},
 		},
 	},
-	// celldata: Array.from({length: 600}, (_, r) => {
-	// 	return Array.from({length: 100}, (_, c) => {
-	// 		return `R${r + 1}-C${c + 1}`
-	// 	})
-	// }),
-	celldata: [],
+	celldata: Array.from({length: 1000}, (_, r) => {
+		return Array.from({length: 120}, (_, c) => {
+			return `R${r + 1}-C${c + 1}`
+		})
+	}),
+	// celldata: [],
 }
 const config2 = {
 	celldata: Array.from({length: 100}, (_, index) => {
@@ -54,9 +54,14 @@ onMounted(() => {
 	}, 1000)
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
+
+const onClick = () => {
+	console.log(sheetRef.value.getSheet())
+}
 </script>
 <template>
 	<div style="height: 100%" class="df">
+		<!-- <el-button @click="onClick">获取数据</el-button> -->
 		<AirSheet ref="sheetRef" v-model="config" :fns="fns"></AirSheet>
 
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->

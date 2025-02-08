@@ -18,6 +18,7 @@ import {useEdit} from '@/hooks/sheet/useEdit.js'
 import {useHistory} from '@/hooks/sheet/useHistory'
 import {useCopy} from '@/hooks/sheet/useCopy'
 import {useExcel} from '@/hooks/sheet/useExcel'
+import {ElMessage} from 'element-plus'
 
 const emits = defineEmits(['update:modelValue', 'cellInput'])
 
@@ -53,11 +54,24 @@ const props = defineProps({
 // 保存数据
 const sheet = reactive({
 	config: {
+		bold: true,
+		italic: true,
+		underline: true,
 		merge: true, // 合并单元格
 		align: true, // 对齐方式
 		border: true, // 边框
+		addRow: true, // 添加行
+		removeRow: true, // 删除行
+		addColumn: true, // 添加列
+		removeColumn: true, // 删除列
+		export: true, // 导出
+		import: true, // 导入
+		edit: true, // 编辑
+		lock: true, // 锁定
+		unlock: true, // 解锁
 
 		mergedCells: {},
+		lockCells: {},
 		cellStyle: {
 			...props.modelValue?.config.cellStyle,
 		},
@@ -694,8 +708,27 @@ const onAlignClick = (align) => {
 	setCellStyle('a', align)
 }
 
+// 加粗
+const onBoldClick = () => {
+	setCellStyle('bold', true)
+}
+
+// 斜体
+const onItalicClick = () => {
+	setCellStyle('italic', true)
+}
+
+// 下划线
+const onUnderlineClick = () => {
+	setCellStyle('underline', true)
+}
+
 // 添加行
 const onAddRowClick = async () => {
+	if (!sheet.config.addRow) {
+		ElMessage.warning('请先在配置中开启添加行功能')
+		return
+	}
 	const ranged = useSelectionRangeHook.ranged
 	const endRow = Math.max(ranged.start.row, ranged.end.row)
 	const insertRowIndex = endRow + 1
@@ -740,6 +773,10 @@ const onAddRowClick = async () => {
 
 // 添加列
 const onAddColumnClick = async () => {
+	if (!sheet.config.addColumn) {
+		ElMessage.warning('请先在配置中开启添加列功能')
+		return
+	}
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
@@ -808,6 +845,10 @@ const onAddColumnClick = async () => {
 
 // 删除行
 const onRemoveRowClick = async () => {
+	if (!sheet.config.removeRow) {
+		ElMessage.warning('请先在配置中开启删除行功能')
+		return
+	}
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
@@ -894,6 +935,10 @@ const onRemoveRowClick = async () => {
 
 // 删除列
 const onRemoveColumnClick = async () => {
+	if (!sheet.config.removeCol) {
+		ElMessage.warning('请先在配置中开启删除列功能')
+		return
+	}
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
 
@@ -985,6 +1030,10 @@ const onRemoveColumnClick = async () => {
 
 // 导入Excel
 const onImportClick = async (event) => {
+	if (!sheet.config.import) {
+		ElMessage.warning('当前表格不支持导入')
+		return
+	}
 	const file = event.target.files[0]
 	if (!file) return
 	const result = await readExcelFile(file)
@@ -997,7 +1046,12 @@ const onImportClick = async (event) => {
 
 // 导出Excel
 const onExportClick = async () => {
-	const result = await exportExcel()
+	if (!sheet.config.export) {
+		ElMessage.warning('当前表格不支持导出')
+		return
+	}
+	const name = Date.now()
+	const result = await exportExcel(`${name}.xlsx`)
 	if (result.success) {
 		console.log('Excel导出成功')
 	}
@@ -1011,6 +1065,50 @@ const onCellInput = (event, cell) => {
 		emits('cellInput', val, cell) // 新值，旧值
 		console.log('单元格编辑', val, cell)
 	}, 0)
+}
+
+// 锁定/解锁单元格
+const onLockClick = () => {
+	if (!sheet.config.lock) {
+		ElMessage.warning('当前表格不支持锁定')
+		return
+	}
+	const ranged = useSelectionRangeHook.ranged
+	if (!ranged) return
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const startCol = Math.min(ranged.start.col, ranged.end.col)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+	for (let row = startRow; row <= endRow; row++) {
+		for (let col = startCol; col <= endCol; col++) {
+			sheet.config.lockCells[`${row}-${col}`] = true
+		}
+	}
+	ElMessage.success(`已锁定`)
+}
+
+// 解锁单元格
+const onUnlockClick = () => {
+	if (!sheet.config.unlock) {
+		ElMessage.warning('当前表格不支持解锁')
+		return
+	}
+	const ranged = useSelectionRangeHook.ranged
+	if (!ranged) return
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const startCol = Math.min(ranged.start.col, ranged.end.col)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+	for (let row = startRow; row <= endRow; row++) {
+		for (let col = startCol; col <= endCol; col++) {
+			delete sheet.config.lockCells[`${row}-${col}`]
+		}
+	}
+	ElMessage.warning(`已解锁`)
 }
 
 const init = () => {
@@ -1128,12 +1226,36 @@ defineExpose({
 	setRange: useSelectionRangeHook.setRange,
 	setMergeCell: useMergedCellsHook.setMergeCell,
 	setCellValue: useEditHook.setCellValue,
+	getSheet: () => {
+		return JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]}))
+	},
+	getSheetData: () => {
+		return JSON.parse(JSON.stringify([...sheet.celldata]))
+	},
 })
 </script>
 <template>
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar" :style="{}">
+			<div
+				class="group"
+				v-if="sheet.config.bold || sheet.config.italic || sheet.config.underline"
+			>
+				<div v-if="sheet.config.bold" class="item" @click="onBoldClick">
+					<Icons icon-name="Bold"></Icons>
+					<span>加粗</span>
+				</div>
+				<div v-if="sheet.config.italic" class="item" @click="onItalicClick">
+					<Icons icon-name="Italic"></Icons>
+					<span>倾斜</span>
+				</div>
+				<div v-if="sheet.config.underline" class="item" @click="onUnderlineClick">
+					<Icons icon-name="Underline"></Icons>
+					<span>下划线</span>
+				</div>
+			</div>
+
 			<div class="group" v-if="sheet.config.align">
 				<div class="item" @click="onAlignClick('left')">
 					<Icons icon-name="AlignLeft"></Icons>
@@ -1148,12 +1270,14 @@ defineExpose({
 					<span>右对齐</span>
 				</div>
 			</div>
+
 			<div class="group" v-if="sheet.config.merge">
 				<div class="item" @click="onMergeClick">
 					<Icons icon-name="Merge"></Icons>
 					<span>合并</span>
 				</div>
 			</div>
+
 			<div class="group" v-if="sheet.config.border">
 				<div class="item" @click="onBorderClick">
 					<Icons icon-name="Border"></Icons>
@@ -1181,50 +1305,72 @@ defineExpose({
 				</div>
 			</div>
 
-			<div class="group">
-				<div class="item" @click="onAddRowClick">
+			<div
+				class="group"
+				v-if="
+					sheet.config.addRow ||
+					sheet.config.addColumn ||
+					sheet.config.removeRow ||
+					sheet.config.removeColumn
+				"
+			>
+				<div v-if="sheet.config.addRow" class="item" @click="onAddRowClick">
 					<Icons icon-name="AddRow"></Icons>
 					<span>添加行</span>
 				</div>
-				<div class="item" @click="onAddColumnClick">
+				<div v-if="sheet.config.addColumn" class="item" @click="onAddColumnClick">
 					<Icons icon-name="AddColumn"></Icons>
 					<span>添加列</span>
 				</div>
-				<div class="item" @click="onRemoveRowClick">
+				<div v-if="sheet.config.removeRow" class="item" @click="onRemoveRowClick">
 					<Icons icon-name="RemoveRow"></Icons>
 					<span>删除行</span>
 				</div>
-				<div class="item" @click="onRemoveColumnClick">
+				<div v-if="sheet.config.removeColumn" class="item" @click="onRemoveColumnClick">
 					<Icons icon-name="RemoveColumn"></Icons>
 					<span>删除列</span>
 				</div>
 			</div>
 
-			<div class="group">
-				<div class="item import">
+			<div class="group" v-if="sheet.config.import || sheet.config.export">
+				<div v-if="sheet.config.import" class="item import">
 					<Icons icon-name="Import"></Icons>
 					<span>导入Excel</span>
 					<input type="file" @change="onImportClick" />
 				</div>
-				<div class="item" @click="onExportClick">
+				<div v-if="sheet.config.export" class="item" @click="onExportClick">
 					<Icons icon-name="Export"></Icons>
 					<span>导出Excel</span>
 				</div>
 			</div>
 
-			<div class="group flx"></div>
+			<!-- 锁定解锁 -->
+			<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
+				<div v-if="sheet.config.lock" class="item" @click="onLockClick">
+					<Icons icon-name="CellLock"></Icons>
+					<span>锁定</span>
+				</div>
+				<div v-if="sheet.config.unlock" class="item" @click="onUnlockClick">
+					<Icons icon-name="CellUnlock"></Icons>
+					<span>解锁</span>
+				</div>
+			</div>
 
-			<div
-				class="group brn"
-				:style="{
-					opacity: !useHistoryHook.canUndo() ? 0.3 : 1,
-				}"
-			>
-				<div class="item" @click="useHistoryHook.undo">
+			<div class="group">
+				<div
+					class="item"
+					@click="useHistoryHook.undo"
+					:style="{
+						opacity: !useHistoryHook.canUndo() ? 0.3 : 1,
+						cursor: !useHistoryHook.canUndo() ? 'not-allowed' : 'pointer',
+					}"
+				>
 					<Icons icon-name="Undo"></Icons>
 					<span>撤销</span>
 				</div>
 			</div>
+
+			<div class="group flx brn"></div>
 		</div>
 
 		<!-- Sheet -->
@@ -1370,6 +1516,9 @@ defineExpose({
 										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
 										:class="{
 											merged: isMergedCellStart(cell),
+											lock: sheet.config.lockCells[
+												`${cell.rowIndex}-${cell.colIndex}`
+											],
 										}"
 										:style="getOffsetStyle(cell)"
 										class="cell"
@@ -1382,6 +1531,9 @@ defineExpose({
 									:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
 									:class="{
 										merged: isMergedCellStart(cell),
+										lock: sheet.config.lockCells[
+											`${cell.rowIndex}-${cell.colIndex}`
+										],
 									}"
 									:style="getOffsetStyle(cell)"
 									@dblclick.stop="useEditHook.startEdit($event, cell)"
@@ -1645,6 +1797,10 @@ defineExpose({
 			&:last-child {
 				padding-bottom: 2px;
 			}
+		}
+
+		&.lock {
+			background-color: var(--z-sheet-virtual);
 		}
 
 		&:focus {
