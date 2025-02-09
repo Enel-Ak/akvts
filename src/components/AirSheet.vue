@@ -690,6 +690,36 @@ const onChangeFont = (e) => {
 const onChangeFontSize = (e) => {
 	const size = e.target.value
 	setCellStyle('size', size)
+	nextTick(() => {
+		const ranged = useSelectionRangeHook.ranged
+		if (!ranged) return
+
+		const {start, end} = ranged
+		const [startRow, endRow] = [Math.min(start.row, end.row), Math.max(start.row, end.row)]
+		const [startCol, endCol] = [Math.min(start.col, end.col), Math.max(start.col, end.col)]
+
+		// 更新每一行的高度
+		for (let row = startRow; row <= endRow; row++) {
+			const rowCells = Array.from(
+				containerRef.value.querySelectorAll(`[data-cell^="${row}-"]`)
+			).filter((cell) => {
+				const col = parseInt(cell.dataset.cell.split('-')[1])
+				return col >= startCol && col <= endCol
+			})
+
+			const maxHeight = Math.max(
+				...rowCells.map((cell) =>
+					Array.from(cell.childNodes).reduce((h, node) => h + node.offsetHeight, 0)
+				)
+			)
+
+			if (maxHeight > useResizeHook.getRowHeight(row)) {
+				useResizeHook.setRowHeight(row, maxHeight)
+			}
+		}
+
+		useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol, true)
+	})
 }
 
 // 颜色
