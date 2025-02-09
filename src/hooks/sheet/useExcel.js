@@ -263,18 +263,27 @@ export const useExcel = (config = {}) => {
 
 			// 处理合并单元格
 			const mergedCells = useMergedCellsHook.getMergedCells()
-			console.log(1, mergedCells)
 
 			if (mergedCells && typeof mergedCells === 'object') {
 				Object.entries(mergedCells).forEach(([key, merge]) => {
 					const [row, col] = key.split('-').map(Number)
 					if (row >= startRow && row <= endRow && col >= startCol && col <= endCol) {
+						// 合并单元格
 						worksheet.mergeCells(
 							row - startRow + 1,
 							col - startCol + 1,
 							row - startRow + merge.rowspan,
 							col - startCol + merge.colspan
 						)
+
+						// 获取合并区域的主单元格
+						const cell = worksheet.getCell(row - startRow + 1, col - startCol + 1)
+
+						// 设置样式
+						cell.alignment = {
+							vertical: 'middle',
+							// horizontal: 'center',
+						}
 					}
 				})
 			}

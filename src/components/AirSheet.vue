@@ -1601,7 +1601,13 @@ defineExpose({
 			</div>
 
 			<!-- 主体 -->
-			<div ref="containerRef" :id="id" class="virtual-sheet sheet-main" @scroll="onScroll">
+			<div
+				ref="containerRef"
+				:id="id"
+				data-air-sheet-cell
+				class="virtual-sheet sheet-main"
+				@scroll="onScroll"
+			>
 				<!-- 虚拟滚动占位 -->
 				<div
 					class="virtual-phantom"

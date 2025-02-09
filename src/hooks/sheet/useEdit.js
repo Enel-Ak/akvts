@@ -18,8 +18,33 @@ export const useEdit = (id, config) => {
 	const startEdit = (e, cell = useSelectionRangeHook.getStartCell()) => {
 		if (!enter || !cell) return
 
-		const rowIndex = cell.row ?? cell.rowIndex
-		const colIndex = cell.col ?? cell.colIndex
+		// 检查是否有组合键按下
+		if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+			return
+		}
+
+		// 允许的特殊按键：退格键、删除键、方向键等
+		const allowedKeys = [
+			'Backspace',
+			'Delete',
+			'ArrowLeft',
+			'ArrowRight',
+			'ArrowUp',
+			'ArrowDown',
+		]
+
+		// 如果是功能键，不执行编辑
+		if (e.key && e.key.startsWith('F') && /^\d+$/.test(e.key.slice(1))) {
+			return
+		}
+
+		// 如果不是字母、数字、特殊字符或允许的特殊按键，不执行编辑
+		if (e.key && e.key.length > 1 && !allowedKeys.includes(e.key)) {
+			return
+		}
+
+		const rowIndex = cell.row || cell.rowIndex
+		const colIndex = cell.col || cell.colIndex
 
 		// 不允许编辑
 		if (!sheet.config.edit) {
@@ -34,27 +59,13 @@ export const useEdit = (id, config) => {
 		}
 
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
-		const originalValue = cellEl?.innerText
+		// const originalValue = cellEl?.innerText
 
-		if (!cellEl || cellEl.getAttribute('contenteditable')) return
-
-		cellEl.setAttribute('contenteditable', 'true')
-
-		// 允许的特殊按键：退格键、删除键、方向键等
-		const allowedKeys = [
-			'Backspace',
-			'Delete',
-			'ArrowLeft',
-			'ArrowRight',
-			'ArrowUp',
-			'ArrowDown',
-		]
-
-		const pattern = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>/?\\|`~ ]$/
-
-		if (e.type !== 'dblclick' && !allowedKeys.includes(e.key) && !pattern.test(e.key)) {
+		if (!cellEl || cellEl.getAttribute('contenteditable')) {
 			return
 		}
+
+		cellEl.setAttribute('contenteditable', 'true')
 
 		// 未双击, 直接输入清空所有内容
 		if (cell.rowIndex === undefined) {

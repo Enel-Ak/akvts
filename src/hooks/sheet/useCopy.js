@@ -1,5 +1,4 @@
 import {ElMessage} from 'element-plus'
-
 export function useCopy(config) {
 	const {sheet, useMergedCellsHook, useSelectionRangeHook, useHistoryHook, renderRange} = config
 
@@ -9,39 +8,42 @@ export function useCopy(config) {
 			event.preventDefault()
 			copySelectedCells()
 		}
-		// 粘贴 Ctrl+V / Command+V
-		else if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
-			event.preventDefault()
-			// 使用现代Clipboard API处理粘贴
-			readClipboard()
-		}
 	}
 
-	// 读取剪贴板内容
-	const readClipboard = async () => {
-		try {
-			const items = await navigator.clipboard.read()
-			for (const item of items) {
-				// 检查是否有HTML格式
-				if (item.types.includes('text/html')) {
-					const htmlBlob = await item.getType('text/html')
-					const html = await htmlBlob.text()
-					processClipboardData({html, isHtml: true})
-				} else if (item.types.includes('text/plain')) {
-					const textBlob = await item.getType('text/plain')
-					const text = await textBlob.text()
-					processClipboardData({text, isHtml: false})
+	// 处理粘贴事件
+	const handlePaste = (e) => {
+		e.preventDefault()
+		const clipboardData = e.clipboardData || window.clipboardData
+
+		// 快速检查数据大小
+		const items = clipboardData.items
+		for (const item of items) {
+			if (item.type === 'text/html') {
+				const html = clipboardData.getData('text/html')
+				if (html && html.length > 500 * 1024) {
+					// 500KB
+					ElMessage.error('数据量过大，请使用导入功能')
+					return
 				}
 			}
-		} catch (error) {
-			console.error('读取剪贴板失败，尝试使用备用方法:', error)
-			// 降级方案：使用readText
-			try {
-				const text = await navigator.clipboard.readText()
-				processClipboardData({text, isHtml: false})
-			} catch (fallbackError) {
-				console.error('备用方法也失败了:', fallbackError)
+		}
+
+		// 优先获取HTML格式
+		const html = clipboardData.getData('text/html')
+		if (html) {
+			processClipboardData({html, isHtml: true})
+			return
+		}
+
+		// 降级到纯文本
+		const text = clipboardData.getData('text/plain')
+		if (text) {
+			if (text.length > 100000) {
+				// 约100KB的文本
+				ElMessage.error('数据量过大，请使用导入功能')
+				return
 			}
+			processClipboardData({text, isHtml: false})
 		}
 	}
 
@@ -62,7 +64,7 @@ export function useCopy(config) {
 		if (isHtml && html) {
 			const div = document.createElement('div')
 			div.innerHTML = html
-			console.log('解析的HTML:', html)
+			// console.log('解析的HTML:', html)
 
 			const table = div.querySelector('table')
 			if (table) {
@@ -189,6 +191,25 @@ export function useCopy(config) {
 
 			useHistoryHook.saveHistory(oldCellData, 'edit')
 
+			// 先删除目标区域内的所有已存在的合并单元格
+			const targetEndRow = baseRow + pasteData.data.length - 1
+			const targetEndCol = baseCol + pasteData.data[0].length - 1
+			const mergedCells = useMergedCellsHook.getMergedCells()
+			Object.entries(mergedCells).forEach(([key, value]) => {
+				// 检查是否与目标区域有交集
+				const [row, col] = key.split('-').map(Number)
+				const {rowspan, colspan} = value
+
+				if (
+					row <= targetEndRow &&
+					row + rowspan - 1 >= baseRow &&
+					col <= targetEndCol &&
+					col + colspan - 1 >= baseCol
+				) {
+					useMergedCellsHook.removeMergedCell(row, col)
+				}
+			})
+
 			pasteData.merges.forEach((merge) => {
 				useMergedCellsHook.setMergeCell(merge.r, merge.c, merge.rs, merge.cs)
 			})
@@ -204,14 +225,113 @@ export function useCopy(config) {
 	}
 
 	// 复制选中单元格到Excel
-	const copySelectedCells = () => {}
+	const copySelectedCells = async () => {
+		const ranged = useSelectionRangeHook.ranged
+		if (!ranged) return
+
+		const startRow = Math.min(ranged.start.row, ranged.end.row)
+		const endRow = Math.max(ranged.start.row, ranged.end.row)
+		const startCol = Math.min(ranged.start.col, ranged.end.col)
+		const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+		// 创建表格HTML，添加完整的表格结构
+		let tableHtml = `
+            <table data-air-sheet-cell>
+                <tbody>
+        `
+
+		for (let row = startRow; row <= endRow; row++) {
+			tableHtml += '<tr>'
+			for (let col = startCol; col <= endCol; col++) {
+				const merge = useMergedCellsHook.findMergedCell(row, col)
+				const value = sheet.celldata.get(row)?.[col] || ''
+
+				// 检查是否在合并单元格范围内
+				if (merge) {
+					// 只在合并单元格的起始位置添加单元格
+					if (merge.row === row && merge.col === col) {
+						const mergeInfo = JSON.stringify({
+							rs: merge.rowspan,
+							cs: merge.colspan,
+						})
+						tableHtml += `<td data-air-sheet-cell data-row="${
+							row - startRow
+						}" data-col="${col - startCol}" data-merge='${mergeInfo}' rowspan="${
+							merge.rowspan
+						}" colspan="${merge.colspan}">${value}</td>`
+					}
+					// 如果是合并单元格的非起始位置，跳过
+					continue
+				} else {
+					// 普通单元格
+					tableHtml += `<td data-air-sheet-cell data-row="${row - startRow}" data-col="${
+						col - startCol
+					}">${value}</td>`
+				}
+			}
+			tableHtml += '</tr>'
+		}
+
+		tableHtml += `
+                </tbody>
+            </table>
+        `
+
+		// 生成纯文本版本（用于兼容性）
+		let plainText = ''
+		for (let row = startRow; row <= endRow; row++) {
+			const rowData = []
+			for (let col = startCol; col <= endCol; col++) {
+				const merge = useMergedCellsHook.findMergedCell(row, col)
+				if (merge) {
+					// 只在合并单元格的起始位置添加值
+					if (merge.row === row && merge.col === col) {
+						rowData.push(sheet.celldata.get(row)?.[col] || '')
+					}
+				} else {
+					rowData.push(sheet.celldata.get(row)?.[col] || '')
+				}
+			}
+			plainText += rowData.join('\t') + '\n'
+		}
+
+		try {
+			// 使用现代Clipboard API
+			const htmlBlob = new Blob([tableHtml], {type: 'text/html'})
+			const textBlob = new Blob([plainText], {type: 'text/plain'})
+
+			await navigator.clipboard.write([
+				new ClipboardItem({
+					'text/html': htmlBlob,
+					'text/plain': textBlob,
+				}),
+			])
+		} catch (error) {
+			console.error('复制失败:', error)
+			// 降级方案：使用传统方法
+			const tempDiv = document.createElement('div')
+			tempDiv.innerHTML = tableHtml
+			document.body.appendChild(tempDiv)
+			const range = document.createRange()
+			range.selectNode(tempDiv)
+			const selection = window.getSelection()
+			selection.removeAllRanges()
+			selection.addRange(range)
+			document.execCommand('copy')
+			document.body.removeChild(tempDiv)
+		}
+	}
 
 	const init = () => {
 		document.addEventListener('keydown', handleKeyDown)
+		// 添加paste事件监听
+		document.addEventListener('paste', handlePaste)
 	}
 
 	const destroy = () => {
 		document.removeEventListener('keydown', handleKeyDown)
+		// 移除paste事件监听
+		document.removeEventListener('paste', handlePaste)
 	}
 
 	return {

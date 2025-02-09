@@ -509,6 +509,22 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return start
 	}
 
+	const getEndCell = () => {
+		if (!ranged.value) return null
+
+		const {end} = ranged.value
+		// 检查是否在合并单元格内
+		const mergedCell = useMergedCellsHook.findMergedCell?.(end.row, end.col)
+		if (mergedCell) {
+			return {
+				row: mergedCell.row + mergedCell.rowspan - 1,
+				col: mergedCell.col + mergedCell.colspan - 1,
+				mergedCell,
+			}
+		}
+		return end
+	}
+
 	// 清除选区的方法
 	const clear = () => {
 		selecting.value = false
@@ -576,6 +592,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		//方法
 		init,
 		getStartCell,
+		getEndCell,
 		setRange,
 		setSelectionClass,
 		drag: handleDragStart,
