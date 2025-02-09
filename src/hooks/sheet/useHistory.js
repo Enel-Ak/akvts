@@ -81,7 +81,6 @@ export function useHistory(config) {
 							const [r, c] = rowIndex.split('-').map(Number)
 							sheet.celldata.get(r)[c] = rowData
 							const merged = useMergedCellsHook.findMergedCell(r, c)
-							console.log(1, merged)
 
 							if (merged) {
 								useSelectionRangeHook.setRange(
