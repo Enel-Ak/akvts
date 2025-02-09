@@ -2,6 +2,9 @@
 import {nextTick, ref, computed, watch, onBeforeMount, onMounted, onUnmounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import useGuid from '@/hooks/useGuid'
+import {useKeepAlive} from '@/store/useKeepAlive'
+
+const keepAlive = useKeepAlive()
 
 const emits = defineEmits(['clickItem', 'cancelItem', 'update:modelValue'])
 const props = defineProps({
@@ -94,12 +97,19 @@ const onClickLabel = (item, isDropdown = false, isPush = false) => {
 const onCloseLabelAll = () => {
 	items.value.splice(1, items.value.length - 1)
 	current.value = items.value[0]
+	keepAlive.clearIncludes()
 	onClickLabel(current.value)
 }
 
 const onCancelItem = (item) => {
 	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 	items.value.splice(index, 1)
+
+	if (item.path) {
+		const name = item.path.split('/').pop() || 'index'
+		keepAlive.removeInclude(name)
+		console.log('removeInclude', name)
+	}
 
 	nextTick(() => {
 		if (current.value[props.keys[0]] === item[props.keys[0]]) {
@@ -223,9 +233,14 @@ const handleRouter = (to) => {
 			}, 0)
 		}
 	}
-
 	save()
+	if (current.value.path) {
+		const name = current.value.path.split('/').pop() || 'index'
+		keepAlive.addInclude(name)
+		console.log('addInclude', name)
+	}
 	console.log('Labels Current', current.value)
+
 	emits('update:modelValue', current.value.pid || current.value.id)
 }
 
@@ -273,7 +288,7 @@ watch(
 		}
 		handleRouter(to)
 	},
-	{deep: true}
+	{deep: true, immediate: true}
 )
 
 watch(

@@ -1,4 +1,4 @@
-<script setup>
+<script setup name="index">
 import {onMounted, ref} from 'vue'
 
 const tableRef = ref()

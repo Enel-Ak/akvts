@@ -4,24 +4,32 @@ export const useKeepAlive = defineStore('useKeepAlive', {
 	state: () => {
 		return {
 			include: [],
-			exclude: [],
 		}
 	},
 	getters: {
 		getInclude: (state) => state.include,
-		getExclude: (state) => state.exclude,
 	},
 	actions: {
-		setInclude(name) {
-			if (this.include.includes(name)) {
-				return
+		addInclude(name) {
+			if (!name) return
+			const componentName = name.toLowerCase()
+			if (!this.include.includes(componentName)) {
+				this.include.push(componentName)
+				console.log('Added to cache:', componentName, this.include)
 			}
-			this.exclude = this.exclude.filter((item) => item !== name)
-			this.include.push(name)
 		},
-		setExclude(name) {
-			this.include = this.include.filter((item) => item !== name)
-			this.exclude.push(name)
+		removeInclude(name) {
+			if (!name) return
+			const componentName = name.toLowerCase()
+			const index = this.include.indexOf(componentName)
+			if (index > -1) {
+				this.include.splice(index, 1)
+				console.log('Removed from cache:', componentName, this.include)
+			}
+		},
+		clearIncludes() {
+			this.include = []
+			console.log('Cleared all cache')
 		},
 	},
 })

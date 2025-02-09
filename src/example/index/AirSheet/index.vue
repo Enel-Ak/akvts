@@ -1,4 +1,4 @@
-<script setup>
+<script setup name="airsheet">
 import {onMounted, ref} from 'vue'
 
 const sheetRef = ref()

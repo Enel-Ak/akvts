@@ -1,4 +1,4 @@
-<script setup>
+<script setup name="grid">
 const achart = {
 	grid: {
 		top: 10,

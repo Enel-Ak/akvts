@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted} from 'vue'
+import {onMounted, onUnmounted} from 'vue'
 import {GridStack} from 'gridstack'
 import 'gridstack/dist/gridstack.min.css'
 

@@ -1,16 +1,10 @@
 <script setup>
-import {onMounted, ref, provide, inject, computed, watch} from 'vue'
-import {deleteLabel} from '../hooks/useLabels'
-import useGuid from '@/hooks/useGuid'
+import {onMounted, ref, computed} from 'vue'
 import {useKeepAlive} from '@/store/useKeepAlive'
 
-const keepAlive = useKeepAlive()
-const includeKeepAlive = ref([])
-const excludeKeepAlive = ref([])
+const keepAliveStore = useKeepAlive()
+const includeKeepAlive = computed(() => keepAliveStore.include)
 const containerExpand = ref(true)
-const hid = ref(useGuid())
-const pid = ref(useGuid())
-const did = ref(useGuid())
 const nav = [
 	{id: 'a', icon: 'Home', label: '首页', path: '/', sort: 1},
 	// {id: 'c', icon: 'Setting', label: '设置', path: '/Block', sort: 2},
@@ -31,23 +25,6 @@ const nav = [
 
 const labelsRef = ref()
 const currentItemId = ref('')
-const parentId = ref('')
-
-watch(
-	() => keepAlive.getInclude,
-	(val) => {
-		includeKeepAlive.value = val
-	},
-	{deep: true, immediate: true}
-)
-
-watch(
-	() => keepAlive.getExclude,
-	(val) => {
-		excludeKeepAlive.value = val
-	},
-	{deep: true, immediate: true}
-)
 
 onMounted(() => {
 	currentItemId.value = nav[0].id
@@ -80,12 +57,8 @@ onMounted(() => {
 
 		<router-view v-slot="{Component}">
 			<Transition name="fade" mode="out-in" appear>
-				<keep-alive>
-					<component
-						:is="Component"
-						:key="$route.fullPath"
-						:name="$route.path.split('/').pop() || 'index'"
-					/>
+				<keep-alive :include="includeKeepAlive">
+					<component :is="Component" :key="$route.fullPath" />
 				</keep-alive>
 			</Transition>
 		</router-view>

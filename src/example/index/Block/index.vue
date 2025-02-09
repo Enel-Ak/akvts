@@ -1,4 +1,4 @@
-<script setup>
+<script setup name="block">
 import {onDeactivated} from 'vue'
 import {useRouter} from 'vue-router'
 const router = useRouter()

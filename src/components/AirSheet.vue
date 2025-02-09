@@ -590,11 +590,28 @@ const restoreScrollPosition = () => {
 	if (!containerRef.value) return
 
 	const container = containerRef.value
+	const alphabet = alphabetRef.value
+	const number = numberRef.value
+	const fn = fnRef.value
+
 	const {top, left} = savedScrollPosition.value
 
 	if (top !== undefined && left !== undefined) {
 		container.scrollTop = top
 		container.scrollLeft = left
+
+		if (alphabet) {
+			alphabet.scrollLeft = left
+		}
+
+		if (number) {
+			number.scrollTop = top
+		}
+
+		if (fn) {
+			fn.scrollTop = top
+		}
+
 		scrollTop.value = top
 		scrollLeft.value = left
 	}
@@ -1216,30 +1233,18 @@ const onUnlockClick = () => {
 	ElMessage.warning(`已解锁`)
 }
 
-const init = () => {
+const init = async () => {
 	initialData()
-	updateViewportSize()
 
-	let rowCount = 0
 	if (props.modelValue?.celldata) {
-		rowCount =
-			props.modelValue?.celldata.length > props.rowCount
-				? props.modelValue?.celldata.length
-				: props.rowCount
-	} else {
-		rowCount = props.rowCount > 671087 ? 671087 : props.rowCount
-	}
-	sheet.config.rowCount = rowCount
-
-	let colCount = 0
-	if (props.modelValue?.celldata) {
-		colCount = props.modelValue.celldata
+		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)
+		sheet.config.colCount = props.modelValue.celldata
 			.map((d) => d.length)
 			.reduce((a, b) => Math.max(a, b), props.colCount)
 	} else {
-		colCount = props.colCount > 240 ? 240 : props.colCount
+		sheet.config.rowCount = Math.min(props.rowCount, 671087)
+		sheet.config.colCount = Math.min(props.colCount, 240)
 	}
-	sheet.config.colCount = colCount
 
 	useResizeHook.init()
 	useMergedCellsHook.init()
@@ -1249,24 +1254,31 @@ const init = () => {
 	useCopyHook.init()
 	useHistoryHook.init()
 
-	initialized.value = true
-	window.addEventListener('resize', updateViewportSize)
-	observeView()
+	nextTick(async () => {
+		updateViewportSize()
+		await nextTick()
 
-	// 计算滚动条宽度
-	const outer = document.createElement('div')
-	outer.style.visibility = 'hidden'
-	outer.style.overflow = 'scroll'
-	document.body.appendChild(outer)
+		await updateVisibleRange()
 
-	const inner = document.createElement('div')
-	outer.appendChild(inner)
+		await updateOffset('offsetTop', 'startRow')
+		await updateOffset('offsetLeft', 'startCol')
 
-	scrollbarWidth.value = outer.offsetWidth - inner.offsetWidth
-	outer.parentNode.removeChild(outer)
-
-	nextTick(() => {
 		restoreScrollPosition()
+		window.addEventListener('resize', updateViewportSize)
+		observeView()
+		initialized.value = true
+
+		// 计算滚动条宽度
+		const outer = document.createElement('div')
+		outer.style.visibility = 'hidden'
+		outer.style.overflow = 'scroll'
+		document.body.appendChild(outer)
+
+		const inner = document.createElement('div')
+		outer.appendChild(inner)
+
+		scrollbarWidth.value = outer.offsetWidth - inner.offsetWidth
+		outer.parentNode.removeChild(outer)
 	})
 }
 
@@ -1296,30 +1308,20 @@ const clearData = () => {
 
 // 初始化
 onMounted(() => {
-	console.log('AirSheet mounted')
 	useSelectionRangeHook.setRange(0, 0, 0, 0)
-	if (!initialized.value) {
-		init()
-	}
 })
 
 onActivated(() => {
-	console.log('AirSheet activated')
-	if (initialized.value) {
-		return
-	}
-	// init()
+	init()
 })
 
 onDeactivated(() => {
-	initialized.value = false
 	if (containerRef.value) {
 		savedScrollPosition.value = {
 			top: containerRef.value.scrollTop,
 			left: containerRef.value.scrollLeft,
 		}
 	}
-	window.removeEventListener('resize', updateViewportSize)
 })
 
 onUnmounted(() => {
@@ -1709,6 +1711,7 @@ defineExpose({
 				</div>
 
 				<!-- 选区框、选区背景 -->
+
 				<div
 					v-if="useSelectionRangeHook.selecting || useSelectionRangeHook.ranged"
 					class="selection-box"

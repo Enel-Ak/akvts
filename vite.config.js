@@ -4,6 +4,7 @@ import pages from 'vite-plugin-pages'
 import path from 'path'
 import ElementPlus from 'unplugin-element-plus/vite'
 import viteCompression from 'vite-plugin-compression'
+import VueSetupExtend from 'vite-plugin-vue-setup-extend'
 
 export default ({mode}) => {
 	const env = loadEnv(mode, process.cwd())
@@ -33,6 +34,7 @@ export default ({mode}) => {
 		},
 		plugins: [
 			vue(),
+			VueSetupExtend(),
 			ElementPlus({
 				useSource: true,
 			}),

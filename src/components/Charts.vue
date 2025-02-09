@@ -104,16 +104,14 @@ watch(
 	{deep: true}
 )
 
-onMounted(async () => {})
-
-onActivated(async () => {
-	await initChart()
+onMounted(() => {
+	initChart()
 	initObserver()
 })
 
-onDeactivated(() => {
-	cleanUp()
-})
+onActivated(() => {})
+
+onDeactivated(() => {})
 
 onUnmounted(() => {
 	cleanUp()

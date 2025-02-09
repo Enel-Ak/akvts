@@ -1,4 +1,4 @@
-<script setup>
+<script setup name="flow">
 import {ref} from 'vue'
 const flowConfig = ref({
 	id: 'abc',

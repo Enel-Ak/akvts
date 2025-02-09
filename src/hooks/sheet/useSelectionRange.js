@@ -186,7 +186,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		let totleHeight = 0
 		let totleWidth = 0
 
-		if (endRow === sheet.config.rowCount - 1) {
+		if (endRow === sheet.config.rowCount - 1 && startRow === 0) {
 			totleHeight = budgetTotalHeight.value
 		} else {
 			for (let i = 0; i <= endRow; i++) {
@@ -199,7 +199,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			}
 		}
 
-		if (endCol === sheet.config.colCount - 1) {
+		if (endCol === sheet.config.colCount - 1 && startCol === 0) {
 			totleWidth = budgetTotalWidth.value
 		} else {
 			for (let i = 0; i <= endCol; i++) {
@@ -261,9 +261,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 			return minRow === maxRow && minRow === rowIndex && maxRow === rowIndex
 		}
 
-		// 获取扩展范围（考虑合并单元格）
-		// const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
-
 		// 直接判断是否在范围内
 		if (row) {
 			return rowIndex >= minRow && rowIndex <= maxRow
@@ -278,10 +275,15 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	// 限制范围在最大值内
 	const limitRange = (pos) => {
-		if (!pos) return pos
+		if (!pos) return null
+
+		// 确保不超过最大行列数
+		const maxRow = sheet.config.rowCount - 1
+		const maxCol = sheet.config.colCount - 1
+
 		return {
-			row: Math.min(Math.max(0, pos.row), sheet.config.rowCount),
-			col: Math.min(Math.max(0, pos.col), sheet.config.colCount),
+			row: Math.min(Math.max(0, pos.row), maxRow),
+			col: Math.min(Math.max(0, pos.col), maxCol),
 			mergedCell: pos.mergedCell,
 		}
 	}
@@ -290,14 +292,15 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const handleMouseDown = (e) => {
 		if (e.button !== 0) return // 只处理左键点击
 
+		mouseDownPos.value = {x: e.clientX, y: e.clientY}
+
 		// 只处理带有cell类的元素
 		if (!e.target.classList.contains('cell')) return
 
-		const pos = getCellPosition(e)
-
+		const pos = limitRange(getCellPosition(e))
+		if (!pos) return
 		if (pos.row > sheet.config.rowCount - 1 || pos.col > sheet.config.colCount - 1) return
 
-		mouseDownPos.value = {x: e.clientX, y: e.clientY}
 		selecting.value = true
 		isDragging.value = false
 

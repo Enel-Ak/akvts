@@ -1,4 +1,4 @@
-<script setup>
+<script setup name="cascade">
 import {ref} from 'vue'
 
 const cascadeOneSelect = ref([
@@ -104,7 +104,11 @@ const options3 = ref([
 						label: '选项2-1',
 						value: 21,
 						children: [
-							{label: '选项2-1-1', value: 211, children: [{label: '选项2-1-1-1', value: 2111}]},
+							{
+								label: '选项2-1-1',
+								value: 211,
+								children: [{label: '选项2-1-1-1', value: 2111}],
+							},
 						],
 					},
 				],

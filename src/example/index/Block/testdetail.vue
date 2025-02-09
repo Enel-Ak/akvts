@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup name="testdetail">
 import {onMounted, onActivated} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {updateLabelTitle} from '@/hooks/useLabels'
