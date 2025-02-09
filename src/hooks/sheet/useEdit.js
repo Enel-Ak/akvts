@@ -2,7 +2,7 @@ import {reactive} from 'vue'
 import {ElMessage} from 'element-plus'
 
 export const useEdit = (id, config) => {
-	const {sheet, renderRange, useResizeHook, useSelectionRangeHook} = config
+	const {sheet, renderRange, useResizeHook, useMergedCellsHook, useSelectionRangeHook} = config
 	let initialized = false
 	let container = null
 	let enter = false
@@ -72,14 +72,35 @@ export const useEdit = (id, config) => {
 		cellEl.focus()
 
 		const setRowHeight = () => {
+			const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
+
 			let height = 0
+
 			for (let node of cellEl.childNodes) {
 				height += node.offsetHeight
 			}
 
-			if (height > useResizeHook.getRowHeight(rowIndex)) {
+			if (merge) {
+				useSelectionRangeHook.setRange(
+					merge.row,
+					merge.col,
+					merge.row + merge.rowspan - 1,
+					merge.col + merge.colspan - 1,
+					true
+				)
+			} else {
+				useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
+			}
+
+			if (merge) {
+				if (height > useResizeHook.getRowHeight(merge.row) * merge.rowspan) {
+					useResizeHook.setRowHeight(merge.row, height)
+				}
+			} else if (height > useResizeHook.getRowHeight(rowIndex)) {
 				useResizeHook.setRowHeight(rowIndex, height)
 			}
+
+			renderRange()
 		}
 
 		const blur = () => {
@@ -91,7 +112,6 @@ export const useEdit = (id, config) => {
 			cellEl.removeEventListener('blur', blur)
 			setTimeout(() => {
 				setRowHeight()
-				useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
 			}, 0)
 		}
 

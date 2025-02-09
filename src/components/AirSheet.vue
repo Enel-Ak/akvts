@@ -95,6 +95,7 @@ const initialData = () => {
 
 	if (total >= limit) {
 		loading.value = true
+		loadingProgress.value = -1
 		loadingText.value = '正在加载数据...'
 	}
 
@@ -190,6 +191,7 @@ const useSelectionRangeHook = reactive(
 const useEditHook = useEdit(id, {
 	sheet,
 	useResizeHook,
+	useMergedCellsHook,
 	useSelectionRangeHook,
 	renderRange: () => updateVisibleRange(),
 })
@@ -491,6 +493,12 @@ const onScroll = async (e) => {
 		cancelAnimationFrame(rafId)
 	}
 
+	if (sheet.config.rowCount >= limit) {
+		loading.value = true
+		loadingProgress.value = -1
+		loadingText.value = '数据量较大，请稍后...'
+	}
+
 	const container = e.target
 	const newScrollTop = container.scrollTop
 	const newScrollLeft = container.scrollLeft
@@ -539,6 +547,10 @@ const onScroll = async (e) => {
 				fn.scrollTop = nt
 			}
 			savedScrollPosition.value = {top: nt, left: nl}
+
+			if (sheet.config.rowCount >= limit) {
+				loading.value = false
+			}
 		})
 	}, 150) // 减少延迟时间以提高响应速度
 }
@@ -648,7 +660,6 @@ let fillSaved = false
 const onInputFillColor = (e) => {
 	if (!fillSaved) {
 		useHistoryHook.saveHistory()
-		onBorderClick(true, null, false)
 		fillSaved = true
 	}
 	const color = e.target.value
@@ -1325,7 +1336,7 @@ defineExpose({
 				</div>
 				<div class="item color">
 					<Icons icon-name="FillColor"></Icons>
-					<span>填充</span>
+					<span class="fill-color">填充</span>
 					<input
 						type="color"
 						@input="onInputFillColor($event)"
@@ -1628,6 +1639,7 @@ defineExpose({
 										:style="getOffsetStyle(cell)"
 										class="cell"
 										@dblclick.stop="useEditHook.startEdit($event, cell)"
+										@blur="onCellInput($event, cell)"
 									></div>
 								</div>
 								<div

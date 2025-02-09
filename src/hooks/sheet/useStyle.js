@@ -58,6 +58,7 @@ export const useStyle = (cellStyle) => {
 				style['color'] = value
 				break
 			case 'bg':
+				style['border-color'] = value
 				style['background-color'] = value
 				break
 			case 'align':

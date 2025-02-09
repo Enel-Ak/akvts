@@ -24,11 +24,11 @@ export const useSheetRender = (config) => {
 
 			requestAnimationFrame(() => {
 				// 发送渲染请求
-				if (sheet.config.rowCount >= limit) {
-					loadingProgress.value = -1
-					loadingText.value = `数据量较大,请稍后...`
-					loading.value = true
-				}
+				// if (sheet.config.rowCount >= limit) {
+				// 	loadingProgress.value = -1
+				// 	loadingText.value = `数据量较大,请稍后...`
+				// 	loading.value = true
+				// }
 				worker.postMessage({
 					type: 'render_request',
 					requestId,
@@ -69,11 +69,11 @@ export const useSheetRender = (config) => {
 						renderResult.value = data
 						request.resolve(data)
 
-						completedTimer = setTimeout(() => {
-							if (renderRequests.size === 0 && loading.value) {
-								loading.value = false
-							}
-						}, 100)
+						// completedTimer = setTimeout(() => {
+						// 	if (renderRequests.size === 0 && loading.value) {
+						// 		loading.value = false
+						// 	}
+						// }, 100)
 					}
 					break
 				}
