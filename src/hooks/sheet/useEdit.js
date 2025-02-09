@@ -1,4 +1,4 @@
-import {reactive} from 'vue'
+import {reactive, nextTick} from 'vue'
 import {ElMessage} from 'element-plus'
 
 export const useEdit = (id, config) => {
@@ -71,48 +71,61 @@ export const useEdit = (id, config) => {
 
 		cellEl.focus()
 
-		const setRowHeight = () => {
+		const setRowHeight = async () => {
 			const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
 
-			let height = 0
-
-			for (let node of cellEl.childNodes) {
-				height += node.offsetHeight
+			// 计算实际内容高度
+			let contentHeight = 0
+			for (const node of cellEl.childNodes) {
+				contentHeight += node.offsetHeight
 			}
 
+			// 如果是合并单元格
 			if (merge) {
-				useSelectionRangeHook.setRange(
-					merge.row,
-					merge.col,
-					merge.row + merge.rowspan - 1,
-					merge.col + merge.colspan - 1,
-					true
-				)
-			} else {
-				useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
-			}
+				// 获取合并区域内所有行的当前高度
+				const rowHeights = Array(merge.rowspan)
+					.fill(0)
+					.map((_, index) => useResizeHook.getRowHeight(merge.row + index))
 
-			if (merge) {
-				if (height > useResizeHook.getRowHeight(merge.row) * merge.rowspan) {
-					useResizeHook.setRowHeight(merge.row, height)
+				const mergedTotalHeight = rowHeights.reduce((total, height) => total + height, 0)
+
+				// 如果内容高度超过合并单元格总高度
+				if (contentHeight > mergedTotalHeight) {
+					// 计算需要增加的高度
+					const additionalHeight = contentHeight - mergedTotalHeight
+					// 将额外高度添加到第一行
+					const newFirstRowHeight = rowHeights[0] + additionalHeight
+					useResizeHook.setRowHeight(merge.row, newFirstRowHeight)
+
+					await nextTick()
+					useSelectionRangeHook.setRange(
+						merge.row,
+						merge.col,
+						merge.row + merge.rowspan - 1,
+						merge.col + merge.colspan - 1,
+						true
+					)
 				}
-			} else if (height > useResizeHook.getRowHeight(rowIndex)) {
-				useResizeHook.setRowHeight(rowIndex, height)
+			} else {
+				// 非合并单元格的情况
+				if (contentHeight > useResizeHook.getRowHeight(rowIndex)) {
+					useResizeHook.setRowHeight(rowIndex, contentHeight)
+					await nextTick()
+					useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
+				}
 			}
 
 			renderRange()
 		}
 
 		const blur = () => {
-			if (cellEl.innerText === '') {
-				cellEl.innerText = originalValue
-			}
+			// if (cellEl.innerText === '') {
+			// 	cellEl.innerText = originalValue
+			// }
 			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
-			setTimeout(() => {
-				setRowHeight()
-			}, 0)
+			setTimeout(() => setRowHeight(), 0)
 		}
 
 		cellEl.addEventListener('blur', blur)

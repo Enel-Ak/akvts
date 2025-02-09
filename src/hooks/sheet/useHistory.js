@@ -80,7 +80,20 @@ export function useHistory(config) {
 						await processMapInBatches(state.celldata, (rowIndex, rowData) => {
 							const [r, c] = rowIndex.split('-').map(Number)
 							sheet.celldata.get(r)[c] = rowData
-							useSelectionRangeHook.setRange(r, c, r, c, true)
+							const merged = useMergedCellsHook.findMergedCell(r, c)
+							console.log(1, merged)
+
+							if (merged) {
+								useSelectionRangeHook.setRange(
+									merged.row,
+									merged.col,
+									merged.rowspan + merged.row - 1,
+									merged.colspan + merged.col - 1,
+									true
+								)
+							} else {
+								useSelectionRangeHook.setRange(r, c, r, c, true)
+							}
 						})
 						state.celldata.clear()
 					} catch (error) {

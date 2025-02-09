@@ -1,4 +1,4 @@
-import {nextTick} from 'vue'
+import {ElMessage} from 'element-plus'
 
 export function useCopy(config) {
 	const {sheet, useMergedCellsHook, useSelectionRangeHook, useHistoryHook, renderRange} = config
@@ -202,6 +202,9 @@ export function useCopy(config) {
 			)
 		}
 	}
+
+	// 复制选中单元格到Excel
+	const copySelectedCells = () => {}
 
 	const init = () => {
 		document.addEventListener('keydown', handleKeyDown)
