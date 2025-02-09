@@ -306,6 +306,7 @@ export function useCopy(config) {
 					'text/plain': textBlob,
 				}),
 			])
+			ElMessage.success('复制成功')
 		} catch (error) {
 			console.error('复制失败:', error)
 			// 降级方案：使用传统方法

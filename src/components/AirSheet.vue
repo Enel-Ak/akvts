@@ -477,6 +477,36 @@ const isMergedCellStart = (cell) => {
 	return mergedCells.hasOwnProperty(key)
 }
 
+// 判断单元格是否锁定
+let lockedTimer = null
+const isLockedCell = () => {
+	clearTimeout(lockedTimer)
+	// 不允许编辑
+	if (!sheet.config.edit) {
+		lockedTimer = setTimeout(() => ElMessage.warning('当前表格不支持编辑'), 300)
+		return true
+	}
+
+	const ranged = useSelectionRangeHook.ranged
+	if (!ranged) return true
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const startCol = Math.min(ranged.start.col, ranged.end.col)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+	for (let row = startRow; row <= endRow; row++) {
+		for (let col = startCol; col <= endCol; col++) {
+			if (sheet.config.lockCells[`${row}-${col}`]) {
+				lockedTimer = setTimeout(() => ElMessage.warning(`单元格已锁定`), 300)
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // 滚动处理
 let scrollTimer = null
 let rafId = null
@@ -597,6 +627,10 @@ const onClickAlphabet = async (e, col) => {
 
 // 设置单元格样式, 工具栏共用,
 const setCellStyle = (type, val, fn, save = true) => {
+	if (isLockedCell()) {
+		return
+	}
+
 	if (save) {
 		useHistoryHook.saveHistory()
 	}
@@ -671,6 +705,9 @@ const onChangeFillColor = (e) => {
 
 // 合并
 const onMergeClick = () => {
+	if (isLockedCell()) {
+		return
+	}
 	useHistoryHook.saveHistory()
 	const ranged = useSelectionRangeHook.ranged
 	if (!ranged) return
@@ -786,6 +823,7 @@ const onUnderlineClick = () => {
 	setCellStyle('underline', true)
 }
 
+// 删除线
 const onStrikethroughClick = () => {
 	setCellStyle('strikethrough', true)
 }
@@ -1258,6 +1296,7 @@ const clearData = () => {
 
 // 初始化
 onMounted(() => {
+	console.log('AirSheet mounted')
 	useSelectionRangeHook.setRange(0, 0, 0, 0)
 	if (!initialized.value) {
 		init()
@@ -1265,10 +1304,11 @@ onMounted(() => {
 })
 
 onActivated(() => {
+	console.log('AirSheet activated')
 	if (initialized.value) {
 		return
 	}
-	init()
+	// init()
 })
 
 onDeactivated(() => {
