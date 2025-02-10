@@ -96,7 +96,7 @@ const initialData = () => {
 	if (total >= limit) {
 		loading.value = true
 		loadingProgress.value = -1
-		loadingText.value = '正在加载数据...'
+		loadingText.value = '数据量较大, 请稍后...'
 	}
 
 	const batchSize = 3000
@@ -144,7 +144,7 @@ const containerHeight = computed(() => {
 })
 const initialized = ref(false)
 const loading = ref(false)
-const loadingText = ref('数据量较大, 请稍等...')
+const loadingText = ref('正在处理数据...')
 const loadingProgress = ref(0)
 const containerRef = ref()
 const alphabetRef = ref()
@@ -272,7 +272,6 @@ const processMapInBatches = (map, callback, batchSize = 5000) => {
 
 			if (processed < total) {
 				if (processed % batchSize !== 0) {
-					loadingText.value = `正在处理数据...`
 					loadingProgress.value = Math.floor((processed / total) * 100)
 				}
 				requestAnimationFrame(processBatch)
@@ -526,7 +525,7 @@ const onScroll = async (e) => {
 	if (sheet.config.rowCount >= limit) {
 		loading.value = true
 		loadingProgress.value = -1
-		loadingText.value = '数据量较大，请稍后...'
+		loadingText.value = '数据量较大, 请稍后...'
 	}
 
 	const container = e.target
@@ -891,7 +890,7 @@ const onAddRowClick = async () => {
 	}
 
 	// 创建新的Map
-	const newMap = new Map()
+	let newMap = new Map()
 
 	try {
 		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
@@ -904,16 +903,103 @@ const onAddRowClick = async () => {
 		})
 
 		// 更新sheet.celldata
-		sheet.celldata = newMap
+		sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
 		sheet.config.rowCount++
 
 		useHistoryHook.saveHistory(
 			{
 				rowIndex: insertRowIndex,
-				rowspan: 0,
+				rowspan: 1,
 			},
 			'addRow'
 		)
+		updateVisibleRange()
+	} catch (error) {
+		console.error('处理数据时出错:', error)
+	} finally {
+		loading.value = false
+		loadingText.value = '处理完成'
+	}
+}
+
+// 删除行
+const onRemoveRowClick = async () => {
+	if (!sheet.config.removeRow) {
+		ElMessage.warning('请先在配置中开启删除行功能')
+		return
+	}
+	const ranged = useSelectionRangeHook.ranged
+	if (!ranged) return
+
+	if (sheet.celldata.size >= limit) {
+		loading.value = true
+		loadingText.value = '正在处理数据...'
+	}
+
+	const startRow = Math.min(ranged.start.row, ranged.end.row)
+	const endRow = Math.max(ranged.start.row, ranged.end.row)
+	const deleteCount = endRow - startRow + 1
+	const deletedRows = new Map()
+	const newMap = new Map()
+
+	try {
+		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+			if (rowIndex < startRow) {
+				newMap.set(rowIndex, rowData)
+			} else if (rowIndex > endRow) {
+				newMap.set(rowIndex - deleteCount, rowData)
+			} else {
+				deletedRows.set(`${rowIndex}`, {rowData, deleteCount})
+			}
+		})
+
+		// 保存历史
+		useHistoryHook.saveHistory(deletedRows, 'removeRow')
+
+		// 更新合并单元格的位置
+		const mergedCells = sheet.config.mergedCells
+		const newMergedCells = new Map()
+		Object.keys(mergedCells).forEach((key) => {
+			const [row, col] = key.split('-').map(Number)
+			const {rowspan, colspan} = mergedCells[key]
+
+			if (row < startRow) {
+				// 在删除行之前的合并单元格
+				if (row + rowspan > startRow) {
+					// 如果合并单元格跨越了删除范围，需要减少 rowspan
+					const overlap = Math.min(endRow - startRow + 1, row + rowspan - startRow)
+					newMergedCells.set(key, {
+						rowspan: rowspan - overlap,
+						colspan,
+					})
+				} else {
+					// 合并单元格完全在删除范围之前，保持不变
+					newMergedCells.set(key, mergedCells[key])
+				}
+			} else if (row > endRow) {
+				// 在删除行之后的合并单元格需要更新行号
+				newMergedCells.set(`${row - deleteCount}-${col}`, {
+					rowspan,
+					colspan,
+				})
+			}
+			// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
+		})
+		useMergedCellsHook.setMergeCells(newMergedCells)
+
+		// 删除行相关的cellstyle
+		for (let i = startRow; i <= endRow; i++) {
+			Object.keys(sheet.config.cellStyle).forEach((key) => {
+				const [row] = key.split('-').map(Number)
+				if (row === i) {
+					delete sheet.config.cellStyle[key]
+				}
+			})
+		}
+
+		// 更新sheet.celldata
+		sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
+		sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
 		updateVisibleRange()
 	} catch (error) {
 		console.error('处理数据时出错:', error)
@@ -989,96 +1075,6 @@ const onAddColumnClick = async () => {
 		updateVisibleRange()
 	} catch (error) {
 		console.error('添加列失败', error)
-	} finally {
-		loading.value = false
-		loadingText.value = '处理完成'
-	}
-}
-
-// 删除行
-const onRemoveRowClick = async () => {
-	if (!sheet.config.removeRow) {
-		ElMessage.warning('请先在配置中开启删除行功能')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	if (sheet.celldata.size >= limit) {
-		loading.value = true
-		loadingText.value = '正在处理数据...'
-	}
-
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const deleteCount = endRow - startRow + 1
-	const deletedRows = new Map()
-	const newMap = new Map()
-
-	try {
-		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-			if (rowIndex < startRow) {
-				newMap.set(rowIndex, rowData)
-			} else if (rowIndex > endRow) {
-				newMap.set(rowIndex - deleteCount, rowData)
-			} else {
-				deletedRows.set(`${rowIndex}`, {
-					rowIndex,
-					value: rowData,
-				})
-			}
-		})
-
-		// 保存历史
-		useHistoryHook.saveHistory(deletedRows, 'removeRow')
-
-		// 更新合并单元格的位置
-		const mergedCells = sheet.config.mergedCells
-		const newMergedCells = new Map()
-		Object.keys(mergedCells).forEach((key) => {
-			const [row, col] = key.split('-').map(Number)
-			const {rowspan, colspan} = mergedCells[key]
-
-			if (row < startRow) {
-				// 在删除行之前的合并单元格
-				if (row + rowspan > startRow) {
-					// 如果合并单元格跨越了删除范围，需要减少 rowspan
-					const overlap = Math.min(endRow - startRow + 1, row + rowspan - startRow)
-					newMergedCells.set(key, {
-						rowspan: rowspan - overlap,
-						colspan,
-					})
-				} else {
-					// 合并单元格完全在删除范围之前，保持不变
-					newMergedCells.set(key, mergedCells[key])
-				}
-			} else if (row > endRow) {
-				// 在删除行之后的合并单元格需要更新行号
-				newMergedCells.set(`${row - deleteCount}-${col}`, {
-					rowspan,
-					colspan,
-				})
-			}
-			// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
-		})
-		useMergedCellsHook.setMergeCells(newMergedCells)
-
-		// 删除行相关的cellstyle
-		for (let i = startRow; i <= endRow; i++) {
-			Object.keys(sheet.config.cellStyle).forEach((key) => {
-				const [row] = key.split('-').map(Number)
-				if (row === i) {
-					delete sheet.config.cellStyle[key]
-				}
-			})
-		}
-
-		// 更新sheet.celldata
-		sheet.celldata = newMap
-		sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
-		updateVisibleRange()
-	} catch (error) {
-		console.error('处理数据时出错:', error)
 	} finally {
 		loading.value = false
 		loadingText.value = '处理完成'

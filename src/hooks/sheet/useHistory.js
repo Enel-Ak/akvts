@@ -68,6 +68,7 @@ export function useHistory(config) {
 		if (history.length > 0) {
 			try {
 				loading.value = true
+				loadingText.value = '撤销数据处理中...'
 				loadingProgress.value = -1
 
 				const state = history.pop()
@@ -101,63 +102,27 @@ export function useHistory(config) {
 					}
 				}
 
-				// 撤销删除行
-				if (state.removeRow.size > 0) {
-					// 恢复删除的行
-					const entries = Array.from(state.removeRow.entries())
-					// 按行号排序，确保从小到大恢复
-					const sortedEntries = entries.sort(
-						([keyA], [keyB]) => Number(keyA) - Number(keyB)
-					)
-
-					// 创建新的数据结构
+				// 撤销添加行
+				if (state.addRow) {
 					const newMap = new Map()
-
 					try {
-						// 先获取所有现有行
-						const existingRows = Array.from(sheet.celldata.entries())
-						// 按行号排序
-						existingRows.sort(([a], [b]) => Number(a) - Number(b))
+						const startRow = state.addRow.rowIndex // insertRowIndex
 
-						// 处理每一行
-						let offset = 0
-						let currentIndex = 0
-
-						// 遍历所有行（包括要恢复的和现有的）
-						while (currentIndex < existingRows.length || sortedEntries.length > 0) {
-							if (sortedEntries.length === 0) {
-								// 只剩下现有行
-								const [rowIndex, rowData] = existingRows[currentIndex]
-								newMap.set(Number(rowIndex) + offset, rowData)
-								currentIndex++
-							} else if (currentIndex >= existingRows.length) {
-								// 只剩下要恢复的行
-								const [key, row] = sortedEntries.shift()
-								newMap.set(Number(row.rowIndex), reactive(row.value))
-								offset++
+						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+							// 保持和添加时后逻辑一样, 后续修改多行
+							if (rowIndex <= startRow) {
+								newMap.set(rowIndex, rowData)
 							} else {
-								// 比较当前行和要恢复的行的位置
-								const [currentRowIndex, currentRowData] = existingRows[currentIndex]
-								const [key, row] = sortedEntries[0]
-
-								if (Number(row.rowIndex) > Number(currentRowIndex) + offset) {
-									// 当前行在要恢复的行之前
-									newMap.set(Number(currentRowIndex) + offset, currentRowData)
-									currentIndex++
-								} else {
-									// 恢复行
-									newMap.set(Number(row.rowIndex), reactive(row.value))
-									offset++
-									sortedEntries.shift()
-								}
+								newMap.set(rowIndex - 1, rowData)
 							}
-						}
+						})
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
-						state.removeRow.clear()
+						sheet.config.rowCount -= 1
+						state.addRow = null
 					} catch (error) {
-						console.error('撤销删除行失败:', error)
+						console.error('撤销添加行失败:', error)
 						loading.value = false
 					}
 				}
@@ -191,25 +156,18 @@ export function useHistory(config) {
 
 				// 撤销删除行
 				if (state.removeRow.size > 0) {
-					// 恢复删除的行
-					const entries = Array.from(state.removeRow.entries())
-					// 按行号排序，确保从小到大恢复
-					const sortedEntries = entries.sort(
-						([keyA], [keyB]) => Number(keyA) - Number(keyB)
-					)
-
 					// 创建新的数据结构
 					const newMap = new Map()
 
 					try {
-						// 先复制现有数据
+						let count = 0
 						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-							newMap.set(rowIndex, rowData)
-						})
-
-						// 恢复删除的行
-						sortedEntries.forEach(([key, row]) => {
-							newMap.set(Number(row.rowIndex), reactive(row.value))
+							const recover = state.removeRow.get(`${rowIndex}`)
+							if (recover) {
+								newMap.set(rowIndex, recover.rowData)
+								count = recover.deleteCount
+							}
+							newMap.set(rowIndex + count, rowData)
 						})
 
 						// 更新 sheet.celldata
@@ -262,6 +220,8 @@ export function useHistory(config) {
 					)
 					useMergedCellsHook.setMergeCells(mergedCells)
 				}
+
+				// renderRange()
 			} catch (error) {
 				console.error('处理数据时出错:', error)
 			} finally {
