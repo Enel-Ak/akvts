@@ -186,7 +186,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		let totleHeight = 0
 		let totleWidth = 0
 
-		if (endRow === sheet.config.rowCount - 1 && startRow === 0) {
+		if (endRow === sheet.config.rowCount - 1) {
 			totleHeight = budgetTotalHeight.value
 		} else {
 			for (let i = 0; i <= endRow; i++) {
@@ -199,7 +199,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			}
 		}
 
-		if (endCol === sheet.config.colCount - 1 && startCol === 0) {
+		if (endCol === sheet.config.colCount - 1) {
 			totleWidth = budgetTotalWidth.value
 		} else {
 			for (let i = 0; i <= endCol; i++) {
@@ -260,6 +260,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 		if (maxCol === sheet.config.colCount - 1) {
 			return minRow === maxRow && minRow === rowIndex && maxRow === rowIndex
 		}
+
+		// 获取扩展范围（考虑合并单元格）
+		// const expanded = getExpandedRange(minRow, maxRow, minCol, maxCol)
 
 		// 直接判断是否在范围内
 		if (row) {
