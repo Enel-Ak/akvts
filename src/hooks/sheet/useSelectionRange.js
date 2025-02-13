@@ -1,5 +1,5 @@
 import {computed, ref, shallowRef, watch} from 'vue'
-const workerURL = new URL('./worker/SelectionRange.worker.js', import.meta.url)
+const workerURL = new URL('../../worker/sheet/SelectionRange.worker.js', import.meta.url)
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置

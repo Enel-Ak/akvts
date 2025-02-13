@@ -1,5 +1,5 @@
 import {ref} from 'vue'
-const workerURL = new URL('./worker/ResizeRender.worker.js', import.meta.url)
+const workerURL = new URL('../../worker/sheet/ResizeRender.worker.js', import.meta.url)
 
 export const useResize = (config = {}) => {
 	// 获取配置

@@ -1,5 +1,5 @@
 import {ref} from 'vue'
-const workerURL = new URL('./worker/SheetRender.worker.js', import.meta.url)
+const workerURL = new URL('../../worker/sheet/SheetRender.worker.js', import.meta.url)
 export const useSheetRender = (config) => {
 	// 创建渲染worker
 	let worker = null

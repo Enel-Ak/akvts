@@ -86,7 +86,7 @@ export default ({mode}) => {
 					// chunkFileNames: '[name]-[hash].js',
 					assetFileNames: (assetInfo) => {
 						if (assetInfo.name.endsWith('.worker.js')) {
-							return 'workers/[name][extname]'
+							return 'worker/[name][extname]'
 						}
 						return 'assets/[name][extname]'
 					},
@@ -113,7 +113,7 @@ export default ({mode}) => {
 			rollupOptions: {
 				output: {
 					format: 'es',
-					entryFileNames: 'workers/[name].js',
+					entryFileNames: 'worker/[name].js',
 				},
 			},
 		},
