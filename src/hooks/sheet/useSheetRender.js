@@ -1,4 +1,5 @@
 import {ref} from 'vue'
+import Worker from './worker/SheetRenderWorker.js?worker'
 
 export const useSheetRender = (config) => {
 	// 创建渲染worker
@@ -52,8 +53,7 @@ export const useSheetRender = (config) => {
 	}
 
 	const init = () => {
-		const workerUrl = new URL('./worker/SheetRenderWorker.js', import.meta.url)
-		worker = new Worker(workerUrl, {type: 'module'})
+		worker = new Worker()
 		// 监听worker消息
 		let completedTimer = null
 		worker.onmessage = (event) => {

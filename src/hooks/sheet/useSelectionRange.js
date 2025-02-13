@@ -1,4 +1,5 @@
 import {computed, ref, shallowRef, watch, nextTick} from 'vue'
+import Worker from './worker/SelectionRangeWorker.js?worker'
 
 export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
@@ -563,10 +564,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 			return
 		}
 
-		const workerUrl = new URL('./worker/SelectionRangeWorker.js', import.meta.url)
-		worker = new Worker(workerUrl, {
-			type: 'module',
-		})
+		// const workerUrl = new URL('./worker/SelectionRangeWorker.js?raw', import.meta.url)
+		worker = new Worker()
 
 		worker.onmessage = (e) => {
 			const {type, data} = e.data

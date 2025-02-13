@@ -1,4 +1,5 @@
 import {reactive, ref} from 'vue'
+import Worker from './worker/ResizeRenderWorker.js?worker'
 export const useResize = (config = {}) => {
 	// 获取配置
 	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
@@ -214,10 +215,7 @@ export const useResize = (config = {}) => {
 	}
 
 	const init = () => {
-		const workerUrl = new URL('./worker/ResizeRenderWorker.js', import.meta.url)
-		worker = new Worker(workerUrl, {
-			type: 'module',
-		})
+		worker = new Worker()
 		// 监听worker消息
 		worker.onmessage = (event) => {
 			const {type, data, requestId} = event.data
