@@ -84,12 +84,6 @@ export default ({mode}) => {
 					// 强制压缩输出文件
 					// entryFileNames: '[name]-[hash].js',
 					// chunkFileNames: '[name]-[hash].js',
-					assetFileNames: (assetInfo) => {
-						if (assetInfo.name.endsWith('.worker.js')) {
-							return 'worker/[name][extname]'
-						}
-						return 'assets/[name][extname]'
-					},
 					compact: true,
 				},
 			},
@@ -105,16 +99,6 @@ export default ({mode}) => {
 					drop_debugger: true,
 				},
 				mangle: true, // 添加此行以启用代码混淆
-			},
-		},
-		worker: {
-			format: 'es',
-			plugins: [],
-			rollupOptions: {
-				output: {
-					format: 'es',
-					entryFileNames: 'worker/[name].js',
-				},
 			},
 		},
 	})

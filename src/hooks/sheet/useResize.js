@@ -1,6 +1,54 @@
 import {ref} from 'vue'
 const workerURL = new URL('../../worker/sheet/ResizeRender.worker.js', import.meta.url)
 
+const workerCode = `
+	// 渲染状态
+	let renderState = {
+		isRunning: false,
+		data: null,
+	}
+
+	const renderResize = (data) => {
+		const {startRow, startCol, type, rowHeight, rowHeights, colWidth, colWidths} = data
+		let offset = {top: 0, left: 0}
+
+		if (type === 'offsetTop') {
+			for (let i = 0; i < startRow; i++) {
+				offset.top += rowHeights[i] || rowHeight
+			}
+		}
+
+		if (type === 'offsetLeft') {
+			for (let i = 0; i < startCol; i++) {
+				offset.left += colWidths[i] || colWidth
+			}
+		}
+
+		return {
+			offset,
+		}
+	}
+
+	// 监听消息
+	self.onmessage = (event) => {
+		const {type, data, requestId} = event.data
+
+		try {
+			let result = null
+			// 直接计算渲染结果
+			if (type === 'render_request') {
+				result = renderResize(data)
+			}
+
+			// 发送响应
+			self.postMessage({type, requestId, data: result})
+		} catch (error) {
+			self.postMessage({type: 'error', requestId, data: error.message})
+		}
+	}
+
+`
+
 export const useResize = (config = {}) => {
 	// 获取配置
 	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
@@ -216,7 +264,10 @@ export const useResize = (config = {}) => {
 	}
 
 	const init = () => {
-		worker = new Worker(workerURL, {type: 'module'})
+		const blob = new Blob([workerCode], {type: 'application/javascript'})
+		const workerUrl = URL.createObjectURL(blob)
+		worker = new Worker(workerUrl)
+		// worker = new Worker(workerURL, {type: 'module'})
 		// 监听worker消息
 		worker.onmessage = (event) => {
 			const {type, data, requestId} = event.data
