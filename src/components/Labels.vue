@@ -106,7 +106,7 @@ const onCancelItem = (item) => {
 	items.value.splice(index, 1)
 
 	if (item.path) {
-		const name = item.path.split('/').pop() || 'index'
+		const name = item.path.split('/').pop().split('?')[0] || 'index'
 		keepAlive.removeInclude(name)
 		console.log('removeInclude', name)
 	}
@@ -235,7 +235,7 @@ const handleRouter = (to) => {
 	}
 	save()
 	if (current.value.path) {
-		const name = current.value.path.split('/').pop() || 'index'
+		const name = current.value.path.split('/').pop().split('?')[0] || 'index'
 		keepAlive.addInclude(name)
 		console.log('addInclude', name)
 	}
