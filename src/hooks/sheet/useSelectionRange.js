@@ -563,7 +563,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 			return
 		}
 
-		worker = new Worker(new URL('./worker/SelectionRangeWorker.js', import.meta.url), {
+		const workerUrl = new URL('./worker/SelectionRangeWorker.js', import.meta.url)
+		worker = new Worker(workerUrl, {
 			type: 'module',
 		})
 

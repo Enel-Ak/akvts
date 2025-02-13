@@ -52,9 +52,8 @@ export const useSheetRender = (config) => {
 	}
 
 	const init = () => {
-		worker = new Worker(new URL('./worker/SheetRenderWorker.js', import.meta.url), {
-			type: 'module',
-		})
+		const workerUrl = new URL('./worker/SheetRenderWorker.js', import.meta.url)
+		worker = new Worker(workerUrl, {type: 'module'})
 		// 监听worker消息
 		let completedTimer = null
 		worker.onmessage = (event) => {

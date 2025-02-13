@@ -214,7 +214,8 @@ export const useResize = (config = {}) => {
 	}
 
 	const init = () => {
-		worker = new Worker(new URL('./worker/ResizeRenderWorker.js', import.meta.url), {
+		const workerUrl = new URL('./worker/ResizeRenderWorker.js', import.meta.url)
+		worker = new Worker(workerUrl, {
 			type: 'module',
 		})
 		// 监听worker消息

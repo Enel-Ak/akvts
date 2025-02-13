@@ -85,6 +85,12 @@ export default ({mode}) => {
 					// entryFileNames: '[name]-[hash].js',
 					// chunkFileNames: '[name]-[hash].js',
 					compact: true,
+					assetFileNames: (assetInfo) => {
+						if (assetInfo.name.endsWith('.worker.js')) {
+							return 'workers/[name][extname]'
+						}
+						return 'assets/[name][extname]'
+					},
 				},
 			},
 			minify: 'terser',
@@ -100,6 +106,10 @@ export default ({mode}) => {
 				},
 				mangle: true, // 添加此行以启用代码混淆
 			},
+		},
+		worker: {
+			format: 'es',
+			plugins: [],
 		},
 	})
 }
