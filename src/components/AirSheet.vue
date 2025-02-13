@@ -83,7 +83,7 @@ const sheet = reactive({
 	celldata: new Map(),
 })
 
-const fns = ref(props.modelValue.fns || [])
+const fns = ref(props.modelValue?.fns || [])
 const limit = 30000
 
 // 初始数据处理
