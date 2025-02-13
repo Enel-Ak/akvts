@@ -104,6 +104,12 @@ export default ({mode}) => {
 		worker: {
 			format: 'es',
 			plugins: [],
+			rollupOptions: {
+				output: {
+					format: 'es',
+					entryFileNames: 'workers/[name].js',
+				},
+			},
 		},
 	})
 }
