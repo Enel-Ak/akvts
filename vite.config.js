@@ -84,6 +84,12 @@ export default ({mode}) => {
 					// 强制压缩输出文件
 					// entryFileNames: '[name]-[hash].js',
 					// chunkFileNames: '[name]-[hash].js',
+					assetFileNames: (assetInfo) => {
+						if (assetInfo.name.endsWith('.worker.js')) {
+							return 'workers/[name][extname]'
+						}
+						return 'assets/[name][extname]'
+					},
 					compact: true,
 				},
 			},

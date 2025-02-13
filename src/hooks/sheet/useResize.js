@@ -1,5 +1,6 @@
 import {ref} from 'vue'
-const workerURL = new URL('./worker/ResizeRenderWorker.js', import.meta.url)
+const workerURL = new URL('./worker/ResizeRender.worker.js', import.meta.url)
+
 export const useResize = (config = {}) => {
 	// 获取配置
 	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
