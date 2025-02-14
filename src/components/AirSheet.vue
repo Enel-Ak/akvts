@@ -19,6 +19,7 @@ import {useHistory} from '@/hooks/sheet/useHistory'
 import {useCopy} from '@/hooks/sheet/useCopy'
 import {useExcel} from '@/hooks/sheet/useExcel'
 import {useTools} from '@/hooks/sheet/useTools'
+import {useMouseRight} from '@/hooks/sheet/useMouseRight'
 import {ElMessage} from 'element-plus'
 
 const emits = defineEmits(['update:modelValue', 'cellInput'])
@@ -222,6 +223,7 @@ const {importing, exportExcel, readExcelFile} = useExcel({
 	useMergedCellsHook,
 	useSelectionRangeHook,
 })
+const useMouseRightHook = useMouseRight(id)
 const useToolsHook = useTools({})
 
 // 计算总高度
@@ -1299,6 +1301,7 @@ const init = async () => {
 	useEditHook.init()
 	useCopyHook.init()
 	useHistoryHook.init()
+	useMouseRightHook.init()
 
 	nextTick(async () => {
 		updateViewportSize()
@@ -1343,6 +1346,10 @@ const destroy = () => {
 
 	if (useResizeHook) {
 		useResizeHook.destroy()
+	}
+
+	if (useMouseRightHook) {
+		useMouseRightHook.destroy()
 	}
 
 	window.removeEventListener('resize', updateViewportSize)
@@ -1783,6 +1790,30 @@ defineExpose({
 					:class="useSelectionRangeHook.rangeClass"
 					:style="useSelectionRangeHook.rangeStyle"
 				></div>
+
+				<!-- 右键菜单 -->
+				<div
+					v-show="useMouseRightHook.contextMenuVisible.value"
+					class="context-menu shadow-12"
+					:style="useMouseRightHook.contextMenuStyle.value"
+				>
+					<div class="menu-item" @click="onAddRowClick">
+						<Icons icon-name="AddRow"></Icons>
+						<span>添加行</span>
+					</div>
+					<div class="menu-item" @click="onAddColumnClick">
+						<Icons icon-name="AddColumn"></Icons>
+						<span>添加列</span>
+					</div>
+					<div class="menu-item" @click="onRemoveRowClick">
+						<Icons icon-name="RemoveRow"></Icons>
+						<span>删除行</span>
+					</div>
+					<div class="menu-item" @click="onRemoveColumnClick">
+						<Icons icon-name="RemoveColumn"></Icons>
+						<span>删除列</span>
+					</div>
+				</div>
 			</div>
 
 			<!-- 操作 -->
@@ -2353,6 +2384,45 @@ defineExpose({
 			flex: none;
 			text-align: right;
 			width: torem(30px);
+		}
+	}
+}
+
+.context-menu {
+	border: 1px solid var(--z-line);
+	background-color: var(--z-theme);
+	border-radius: 3px;
+	min-width: 120px;
+	position: absolute;
+	z-index: 1000;
+
+	.menu-item {
+		align-items: center;
+		cursor: pointer;
+		color: var(--z-font-color);
+		display: flex;
+		height: 30px;
+		line-height: 30px;
+		padding: 0 10px;
+		position: relative;
+		user-select: none;
+		white-space: nowrap;
+		span {
+			font-size: 13px;
+		}
+
+		&:not(:last-child) {
+			border-bottom: 1px solid var(--z-line);
+		}
+
+		&:hover {
+			background-color: var(--z-bg-secondary);
+		}
+
+		:deep(svg) {
+			width: 16px;
+			height: 16px;
+			margin-right: 8px;
 		}
 	}
 }

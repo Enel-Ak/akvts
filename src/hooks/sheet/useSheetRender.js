@@ -284,7 +284,6 @@ export const useSheetRender = (config) => {
 	}
 
 	const init = () => {
-		// worker = new Worker(workerURL, {type: 'module'})
 		const blob = new Blob([workerCode], {type: 'application/javascript'})
 		const workerUrl = URL.createObjectURL(blob)
 		worker = new Worker(workerUrl)
