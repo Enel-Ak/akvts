@@ -1,5 +1,5 @@
 import {cloneDeep} from 'lodash'
-import {nextTick, reactive} from 'vue'
+import {reactive} from 'vue'
 export function useHistory(config) {
 	const {
 		sheet,

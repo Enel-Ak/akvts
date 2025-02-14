@@ -1393,7 +1393,7 @@ defineExpose({
 		<div class="toolbar" :style="{}">
 			<div class="group font-layout h-full">
 				<div class="item font">
-					<select value="STSong" @change="onChangeFont($event)">
+					<select value="FZSSJW, sans-serif" @change="onChangeFont($event)">
 						<option
 							v-for="[key, value] of Object.entries(useToolsHook.fonts)"
 							:key="value"
@@ -2065,7 +2065,7 @@ defineExpose({
 
 	.sheet-main {
 		font-size: 13px;
-		font-family: STSong, serif;
+		font-family: FZSSJW, sans-serif;
 	}
 
 	.row {
