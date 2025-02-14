@@ -227,7 +227,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 		let totaloffsetLeft = 0
 		let totleHeight = 0
 		let totleWidth = 0
-		console.log(startRow, endRow, startCol, endCol)
 
 		if (endRow === sheet.config.rowCount - 1 && startRow === 0) {
 			totleHeight = budgetTotalHeight.value

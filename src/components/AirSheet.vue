@@ -1923,7 +1923,7 @@ defineExpose({
 			}
 
 			.border-merge {
-				left: -104px;
+				left: -103px;
 			}
 		}
 	}
