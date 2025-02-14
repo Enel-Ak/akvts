@@ -1655,7 +1655,7 @@ defineExpose({
 			<!-- 序号 -->
 			<div
 				ref="numberRef"
-				class="virtual-sheet custom brn"
+				class="virtual-sheet custom brn bln"
 				v-if="enableNumber"
 				:style="{
 					width: numberWidth + 'px',
@@ -1700,7 +1700,7 @@ defineExpose({
 				ref="containerRef"
 				:id="id"
 				data-air-sheet-cell
-				class="virtual-sheet sheet-main"
+				class="virtual-sheet sheet-main brn"
 				@scroll="onScroll"
 			>
 				<!-- 虚拟滚动占位 -->
@@ -1860,6 +1860,8 @@ defineExpose({
 </template>
 <style scoped lang="scss">
 .air-sheet-component {
+	border-radius: 3px;
+	border: 1px solid var(--z-line);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -1869,7 +1871,6 @@ defineExpose({
 
 .toolbar {
 	align-items: flex-start;
-	border: 1px solid var(--z-line);
 	border-bottom: none;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
@@ -2023,8 +2024,6 @@ defineExpose({
 }
 
 .statusbar {
-	border: 1px solid var(--z-line);
-	border-top: none;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	padding: 5px;
@@ -2217,7 +2216,7 @@ defineExpose({
 	}
 
 	.alphabet-placeholder {
-		border: 1px solid var(--z-line);
+		border-top: 1px solid var(--z-line);
 		background-color: rgba(var(--z-bg-secondary-rbg), 0.3);
 		height: 18px;
 		// transition: opacity 0.15s linear;
