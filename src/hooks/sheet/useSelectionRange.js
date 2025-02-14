@@ -227,10 +227,10 @@ export const useSelectionRange = (containerId, config = {}) => {
 		let totaloffsetLeft = 0
 		let totleHeight = 0
 		let totleWidth = 0
+		console.log(startRow, endRow, startCol, endCol)
 
-		if (endRow === sheet.config.rowCount - 1) {
+		if (endRow === sheet.config.rowCount - 1 && startRow === 0) {
 			totleHeight = budgetTotalHeight.value
-
 			if (endRow === startRow) {
 				const allRowHeight = sheet.config.rowCount * rowHeight
 				const cached = Object.entries(useResizeHook.rowHeights).map(([key, value]) =>
@@ -252,7 +252,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			}
 		}
 
-		if (endCol === sheet.config.colCount - 1) {
+		if (endCol === sheet.config.colCount - 1 && startCol === 0) {
 			totleWidth = budgetTotalWidth.value
 			if (endCol === startCol) {
 				const allColWidth = sheet.config.colCount * colWidth
