@@ -1,6 +1,4 @@
 import {ref} from 'vue'
-const workerURL = new URL('../../worker/sheet/ResizeRender.worker.js', import.meta.url)
-
 const workerCode = `
 	// 渲染状态
 	let renderState = {

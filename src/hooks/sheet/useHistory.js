@@ -117,6 +117,23 @@ export function useHistory(config) {
 							}
 						})
 
+						// 处理合并单元格
+						const mergedCells = useMergedCellsHook.getMergedCells()
+						const newMergedCells = new Map()
+
+						for (const [key, value] of Object.entries(mergedCells)) {
+							const [row, col] = key.split('-').map(Number)
+							if (row > startRow) {
+								// 如果合并单元格在删除行之后，向上移动一行
+								newMergedCells.set(`${row - 1}-${col}`, value)
+							} else {
+								newMergedCells.set(key, value)
+							}
+						}
+
+						// 更新合并单元格
+						useMergedCellsHook.setMergeCells(newMergedCells)
+
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
 						sheet.config.rowCount -= 1
@@ -143,6 +160,25 @@ export function useHistory(config) {
 							// 更新到新Map
 							newMap.set(rowIndex, reactive(newRowData))
 						})
+
+						// 处理合并单元格
+						const mergedCells = useMergedCellsHook.getMergedCells()
+						const newMergedCells = new Map()
+
+						for (const [key, value] of Object.entries(mergedCells)) {
+							const [row, col] = key.split('-').map(Number)
+							if (col > state.addCol.colIndex) {
+								// 如果合并单元格在删除列之后，向左移动一列
+								newMergedCells.set(`${row}-${col - 1}`, value)
+							} else if (col < state.addCol.colIndex) {
+								// 如果合并单元格在删除列之前，保持不变
+								newMergedCells.set(key, value)
+							}
+							// 如果合并单元格正好在删除列的位置，则不添加到新的Map中
+						}
+
+						// 更新合并单元格
+						useMergedCellsHook.setMergeCells(newMergedCells)
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap

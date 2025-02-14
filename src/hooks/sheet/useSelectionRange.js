@@ -152,8 +152,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 	}
 
 	watch(
-		() => [sheet.config.rowCount, sheet.config.colCount],
+		() => [sheet.config.rowCount, sheet.config.colCount, useResizeHook.isResizing.value],
 		(value) => {
+			if (value[2]) return
 			worker.postMessage({
 				type: 'resize',
 				data: {
@@ -229,6 +230,17 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		if (endRow === sheet.config.rowCount - 1) {
 			totleHeight = budgetTotalHeight.value
+
+			if (endRow === startRow) {
+				const allRowHeight = sheet.config.rowCount * rowHeight
+				const cached = Object.entries(useResizeHook.rowHeights).map(([key, value]) =>
+					Number(value)
+				)
+				const cachedHeight = cached.reduce((a, b) => a + b, 0)
+				totleHeight = useResizeHook.getRowHeight(endRow)
+				totalOffsetTop =
+					allRowHeight - totleHeight - cached.length * rowHeight + cachedHeight
+			}
 		} else {
 			for (let i = 0; i <= endRow; i++) {
 				const height = useResizeHook.getRowHeight(i)
@@ -242,6 +254,15 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		if (endCol === sheet.config.colCount - 1) {
 			totleWidth = budgetTotalWidth.value
+			if (endCol === startCol) {
+				const allColWidth = sheet.config.colCount * colWidth
+				const cached = Object.entries(useResizeHook.colWidths).map(([key, value]) =>
+					Number(value)
+				)
+				const cachedWidth = cached.reduce((a, b) => a + b, 0)
+				totleWidth = useResizeHook.getColWidth(endCol)
+				totaloffsetLeft = allColWidth - totleWidth - cached.length * colWidth + cachedWidth
+			}
 		} else {
 			for (let i = 0; i <= endCol; i++) {
 				const width = useResizeHook.getColWidth(i)

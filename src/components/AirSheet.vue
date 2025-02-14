@@ -30,7 +30,7 @@ const props = defineProps({
 	// 总行数
 	rowCount: {type: Number, default: 100}, // 最大 671087
 	// 总列数
-	colCount: {type: Number, default: 26},
+	colCount: {type: Number, default: 15},
 	// 单元格高度
 	rowHeight: {type: Number, default: 25},
 	// 单元格宽度
@@ -902,6 +902,23 @@ const onAddRowClick = async () => {
 			newMap.set(insertRowIndex, reactive([]))
 		})
 
+		// 处理合并单元格
+		const mergedCells = useMergedCellsHook.getMergedCells()
+		const newMergedCells = new Map()
+
+		for (const [key, value] of Object.entries(mergedCells)) {
+			const [row, col] = key.split('-').map(Number)
+			if (row >= insertRowIndex) {
+				// 如果合并单元格在插入行之后，向下移动一行
+				newMergedCells.set(`${row + 1}-${col}`, value)
+			} else {
+				newMergedCells.set(key, value)
+			}
+		}
+
+		// 更新合并单元格
+		useMergedCellsHook.setMergeCells(newMergedCells)
+
 		// 更新sheet.celldata
 		sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
 		sheet.config.rowCount++
@@ -1374,7 +1391,7 @@ defineExpose({
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar" :style="{}">
-			<div class="group h-full">
+			<div class="group font-layout h-full">
 				<div class="item font">
 					<select value="STSong" @change="onChangeFont($event)">
 						<option
@@ -1463,30 +1480,32 @@ defineExpose({
 				</div>
 			</div>
 
-			<div class="group" v-if="sheet.config.border">
+			<div class="group group-merge" v-if="sheet.config.border">
 				<div class="item" @click="onBorderClick">
 					<Icons icon-name="Border"></Icons>
 					<span>边框</span>
 				</div>
-				<div class="item" @click="onBorderClick(false)">
-					<Icons icon-name="UnBorder"></Icons>
-					<span>无边框</span>
-				</div>
-				<div class="item" @click="onBorderClick(null, 'top')">
-					<Icons icon-name="BorderTop"></Icons>
-					<span>上边框</span>
-				</div>
-				<div class="item" @click="onBorderClick(null, 'bottom')">
-					<Icons icon-name="BorderBottom"></Icons>
-					<span>下边框</span>
-				</div>
-				<div class="item" @click="onBorderClick(null, 'left')">
-					<Icons icon-name="BorderLeft"></Icons>
-					<span>左边框</span>
-				</div>
-				<div class="item" @click="onBorderClick(null, 'right')">
-					<Icons icon-name="BorderRight"></Icons>
-					<span>右边框</span>
+				<div class="merge border-merge shadow-12">
+					<div class="item" @click="onBorderClick(false)">
+						<Icons icon-name="UnBorder"></Icons>
+						<span>无边框</span>
+					</div>
+					<div class="item" @click="onBorderClick(null, 'top')">
+						<Icons icon-name="BorderTop"></Icons>
+						<span>上边框</span>
+					</div>
+					<div class="item" @click="onBorderClick(null, 'bottom')">
+						<Icons icon-name="BorderBottom"></Icons>
+						<span>下边框</span>
+					</div>
+					<div class="item" @click="onBorderClick(null, 'left')">
+						<Icons icon-name="BorderLeft"></Icons>
+						<span>左边框</span>
+					</div>
+					<div class="item" @click="onBorderClick(null, 'right')">
+						<Icons icon-name="BorderRight"></Icons>
+						<span>右边框</span>
+					</div>
 				</div>
 			</div>
 
@@ -1855,6 +1874,58 @@ defineExpose({
 		border-right: 1px solid var(--z-line);
 		display: flex;
 		padding: 4px 4px 4px 0;
+
+		&.font-layout {
+			flex-wrap: wrap;
+			width: 196px;
+
+			.item:not(:first-child) {
+				flex: none;
+			}
+		}
+
+		&.group-merge {
+			overflow: hidden;
+			position: relative;
+
+			&:hover {
+				overflow: visible;
+				.merge {
+					height: 100%;
+					opacity: 1;
+					z-index: 1;
+				}
+			}
+
+			.merge {
+				border: 1px solid var(--z-line);
+				background-color: rgba(var(--z-theme-rgb), 1);
+				display: flex;
+				height: 0;
+				left: 0;
+				opacity: 0;
+
+				position: absolute;
+				padding: 3px 3px 3px 0;
+				top: 90%;
+				transition: all 0.15s linear;
+				z-index: 1;
+				white-space: nowrap;
+
+				&::after {
+					content: '';
+					position: absolute;
+					border: 5px solid transparent;
+					border-bottom-color: var(--z-theme);
+					left: calc(50% - 5px);
+					top: -9px;
+				}
+			}
+
+			.border-merge {
+				left: -104px;
+			}
+		}
 	}
 
 	.item {
