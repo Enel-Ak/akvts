@@ -1237,7 +1237,7 @@ const onCellInput = (event, cell) => {
 	}, 0)
 }
 
-// 锁定/解锁单元格
+// 锁定单元格
 const onLockClick = () => {
 	if (!sheet.config.lock) {
 		ElMessage.warning('当前表格不支持锁定')
@@ -2014,8 +2014,11 @@ defineExpose({
 			flex-direction: row;
 			select {
 				border: 1px solid var(--z-line);
+				cursor: pointer;
 				flex: 1;
+				font-size: 12px;
 				padding: 2px;
+
 				&:nth-child(1) {
 					border-radius: 4px 0 0 4px;
 				}
