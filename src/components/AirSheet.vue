@@ -1797,19 +1797,23 @@ defineExpose({
 					class="context-menu shadow-12"
 					:style="useMouseRightHook.contextMenuStyle.value"
 				>
-					<div class="menu-item" @click="onAddRowClick">
+					<div v-if="sheet.config.addRow" class="menu-item" @click="onAddRowClick">
 						<Icons icon-name="AddRow"></Icons>
 						<span>添加行</span>
 					</div>
-					<div class="menu-item" @click="onAddColumnClick">
+					<div v-if="sheet.config.addColumn" class="menu-item" @click="onAddColumnClick">
 						<Icons icon-name="AddColumn"></Icons>
 						<span>添加列</span>
 					</div>
-					<div class="menu-item" @click="onRemoveRowClick">
+					<div v-if="sheet.config.removeRow" class="menu-item" @click="onRemoveRowClick">
 						<Icons icon-name="RemoveRow"></Icons>
 						<span>删除行</span>
 					</div>
-					<div class="menu-item" @click="onRemoveColumnClick">
+					<div
+						v-if="sheet.config.removeColumn"
+						class="menu-item"
+						@click="onRemoveColumnClick"
+					>
 						<Icons icon-name="RemoveColumn"></Icons>
 						<span>删除列</span>
 					</div>
@@ -2416,7 +2420,7 @@ defineExpose({
 		}
 
 		&:hover {
-			background-color: var(--z-bg-secondary);
+			background-color: var(--z-sheet-active);
 		}
 
 		:deep(svg) {
