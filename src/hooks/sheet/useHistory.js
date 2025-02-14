@@ -107,13 +107,16 @@ export function useHistory(config) {
 					const newMap = new Map()
 					try {
 						const startRow = state.addRow.rowIndex // insertRowIndex
+						const rowspan = state.addRow.rowspan
 
 						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
 							// 保持和添加时后逻辑一样, 后续修改多行
-							if (rowIndex <= startRow) {
+							if (rowIndex < startRow) {
+								// 插入行之前的数据保持不变
 								newMap.set(rowIndex, rowData)
-							} else {
-								newMap.set(rowIndex - 1, rowData)
+							} else if (rowIndex > startRow + rowspan - 1) {
+								// 插入行之后的数据向上移动
+								newMap.set(rowIndex - rowspan, rowData)
 							}
 						})
 
@@ -125,7 +128,7 @@ export function useHistory(config) {
 							const [row, col] = key.split('-').map(Number)
 							if (row > startRow) {
 								// 如果合并单元格在删除行之后，向上移动一行
-								newMergedCells.set(`${row - 1}-${col}`, value)
+								newMergedCells.set(`${row - rowspan}-${col}`, value)
 							} else {
 								newMergedCells.set(key, value)
 							}
@@ -136,7 +139,7 @@ export function useHistory(config) {
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
-						sheet.config.rowCount -= 1
+						sheet.config.rowCount -= rowspan
 						state.addRow = null
 					} catch (error) {
 						console.error('撤销添加行失败:', error)

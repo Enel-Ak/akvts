@@ -875,6 +875,7 @@ const onStrikethroughClick = () => {
 }
 
 // 添加行
+const addRowCount = ref(1)
 const onAddRowClick = async () => {
 	if (!sheet.config.addRow) {
 		ElMessage.warning('请先在配置中开启添加行功能')
@@ -897,7 +898,7 @@ const onAddRowClick = async () => {
 			if (rowIndex < insertRowIndex) {
 				newMap.set(rowIndex, rowData)
 			} else {
-				newMap.set(rowIndex + 1, rowData)
+				newMap.set(rowIndex + addRowCount.value, rowData)
 			}
 			newMap.set(insertRowIndex, reactive([]))
 		})
@@ -910,7 +911,7 @@ const onAddRowClick = async () => {
 			const [row, col] = key.split('-').map(Number)
 			if (row >= insertRowIndex) {
 				// 如果合并单元格在插入行之后，向下移动一行
-				newMergedCells.set(`${row + 1}-${col}`, value)
+				newMergedCells.set(`${row + addRowCount.value}-${col}`, value)
 			} else {
 				newMergedCells.set(key, value)
 			}
@@ -921,12 +922,12 @@ const onAddRowClick = async () => {
 
 		// 更新sheet.celldata
 		sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
-		sheet.config.rowCount++
+		sheet.config.rowCount += addRowCount.value
 
 		useHistoryHook.saveHistory(
 			{
 				rowIndex: insertRowIndex,
-				rowspan: 1,
+				rowspan: addRowCount.value,
 			},
 			'addRow'
 		)
@@ -1027,6 +1028,7 @@ const onRemoveRowClick = async () => {
 }
 
 // 添加列
+const addColumnCount = ref(1)
 const onAddColumnClick = async () => {
 	if (!sheet.config.addColumn) {
 		ElMessage.warning('请先在配置中开启添加列功能')
@@ -1509,23 +1511,28 @@ defineExpose({
 				</div>
 			</div>
 
-			<div
-				class="group"
-				v-if="
-					sheet.config.addRow ||
-					sheet.config.addColumn ||
-					sheet.config.removeRow ||
-					sheet.config.removeColumn
-				"
-			>
-				<div v-if="sheet.config.addRow" class="item" @click="onAddRowClick">
+			<div v-if="sheet.config.addRow" class="group group-merge">
+				<div class="item" @click="onAddRowClick">
 					<Icons icon-name="AddRow"></Icons>
 					<span>添加行</span>
 				</div>
+
+				<div class="merge add-row-merge shadow-12">
+					<input v-model.number="addRowCount" type="text" value="1" />
+				</div>
+			</div>
+
+			<div v-if="sheet.config.addColumn" class="group group-merge">
 				<div v-if="sheet.config.addColumn" class="item" @click="onAddColumnClick">
 					<Icons icon-name="AddColumn"></Icons>
 					<span>添加列</span>
 				</div>
+				<div class="merge add-column-merge shadow-12">
+					<input v-model.number="addColumnCount" type="text" value="1" />
+				</div>
+			</div>
+
+			<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
 				<div v-if="sheet.config.removeRow" class="item" @click="onRemoveRowClick">
 					<Icons icon-name="RemoveRow"></Icons>
 					<span>删除行</span>
@@ -1877,7 +1884,6 @@ defineExpose({
 
 		&.font-layout {
 			flex-wrap: wrap;
-			width: 196px;
 
 			.item:not(:first-child) {
 				flex: none;
@@ -1898,7 +1904,8 @@ defineExpose({
 			}
 
 			.merge {
-				border: 1px solid var(--z-line);
+				// border: 1px solid var(--z-line);
+				border-radius: 3px;
 				background-color: rgba(var(--z-theme-rgb), 1);
 				display: flex;
 				height: 0;
@@ -1923,7 +1930,19 @@ defineExpose({
 			}
 
 			.border-merge {
-				left: -103px;
+				left: -101px;
+			}
+
+			.add-row-merge,
+			.add-column-merge {
+				height: 25px !important;
+				line-height: 25px;
+				left: calc(50% - 53px);
+				padding-left: 3px;
+				input {
+					border: 1px solid var(--z-line);
+					width: 100px;
+				}
 			}
 		}
 	}
