@@ -658,7 +658,7 @@ export const useTools = (config) => {
 				delete sheet.config.lockCells[`${row}-${col}`]
 			}
 		}
-		ElMessage.warning(`已解锁`)
+		ElMessage.success(`已解锁`)
 	}
 
 	return {

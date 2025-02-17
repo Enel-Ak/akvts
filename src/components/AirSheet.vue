@@ -922,7 +922,11 @@ defineExpose({
 				</div>
 
 				<div class="merge add-row-merge shadow-12">
-					<input v-model.number="useToolsHook.addRowCount.value" type="text" value="1" />
+					<input
+						v-model.number="useToolsHook.addRowCount.value"
+						type="number"
+						value="1"
+					/>
 				</div>
 			</div>
 
@@ -934,7 +938,7 @@ defineExpose({
 				<div class="merge add-column-merge shadow-12">
 					<input
 						v-model.number="useToolsHook.addColumnCount.value"
-						type="text"
+						type="number"
 						value="1"
 					/>
 				</div>
