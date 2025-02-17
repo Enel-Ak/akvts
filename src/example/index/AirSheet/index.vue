@@ -4,11 +4,8 @@ import {onMounted, ref} from 'vue'
 const sheetRef = ref()
 const config = {
 	config: {
-		cellStyle: {
-			'0-0': {
-				align: 'right',
-			},
-		},
+		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
+		cellStyle: {},
 	},
 	celldata: Array.from({length: 1000}, (_, r) => {
 		return Array.from({length: 10}, (_, c) => {

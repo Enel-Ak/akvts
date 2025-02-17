@@ -81,10 +81,7 @@ const sheet = reactive({
 		cellStyle: {
 			...props.modelValue?.config.cellStyle,
 		},
-		cellType: {
-			// radio/checkbox/select/datetime, 0-0: 指定单元格,-0: 指定列,1-: 指定行
-			'0-0': {type: 'select', options: []},
-		},
+		cellKeys: props.modelValue?.config.cellKeys || [],
 		rowCount: 0,
 		colCount: 0,
 	},
@@ -194,7 +191,6 @@ const useSelectionRangeHook = reactive(
 		useMergedCellsHook,
 		useResizeHook,
 		renderRange: () => updateVisibleRange(),
-		cellClick: (e, cell) => onClickCell(e, cell),
 	})
 )
 const useEditHook = useEdit(id, {
@@ -418,7 +414,9 @@ const visibleCells = (row) => {
 			rowHeight: useResizeHook.getRowHeight(row.rowIndex),
 			colWidth: useResizeHook.getColWidth(i),
 			value,
-			config: {},
+			config: {
+				key: sheet.config.cellKeys[i],
+			},
 		})
 	}
 	return cells
@@ -704,9 +702,8 @@ const onClickCell = (e, cell) => {
 
 	// 使用定时器延迟触发点击事件
 	clickTimer = setTimeout(() => {
-		const cellValue = sheet.celldata.get(cell.row)?.[cell.col]
-		console.log('单元格点击', cell, cellValue)
-		emits('cellClick', cell, cellValue)
+		console.log('单元格点击', cell)
+		emits('cellClick', cell)
 		// 确保在事件触发后重置状态
 		if (now === lastClickTime) {
 			lastClickTime = 0
@@ -1222,6 +1219,7 @@ defineExpose({
 										],
 									}"
 									:style="getOffsetStyle(cell)"
+									@click="onClickCell($event, cell)"
 									@dblclick.stop="useEditHook.startEdit($event, cell)"
 									@blur="onCellBlur($event, cell)"
 									class="cell"
