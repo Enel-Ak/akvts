@@ -387,6 +387,7 @@ const visibleCells = (row) => {
 
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
+	const rowHeight = useResizeHook.getRowHeight(row.rowIndex)
 
 	for (let i = start; i < end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
@@ -410,8 +411,8 @@ const visibleCells = (row) => {
 
 		cells.push({
 			rowIndex: row.rowIndex,
+			rowHeight,
 			colIndex: i,
-			rowHeight: useResizeHook.getRowHeight(row.rowIndex),
 			colWidth: useResizeHook.getColWidth(i),
 			value,
 			config: {
