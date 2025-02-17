@@ -108,7 +108,7 @@ const workerCode = `
 			// 确保不超出总行数
 			endRow = Math.min(rowCount, endRow + bufferRows)
 
-			return {startRow, endRow, totalHeight}
+			return {startRow, endRow, accHeight, totalHeight}
 		}
 
 		// 计算列范围
@@ -154,7 +154,7 @@ const workerCode = `
 			// 确保不超出总列数
 			endCol = Math.min(colCount, endCol + bufferCols)
 
-			return {startCol, endCol, totalWidth}
+			return {startCol, endCol, accWidth, totalWidth}
 		}
 
 		const rowRange = calculateRowRange()
@@ -165,28 +165,34 @@ const workerCode = `
 		let endRow = rowRange.endRow
 		let endCol = colRange.endCol
 
-		for (let [key, value] of Object.entries(mergedCells)) {
-			const [rowIndex, colIndex] = key.split('-').map(Number)
+		// for (let [key, value] of Object.entries(mergedCells)) {
+		// 	const [rowIndex, colIndex] = key.split('-').map(Number)
 
-			if (startRow - rowIndex < value.rowspan && startRow >= rowIndex) {
-				startRow = rowIndex
-			}
+		// 	if (startRow - rowIndex < value.rowspan && startRow >= rowIndex) {
+		// 		startRow = rowIndex
+		// 	}
 
-			if (startCol - colIndex < value.colspan && startCol >= colIndex) {
-				startCol = colIndex
-			}
-		}
+		// 	if (startCol - colIndex < value.colspan && startCol >= colIndex) {
+		// 		startCol = colIndex
+		// 	}
+		// }
 
-		// 计算缓冲区
-		const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
+		// // 计算缓冲区
+		// const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
 
-		// 分块计算
-		const chunks = calculateChunkedRange(startRow, endRow, startCol, endCol)
+		// // 分块计算
+		// const chunks = calculateChunkedRange(startRow, endRow, startCol, endCol)
 
 		return {
 			visible: {startRow, endRow, startCol, endCol},
-			buffer: bufferRange,
-			chunks,
+			// buffer: bufferRange,
+			// chunks,
+			metrics: {
+				accHeight: rowRange.accHeight,
+				totalHeight: rowRange.totalHeight,
+				accWidth: colRange.accWidth,
+				totalWidth: colRange.totalWidth,
+			}
 		}
 	}
 
@@ -195,12 +201,13 @@ const workerCode = `
 		const range = calculateVisibleRange(data)
 
 		return {
-			startRow: range.visible.startRow,
-			endRow: range.visible.endRow,
-			startCol: range.visible.startCol,
-			endCol: range.visible.endCol,
-			buffer: range.buffer,
-			chunks: range.chunks,
+			visible: {
+				startRow: range.visible.startRow,
+				endRow: range.visible.endRow,
+				startCol: range.visible.startCol,
+				endCol: range.visible.endCol,
+			},
+			metrics: range.metrics
 		}
 	}
 

@@ -360,7 +360,11 @@ const observeView = () => {
 // 生成可见行数据
 const visibleRows = computed(() => {
 	const rows = []
-	const {startRow, endRow, buffer} = visibleRangeRef.value
+
+	// 使用worker计算的结果
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return rows
+
+	const {startRow, endRow} = visibleRangeRef.value.visible
 	const start = Math.max(0, startRow)
 	const end = Math.min(sheet.config.rowCount, endRow)
 
@@ -377,7 +381,9 @@ const visibleRows = computed(() => {
 // 生成可见列数据
 const visibleCells = (row) => {
 	const cells = []
-	const {startCol, endCol, buffer} = visibleRangeRef.value
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return cells
+	const {startCol, endCol} = visibleRangeRef.value.visible
+
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
 
@@ -420,25 +426,33 @@ const offsetLeft = ref(0)
 // 滚动条宽度补偿
 const scrollbarWidth = ref(0)
 const updateOffset = async (type, value) => {
-	const result = await useResizeHook.getRenderResult({
-		type,
-		[value]: visibleRangeRef.value[value],
-	})
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible || !visibleRangeRef.value.metrics)
+		return
 
 	if (type === 'offsetTop') {
-		offsetTop.value = result?.offset?.top || 0
-	} else if (type === 'offsetLeft') {
-		offsetLeft.value = result?.offset?.left || 0
+		let height = 0
+		const startRow = Math.min(visibleRangeRef.value.visible.startRow, sheet.config.rowCount)
+		for (let i = 0; i < startRow; i++) {
+			height += useResizeHook.getRowHeight(i)
+		}
+		offsetTop.value = height
+	} else {
+		let width = 0
+		const startCol = Math.min(visibleRangeRef.value.visible.startCol, sheet.config.colCount)
+		for (let i = 0; i < startCol; i++) {
+			width += useResizeHook.getColWidth(i)
+		}
+		offsetLeft.value = width
 	}
 }
 
 watch(
-	() => visibleRangeRef.value.startRow,
+	() => visibleRangeRef.value?.visible?.startRow,
 	() => updateOffset('offsetTop', 'startRow')
 )
 
 watch(
-	() => visibleRangeRef.value.startCol,
+	() => visibleRangeRef.value?.visible?.startCol,
 	() => updateOffset('offsetLeft', 'startCol')
 )
 
@@ -463,16 +477,17 @@ const getTitle = (index) => {
 // 计算当前可见的列标题
 const visibleTitles = computed(() => {
 	const titles = []
-	const {startCol, endCol} = visibleRangeRef.value
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return titles
+
+	const {startCol, endCol} = visibleRangeRef.value.visible
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
 
-	for (let col = start; col < end; col++) {
-		const colWidth = useResizeHook.getColWidth(col)
+	for (let i = start; i < end; i++) {
 		titles.push({
-			colIndex: col,
-			title: getTitle(col),
-			colWidth,
+			colIndex: i,
+			colWidth: useResizeHook.getColWidth(i),
+			title: getTitle(i),
 		})
 	}
 	return titles
@@ -530,6 +545,7 @@ const isLockedCell = () => {
 // 滚动处理
 let scrollTimer = null
 let rafId = null
+
 const lastScroll = ref(false)
 const onScroll = async (e) => {
 	if (lastScroll.value) {
@@ -549,9 +565,8 @@ const onScroll = async (e) => {
 		loadingText.value = '数据量较大, 请稍后...'
 	}
 
-	const container = e.target
-	const newScrollTop = container.scrollTop
-	const newScrollLeft = container.scrollLeft
+	const newScrollTop = containerRef.value.scrollTop
+	const newScrollLeft = containerRef.value.scrollLeft
 
 	const alphabet = alphabetRef.value
 	const number = numberRef.value
@@ -562,12 +577,12 @@ const onScroll = async (e) => {
 		scrollTop.value = newScrollTop
 		scrollLeft.value = newScrollLeft
 
-		if (alphabet) {
-			alphabet.scrollLeft = newScrollLeft
-		}
-
 		if (number) {
 			number.scrollTop = newScrollTop
+		}
+
+		if (alphabet) {
+			alphabet.scrollLeft = newScrollLeft
 		}
 
 		if (fn) {
@@ -596,13 +611,14 @@ const onScroll = async (e) => {
 			if (fn) {
 				fn.scrollTop = nt
 			}
+
 			savedScrollPosition.value = {top: nt, left: nl}
 
 			if (sheet.config.rowCount >= limit) {
 				loading.value = false
 			}
 		})
-	}, 150) // 减少延迟时间以提高响应速度
+	}, 150)
 }
 
 // 恢复滚动位置
