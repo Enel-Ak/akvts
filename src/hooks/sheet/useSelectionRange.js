@@ -44,7 +44,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 	// 基础配置
 	let worker = null
 	let container = null
-	const {sheet, rowHeight, colWidth, useMergedCellsHook, useResizeHook, renderRange} = config
+	const {sheet, rowHeight, colWidth, useMergedCellsHook, useResizeHook, renderRange, cellClick} =
+		config
 	const budgetTotalHeight = ref(0)
 	const budgetTotalWidth = ref(0)
 
@@ -382,6 +383,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 				col: expanded.endCol,
 			}
 		}
+		typeof cellClick === 'function' && cellClick(e, pos)
 	}
 
 	const handleMouseMove = (e) => {

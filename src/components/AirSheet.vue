@@ -22,7 +22,7 @@ import {useTools} from '@/hooks/sheet/useTools'
 import {useMouseRight} from '@/hooks/sheet/useMouseRight'
 import {ElMessage} from 'element-plus'
 
-const emits = defineEmits(['update:modelValue', 'cellInput'])
+const emits = defineEmits(['update:modelValue', 'cellClick', 'cellBlur'])
 
 // 核心配置参数
 const props = defineProps({
@@ -80,6 +80,10 @@ const sheet = reactive({
 		lockCells: {},
 		cellStyle: {
 			...props.modelValue?.config.cellStyle,
+		},
+		cellType: {
+			// radio/checkbox/select/datetime, 0-0: 指定单元格,-0: 指定列,1-: 指定行
+			'0-0': {type: 'select', options: []},
 		},
 		rowCount: 0,
 		colCount: 0,
@@ -190,6 +194,7 @@ const useSelectionRangeHook = reactive(
 		useMergedCellsHook,
 		useResizeHook,
 		renderRange: () => updateVisibleRange(),
+		cellClick: (e, cell) => onClickCell(e, cell),
 	})
 )
 const useEditHook = useEdit(id, {
@@ -678,12 +683,43 @@ const onClickAlphabet = async (e, col) => {
 	useSelectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
 }
 
+// 单元格点击
+let clickTimer = null
+let lastClickTime = 0
+const onClickCell = (e, cell) => {
+	const now = Date.now()
+
+	// 清除之前的定时器
+	clearTimeout(clickTimer)
+
+	// 检查是否是双击（两次点击间隔小于300ms且点击同一个单元格）
+	if (now - lastClickTime < 300) {
+		// 双击时不触发点击事件，并重置状态
+		lastClickTime = 0
+		return
+	}
+
+	// 记录本次点击
+	lastClickTime = now
+
+	// 使用定时器延迟触发点击事件
+	clickTimer = setTimeout(() => {
+		const cellValue = sheet.celldata.get(cell.row)?.[cell.col]
+		console.log('单元格点击', cell, cellValue)
+		emits('cellClick', cell, cellValue)
+		// 确保在事件触发后重置状态
+		if (now === lastClickTime) {
+			lastClickTime = 0
+		}
+	}, 300)
+}
+
 // 单元格编辑失去焦点后
-const onCellInput = (event, cell) => {
+const onCellBlur = (event, cell) => {
 	useHistoryHook.saveHistory(cell)
 	setTimeout(() => {
 		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
-		emits('cellInput', val, cell) // 新值，旧值
+		emits('cellBlur', val, cell) // 新值，旧值
 		console.log('单元格编辑', val, cell)
 	}, 0)
 }
@@ -1172,7 +1208,7 @@ defineExpose({
 										:style="getOffsetStyle(cell)"
 										class="cell"
 										@dblclick.stop="useEditHook.startEdit($event, cell)"
-										@blur="onCellInput($event, cell)"
+										@blur="onCellBlur($event, cell)"
 									></div>
 								</div>
 								<div
@@ -1187,7 +1223,7 @@ defineExpose({
 									}"
 									:style="getOffsetStyle(cell)"
 									@dblclick.stop="useEditHook.startEdit($event, cell)"
-									@blur="onCellInput($event, cell)"
+									@blur="onCellBlur($event, cell)"
 									class="cell"
 								></div>
 							</template>
@@ -1196,7 +1232,6 @@ defineExpose({
 				</div>
 
 				<!-- 选区框、选区背景 -->
-
 				<div
 					v-if="useSelectionRangeHook.selecting || useSelectionRangeHook.ranged"
 					class="selection-box"
@@ -1222,22 +1257,30 @@ defineExpose({
 					class="context-menu shadow-12"
 					:style="useMouseRightHook.contextMenuStyle.value"
 				>
-					<div v-if="sheet.config.addRow" class="menu-item" @click="onAddRowClick">
+					<div v-if="sheet.config.addRow" class="menu-item" @click="useToolsHook.addRow">
 						<Icons icon-name="AddRow"></Icons>
 						<span>添加行</span>
 					</div>
-					<div v-if="sheet.config.addColumn" class="menu-item" @click="onAddColumnClick">
+					<div
+						v-if="sheet.config.addColumn"
+						class="menu-item"
+						@click="useToolsHook.addColumn"
+					>
 						<Icons icon-name="AddColumn"></Icons>
 						<span>添加列</span>
 					</div>
-					<div v-if="sheet.config.removeRow" class="menu-item" @click="onRemoveRowClick">
+					<div
+						v-if="sheet.config.removeRow"
+						class="menu-item"
+						@click="useToolsHook.removeRow"
+					>
 						<Icons icon-name="RemoveRow"></Icons>
 						<span>删除行</span>
 					</div>
 					<div
 						v-if="sheet.config.removeColumn"
 						class="menu-item"
-						@click="onRemoveColumnClick"
+						@click="useToolsHook.removeColumn"
 					>
 						<Icons icon-name="RemoveColumn"></Icons>
 						<span>删除列</span>
