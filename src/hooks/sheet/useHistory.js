@@ -156,7 +156,11 @@ export function useHistory(config) {
 							const newRowData = []
 							// 遍历原数据，跳过要删除的列
 							rowData.forEach((cellData, index) => {
-								if (index !== state.addCol.colIndex) {
+								// 检查当前列是否在要删除的列范围内
+								const isInDeleteRange =
+									index >= state.addCol.colIndex &&
+									index < state.addCol.colIndex + state.addCol.colspan
+								if (!isInDeleteRange) {
 									newRowData.push(cellData)
 								}
 							})
@@ -171,8 +175,8 @@ export function useHistory(config) {
 						for (const [key, value] of Object.entries(mergedCells)) {
 							const [row, col] = key.split('-').map(Number)
 							if (col > state.addCol.colIndex) {
-								// 如果合并单元格在删除列之后，向左移动一列
-								newMergedCells.set(`${row}-${col - 1}`, value)
+								// 如果合并单元格在删除列之后，向左移动对应的列数
+								newMergedCells.set(`${row}-${col - state.addCol.colspan}`, value)
 							} else if (col < state.addCol.colIndex) {
 								// 如果合并单元格在删除列之前，保持不变
 								newMergedCells.set(key, value)
@@ -185,7 +189,7 @@ export function useHistory(config) {
 
 						// 更新 sheet.celldata
 						sheet.celldata = newMap
-						sheet.config.colCount -= state.addCol.colspan + 1
+						sheet.config.colCount -= state.addCol.colspan
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)

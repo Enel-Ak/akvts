@@ -56,6 +56,9 @@ const props = defineProps({
 // 保存数据
 const sheet = reactive({
 	config: {
+		font: true, // 字体
+		color: true, // 颜色
+		fill: true, // 填充
 		bold: true, // 加粗
 		strikethrough: true, // 删除线
 		italic: true, // 斜体
@@ -224,7 +227,21 @@ const {importing, exportExcel, readExcelFile} = useExcel({
 	useSelectionRangeHook,
 })
 const useMouseRightHook = useMouseRight(id)
-const useToolsHook = useTools({})
+const useToolsHook = useTools({
+	sheet,
+	limit,
+	loading,
+	loadingText,
+	containerRef,
+	useResizeHook,
+	useHistoryHook,
+	useMergedCellsHook,
+	useSelectionRangeHook,
+	isLocked: () => isLockedCell(),
+	renderRange: () => updateVisibleRange(),
+	processMapInBatches: (map, callback, batchSize) =>
+		processMapInBatches(map, callback, batchSize),
+})
 
 // 计算总高度
 const totalHeight = computed(() => {
@@ -681,522 +698,6 @@ const setCellStyle = (type, val, fn, save = true) => {
 	}
 }
 
-// 字体
-const onChangeFont = (e) => {
-	const font = e.target.value
-	setCellStyle('font', font)
-}
-
-// 字号
-const onChangeFontSize = (e) => {
-	const size = e.target.value
-	setCellStyle('size', size)
-	nextTick(() => {
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
-
-		const {start, end} = ranged
-		const [startRow, endRow] = [Math.min(start.row, end.row), Math.max(start.row, end.row)]
-		const [startCol, endCol] = [Math.min(start.col, end.col), Math.max(start.col, end.col)]
-
-		// 更新每一行的高度
-		for (let row = startRow; row <= endRow; row++) {
-			const rowCells = Array.from(
-				containerRef.value.querySelectorAll(`[data-cell^="${row}-"]`)
-			).filter((cell) => {
-				const col = parseInt(cell.dataset.cell.split('-')[1])
-				return col >= startCol && col <= endCol
-			})
-
-			const maxHeight = Math.max(
-				...rowCells.map((cell) =>
-					Array.from(cell.childNodes).reduce((h, node) => h + node.offsetHeight, 0)
-				)
-			)
-
-			if (maxHeight > useResizeHook.getRowHeight(row)) {
-				useResizeHook.setRowHeight(row, maxHeight)
-			}
-		}
-
-		useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol, true)
-	})
-}
-
-// 颜色
-let fontSaved = false
-const onInputFontColor = (e) => {
-	if (!fontSaved) {
-		useHistoryHook.saveHistory()
-		fontSaved = true
-	}
-	const color = e.target.value
-	setCellStyle('color', color, null, false)
-}
-const onChangeFontColor = (e) => {
-	fontSaved = false
-}
-
-// 填充
-let fillSaved = false
-const onInputFillColor = (e) => {
-	if (!fillSaved) {
-		useHistoryHook.saveHistory()
-		fillSaved = true
-	}
-	const color = e.target.value
-	setCellStyle('bg', color, null, false)
-}
-const onChangeFillColor = (e) => {
-	fillSaved = false
-}
-
-// 合并
-const onMergeClick = () => {
-	if (isLockedCell()) {
-		return
-	}
-	useHistoryHook.saveHistory()
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const startCol = Math.min(ranged.start.col, ranged.end.col)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
-
-	useMergedCellsHook.setMergeCell(
-		startRow,
-		startCol,
-		endRow - startRow + 1,
-		endCol - startCol + 1
-	)
-}
-
-// 边框
-const onBorderClick = (border = true, direction = null, save = true) => {
-	setCellStyle(
-		'b',
-		null,
-		(r, c, {startRow, startCol, endRow, endCol}) => {
-			// 删除边框样式
-			if (!border && !direction) {
-				// 无边框
-				if (sheet.config.cellStyle[`${r}-${c}`]) {
-					delete sheet.config.cellStyle[`${r}-${c}`].b
-					delete sheet.config.cellStyle[`${r}-${c}`].bt
-					delete sheet.config.cellStyle[`${r}-${c}`].bb
-					delete sheet.config.cellStyle[`${r}-${c}`].bl
-					delete sheet.config.cellStyle[`${r}-${c}`].br
-					// 如果没有其他样式，删除整个样式对象
-					if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
-						delete sheet.config.cellStyle[`${r}-${c}`]
-					}
-				}
-				return
-			}
-
-			if (border && !direction) {
-				// 点边框时删除其他边框
-				try {
-					delete sheet.config.cellStyle[`${r}-${c}`].bt
-					delete sheet.config.cellStyle[`${r}-${c}`].bb
-					delete sheet.config.cellStyle[`${r}-${c}`].bl
-					delete sheet.config.cellStyle[`${r}-${c}`].br
-				} catch {}
-			}
-
-			// 如果没有cellStyle对象，创建一个
-			if (!sheet.config.cellStyle[`${r}-${c}`]) {
-				sheet.config.cellStyle[`${r}-${c}`] = {}
-			}
-
-			if (border === null && direction) {
-				if (direction === 'top') {
-					sheet.config.cellStyle[`${r}-${c}`].bt = 'borderTop'
-				} else if (direction === 'bottom') {
-					sheet.config.cellStyle[`${r}-${c}`].bb = 'borderBottom'
-				} else if (direction === 'left') {
-					sheet.config.cellStyle[`${r}-${c}`].bl = 'borderLeft'
-				} else if (direction === 'right') {
-					sheet.config.cellStyle[`${r}-${c}`].br = 'borderRight'
-				}
-				return
-			}
-
-			// 第一行第一列的交叉单元格
-			if (r === startRow && c === startCol) {
-				sheet.config.cellStyle[`${r}-${c}`].b = 'cross'
-				return
-			}
-
-			// 第一行
-			if (r === startRow) {
-				sheet.config.cellStyle[`${r}-${c}`].b = 'top'
-				return
-			}
-
-			// 第一列
-			if (c === startCol) {
-				sheet.config.cellStyle[`${r}-${c}`].b = 'left'
-				return
-			}
-
-			// 其他内部单元格
-			if (r <= endRow && c <= endCol) {
-				sheet.config.cellStyle[`${r}-${c}`].b = 'all'
-			}
-		},
-		save
-	)
-}
-
-// 对齐
-const onAlignClick = (align) => {
-	setCellStyle('align', align)
-}
-
-// 加粗
-const onBoldClick = () => {
-	setCellStyle('bold', true)
-}
-
-// 斜体
-const onItalicClick = () => {
-	setCellStyle('italic', true)
-}
-
-// 下划线
-const onUnderlineClick = () => {
-	setCellStyle('underline', true)
-}
-
-// 删除线
-const onStrikethroughClick = () => {
-	setCellStyle('strikethrough', true)
-}
-
-// 添加行
-const addRowCount = ref(1)
-const onAddRowClick = async () => {
-	if (!sheet.config.addRow) {
-		ElMessage.warning('请先在配置中开启添加行功能')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const insertRowIndex = endRow + 1
-
-	if (sheet.celldata.size >= limit) {
-		loading.value = true
-		loadingText.value = '正在处理数据...'
-	}
-
-	// 创建新的Map
-	let newMap = new Map()
-
-	try {
-		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-			if (rowIndex < insertRowIndex) {
-				newMap.set(rowIndex, rowData)
-			} else {
-				newMap.set(rowIndex + addRowCount.value, rowData)
-			}
-			newMap.set(insertRowIndex, reactive([]))
-		})
-
-		// 处理合并单元格
-		const mergedCells = useMergedCellsHook.getMergedCells()
-		const newMergedCells = new Map()
-
-		for (const [key, value] of Object.entries(mergedCells)) {
-			const [row, col] = key.split('-').map(Number)
-			if (row >= insertRowIndex) {
-				// 如果合并单元格在插入行之后，向下移动一行
-				newMergedCells.set(`${row + addRowCount.value}-${col}`, value)
-			} else {
-				newMergedCells.set(key, value)
-			}
-		}
-
-		// 更新合并单元格
-		useMergedCellsHook.setMergeCells(newMergedCells)
-
-		// 更新sheet.celldata
-		sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
-		sheet.config.rowCount += addRowCount.value
-
-		useHistoryHook.saveHistory(
-			{
-				rowIndex: insertRowIndex,
-				rowspan: addRowCount.value,
-			},
-			'addRow'
-		)
-		updateVisibleRange()
-	} catch (error) {
-		console.error('处理数据时出错:', error)
-	} finally {
-		loading.value = false
-		loadingText.value = '处理完成'
-	}
-}
-
-// 删除行
-const onRemoveRowClick = async () => {
-	if (!sheet.config.removeRow) {
-		ElMessage.warning('请先在配置中开启删除行功能')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	if (sheet.celldata.size >= limit) {
-		loading.value = true
-		loadingText.value = '正在处理数据...'
-	}
-
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const deleteCount = endRow - startRow + 1
-	const deletedRows = new Map()
-	const newMap = new Map()
-
-	try {
-		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-			if (rowIndex < startRow) {
-				newMap.set(rowIndex, rowData)
-			} else if (rowIndex > endRow) {
-				newMap.set(rowIndex - deleteCount, rowData)
-			} else {
-				deletedRows.set(`${rowIndex}`, {rowData, deleteCount})
-			}
-		})
-
-		// 保存历史
-		useHistoryHook.saveHistory(deletedRows, 'removeRow')
-
-		// 更新合并单元格的位置
-		const mergedCells = sheet.config.mergedCells
-		const newMergedCells = new Map()
-		Object.keys(mergedCells).forEach((key) => {
-			const [row, col] = key.split('-').map(Number)
-			const {rowspan, colspan} = mergedCells[key]
-
-			if (row < startRow) {
-				// 在删除行之前的合并单元格
-				if (row + rowspan > startRow) {
-					// 如果合并单元格跨越了删除范围，需要减少 rowspan
-					const overlap = Math.min(endRow - startRow + 1, row + rowspan - startRow)
-					newMergedCells.set(key, {
-						rowspan: rowspan - overlap,
-						colspan,
-					})
-				} else {
-					// 合并单元格完全在删除范围之前，保持不变
-					newMergedCells.set(key, mergedCells[key])
-				}
-			} else if (row > endRow) {
-				// 在删除行之后的合并单元格需要更新行号
-				newMergedCells.set(`${row - deleteCount}-${col}`, {
-					rowspan,
-					colspan,
-				})
-			}
-			// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
-		})
-		useMergedCellsHook.setMergeCells(newMergedCells)
-
-		// 删除行相关的cellstyle
-		for (let i = startRow; i <= endRow; i++) {
-			Object.keys(sheet.config.cellStyle).forEach((key) => {
-				const [row] = key.split('-').map(Number)
-				if (row === i) {
-					delete sheet.config.cellStyle[key]
-				}
-			})
-		}
-
-		// 更新sheet.celldata
-		sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
-		sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
-		updateVisibleRange()
-	} catch (error) {
-		console.error('处理数据时出错:', error)
-	} finally {
-		loading.value = false
-		loadingText.value = '处理完成'
-	}
-}
-
-// 添加列
-const addColumnCount = ref(1)
-const onAddColumnClick = async () => {
-	if (!sheet.config.addColumn) {
-		ElMessage.warning('请先在配置中开启添加列功能')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	if (sheet.celldata.size >= limit) {
-		loading.value = true
-		loadingText.value = '正在处理数据...'
-	}
-
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
-	const insertColIndex = endCol + 1
-	const newMap = new Map()
-
-	try {
-		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-			// 创建新的行数据数组
-			const newRowData = Array.from(rowData)
-
-			// 在指定位置插入空值
-			newRowData.splice(insertColIndex, 0, '')
-
-			// 更新到新Map
-			newMap.set(rowIndex, reactive(newRowData))
-		})
-
-		// 更新sheet.celldata
-		sheet.celldata = newMap
-		sheet.config.colCount++
-
-		// 更新合并单元格
-		const mergedCells = sheet.config.mergedCells
-		const newMergedCells = new Map()
-		Object.keys(mergedCells).forEach((key) => {
-			const [row, col] = key.split('-').map(Number)
-			const {rowspan, colspan} = mergedCells[key]
-
-			if (col < insertColIndex) {
-				// 在插入列之前的合并单元格保持不变
-				newMergedCells.set(key, mergedCells[key])
-			} else {
-				// 在插入列之后的合并单元格需要更新列号
-				newMergedCells.set(`${row}-${col + 1}`, {
-					rowspan,
-					colspan,
-				})
-			}
-		})
-		useMergedCellsHook.setMergeCells(newMergedCells)
-
-		// 保存历史记录
-		useHistoryHook.saveHistory(
-			{
-				colIndex: insertColIndex,
-				colspan: 0,
-			},
-			'addCol'
-		)
-
-		updateVisibleRange()
-	} catch (error) {
-		console.error('添加列失败', error)
-	} finally {
-		loading.value = false
-		loadingText.value = '处理完成'
-	}
-}
-
-// 删除列
-const onRemoveColumnClick = async () => {
-	if (!sheet.config.removeColumn) {
-		ElMessage.warning('请先在配置中开启删除列功能')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	if (sheet.celldata.size >= limit) {
-		loading.value = true
-		loadingText.value = '正在处理数据...'
-	}
-
-	const startCol = Math.min(ranged.start.col, ranged.end.col)
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
-	const deleteCount = endCol - startCol + 1
-	const deletedCols = new Map()
-	const newMap = new Map()
-
-	try {
-		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-			const newRowData = []
-			rowData.forEach((cellData, colIndex) => {
-				if (colIndex < startCol) {
-					newRowData[colIndex] = cellData
-				} else if (colIndex > endCol) {
-					newRowData[colIndex - deleteCount] = cellData
-				} else {
-					const row = deletedCols.get(rowIndex)
-					if (row) {
-						row.push({rowIndex, colIndex, value: cellData})
-					} else {
-						deletedCols.set(rowIndex, [{rowIndex, colIndex, value: cellData}])
-					}
-				}
-			})
-			newMap.set(rowIndex, reactive(newRowData))
-		})
-
-		// 保存历史
-		useHistoryHook.saveHistory(deletedCols, 'removeCol')
-
-		// 更新合并单元格的位置
-		const mergedCells = sheet.config.mergedCells
-		const newMergedCells = new Map()
-		Object.keys(mergedCells).forEach((key) => {
-			const [row, col] = key.split('-').map(Number)
-			const {rowspan, colspan} = mergedCells[key]
-
-			if (col < startCol) {
-				// 在删除列之前的合并单元格
-				if (col + colspan > startCol) {
-					// 如果合并单元格跨越了删除范围，需要减少 rowspan
-					const overlap = Math.min(endCol - startCol + 1, col + colspan - startCol)
-					newMergedCells.set(key, {
-						rowspan: rowspan,
-						colspan: colspan - overlap,
-					})
-				} else {
-					// 合并单元格完全在删除范围之前，保持不变
-					newMergedCells.set(key, mergedCells[key])
-				}
-			} else if (col > endCol) {
-				// 在删除列之后的合并单元格需要更新行号
-				newMergedCells.set(`${row}-${col - deleteCount}`, {
-					rowspan,
-					colspan,
-				})
-			}
-		})
-		useMergedCellsHook.setMergeCells(newMergedCells)
-
-		// 删除列相关的cellstyle
-		for (let i = startCol; i <= endCol; i++) {
-			Object.keys(sheet.config.cellStyle).forEach((key) => {
-				const [_, col] = key.split('-').map(Number)
-				if (col === i) {
-					delete sheet.config.cellStyle[key]
-				}
-			})
-		}
-
-		// 更新sheet.celldata和其他相关操作
-		sheet.celldata = newMap
-		sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
-		updateVisibleRange()
-	} catch (error) {
-		console.error('处理数据时出错:', error)
-	} finally {
-		loading.value = false
-		loadingText.value = '处理完成'
-	}
-}
-
 // 导入Excel
 const onImportClick = async (event) => {
 	if (!sheet.config.import) {
@@ -1400,9 +901,10 @@ defineExpose({
 	<div class="air-sheet-component" :style="{height: containerHeight}">
 		<!-- 工具栏 -->
 		<div class="toolbar" :style="{}">
-			<div class="group font-layout h-full">
+			<div v-if="sheet.config.font" class="group font-layout h-full">
 				<div class="item font">
-					<select value="FZSSJW, sans-serif" @change="onChangeFont($event)">
+					<!-- 字体 -->
+					<select value="FZSSJW, sans-serif" @change="useToolsHook.setFont($event)">
 						<option
 							v-for="[key, value] of Object.entries(useToolsHook.fonts)"
 							:key="value"
@@ -1411,7 +913,8 @@ defineExpose({
 							{{ key }}
 						</option>
 					</select>
-					<select value="13" @change="onChangeFontSize($event)">
+					<!-- 字号 -->
+					<select value="13" @change="useToolsHook.setFontSize($event)">
 						<option v-for="size in useToolsHook.fontSize" :key="size" :value="size">
 							{{ size }}
 						</option>
@@ -1419,23 +922,23 @@ defineExpose({
 				</div>
 			</div>
 
-			<div class="group">
-				<div class="item color">
+			<div v-if="sheet.config.color || sheet.config.fill" class="group">
+				<div v-if="sheet.config.color" class="item color">
 					<Icons icon-name="Font"></Icons>
 					<span>颜色</span>
 					<input
 						type="color"
-						@input="onInputFontColor($event)"
-						@change="onChangeFontColor($event)"
+						@input="useToolsHook.setFontColor($event)"
+						@change="useToolsHook.fontColorChanged($event)"
 					/>
 				</div>
-				<div class="item color">
+				<div v-if="sheet.config.fill" class="item color">
 					<Icons icon-name="FillColor"></Icons>
 					<span class="fill-color">填充</span>
 					<input
 						type="color"
-						@input="onInputFillColor($event)"
-						@change="onChangeFillColor($event)"
+						@input="useToolsHook.setFillColor($event)"
+						@change="useToolsHook.fillColorChanged($event)"
 					/>
 				</div>
 			</div>
@@ -1449,69 +952,73 @@ defineExpose({
 					sheet.config.strikethrough
 				"
 			>
-				<div v-if="sheet.config.bold" class="item" @click="onBoldClick">
+				<div v-if="sheet.config.bold" class="item" @click="useToolsHook.setBold">
 					<Icons icon-name="Bold"></Icons>
 					<span>加粗</span>
 				</div>
-				<div v-if="sheet.config.italic" class="item" @click="onItalicClick">
+				<div v-if="sheet.config.italic" class="item" @click="useToolsHook.setItalic">
 					<Icons icon-name="Italic"></Icons>
 					<span>倾斜</span>
 				</div>
-				<div v-if="sheet.config.underline" class="item" @click="onUnderlineClick">
+				<div v-if="sheet.config.underline" class="item" @click="useToolsHook.setUnderline">
 					<Icons icon-name="Underline"></Icons>
 					<span>下划线</span>
 				</div>
-				<div v-if="sheet.config.strikethrough" class="item" @click="onStrikethroughClick">
+				<div
+					v-if="sheet.config.strikethrough"
+					class="item"
+					@click="useToolsHook.setStrikethrough"
+				>
 					<Icons icon-name="Strikethrough"></Icons>
 					<span>删除线</span>
 				</div>
 			</div>
 
 			<div class="group" v-if="sheet.config.align">
-				<div class="item" @click="onAlignClick('left')">
+				<div class="item" @click="useToolsHook.setAlign('left')">
 					<Icons icon-name="AlignLeft"></Icons>
 					<span>左对齐</span>
 				</div>
-				<div class="item" @click="onAlignClick('center')">
+				<div class="item" @click="useToolsHook.setAlign('center')">
 					<Icons icon-name="AlignCenter"></Icons>
 					<span>居中</span>
 				</div>
-				<div class="item" @click="onAlignClick('right')">
+				<div class="item" @click="useToolsHook.setAlign('right')">
 					<Icons icon-name="AlignRight"></Icons>
 					<span>右对齐</span>
 				</div>
 			</div>
 
 			<div class="group" v-if="sheet.config.merge">
-				<div class="item" @click="onMergeClick">
+				<div class="item" @click="useToolsHook.setMerge()">
 					<Icons icon-name="Merge"></Icons>
 					<span>合并</span>
 				</div>
 			</div>
 
 			<div class="group group-merge" v-if="sheet.config.border">
-				<div class="item" @click="onBorderClick">
+				<div class="item" @click="useToolsHook.setBorder()">
 					<Icons icon-name="Border"></Icons>
 					<span>边框</span>
 				</div>
 				<div class="merge border-merge shadow-12">
-					<div class="item" @click="onBorderClick(false)">
+					<div class="item" @click="useToolsHook.setBorder(false)">
 						<Icons icon-name="UnBorder"></Icons>
 						<span>无边框</span>
 					</div>
-					<div class="item" @click="onBorderClick(null, 'top')">
+					<div class="item" @click="useToolsHook.setBorder(null, 'top')">
 						<Icons icon-name="BorderTop"></Icons>
 						<span>上边框</span>
 					</div>
-					<div class="item" @click="onBorderClick(null, 'bottom')">
+					<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
 						<Icons icon-name="BorderBottom"></Icons>
 						<span>下边框</span>
 					</div>
-					<div class="item" @click="onBorderClick(null, 'left')">
+					<div class="item" @click="useToolsHook.setBorder(null, 'left')">
 						<Icons icon-name="BorderLeft"></Icons>
 						<span>左边框</span>
 					</div>
-					<div class="item" @click="onBorderClick(null, 'right')">
+					<div class="item" @click="useToolsHook.setBorder(null, 'right')">
 						<Icons icon-name="BorderRight"></Icons>
 						<span>右边框</span>
 					</div>
@@ -1519,32 +1026,40 @@ defineExpose({
 			</div>
 
 			<div v-if="sheet.config.addRow" class="group group-merge">
-				<div class="item" @click="onAddRowClick">
+				<div class="item" @click="useToolsHook.addRow">
 					<Icons icon-name="AddRow"></Icons>
 					<span>添加行</span>
 				</div>
 
 				<div class="merge add-row-merge shadow-12">
-					<input v-model.number="addRowCount" type="text" value="1" />
+					<input v-model.number="useToolsHook.addRowCount.value" type="text" value="1" />
 				</div>
 			</div>
 
 			<div v-if="sheet.config.addColumn" class="group group-merge">
-				<div v-if="sheet.config.addColumn" class="item" @click="onAddColumnClick">
+				<div v-if="sheet.config.addColumn" class="item" @click="useToolsHook.addColumn">
 					<Icons icon-name="AddColumn"></Icons>
 					<span>添加列</span>
 				</div>
 				<div class="merge add-column-merge shadow-12">
-					<input v-model.number="addColumnCount" type="text" value="1" />
+					<input
+						v-model.number="useToolsHook.addColumnCount.value"
+						type="text"
+						value="1"
+					/>
 				</div>
 			</div>
 
 			<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
-				<div v-if="sheet.config.removeRow" class="item" @click="onRemoveRowClick">
+				<div v-if="sheet.config.removeRow" class="item" @click="useToolsHook.removeRow">
 					<Icons icon-name="RemoveRow"></Icons>
 					<span>删除行</span>
 				</div>
-				<div v-if="sheet.config.removeColumn" class="item" @click="onRemoveColumnClick">
+				<div
+					v-if="sheet.config.removeColumn"
+					class="item"
+					@click="useToolsHook.removeColumn"
+				>
 					<Icons icon-name="RemoveColumn"></Icons>
 					<span>删除列</span>
 				</div>
@@ -1894,543 +1409,5 @@ defineExpose({
 	</div>
 </template>
 <style scoped lang="scss">
-.air-sheet-component {
-	border-radius: 3px;
-	border: 1px solid var(--z-line);
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	position: relative;
-	width: 100%;
-}
-
-.toolbar {
-	align-items: flex-start;
-	border-bottom: none;
-	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-start;
-	// transition: all 0.15s linear;
-	user-select: none;
-	.group {
-		border-right: 1px solid var(--z-line);
-		display: flex;
-		padding: 4px 4px 4px 0;
-
-		&.font-layout {
-			flex-wrap: wrap;
-
-			.item:not(:first-child) {
-				flex: none;
-			}
-		}
-
-		&.group-merge {
-			overflow: hidden;
-			position: relative;
-
-			&:hover {
-				overflow: visible;
-				.merge {
-					height: 100%;
-					opacity: 1;
-					z-index: 1;
-				}
-			}
-
-			.merge {
-				// border: 1px solid var(--z-line);
-				border-radius: 3px;
-				background-color: rgba(var(--z-theme-rgb), 1);
-				display: flex;
-				height: 0;
-				left: 0;
-				opacity: 0;
-
-				position: absolute;
-				padding: 3px 3px 3px 0;
-				top: 90%;
-				transition: all 0.15s linear;
-				z-index: 1;
-				white-space: nowrap;
-
-				&::after {
-					content: '';
-					position: absolute;
-					border: 5px solid transparent;
-					border-bottom-color: var(--z-theme);
-					left: calc(50% - 5px);
-					top: -9px;
-				}
-			}
-
-			.border-merge {
-				left: -101px;
-			}
-
-			.add-row-merge,
-			.add-column-merge {
-				height: 25px !important;
-				line-height: 25px;
-				left: calc(50% - 53px);
-				padding-left: 3px;
-				input {
-					border: 1px solid var(--z-line);
-					width: 100px;
-				}
-			}
-		}
-	}
-
-	.item {
-		align-items: center;
-		border-radius: 2px;
-		cursor: pointer;
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-start;
-		margin: 0 0 0 4px;
-		overflow: hidden;
-		padding: 4px;
-		position: relative;
-		// transition: all 0.15s linear;
-		span {
-			font-size: 12px;
-			padding: 4px 0 0 0;
-			transform: scale(0.85);
-		}
-
-		&:hover {
-			background-color: var(--z-sheet-active);
-			color: var(--z-font-color);
-			:deep(svg) {
-				color: var(--z-font-color) !important;
-			}
-		}
-
-		&.font {
-			flex-wrap: wrap;
-			flex-direction: row;
-			select {
-				border: 1px solid var(--z-line);
-				cursor: pointer;
-				flex: 1;
-				font-size: 12px;
-				padding: 2px;
-
-				&:nth-child(1) {
-					border-radius: 4px 0 0 4px;
-				}
-				&:nth-child(2) {
-					border-radius: 0 4px 4px 0;
-					margin-left: -1px;
-				}
-			}
-			&:hover {
-				background-color: transparent;
-			}
-		}
-
-		&.import {
-			overflow: hidden;
-			input {
-				cursor: pointer;
-				position: absolute;
-				left: 0;
-				top: 0;
-				bottom: 0;
-				right: 0;
-				opacity: 0.01;
-				transform: scale(2);
-			}
-		}
-
-		&.color {
-			input {
-				cursor: pointer;
-				position: absolute;
-				left: 0;
-				top: 0;
-				bottom: 0;
-				right: 0;
-				opacity: 0.01;
-				transform: scale(2);
-			}
-		}
-	}
-}
-
-.statusbar {
-	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
-	display: flex;
-	padding: 5px;
-	// transition: all 0.15s linear;
-	> span {
-		font-size: 12px;
-		padding-right: 10px;
-	}
-}
-
-.sheet {
-	display: flex;
-	flex-wrap: wrap;
-	overflow: hidden;
-	position: relative;
-	width: 100%;
-
-	.main-content {
-		flex: 1;
-		position: relative;
-		overflow: visible;
-		min-width: 0;
-	}
-
-	.virtual-sheet {
-		border: 1px solid var(--z-line);
-		background-color: var(--z-theme);
-		display: flex;
-		flex: 1;
-		position: relative;
-		overflow: auto;
-		height: calc(100% - 18px);
-		will-change: opacity, transform, scroll-position;
-	}
-
-	.virtual-phantom {
-		position: absolute;
-		left: 0;
-		top: 0;
-		z-index: -1;
-	}
-
-	.virtual-content {
-		position: absolute;
-		left: 0;
-		top: 0;
-		z-index: 2;
-		padding-bottom: 1px;
-		padding-right: 1px;
-		will-change: transform, contents;
-
-		.selection {
-			color: var(--z-font-color);
-			background-color: rgba(var(--z-sheet-active-rgb), 1);
-		}
-	}
-
-	.sheet-main {
-		font-size: 13px;
-		font-family: FZSSJW, sans-serif;
-	}
-
-	.row {
-		display: flex;
-		position: relative;
-	}
-
-	.cell {
-		align-items: flex-start;
-		border-right: 1px solid var(--z-line);
-		border-bottom: 1px solid var(--z-line);
-		box-sizing: border-box;
-		color: var(--z-font-color);
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		padding: 0 4px;
-
-		overflow: hidden;
-		user-select: none;
-
-		> :deep(div) {
-			line-height: 1;
-			&:not(.merged, .resize-handle) {
-				pointer-events: none;
-			}
-
-			&:first-child {
-				padding-top: 2px;
-			}
-
-			&:last-child {
-				padding-bottom: 2px;
-			}
-		}
-
-		&.lock {
-			background-color: var(--z-sheet-virtual);
-		}
-
-		&:focus {
-			background-color: var(--z-theme);
-			outline: none;
-		}
-	}
-
-	.custom {
-		background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
-		flex: none;
-		overflow: hidden;
-		// transition: opacity 0.15s linear;
-
-		.number-cell {
-			align-items: center;
-			border-bottom: 1px solid var(--z-line);
-			cursor: pointer;
-			display: flex;
-			justify-content: center;
-			position: relative;
-			span {
-				color: rgba(var(--z-font-color-rgb), 1);
-				text-overflow: ellipsis;
-				overflow: hidden;
-				transform: scale(0.85);
-			}
-		}
-
-		.fns {
-			align-items: center;
-			border-bottom: 1px solid var(--z-line);
-			display: flex;
-			justify-content: center;
-			padding: 0 4px;
-
-			span {
-				cursor: pointer;
-				color: var(--z-font-color);
-				margin: 0 5px;
-				text-decoration: none;
-			}
-
-			&.selection {
-				span {
-					// color: var(--z-font-color);
-				}
-			}
-		}
-
-		.virtual-content {
-			padding-bottom: 120px;
-		}
-
-		&.alphabet {
-			border-bottom: none;
-			height: 18px;
-
-			width: 100%;
-
-			.alphabet-cells {
-				padding-bottom: 0;
-			}
-
-			.alphabet-cell {
-				cursor: pointer;
-				align-items: center;
-			}
-
-			.cell {
-				border-right: 1px solid var(--z-line);
-				border-bottom: 0;
-				line-height: 18px;
-				overflow: visible;
-				position: relative;
-				text-align: center;
-
-				span {
-					font-size: 12px;
-					flex: 1;
-				}
-
-				.resize-handle {
-					bottom: 0;
-					cursor: col-resize;
-					height: 100%;
-					right: -3px;
-					width: 6px;
-				}
-			}
-		}
-	}
-
-	.alphabet-placeholder {
-		border-top: 1px solid var(--z-line);
-		background-color: rgba(var(--z-bg-secondary-rbg), 0.3);
-		height: 18px;
-		// transition: opacity 0.15s linear;
-	}
-
-	.merged-cell-placeholder {
-		box-sizing: border-box;
-		border: 1px solid var(--z-border);
-		position: relative;
-		overflow: visible;
-		z-index: 1;
-	}
-
-	.selection-box,
-	.selection-bg-box {
-		position: absolute;
-		pointer-events: none;
-		z-index: 3;
-		// transition: background-color 0.1s;
-		will-change: top, left, width, height;
-
-		&.selection-single {
-			border: 2px solid var(--z-main);
-		}
-
-		&.selection-range {
-			border: 2px solid var(--z-main);
-		}
-
-		.selection-handle {
-			position: absolute;
-			right: -4px;
-			bottom: -4px;
-			width: 8px;
-			height: 8px;
-			background-color: var(--z-main);
-			border: 1px solid #fff;
-			cursor: se-resize;
-			pointer-events: auto;
-		}
-	}
-
-	.selection-bg-box {
-		border: none !important;
-		background-color: rgba(var(--z-bg-secondary-rgb), 0.7);
-		z-index: 1;
-	}
-}
-
-.btn {
-	border-top: none !important;
-}
-
-.bbn {
-	border-bottom: none !important;
-}
-
-.brn {
-	border-right: none !important;
-}
-
-.bln {
-	border-left: none !important;
-}
-
-.resize-handle {
-	bottom: -3px;
-	cursor: row-resize;
-	height: 6px;
-	position: absolute;
-	right: 0;
-	// transition: all 0.15s linear;
-	width: 100%;
-	z-index: 1;
-
-	&.resizing,
-	&:hover {
-		background-color: var(--z-main);
-		opacity: 1;
-	}
-}
-
-.grid-lines-row {
-	position: absolute;
-	top: 0;
-	left: 1px;
-	height: 1px;
-	background-color: var(--z-main);
-	pointer-events: none;
-	z-index: -1;
-}
-
-.grid-lines-col {
-	position: absolute;
-	top: 1px;
-	left: 0;
-	width: 1px;
-	background-color: var(--z-main);
-	height: 100%;
-	pointer-events: none;
-	z-index: -1;
-}
-
-.mask {
-	align-items: center;
-	background-color: rgba(var(--z-theme-rgb), 0.8);
-	display: flex;
-	justify-content: center;
-	position: absolute;
-	transition: all 0.15s linear;
-	opacity: 0;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: -1;
-	&.active {
-		opacity: 1;
-		z-index: 101;
-	}
-
-	div {
-		align-items: center;
-		color: var(--z-font-color);
-		display: flex;
-		flex: 1;
-		margin-left: 5px;
-		justify-content: center;
-		white-space: nowrap;
-		span {
-			margin-left: 5px;
-		}
-		span:nth-child(3) {
-			flex: none;
-			text-align: right;
-			width: torem(30px);
-		}
-	}
-}
-
-.context-menu {
-	border: 1px solid var(--z-line);
-	background-color: var(--z-theme);
-	border-radius: 3px;
-	min-width: 120px;
-	position: absolute;
-	z-index: 1000;
-
-	.menu-item {
-		align-items: center;
-		cursor: pointer;
-		color: var(--z-font-color);
-		display: flex;
-		height: 30px;
-		line-height: 30px;
-		padding: 0 10px;
-		position: relative;
-		user-select: none;
-		white-space: nowrap;
-		span {
-			font-size: 13px;
-		}
-
-		&:not(:last-child) {
-			border-bottom: 1px solid var(--z-line);
-		}
-
-		&:hover {
-			background-color: var(--z-sheet-active);
-		}
-
-		:deep(svg) {
-			width: 16px;
-			height: 16px;
-			margin-right: 8px;
-		}
-	}
-}
+@use '@/styles/components/air-sheet.scss';
 </style>

@@ -353,7 +353,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	// 事件处理
 	const handleMouseDown = (e) => {
-		// if (e.button !== 0) return // 只处理左键点击
+		if (e.button !== 0) return // 只处理左键点击
 
 		mouseDownPos.value = {x: e.clientX, y: e.clientY}
 
