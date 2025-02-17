@@ -217,7 +217,8 @@ const useCopyHook = useCopy({
 	useHistoryHook,
 	renderRange: () => updateVisibleRange(),
 })
-const {importing, exportExcel, readExcelFile} = useExcel({
+// const {importing, exportExcel, readExcelFile}
+const useExcelHook = useExcel({
 	sheet,
 	loading,
 	loadingText,
@@ -233,6 +234,7 @@ const useToolsHook = useTools({
 	loading,
 	loadingText,
 	containerRef,
+	useExcelHook,
 	useResizeHook,
 	useHistoryHook,
 	useMergedCellsHook,
@@ -660,74 +662,6 @@ const onClickAlphabet = async (e, col) => {
 	useSelectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
 }
 
-// 设置单元格样式, 工具栏共用,
-const setCellStyle = (type, val, fn, save = true) => {
-	if (isLockedCell()) {
-		return
-	}
-
-	if (save) {
-		useHistoryHook.saveHistory()
-	}
-
-	const ranged = useSelectionRangeHook.ranged
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const startCol = Math.min(ranged.start.col, ranged.end.col)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
-
-	for (let i = startRow; i <= endRow; i++) {
-		for (let j = startCol; j <= endCol; j++) {
-			if (fn && typeof fn === 'function') {
-				fn(i, j, {startRow, startCol, endRow, endCol})
-			} else {
-				if (!sheet.config.cellStyle[`${i}-${j}`]) {
-					sheet.config.cellStyle[`${i}-${j}`] = {}
-				}
-
-				if (
-					sheet.config.cellStyle[`${i}-${j}`][type] &&
-					sheet.config.cellStyle[`${i}-${j}`][type] === val
-				) {
-					delete sheet.config.cellStyle[`${i}-${j}`][type]
-					continue
-				}
-				sheet.config.cellStyle[`${i}-${j}`][type] = val
-			}
-		}
-	}
-}
-
-// 导入Excel
-const onImportClick = async (event) => {
-	if (!sheet.config.import) {
-		ElMessage.warning('当前表格不支持导入')
-		return
-	}
-	const file = event.target.files[0]
-	if (!file) return
-	const result = await readExcelFile(file)
-	if (result.success) {
-		console.log('Excel导入成功', sheet.celldata)
-		event.target.value = null
-		updateVisibleRange()
-	}
-}
-
-// 导出Excel
-const onExportClick = async () => {
-	if (!sheet.config.export) {
-		ElMessage.warning('当前表格不支持导出')
-		return
-	}
-
-	const name = Date.now()
-	const result = await exportExcel(`${name}.xlsx`)
-	if (result.success) {
-		console.log('Excel导出成功')
-	}
-}
-
 // 单元格编辑失去焦点后
 const onCellInput = (event, cell) => {
 	useHistoryHook.saveHistory(cell)
@@ -736,50 +670,6 @@ const onCellInput = (event, cell) => {
 		emits('cellInput', val, cell) // 新值，旧值
 		console.log('单元格编辑', val, cell)
 	}, 0)
-}
-
-// 锁定单元格
-const onLockClick = () => {
-	if (!sheet.config.lock) {
-		ElMessage.warning('当前表格不支持锁定')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const startCol = Math.min(ranged.start.col, ranged.end.col)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
-
-	for (let row = startRow; row <= endRow; row++) {
-		for (let col = startCol; col <= endCol; col++) {
-			sheet.config.lockCells[`${row}-${col}`] = true
-		}
-	}
-	ElMessage.success(`已锁定`)
-}
-
-// 解锁单元格
-const onUnlockClick = () => {
-	if (!sheet.config.unlock) {
-		ElMessage.warning('当前表格不支持解锁')
-		return
-	}
-	const ranged = useSelectionRangeHook.ranged
-	if (!ranged) return
-
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const startCol = Math.min(ranged.start.col, ranged.end.col)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
-
-	for (let row = startRow; row <= endRow; row++) {
-		for (let col = startCol; col <= endCol; col++) {
-			delete sheet.config.lockCells[`${row}-${col}`]
-		}
-	}
-	ElMessage.warning(`已解锁`)
 }
 
 const init = async () => {
@@ -1069,9 +959,9 @@ defineExpose({
 				<div v-if="sheet.config.import" class="item import">
 					<Icons icon-name="Import"></Icons>
 					<span>导入Excel</span>
-					<input type="file" @change="onImportClick" />
+					<input type="file" @change="useToolsHook.importExcel" />
 				</div>
-				<div v-if="sheet.config.export" class="item" @click="onExportClick">
+				<div v-if="sheet.config.export" class="item" @click="useToolsHook.exportExcel">
 					<Icons icon-name="Export"></Icons>
 					<span>导出Excel</span>
 				</div>
@@ -1079,11 +969,11 @@ defineExpose({
 
 			<!-- 锁定解锁 -->
 			<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
-				<div v-if="sheet.config.lock" class="item" @click="onLockClick">
+				<div v-if="sheet.config.lock" class="item" @click="useToolsHook.setLocked">
 					<Icons icon-name="CellLock"></Icons>
 					<span>锁定</span>
 				</div>
-				<div v-if="sheet.config.unlock" class="item" @click="onUnlockClick">
+				<div v-if="sheet.config.unlock" class="item" @click="useToolsHook.setUnlocked">
 					<Icons icon-name="CellUnlock"></Icons>
 					<span>解锁</span>
 				</div>

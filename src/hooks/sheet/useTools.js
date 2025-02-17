@@ -1,4 +1,5 @@
 import {ref, nextTick, reactive} from 'vue'
+import {ElMessage} from 'element-plus'
 export const useTools = (config) => {
 	const {
 		sheet,
@@ -6,6 +7,7 @@ export const useTools = (config) => {
 		loading,
 		loadingText,
 		containerRef,
+		useExcelHook,
 		useResizeHook,
 		useHistoryHook,
 		useMergedCellsHook,
@@ -586,6 +588,79 @@ export const useTools = (config) => {
 		}
 	}
 
+	// 导入Excel
+	const importExcel = async (event) => {
+		if (!sheet.config.import) {
+			ElMessage.warning('当前表格不支持导入')
+			return
+		}
+		const file = event.target.files[0]
+		if (!file) return
+		const result = await useExcelHook.readExcelFile(file)
+		if (result.success) {
+			console.log('Excel导入成功', sheet.celldata)
+			event.target.value = null
+			renderRange()
+		}
+	}
+
+	// 导出Excel
+	const exportExcel = async () => {
+		if (!sheet.config.export) {
+			ElMessage.warning('当前表格不支持导出')
+			return
+		}
+		const name = Date.now()
+		const result = await useExcelHook.exportExcel(`${name}.xlsx`)
+		if (result.success) {
+			console.log('Excel导出成功')
+		}
+	}
+
+	// 锁定
+	const setLocked = () => {
+		if (!sheet.config.lock) {
+			ElMessage.warning('当前表格不支持锁定')
+			return
+		}
+		const ranged = useSelectionRangeHook.ranged
+		if (!ranged) return
+
+		const startRow = Math.min(ranged.start.row, ranged.end.row)
+		const startCol = Math.min(ranged.start.col, ranged.end.col)
+		const endRow = Math.max(ranged.start.row, ranged.end.row)
+		const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+		for (let row = startRow; row <= endRow; row++) {
+			for (let col = startCol; col <= endCol; col++) {
+				sheet.config.lockCells[`${row}-${col}`] = true
+			}
+		}
+		ElMessage.success(`已锁定`)
+	}
+
+	// 解锁
+	const setUnlocked = () => {
+		if (!sheet.config.unlock) {
+			ElMessage.warning('当前表格不支持解锁')
+			return
+		}
+		const ranged = useSelectionRangeHook.ranged
+		if (!ranged) return
+
+		const startRow = Math.min(ranged.start.row, ranged.end.row)
+		const startCol = Math.min(ranged.start.col, ranged.end.col)
+		const endRow = Math.max(ranged.start.row, ranged.end.row)
+		const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+		for (let row = startRow; row <= endRow; row++) {
+			for (let col = startCol; col <= endCol; col++) {
+				delete sheet.config.lockCells[`${row}-${col}`]
+			}
+		}
+		ElMessage.warning(`已解锁`)
+	}
+
 	return {
 		fonts,
 		fontSize,
@@ -612,5 +687,11 @@ export const useTools = (config) => {
 		addColumnCount,
 		addColumn,
 		removeColumn,
+
+		importExcel,
+		exportExcel,
+
+		setLocked,
+		setUnlocked,
 	}
 }
