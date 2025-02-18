@@ -1157,6 +1157,7 @@ defineExpose({
 							></div>
 						</div>
 					</template>
+					<div :style="{height: scrollbarWidth + 'px'}"></div>
 				</div>
 			</div>
 
