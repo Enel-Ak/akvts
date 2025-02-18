@@ -227,8 +227,16 @@
 	}
 
 	.sheet-main {
+		background-color: var(--z-theme);
 		font-size: 13px;
 		font-family: FZSSJW, sans-serif;
+	}
+
+	.scroll-tip {
+		pointer-events: none;
+		position: absolute;
+		top: calc(50% - 10px);
+		left: calc(50% - 10px);
 	}
 
 	.row {
@@ -318,7 +326,7 @@
 		}
 
 		.virtual-content {
-			padding-bottom: 120px;
+			padding-bottom: 25px;
 		}
 
 		&.alphabet {

@@ -325,37 +325,12 @@ const updateVisibleRange = async () => {
 		}
 
 		const result = await useSheetRenderHook.getRenderResult(renderData)
-
 		if (result) {
 			visibleRangeRef.value = result
 		}
 	} catch (error) {
 		console.error('计算可见范围失败:', error)
 	}
-}
-
-// 监听滚动位置变化
-watch([scrollTop, scrollLeft], () => updateVisibleRange(), {immediate: true})
-
-// 监听视口大小变化
-let observer = null
-let observerTimer = null
-const observeView = () => {
-	observer = new ResizeObserver((entries) => {
-		if (observerTimer) {
-			clearTimeout(observerTimer)
-		}
-		observerTimer = setTimeout(() => {
-			entries.forEach((entry) => {
-				viewportHeight.value = entry.contentRect.height
-				viewportWidth.value = entry.contentRect.width
-				lastScroll.value = true
-				updateVisibleRange()
-			})
-		}, 16)
-	})
-
-	observer.observe(containerRef.value)
 }
 
 // 生成可见行数据
@@ -421,6 +396,27 @@ const visibleCells = (row) => {
 		})
 	}
 	return cells
+}
+
+// 监听视口大小变化
+let observer = null
+let observerTimer = null
+const observeView = () => {
+	observer = new ResizeObserver((entries) => {
+		if (observerTimer) {
+			clearTimeout(observerTimer)
+		}
+		observerTimer = setTimeout(() => {
+			entries.forEach((entry) => {
+				viewportHeight.value = entry.contentRect.height
+				viewportWidth.value = entry.contentRect.width
+				lastScroll.value = true
+				updateVisibleRange()
+			})
+		}, 16)
+	})
+
+	observer.observe(containerRef.value)
 }
 
 // 计算偏移量
@@ -624,6 +620,9 @@ const onScroll = async (e) => {
 		})
 	}, 150)
 }
+
+// 监听滚动位置变化
+watch([scrollTop, scrollLeft], () => updateVisibleRange(), {immediate: true})
 
 // 恢复滚动位置
 const restoreScrollPosition = () => {
@@ -1342,6 +1341,11 @@ defineExpose({
 					height: totalHeight + 'px',
 				}"
 			></div>
+
+			<!-- 滚动渲染提示, 数据小于限制时显示 -->
+			<div class="scroll-tip" v-if="!lastScroll && sheet.config.rowCount < limit">
+				<Icons icon-name="Loading" class="loading-animation"></Icons>
+			</div>
 		</div>
 
 		<!-- 状态栏 -->

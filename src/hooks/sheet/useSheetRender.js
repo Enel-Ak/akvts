@@ -13,11 +13,12 @@ const workerCode = `
 
 	// 计算缓冲区范围
 	const calculateBufferRange = (startRow, endRow, startCol, endCol, buffer) => {
+		// 确保缓冲区上下对称
 		const bufferStartRow = Math.max(0, startRow - buffer)
-		const bufferEndRow = endRow + buffer
+		const bufferEndRow = Math.min(renderState.data.rowCount, endRow + buffer)
 
 		const bufferStartCol = Math.max(0, startCol - buffer)
-		const bufferEndCol = endCol + buffer
+		const bufferEndCol = Math.min(renderState.data.colCount, endCol + buffer)
 
 		return {
 			startRow: bufferStartRow,
@@ -47,6 +48,7 @@ const workerCode = `
 
 	// 计算可见范围
 	const calculateVisibleRange = (data) => {
+		renderState.data = data
 		const {
 			scrollTop,
 			scrollLeft,
@@ -54,144 +56,81 @@ const workerCode = `
 			viewportWidth,
 			rowCount,
 			colCount,
+			buffer = 5,
 			defaultRowHeight,
 			defaultColWidth,
-			rowHeights,
-			colWidths,
-			buffer,
-			mergedCells = {},
+			rowHeights = {},
+			colWidths = {},
 		} = data
 
-		// 计算行范围
-		const calculateRowRange = () => {
-			let startRow = 0
-			let accHeight = 0
-			let totalHeight = 0
+		// 计算可见行范围
+		let accHeight = 0
+		let startRow = 0
+		let endRow = 0
+		let totalHeight = 0
 
-			// 计算总高度
-			for (let i = 0; i < rowCount; i++) {
-				totalHeight += rowHeights?.[i] || defaultRowHeight
+		// 先计算总高度
+		for (let i = 0; i < rowCount; i++) {
+			const height = rowHeights[i] || defaultRowHeight
+			totalHeight += height
+			
+			if (accHeight <= scrollTop) {
+				startRow = i
 			}
-
-			// 找到起始行
-			while (startRow < rowCount) {
-				const rowHeight = rowHeights?.[startRow] || defaultRowHeight
-				if (accHeight + rowHeight > scrollTop) {
-					break
-				}
-				accHeight += rowHeight
-				startRow++
+			
+			accHeight += height
+			
+			if (accHeight >= scrollTop + viewportHeight && endRow === 0) {
+				endRow = i + 1
 			}
-
-			// 添加上方缓冲区
-			const bufferRows = buffer
-			startRow = Math.max(0, startRow - bufferRows)
-
-			let endRow = startRow
-			let visibleHeight = 0
-
-			// 计算可见行数，增加底部缓冲区
-			while (
-				endRow < rowCount &&
-				visibleHeight < viewportHeight + defaultRowHeight * bufferRows
-			) {
-				const rowHeight = rowHeights?.[endRow] || defaultRowHeight
-				visibleHeight += rowHeight
-				endRow++
-			}
-
-			// 特殊处理：如果接近底部，确保显示所有数据
-			if (scrollTop + viewportHeight >= totalHeight - viewportHeight / 2) {
-				endRow = rowCount
-			}
-
-			// 确保不超出总行数
-			endRow = Math.min(rowCount, endRow + bufferRows)
-
-			return {startRow, endRow, accHeight, totalHeight}
+		}
+		
+		// 如果没有找到结束行，设置为最后一行
+		if (endRow === 0) {
+			endRow = rowCount
 		}
 
-		// 计算列范围
-		const calculateColRange = () => {
-			let startCol = 0
-			let accWidth = 0
-			let totalWidth = 0
+		// 计算可见列范围
+		let accWidth = 0
+		let startCol = 0
+		let endCol = 0
+		let totalWidth = 0
 
-			// 计算总宽度
-			for (let i = 0; i < colCount; i++) {
-				totalWidth += colWidths?.[i] || defaultColWidth
+		for (let i = 0; i < colCount; i++) {
+			const width = colWidths[i] || defaultColWidth
+			totalWidth += width
+			
+			if (accWidth <= scrollLeft) {
+				startCol = i
 			}
-
-			// 找到起始列
-			while (startCol < colCount) {
-				const colWidth = colWidths?.[startCol] || defaultColWidth
-				if (accWidth + colWidth > scrollLeft) {
-					break
-				}
-				accWidth += colWidth
-				startCol++
+			
+			accWidth += width
+			
+			if (accWidth >= scrollLeft + viewportWidth && endCol === 0) {
+				endCol = i + 1
 			}
-
-			// 添加左侧缓冲区
-			const bufferCols = buffer
-			startCol = Math.max(0, startCol - bufferCols)
-
-			let endCol = startCol
-			let visibleWidth = 0
-
-			// 计算可见列数，增加右侧缓冲区
-			while (endCol < colCount && visibleWidth < viewportWidth + defaultColWidth * bufferCols) {
-				const colWidth = colWidths?.[endCol] || defaultColWidth
-				visibleWidth += colWidth
-				endCol++
-			}
-
-			// 特殊处理：如果接近右边界，确保显示所有列
-			if (scrollLeft + viewportWidth >= totalWidth - viewportWidth / 2) {
-				endCol = colCount
-			}
-
-			// 确保不超出总列数
-			endCol = Math.min(colCount, endCol + bufferCols)
-
-			return {startCol, endCol, accWidth, totalWidth}
+		}
+		
+		// 如果没有找到结束列，设置为最后一列
+		if (endCol === 0) {
+			endCol = colCount
 		}
 
-		const rowRange = calculateRowRange()
-		const colRange = calculateColRange()
-
-		let startRow = rowRange.startRow
-		let startCol = colRange.startCol
-		let endRow = rowRange.endRow
-		let endCol = colRange.endCol
-
-		// for (let [key, value] of Object.entries(mergedCells)) {
-		// 	const [rowIndex, colIndex] = key.split('-').map(Number)
-
-		// 	if (startRow - rowIndex < value.rowspan && startRow >= rowIndex) {
-		// 		startRow = rowIndex
-		// 	}
-
-		// 	if (startCol - colIndex < value.colspan && startCol >= colIndex) {
-		// 		startCol = colIndex
-		// 	}
-		// }
-
-		// // 计算缓冲区
-		// const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
-
-		// // 分块计算
-		// const chunks = calculateChunkedRange(startRow, endRow, startCol, endCol)
+		// 计算缓冲区
+		const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
 
 		return {
-			visible: {startRow, endRow, startCol, endCol},
-			// buffer: bufferRange,
-			// chunks,
+			visible: {
+				startRow: bufferRange.startRow,
+				endRow: bufferRange.endRow,
+				startCol: bufferRange.startCol,
+				endCol: bufferRange.endCol,
+			},
 			metrics: {
-				accHeight: rowRange.accHeight,
-				totalHeight: rowRange.totalHeight,
-				accWidth: colRange.accWidth,
-				totalWidth: colRange.totalWidth,
+				accHeight,
+				totalHeight,
+				accWidth,
+				totalWidth,
 			}
 		}
 	}
