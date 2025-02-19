@@ -744,17 +744,17 @@ const onZoomInput = async () => {
 	}
 	clearTimeout(zoomTimer)
 	zoomTimer = setTimeout(async () => {
-		const top = originalScrollTop * currentZoom
+		let top = originalScrollTop * currentZoom
 		lastScroll.value = false
-		if (fnRef.value) {
-			fnRef.value.scrollTop = top
-		}
-		if (numberRef.value) {
-			numberRef.value.scrollTo = top
-		}
 
 		requestAnimationFrame(async () => {
-			// 直接设置滚动位置
+			if (fnRef.value) {
+				fnRef.value.scrollTop = top
+			}
+			if (numberRef.value) {
+				numberRef.value.scrollTo = top
+			}
+
 			if (containerRef.value) {
 				containerRef.value.scrollTop = top
 			}
