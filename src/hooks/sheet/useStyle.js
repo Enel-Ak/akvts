@@ -1,4 +1,4 @@
-export const useStyle = (cellStyle) => {
+export const useStyle = (cellStyle, zoom) => {
 	let style = {}
 	let line = `1px solid #000`
 
@@ -52,7 +52,7 @@ export const useStyle = (cellStyle) => {
 				style['font-family'] = value
 				break
 			case 'size':
-				style['font-size'] = value + 'px'
+				style['font-size'] = value * zoom + 'px'
 				break
 			case 'color':
 				style['color'] = value

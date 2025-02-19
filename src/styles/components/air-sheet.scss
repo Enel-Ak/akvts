@@ -169,13 +169,37 @@
 }
 
 .statusbar {
+	align-items: center;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	padding: 5px;
 	// transition: all 0.15s linear;
-	> span {
+	> div {
 		font-size: 12px;
 		padding-right: 10px;
+	}
+
+	.zoom {
+		align-items: center;
+		display: flex;
+		padding-right: 0;
+		small {
+			display: inline-block;
+			text-align: right;
+			width: 30px;
+		}
+		> * {
+			margin-left: 5px;
+		}
+
+		i,
+		input {
+			cursor: pointer;
+		}
+
+		i:hover {
+			background: var(--z-sheet-active);
+		}
 	}
 }
 
@@ -228,7 +252,6 @@
 
 	.sheet-main {
 		background-color: var(--z-theme);
-		font-size: 13px;
 		font-family: FZSSJW, sans-serif;
 	}
 

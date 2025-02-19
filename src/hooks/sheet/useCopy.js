@@ -1,6 +1,13 @@
 import {ElMessage} from 'element-plus'
 export function useCopy(config) {
-	const {sheet, useMergedCellsHook, useSelectionRangeHook, useHistoryHook, renderRange} = config
+	const {
+		sheet,
+		useResizeHook,
+		useMergedCellsHook,
+		useSelectionRangeHook,
+		useHistoryHook,
+		renderRange,
+	} = config
 
 	const handleKeyDown = (event) => {
 		// 复制 Ctrl+C / Command+C
@@ -47,8 +54,40 @@ export function useCopy(config) {
 		}
 	}
 
+	// 处理单元格内容，将br转换为\n
+	const processCellContent = (cell) => {
+		// 创建一个临时容器来保存内容
+		const temp = document.createElement('div')
+		temp.innerHTML = cell.innerHTML
+
+		// 将所有的br标签替换为换行符
+		const brElements = temp.getElementsByTagName('br')
+		while (brElements.length > 0) {
+			brElements[0].replaceWith('\n')
+		}
+
+		return temp.textContent.trim()
+	}
+
+	// 处理单元格样式
+	const processCellStyle = (cell) => {
+		const style = cell.style
+		const ptx = 1.33
+		const width = ((parseInt(style.width) || 0) / ptx) | 0
+		const height = ((parseInt(style.height) || 0) / ptx) | 0
+
+		return {
+			width,
+			height,
+			style: {
+				width: cell.style.width || null,
+				height: cell.style.height || null,
+			},
+		}
+	}
+
 	// 处理剪贴板数据
-	const processClipboardData = ({html, text, isHtml}) => {
+	const processClipboardData = async ({html, text, isHtml}) => {
 		const ranged = useSelectionRangeHook.ranged
 		if (!ranged) return
 
@@ -58,13 +97,16 @@ export function useCopy(config) {
 		let pasteData = {
 			data: [], // 单元格数据
 			merges: [], // 合并单元格信息
-			styles: [], // 样式信息
+			styles: {
+				rowHeights: {},
+				colWidths: {},
+			}, // 样式信息
 		}
 
 		if (isHtml && html) {
 			const div = document.createElement('div')
 			div.innerHTML = html
-			// console.log('解析的HTML:', html)
+			console.log('解析的HTML:', html)
 
 			const table = div.querySelector('table')
 			if (table) {
@@ -99,9 +141,19 @@ export function useCopy(config) {
 							colIndex++
 						}
 
-						const value = cell.textContent.trim()
+						// 获取单元格值
+						const value = processCellContent(cell)
 						const rowspan = parseInt(cell.getAttribute('rowspan')) || 1
 						const colspan = parseInt(cell.getAttribute('colspan')) || 1
+						const {width, height, style} = processCellStyle(cell)
+
+						// 更新行高和列宽
+						if (height > (pasteData.styles.rowHeights[rowIndex] || 0)) {
+							pasteData.styles.rowHeights[rowIndex] = height
+						}
+						if (width > (pasteData.styles.colWidths[colIndex] || 0)) {
+							pasteData.styles.colWidths[colIndex] = width
+						}
 
 						// 处理合并单元格
 						if (rowspan > 1 || colspan > 1) {
@@ -122,7 +174,8 @@ export function useCopy(config) {
 									if (rowIndex + r < maxRows && colIndex + c < maxCols) {
 										matrix[rowIndex + r][colIndex + c] = {
 											mainCell: {row: rowIndex, col: colIndex},
-											value: value,
+											value,
+											style,
 										}
 										// 除了主单元格外，其他位置填充空字符串
 										if (r !== 0 || c !== 0) {
@@ -135,7 +188,8 @@ export function useCopy(config) {
 							// 普通单元格
 							matrix[rowIndex][colIndex] = {
 								mainCell: {row: rowIndex, col: colIndex},
-								value: value,
+								value,
+								style,
 							}
 							dataMatrix[rowIndex][colIndex] = value
 						}
@@ -222,6 +276,20 @@ export function useCopy(config) {
 				true
 			)
 		}
+
+		// 处理高度
+		if (Object.keys(pasteData.styles.rowHeights).length) {
+			Object.entries(pasteData.styles.rowHeights).forEach(([row, height]) => {
+				useResizeHook.setRowHeight(Number(row), height)
+			})
+		}
+
+		// 处理宽度
+		if (Object.keys(pasteData.styles.colWidths).length) {
+			Object.entries(pasteData.styles.colWidths).forEach(([col, width]) => {
+				useResizeHook.setColWidth(Number(col), width)
+			})
+		}
 	}
 
 	// 复制选中单元格到Excel
@@ -245,6 +313,11 @@ export function useCopy(config) {
 			for (let col = startCol; col <= endCol; col++) {
 				const merge = useMergedCellsHook.findMergedCell(row, col)
 				const value = sheet.celldata.get(row)?.[col] || ''
+
+				// 获取单元格的宽高
+				const rowHeight = useResizeHook.getRowHeight(row)
+				const colWidth = useResizeHook.getColWidth(col)
+				const style = `style="height:${rowHeight}px;width:${colWidth}px;"`
 
 				// 检查是否在合并单元格范围内
 				if (merge) {
@@ -276,6 +349,7 @@ export function useCopy(config) {
                 </tbody>
             </table>
         `
+		console.log(111, tableHtml)
 
 		// 生成纯文本版本（用于兼容性）
 		let plainText = ''

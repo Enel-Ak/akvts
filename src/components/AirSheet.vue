@@ -75,6 +75,7 @@ const sheet = reactive({
 		edit: true, // 编辑
 		lock: true, // 锁定
 		unlock: true, // 解锁
+		zoom: 1, //缩放
 
 		mergedCells: {},
 		lockCells: {},
@@ -170,6 +171,7 @@ const savedScrollPosition = ref({top: 0, left: 0})
 // hooks 模块
 const useSheetRenderHook = useSheetRender({sheet, loading, loadingText, loadingProgress})
 const useResizeHook = useResize({
+	sheet,
 	rowHeight: props.rowHeight,
 	colWidth: props.colWidth,
 	renderRange: () => updateVisibleRange(),
@@ -213,6 +215,7 @@ const useHistoryHook = useHistory({
 })
 const useCopyHook = useCopy({
 	sheet,
+	useResizeHook,
 	useMergedCellsHook,
 	useSelectionRangeHook,
 	useHistoryHook,
@@ -317,8 +320,8 @@ const updateVisibleRange = async () => {
 			rowCount: sheet.config.rowCount,
 			colCount: sheet.config.colCount,
 			buffer: props.buffer,
-			defaultRowHeight: props.rowHeight,
-			defaultColWidth: props.colWidth,
+			defaultRowHeight: props.rowHeight * sheet.config.zoom,
+			defaultColWidth: props.colWidth * sheet.config.zoom,
 			rowHeights: useResizeHook.rowHeights,
 			colWidths: useResizeHook.colWidths,
 			mergedCells: JSON.parse(JSON.stringify(sheet.config.mergedCells)),
@@ -362,7 +365,7 @@ const visibleCells = (row) => {
 
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
-	const rowHeight = useResizeHook.getRowHeight(row.rowIndex)
+	// const rowHeight = useResizeHook.getRowHeight(row.rowIndex)
 
 	for (let i = start; i < end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
@@ -386,7 +389,7 @@ const visibleCells = (row) => {
 
 		cells.push({
 			rowIndex: row.rowIndex,
-			rowHeight,
+			rowHeight: row.rowHeight,
 			colIndex: i,
 			colWidth: useResizeHook.getColWidth(i),
 			value,
@@ -545,7 +548,6 @@ const isLockedCell = () => {
 // 滚动处理
 let scrollTimer = null
 let rafId = null
-
 const lastScroll = ref(false)
 const onScroll = async (e) => {
 	if (lastScroll.value) {
@@ -719,6 +721,47 @@ const onCellBlur = (event, cell) => {
 		emits('cellBlur', val, cell) // 新值，旧值
 		console.log('单元格编辑', val, cell)
 	}, 0)
+}
+
+// 改变缩放比例时
+let zoomTimer = null
+let historyScrollTop = -1
+const onZoomChange = async () => {
+	// 记录当前第一个可见行的位置
+	if (historyScrollTop === -1) {
+		historyScrollTop = scrollTop.value
+	}
+	clearTimeout(zoomTimer)
+	zoomTimer = setTimeout(async () => {
+		containerRef.value.scrollTop = historyScrollTop * sheet.config.zoom
+		await updateVisibleRange()
+		await updateOffset('offsetTop', 'startRow')
+		await updateOffset('offsetLeft', 'startCol')
+		lastScroll.value = false
+		onScroll()
+	}, 16)
+}
+
+const onZoomSize = (size) => {
+	let newZoom = sheet.config.zoom + size
+
+	// 限制缩放比例在 0.5~3 之间
+	if (newZoom < 0.5) {
+		newZoom = 0.5
+	} else if (newZoom > 3) {
+		newZoom = 3
+	}
+
+	sheet.config.zoom = newZoom
+	onZoomChange()
+}
+
+const onZoomReset = async () => {
+	sheet.config.zoom = 1
+	onZoomChange()
+	setTimeout(() => {
+		historyScrollTop = -1
+	}, 128)
 }
 
 const init = async () => {
@@ -1168,11 +1211,17 @@ defineExpose({
 				data-air-sheet-cell
 				class="virtual-sheet sheet-main brn"
 				@scroll="onScroll"
+				:style="{
+					fontSize: `${13 * sheet.config.zoom}px`,
+				}"
 			>
 				<!-- 虚拟滚动占位 -->
 				<div
 					class="virtual-phantom"
-					:style="{height: totalHeight + 'px', width: totalWidth + 'px'}"
+					:style="{
+						height: totalHeight + 'px',
+						width: totalWidth + 'px',
+					}"
 				></div>
 
 				<!-- 单元格 -->
@@ -1184,7 +1233,11 @@ defineExpose({
 				>
 					<!-- 只渲染可视区域的单元格 -->
 					<template v-for="row of visibleRows" :key="row.rowIndex">
-						<div class="row" :style="{height: `${row.height}px`}">
+						<div
+							class="row"
+							:data-row="row.rowIndex"
+							:style="{height: `${row.rowHeight}px`}"
+						>
 							<template v-for="cell of visibleCells(row)" :key="cell.colIndex">
 								<div
 									v-if="isMergedCellStart(cell)"
@@ -1351,8 +1404,25 @@ defineExpose({
 
 		<!-- 状态栏 -->
 		<div class="statusbar" :style="{}">
-			<span>总行数: {{ sheet.config.rowCount }}</span>
-			<span>总列数: {{ sheet.config.colCount }}</span>
+			<div>总行数: {{ sheet.config.rowCount }}</div>
+			<div>总列数: {{ sheet.config.colCount }}</div>
+			<div class="flx"></div>
+			<div class="zoom">
+				<span>
+					<small>{{ (sheet.config.zoom * 100) | 0 }}%</small>
+				</span>
+				<Icons icon-name="Remove" @click="onZoomSize(-0.1)"></Icons>
+				<input
+					v-model.number="sheet.config.zoom"
+					type="range"
+					min="0.5"
+					max="3"
+					step="0.01"
+					@input="onZoomChange"
+				/>
+				<Icons icon-name="Add" @click="onZoomSize(0.1)"></Icons>
+				<Icons icon-name="Restore" @click="onZoomReset"></Icons>
+			</div>
 		</div>
 
 		<!-- 遮罩 -->

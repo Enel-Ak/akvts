@@ -49,7 +49,7 @@ const workerCode = `
 
 export const useResize = (config = {}) => {
 	// 获取配置
-	const {rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
+	const {sheet, rowHeight, colWidth, renderRange, useSelectionRangeHook} = config
 
 	// 创建渲染worker
 	let worker = null
@@ -77,21 +77,21 @@ export const useResize = (config = {}) => {
 
 	// 获取行的实际高度
 	const getRowHeight = (index) => {
-		return rowHeights[index] || rowHeight
+		return (rowHeights[index] || rowHeight) * sheet.config.zoom
 	}
 
 	// 获取列的实际宽度
 	const getColWidth = (index) => {
-		return colWidths[index] || colWidth
+		return (colWidths[index] || colWidth) * sheet.config.zoom
 	}
 
 	const setRowHeight = (index, height) => {
-		rowHeights[index] = height
+		rowHeights[index] = height < rowHeight ? rowHeight : height
 		renderRange()
 	}
 
 	const setColWidth = (index, width) => {
-		colWidths[index] = width
+		colWidths[index] = width < colWidth ? colWidth : width
 		renderRange()
 	}
 
