@@ -323,6 +323,8 @@
 			display: flex;
 			justify-content: center;
 			position: relative;
+			transition: height 0.15s linear;
+			will-change: height;
 			span {
 				color: rgba(var(--z-font-color-rgb), 1);
 				text-overflow: ellipsis;

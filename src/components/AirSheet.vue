@@ -570,6 +570,9 @@ const onScroll = async (e) => {
 	const newScrollTop = containerRef.value.scrollTop
 	const newScrollLeft = containerRef.value.scrollLeft
 
+	// 在滚动时更新原始滚动位置
+	originalScrollTop = newScrollTop / (sheet.config.zoom || 1)
+
 	const alphabet = alphabetRef.value
 	const number = numberRef.value
 	const fn = fnRef.value
@@ -625,6 +628,8 @@ const onScroll = async (e) => {
 
 // 监听滚动位置变化
 watch([scrollTop, scrollLeft], () => updateVisibleRange(), {immediate: true})
+
+// 恢复滚动位置
 
 // 恢复滚动位置
 const restoreScrollPosition = () => {
@@ -725,27 +730,55 @@ const onCellBlur = (event, cell) => {
 
 // 改变缩放比例时
 let zoomTimer = null
-let historyScrollTop = -1
-const onZoomChange = async () => {
+let originalScrollTop = -1
+let lastZoom = 1
+const onZoomInput = async () => {
+	const currentZoom = sheet.config.zoom || 1
 	// 记录当前第一个可见行的位置
-	if (historyScrollTop === -1) {
-		historyScrollTop = scrollTop.value
+	if (originalScrollTop === -1) {
+		// 如果是第一次缩放，直接记录当前位置除以当前缩放比例
+		originalScrollTop = containerRef.value.scrollTop / currentZoom
+	} else if (lastZoom !== currentZoom) {
+		// 如果缩放比例发生变化，更新原始位置
+		originalScrollTop = containerRef.value.scrollTop / lastZoom
 	}
 	clearTimeout(zoomTimer)
 	zoomTimer = setTimeout(async () => {
-		containerRef.value.scrollTop = historyScrollTop * sheet.config.zoom
-		await updateVisibleRange()
-		await updateOffset('offsetTop', 'startRow')
-		await updateOffset('offsetLeft', 'startCol')
-
-		// 重置滚动状态
+		const top = originalScrollTop * currentZoom
 		lastScroll.value = false
-		onScroll()
+		if (fnRef.value) {
+			fnRef.value.scrollTop = top
+		}
+		if (numberRef.value) {
+			numberRef.value.scrollTo = top
+		}
+
+		requestAnimationFrame(async () => {
+			// 直接设置滚动位置
+			if (containerRef.value) {
+				containerRef.value.scrollTop = top
+			}
+
+			await updateOffset('offsetTop', 'startRow')
+			await updateOffset('offsetLeft', 'startCol')
+
+			lastZoom = currentZoom
+		})
 	}, 16)
 }
 
+const onZoomChange = () => {
+	originalScrollTop = -1
+}
+
 const onZoomSize = (size) => {
-	let newZoom = sheet.config.zoom + size
+	const currentZoom = sheet.config.zoom
+	// 在改变缩放前记录当前的原始位置
+	if (originalScrollTop === -1) {
+		originalScrollTop = containerRef.value.scrollTop / currentZoom
+	}
+
+	let newZoom = currentZoom + size
 
 	// 限制缩放比例在 0.5~3 之间
 	if (newZoom < 0.5) {
@@ -755,15 +788,24 @@ const onZoomSize = (size) => {
 	}
 
 	sheet.config.zoom = newZoom
-	onZoomChange()
+	onZoomInput()
 }
 
 const onZoomReset = async () => {
+	const currentZoom = sheet.config.zoom
+	// 在重置前记录当前的原始位置
+	if (originalScrollTop === -1) {
+		originalScrollTop = containerRef.value.scrollTop / currentZoom
+	}
+
 	sheet.config.zoom = 1
-	onZoomChange()
+	onZoomInput()
+
+	// 重置完成后清除原始位置
 	setTimeout(() => {
-		historyScrollTop = -1
-	}, 128)
+		originalScrollTop = -1
+		lastZoom = 1
+	}, 200)
 }
 
 const init = async () => {
@@ -1411,7 +1453,7 @@ defineExpose({
 			<div class="flx"></div>
 			<div class="zoom">
 				<span>
-					<small>{{ (sheet.config.zoom * 100) | 0 }}%</small>
+					<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
 				</span>
 				<Icons icon-name="Remove" @click="onZoomSize(-0.1)"></Icons>
 				<input
@@ -1420,7 +1462,8 @@ defineExpose({
 					min="0.5"
 					max="3"
 					step="0.01"
-					@input="onZoomChange"
+					@input="onZoomInput"
+					@change="onZoomChange"
 				/>
 				<Icons icon-name="Add" @click="onZoomSize(0.1)"></Icons>
 				<Icons icon-name="Restore" @click="onZoomReset"></Icons>
