@@ -747,6 +747,11 @@ const onZoomInput = async () => {
 		let top = originalScrollTop * currentZoom
 		lastScroll.value = false
 
+		// 计算最大滚动位置
+		const maxScroll = containerRef.value.scrollHeight - containerRef.value.clientHeight
+		// 确保不超过最大滚动位置
+		top = Math.min(top, maxScroll)
+
 		requestAnimationFrame(async () => {
 			if (fnRef.value) {
 				fnRef.value.scrollTop = top
@@ -763,6 +768,7 @@ const onZoomInput = async () => {
 			await updateOffset('offsetLeft', 'startCol')
 
 			lastZoom = currentZoom
+			onScroll()
 		})
 	}, 16)
 }
