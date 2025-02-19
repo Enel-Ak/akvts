@@ -265,6 +265,8 @@
 	.row {
 		display: flex;
 		position: relative;
+		transition: width 0.15s linear, height 0.15s linear, font-size 0.15s linear;
+		will-change: contents;
 	}
 
 	.cell {
@@ -280,6 +282,8 @@
 
 		overflow: hidden;
 		user-select: none;
+		transition: font-size 0.15s linear;
+		will-change: contents;
 
 		> :deep(div) {
 			line-height: 1;

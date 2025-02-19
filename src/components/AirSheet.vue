@@ -737,6 +737,8 @@ const onZoomChange = async () => {
 		await updateVisibleRange()
 		await updateOffset('offsetTop', 'startRow')
 		await updateOffset('offsetLeft', 'startCol')
+
+		// 重置滚动状态
 		lastScroll.value = false
 		onScroll()
 	}, 16)
