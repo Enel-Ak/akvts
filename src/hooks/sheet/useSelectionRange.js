@@ -556,7 +556,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 							const cellData = rowData[mergedCell.col]
 							if (!isNaN(cellData)) {
 								sum += parseFloat(cellData)
-								values.push(cellData)
+								values.push(parseFloat(cellData))
 							}
 						}
 						mergedCells.add(mergedId)
@@ -571,7 +571,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 						const cellData = rowData[col]
 						if (!isNaN(cellData)) {
 							sum += parseFloat(cellData)
-							values.push(cellData)
+							values.push(parseFloat(cellData))
 						}
 					}
 				}
