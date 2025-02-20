@@ -1457,22 +1457,32 @@ defineExpose({
 
 		<!-- 状态栏 -->
 		<div class="statusbar" :style="{}">
-			<div class="statistics"><span>行</span> {{ sheet.config.rowCount }}</div>
-			<div class="statistics"><span>列</span> {{ sheet.config.colCount }}</div>
 			<div class="statistics">
-				<span>最小值</span> {{ useSelectionRangeHook.statistics.min }}
+				<span>行 = </span>
+				{{ sheet.config.rowCount }}
 			</div>
 			<div class="statistics">
-				<span>最大值</span> {{ useSelectionRangeHook.statistics.max }}
+				<span>列 = </span>
+				{{ sheet.config.colCount }}
 			</div>
 			<div class="statistics">
-				<span>求和</span> {{ useSelectionRangeHook.statistics.sum }}
+				<span>最小值 = </span>
+				{{ useSelectionRangeHook.statistics.min }}
 			</div>
 			<div class="statistics">
-				<span>平均值</span> {{ useSelectionRangeHook.statistics.average }}
+				<span>最大值 = </span>
+				{{ useSelectionRangeHook.statistics.max }}
 			</div>
 			<div class="statistics">
-				<span>计数</span> {{ useSelectionRangeHook.statistics.count }}
+				<span>求和 = </span>{{ useSelectionRangeHook.statistics.sum }}
+			</div>
+			<div class="statistics">
+				<span>平均值 = </span>
+				{{ useSelectionRangeHook.statistics.average }}
+			</div>
+			<div class="statistics">
+				<span>计数 = </span>
+				{{ useSelectionRangeHook.statistics.count }}
 			</div>
 
 			<div class="flx"></div>

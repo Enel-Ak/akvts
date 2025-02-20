@@ -568,8 +568,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 					// 非合并单元格正常计算平均值
 					const rowData = sheet.celldata.get(row)
 					if (rowData) {
-						const cellData = rowData[col]
-						if (!isNaN(cellData)) {
+						const cellData = rowData[col]?.trim()
+						if (cellData && !isNaN(cellData)) {
 							sum += parseFloat(cellData)
 							values.push(parseFloat(cellData))
 						}
