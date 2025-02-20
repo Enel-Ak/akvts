@@ -1063,7 +1063,7 @@ defineExpose({
 			</div>
 
 			<div v-if="sheet.config.addRow" class="group group-merge">
-				<div class="item" @click="useToolsHook.addRow">
+				<div class="item" @click="useToolsHook.addRow($event, false)">
 					<Icons icon-name="AddRow"></Icons>
 					<span>添加行</span>
 				</div>
@@ -1078,7 +1078,11 @@ defineExpose({
 			</div>
 
 			<div v-if="sheet.config.addColumn" class="group group-merge">
-				<div v-if="sheet.config.addColumn" class="item" @click="useToolsHook.addColumn">
+				<div
+					v-if="sheet.config.addColumn"
+					class="item"
+					@click="useToolsHook.addColumn($event, false)"
+				>
 					<Icons icon-name="AddColumn"></Icons>
 					<span>添加列</span>
 				</div>
@@ -1371,14 +1375,18 @@ defineExpose({
 					class="context-menu shadow-12"
 					:style="useMouseRightHook.contextMenuStyle.value"
 				>
-					<div v-if="sheet.config.addRow" class="menu-item" @click="useToolsHook.addRow">
+					<div
+						v-if="sheet.config.addRow"
+						class="menu-item"
+						@click="useToolsHook.addRow($event, false)"
+					>
 						<Icons icon-name="AddRow"></Icons>
 						<span>添加行</span>
 					</div>
 					<div
 						v-if="sheet.config.addColumn"
 						class="menu-item"
-						@click="useToolsHook.addColumn"
+						@click="useToolsHook.addColumn($event, false)"
 					>
 						<Icons icon-name="AddColumn"></Icons>
 						<span>添加列</span>

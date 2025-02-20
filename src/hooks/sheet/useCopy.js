@@ -256,14 +256,14 @@ export function useCopy(config) {
 			if (maxCols > sheet.config.colCount) {
 				const colsToAdd = maxCols - sheet.config.colCount
 				useToolsHook.addColumnCount.value = colsToAdd
-				useToolsHook.addColumn(true)
+				useToolsHook.addColumn(null, true)
 			}
 
 			// 检查是否需要添加行
 			if (maxRows > sheet.config.rowCount) {
 				const rowsToAdd = maxRows - sheet.config.rowCount
 				useToolsHook.addRowCount.value = rowsToAdd
-				useToolsHook.addRow(true)
+				useToolsHook.addRow(null, true)
 			}
 
 			await renderRange()

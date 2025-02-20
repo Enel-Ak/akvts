@@ -165,11 +165,30 @@ export const useTools = (config) => {
 			color,
 			(r, c, {startRow, startCol, endRow, endCol}) => {
 				const cellStyle = sheet.config.cellStyle[`${r}-${c}`]
+
 				if (
 					cellStyle &&
 					(cellStyle.b || cellStyle.bt || cellStyle.bb || cellStyle.bl || cellStyle.br)
 				) {
-					sheet.config.cellStyle[`${r}-${c}`]['bc'] = color
+					if (cellStyle.b) {
+						sheet.config.cellStyle[`${r}-${c}`]['btc'] = color
+						sheet.config.cellStyle[`${r}-${c}`]['brc'] = color
+						sheet.config.cellStyle[`${r}-${c}`]['blc'] = color
+						sheet.config.cellStyle[`${r}-${c}`]['bbc'] = color
+					} else {
+						if (cellStyle.bt) {
+							sheet.config.cellStyle[`${r}-${c}`]['btc'] = color
+						}
+						if (cellStyle.bb) {
+							sheet.config.cellStyle[`${r}-${c}`]['bbc'] = color
+						}
+						if (cellStyle.bl) {
+							sheet.config.cellStyle[`${r}-${c}`]['blc'] = color
+						}
+						if (cellStyle.br) {
+							sheet.config.cellStyle[`${r}-${c}`]['brc'] = color
+						}
+					}
 				}
 			},
 			false
@@ -216,6 +235,10 @@ export const useTools = (config) => {
 						delete sheet.config.cellStyle[`${r}-${c}`].bb
 						delete sheet.config.cellStyle[`${r}-${c}`].bl
 						delete sheet.config.cellStyle[`${r}-${c}`].br
+						delete sheet.config.cellStyle[`${r}-${c}`].btc
+						delete sheet.config.cellStyle[`${r}-${c}`].brc
+						delete sheet.config.cellStyle[`${r}-${c}`].blc
+						delete sheet.config.cellStyle[`${r}-${c}`].bbc
 						// 如果没有其他样式，删除整个样式对象
 						if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
 							delete sheet.config.cellStyle[`${r}-${c}`]
@@ -306,7 +329,7 @@ export const useTools = (config) => {
 
 	// 添加行
 	const addRowCount = ref(1)
-	const addRow = async (isEnd = false) => {
+	const addRow = async (_, isEnd = false) => {
 		if (!sheet.config.addRow) {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
@@ -459,7 +482,7 @@ export const useTools = (config) => {
 
 	// 添加列
 	const addColumnCount = ref(1)
-	const addColumn = async (isEnd = false) => {
+	const addColumn = async (_, isEnd = false) => {
 		if (!sheet.config.addColumn) {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return

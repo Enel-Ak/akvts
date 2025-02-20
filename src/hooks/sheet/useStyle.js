@@ -94,11 +94,17 @@ export const useStyle = (cellStyle, zoom) => {
 			case 'bb':
 				style[border('bottom')] = line
 				break
-			case 'bc':
+			case 'btc':
 				style['border-top-color'] = value + ' !important'
-				style['border-left-color'] = value + ' !important'
-				style['border-bottom-color'] = value + ' !important'
+				break
+			case 'brc':
 				style['border-right-color'] = value + ' !important'
+				break
+			case 'blc':
+				style['border-left-color'] = value + ' !important'
+				break
+			case 'bbc':
+				style['border-bottom-color'] = value + ' !important'
 				break
 			case 'bold':
 				style['font-weight'] = bold(value)
