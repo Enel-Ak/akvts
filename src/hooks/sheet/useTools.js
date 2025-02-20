@@ -239,6 +239,7 @@ export const useTools = (config) => {
 						delete sheet.config.cellStyle[`${r}-${c}`].brc
 						delete sheet.config.cellStyle[`${r}-${c}`].blc
 						delete sheet.config.cellStyle[`${r}-${c}`].bbc
+
 						// 如果没有其他样式，删除整个样式对象
 						if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
 							delete sheet.config.cellStyle[`${r}-${c}`]
