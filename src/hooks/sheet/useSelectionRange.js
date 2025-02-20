@@ -25,6 +25,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	const selectionStart = shallowRef({row: -1, col: -1})
 	const selectionEnd = shallowRef({row: -1, col: -1})
 	const ranged = shallowRef({start: {row: -1, col: -1}, end: {row: -1, col: -1}})
+	const statistics = shallowRef({count: 0, average: 0, min: 0, max: 0, sum: 0})
 
 	// 获取单元格位置
 	const getCellPosition = (e) => {
@@ -511,6 +512,81 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return end
 	}
 
+	// 快速获取选区数据
+	const rangeData = () => {
+		const startRow = Math.min(ranged.value.start.row, ranged.value.end.row)
+		const endRow = Math.max(ranged.value.start.row, ranged.value.end.row)
+		const startCol = Math.min(ranged.value.start.col, ranged.value.end.col)
+		const endCol = Math.max(ranged.value.start.col, ranged.value.end.col)
+		return {
+			startRow,
+			endRow,
+			startCol,
+			endCol,
+		}
+	}
+
+	// 状态栏显示的统计信息
+	const getStatistics = () => {
+		if (!ranged.value) return 0
+		const {startRow, endRow, startCol, endCol} = rangeData()
+
+		let count = 0
+		let sum = 0
+		let values = []
+
+		const mergedCells = new Set() // 用于记录已经计算过的合并单元格
+
+		// 遍历选中区域的每个单元格
+		for (let row = startRow; row <= endRow; row++) {
+			for (let col = startCol; col <= endCol; col++) {
+				// 检查当前位置是否在合并单元格内
+				const mergedCell = useMergedCellsHook.findMergedCell(row, col)
+				if (mergedCell) {
+					// 生成合并单元格的唯一标识
+					const mergedId = `${mergedCell.row}-${mergedCell.col}`
+					// 如果这个合并单元格还没计算过，就计数
+					if (!mergedCells.has(mergedId)) {
+						//计数
+						count++
+
+						// 平均值
+						const rowData = sheet.celldata.get(mergedCell.row)
+						if (rowData) {
+							const cellData = rowData[mergedCell.col]
+							if (!isNaN(cellData)) {
+								sum += parseFloat(cellData)
+								values.push(cellData)
+							}
+						}
+						mergedCells.add(mergedId)
+					}
+				} else {
+					// 非合并单元格正常计数
+					count++
+
+					// 非合并单元格正常计算平均值
+					const rowData = sheet.celldata.get(row)
+					if (rowData) {
+						const cellData = rowData[col]
+						if (!isNaN(cellData)) {
+							sum += parseFloat(cellData)
+							values.push(cellData)
+						}
+					}
+				}
+			}
+		}
+
+		statistics.value = {
+			count,
+			sum,
+			average: (sum / 2).toFixed(2),
+			min: values.length > 0 ? Math.min(...values) : 0,
+			max: values.length > 0 ? Math.max(...values) : 0,
+		}
+	}
+
 	// 清除选区的方法
 	const clear = () => {
 		selecting.value = false
@@ -557,6 +633,12 @@ export const useSelectionRange = (containerId, config = {}) => {
 		document.addEventListener('mouseup', handleDragEnd)
 	}
 
+	// 更新统计信息
+	watch(
+		() => [ranged.value, sheet.config.mergedCells],
+		() => getStatistics()
+	)
+
 	return {
 		// 状态
 		selecting,
@@ -568,6 +650,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		rangeStyle,
 		selectionStart,
 		selectionEnd,
+		statistics,
 
 		//方法
 		init,

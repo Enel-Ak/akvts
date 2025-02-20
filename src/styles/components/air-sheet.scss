@@ -179,6 +179,19 @@
 		padding-right: 10px;
 	}
 
+	.statistics {
+		align-items: center;
+		border-right: 1px solid var(--z-line);
+		display: flex;
+		margin-right: 5px;
+
+		span {
+			opacity: 1;
+			padding: 2px 5px;
+			margin-right: 3px;
+		}
+	}
+
 	.zoom {
 		align-items: center;
 		display: flex;
