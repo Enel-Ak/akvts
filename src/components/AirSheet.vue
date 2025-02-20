@@ -179,7 +179,7 @@ const useResizeHook = useResize({
 	sheet,
 	rowHeight: props.rowHeight,
 	colWidth: props.colWidth,
-	renderRange: () => updateVisibleRange(),
+	renderRange: async () => await updateVisibleRange(),
 	useMergedCellsHook: () => useMergedCellsHook,
 	useSelectionRangeHook: () => useSelectionRangeHook,
 })
@@ -188,7 +188,7 @@ const useMergedCellsHook = useMergedCells({
 	rowHeight: props.rowHeight,
 	colWidth: props.colWidth,
 	useResizeHook,
-	renderRange: () => updateVisibleRange(),
+	renderRange: async () => await updateVisibleRange(),
 })
 const useSelectionRangeHook = reactive(
 	useSelectionRange(id, {
@@ -198,7 +198,7 @@ const useSelectionRangeHook = reactive(
 		useResizeHook,
 		useMergedCellsHook,
 		render: {
-			update: () => updateVisibleRange(),
+			update: async () => await updateVisibleRange(),
 			range: () => visibleRangeRef.value,
 		},
 	})
@@ -208,7 +208,7 @@ const useEditHook = useEdit(id, {
 	useResizeHook,
 	useMergedCellsHook,
 	useSelectionRangeHook,
-	renderRange: () => updateVisibleRange(),
+	renderRange: async () => await updateVisibleRange(),
 })
 const useHistoryHook = useHistory({
 	loading,
@@ -217,19 +217,10 @@ const useHistoryHook = useHistory({
 	sheet,
 	useMergedCellsHook,
 	useSelectionRangeHook,
-	renderRange: () => updateVisibleRange(),
+	renderRange: async () => awaitupdateVisibleRange(),
 	processMapInBatches: (map, callback, batchSize = 5000) =>
 		processMapInBatches(map, callback, batchSize),
 })
-const useCopyHook = useCopy({
-	sheet,
-	useResizeHook,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-	useHistoryHook,
-	renderRange: () => updateVisibleRange(),
-})
-// const {importing, exportExcel, readExcelFile}
 const useExcelHook = useExcel({
 	sheet,
 	loading,
@@ -239,7 +230,6 @@ const useExcelHook = useExcel({
 	useMergedCellsHook,
 	useSelectionRangeHook,
 })
-const useMouseRightHook = useMouseRight(id)
 const useToolsHook = useTools({
 	sheet,
 	limit,
@@ -252,10 +242,20 @@ const useToolsHook = useTools({
 	useMergedCellsHook,
 	useSelectionRangeHook,
 	isLocked: () => isLockedCell(),
-	renderRange: () => updateVisibleRange(),
+	renderRange: async () => await updateVisibleRange(),
 	processMapInBatches: (map, callback, batchSize) =>
 		processMapInBatches(map, callback, batchSize),
 })
+const useCopyHook = useCopy({
+	sheet,
+	useResizeHook,
+	useMergedCellsHook,
+	useSelectionRangeHook,
+	useHistoryHook,
+	useToolsHook,
+	renderRange: async () => await updateVisibleRange(),
+})
+const useMouseRightHook = useMouseRight(id)
 
 // 可见范围的响应式引用
 const visibleRangeRef = ref({
@@ -1047,6 +1047,18 @@ defineExpose({
 						<Icons icon-name="BorderRight"></Icons>
 						<span>右边框</span>
 					</div>
+				</div>
+			</div>
+
+			<div v-if="sheet.config.border" class="group">
+				<div class="item border-color" @click="useToolsHook.setBorderColor">
+					<Icons icon-name="BorderColor"></Icons>
+					<span>边框颜色</span>
+					<input
+						type="color"
+						@input="useToolsHook.setBorderColor($event)"
+						@change="useToolsHook.borderColorChanged"
+					/>
 				</div>
 			</div>
 

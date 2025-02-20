@@ -6,6 +6,7 @@ export function useCopy(config) {
 		useMergedCellsHook,
 		useSelectionRangeHook,
 		useHistoryHook,
+		useToolsHook,
 		renderRange,
 	} = config
 
@@ -70,11 +71,30 @@ export function useCopy(config) {
 	}
 
 	// 处理单元格样式
-	const processCellStyle = (cell) => {
+	const cellCache = new Map()
+	const processCellStyle = (cell, key, other = false) => {
 		const style = cell.style
 		const ptx = 1.33
 		const width = ((parseInt(style.width) || 0) / ptx) | 0
 		const height = ((parseInt(style.height) || 0) / ptx) | 0
+
+		if (!other) {
+			cellCache.set(key, cell)
+		} else {
+			const [row, col] = key.split('-').map(Number)
+			if (style.borderLeft || style.borderRight || style.borderTop || style.borderBottom) {
+				useToolsHook.setBorder()
+			}
+			if (style.textAlign) {
+				useToolsHook.setCellStyle({type: 'align', value: style.textAlign, row, col})
+			}
+			if (style.color) {
+				useToolsHook.setCellStyle({type: 'color', value: style.color, row, col})
+			}
+			if (style.backgroundColor) {
+				useToolsHook.setCellStyle({type: 'bg', value: style.backgroundColor, row, col})
+			}
+		}
 
 		return {
 			width,
@@ -145,14 +165,16 @@ export function useCopy(config) {
 						const value = processCellContent(cell)
 						const rowspan = parseInt(cell.getAttribute('rowspan')) || 1
 						const colspan = parseInt(cell.getAttribute('colspan')) || 1
-						const {width, height, style} = processCellStyle(cell)
+						const curRow = baseRow + rowIndex
+						const curCol = baseCol + colIndex
+						const {width, height, style} = processCellStyle(cell, `${curRow}-${curCol}`)
 
 						// 更新行高和列宽
-						if (height > (pasteData.styles.rowHeights[rowIndex] || 0)) {
-							pasteData.styles.rowHeights[rowIndex] = height
+						if (height > (pasteData.styles.rowHeights[curRow] || 0) && rowspan <= 1) {
+							pasteData.styles.rowHeights[curRow] = height
 						}
-						if (width > (pasteData.styles.colWidths[colIndex] || 0)) {
-							pasteData.styles.colWidths[colIndex] = width
+						if (width > (pasteData.styles.colWidths[curCol] || 0) && colspan <= 1) {
+							pasteData.styles.colWidths[curCol] = width
 						}
 
 						// 处理合并单元格
@@ -227,19 +249,43 @@ export function useCopy(config) {
 
 		if (pasteData.data.length) {
 			const oldCellData = []
+			const maxRows = pasteData.data.length + baseRow
+			const maxCols = pasteData.data[0].length + baseCol
+
+			// 检查是否需要添加列
+			if (maxCols > sheet.config.colCount) {
+				const colsToAdd = maxCols - sheet.config.colCount
+				useToolsHook.addColumnCount.value = colsToAdd
+				useToolsHook.addColumn(true)
+			}
+
+			// 检查是否需要添加行
+			if (maxRows > sheet.config.rowCount) {
+				const rowsToAdd = maxRows - sheet.config.rowCount
+				useToolsHook.addRowCount.value = rowsToAdd
+				useToolsHook.addRow(true)
+			}
+
+			await renderRange()
+
 			pasteData.data.forEach((row, rowIndex) => {
 				row.forEach((cell, colIndex) => {
-					const oldCell = sheet.celldata.get(baseRow + rowIndex)?.[baseCol + colIndex]
-					if (!sheet.celldata.get(baseRow + rowIndex)) {
-						sheet.celldata.set(baseRow + rowIndex, [])
+					const targetRow = baseRow + rowIndex
+					const targetCol = baseCol + colIndex
+
+					if (!sheet.celldata.get(targetRow)) {
+						sheet.celldata.set(targetRow, [])
 					}
 
+					// 保存原始数据用于历史记录
 					oldCellData.push({
-						rowIndex: baseRow + rowIndex,
-						colIndex: baseCol + colIndex,
-						value: oldCell,
+						rowIndex: targetRow,
+						colIndex: targetCol,
+						value: sheet.celldata.get(targetRow)[targetCol],
 					})
-					sheet.celldata.get(baseRow + rowIndex)[baseCol + colIndex] = cell
+
+					// 替换数据
+					sheet.celldata.get(targetRow)[targetCol] = cell
 				})
 			})
 
@@ -288,6 +334,13 @@ export function useCopy(config) {
 		if (Object.keys(pasteData.styles.colWidths).length) {
 			Object.entries(pasteData.styles.colWidths).forEach(([col, width]) => {
 				useResizeHook.setColWidth(Number(col), width)
+			})
+		}
+
+		// 处理其他样式
+		if (cellCache.size) {
+			cellCache.forEach((cell, key) => {
+				processCellStyle(cell, key, true)
 			})
 		}
 	}

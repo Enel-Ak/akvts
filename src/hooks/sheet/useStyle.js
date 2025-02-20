@@ -1,6 +1,6 @@
 export const useStyle = (cellStyle, zoom) => {
 	let style = {}
-	let line = `1px solid #000`
+	let line = `1pt solid #000`
 
 	if (!cellStyle) return style
 
@@ -93,6 +93,12 @@ export const useStyle = (cellStyle, zoom) => {
 				break
 			case 'bb':
 				style[border('bottom')] = line
+				break
+			case 'bc':
+				style['border-top-color'] = value + ' !important'
+				style['border-left-color'] = value + ' !important'
+				style['border-bottom-color'] = value + ' !important'
+				style['border-right-color'] = value + ' !important'
 				break
 			case 'bold':
 				style['font-weight'] = bold(value)

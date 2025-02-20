@@ -28,8 +28,8 @@ export const useTools = (config) => {
 	}
 	const fontSize = [12, 13, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]
 
-	// 设置单元格样式, 工具栏共用,
-	const setCellStyle = (type, val, fn, save = true) => {
+	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
+	const setCellStyles = (type, val, fn, save = true) => {
 		if (isLocked()) {
 			return
 		}
@@ -66,16 +66,32 @@ export const useTools = (config) => {
 		}
 	}
 
+	// 设置单元格样式, 指定单元格
+	const setCellStyle = ({type, value, row, col, rowspan = 1, colspan = 1}) => {
+		if (isLocked()) {
+			return
+		}
+
+		for (let i = row; i < row + rowspan; i++) {
+			for (let j = col; j < col + colspan; j++) {
+				if (!sheet.config.cellStyle[`${i}-${j}`]) {
+					sheet.config.cellStyle[`${i}-${j}`] = {}
+				}
+				sheet.config.cellStyle[`${i}-${j}`][type] = value
+			}
+		}
+	}
+
 	// 设置字体
 	const setFont = (e) => {
 		const font = e.target.value
-		setCellStyle('font', font)
+		setCellStyles('font', font)
 	}
 
 	// 设置字体大小
 	const setFontSize = (e) => {
 		const size = e.target.value
-		setCellStyle('size', size)
+		setCellStyles('size', size)
 		nextTick(() => {
 			const ranged = useSelectionRangeHook.ranged
 			if (!ranged) return
@@ -116,7 +132,7 @@ export const useTools = (config) => {
 			fontSaved = true
 		}
 		const color = e.target.value
-		setCellStyle('color', color, null, false)
+		setCellStyles('color', color, null, false)
 	}
 	const fontColorChanged = (e) => {
 		fontSaved = false
@@ -130,10 +146,37 @@ export const useTools = (config) => {
 			fillSaved = true
 		}
 		const color = e.target.value
-		setCellStyle('bg', color, null, false)
+		setCellStyles('bg', color, null, false)
 	}
 	const fillColorChanged = (e) => {
 		fillSaved = false
+	}
+
+	// 设置边框颜色
+	let borderSaved = false
+	const setBorderColor = (e) => {
+		if (!borderSaved) {
+			useHistoryHook.saveHistory()
+			borderSaved = true
+		}
+		const color = e.target.value
+		setCellStyles(
+			'bc',
+			color,
+			(r, c, {startRow, startCol, endRow, endCol}) => {
+				const cellStyle = sheet.config.cellStyle[`${r}-${c}`]
+				if (
+					cellStyle &&
+					(cellStyle.b || cellStyle.bt || cellStyle.bb || cellStyle.bl || cellStyle.br)
+				) {
+					sheet.config.cellStyle[`${r}-${c}`]['bc'] = color
+				}
+			},
+			false
+		)
+	}
+	const borderColorChanged = () => {
+		borderSaved = false
 	}
 
 	// 合并
@@ -160,7 +203,7 @@ export const useTools = (config) => {
 
 	// 边框
 	const setBorder = (border = true, direction = null, save = true) => {
-		setCellStyle(
+		setCellStyles(
 			'b',
 			null,
 			(r, c, {startRow, startCol, endRow, endCol}) => {
@@ -238,39 +281,39 @@ export const useTools = (config) => {
 
 	// 对齐
 	const setAlign = (align) => {
-		setCellStyle('align', align)
+		setCellStyles('align', align)
 	}
 
 	// 加粗
 	const setBold = () => {
-		setCellStyle('bold', true)
+		setCellStyles('bold', true)
 	}
 
 	// 斜体
 	const setItalic = () => {
-		setCellStyle('italic', true)
+		setCellStyles('italic', true)
 	}
 
 	// 下划线
 	const setUnderline = () => {
-		setCellStyle('underline', true)
+		setCellStyles('underline', true)
 	}
 
 	// 删除线
 	const setStrikethrough = () => {
-		setCellStyle('strikethrough', true)
+		setCellStyles('strikethrough', true)
 	}
 
 	// 添加行
 	const addRowCount = ref(1)
-	const addRow = async () => {
+	const addRow = async (isEnd = false) => {
 		if (!sheet.config.addRow) {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
 		}
 		const ranged = useSelectionRangeHook.ranged
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const insertRowIndex = endRow + 1
+		const insertRowIndex = isEnd ? sheet.config.rowCount : endRow + 1
 
 		if (sheet.celldata.size >= limit) {
 			loading.value = true
@@ -416,7 +459,7 @@ export const useTools = (config) => {
 
 	// 添加列
 	const addColumnCount = ref(1)
-	const addColumn = async () => {
+	const addColumn = async (isEnd = false) => {
 		if (!sheet.config.addColumn) {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return
@@ -430,7 +473,7 @@ export const useTools = (config) => {
 		}
 
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
-		const insertColIndex = endCol + 1
+		const insertColIndex = isEnd ? sheet.config.colCount : endCol + 1
 		const newMap = new Map()
 
 		try {
@@ -438,7 +481,6 @@ export const useTools = (config) => {
 				// 创建新的行数据数组
 				const newRowData = Array.from(rowData)
 
-				// 在指定位置插入空值
 				// 在指定位置插入空值，根据addColumnCount插入多列
 				for (let i = 0; i < addColumnCount.value; i++) {
 					newRowData.splice(insertColIndex + i, 0, '')
@@ -665,12 +707,16 @@ export const useTools = (config) => {
 		fonts,
 		fontSize,
 
+		setCellStyle,
+
 		setFont,
 		setFontSize,
 		setFontColor,
 		fontColorChanged,
 		setFillColor,
 		fillColorChanged,
+		setBorderColor,
+		borderColorChanged,
 
 		setBold,
 		setItalic,
