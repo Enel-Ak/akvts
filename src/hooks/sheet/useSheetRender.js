@@ -1,6 +1,4 @@
 import {ref} from 'vue'
-// const workerURL = new URL('../../worker/sheet/SheetRender.worker.js', import.meta.url)
-
 const workerCode = `
 	// 渲染状态
 	let renderState = {
@@ -64,10 +62,10 @@ const workerCode = `
 		} = data
 
 		// 计算可见行范围
-		let accHeight = 0
+		let accHeight = 0 // 用于确定可视区域的起始位置
 		let startRow = 0
 		let endRow = 0
-		let totalHeight = 0
+		let totalHeight = 0 // 整个表格的最终总高度
 
 		// 先计算总高度
 		for (let i = 0; i < rowCount; i++) {
@@ -179,7 +177,7 @@ const workerCode = `
 export const useSheetRender = (config) => {
 	// 创建渲染worker
 	let worker = null
-	const {sheet, loading, loadingText, loadingProgress} = config
+	// const {sheet, loading, loadingText, loadingProgress} = config
 
 	// 渲染结果缓存
 	const renderResult = ref(null)
@@ -187,7 +185,7 @@ export const useSheetRender = (config) => {
 	// 渲染请求队列
 	let renderRequestId = 0
 	const renderRequests = new Map()
-	const limit = 30000
+	// const limit = 30000
 
 	// 获取渲染结果
 	const getRenderResult = (data) => {

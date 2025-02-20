@@ -169,7 +169,12 @@ const viewportWidth = ref(0)
 const savedScrollPosition = ref({top: 0, left: 0})
 
 // hooks 模块
-const useSheetRenderHook = useSheetRender({sheet, loading, loadingText, loadingProgress})
+const useSheetRenderHook = useSheetRender({
+	sheet,
+	loading,
+	loadingText,
+	loadingProgress,
+})
 const useResizeHook = useResize({
 	sheet,
 	rowHeight: props.rowHeight,
@@ -190,9 +195,12 @@ const useSelectionRangeHook = reactive(
 		sheet,
 		rowHeight: props.rowHeight,
 		colWidth: props.colWidth,
-		useMergedCellsHook,
 		useResizeHook,
-		renderRange: () => updateVisibleRange(),
+		useMergedCellsHook,
+		render: {
+			update: () => updateVisibleRange(),
+			range: () => visibleRangeRef.value,
+		},
 	})
 )
 const useEditHook = useEdit(id, {
@@ -247,24 +255,6 @@ const useToolsHook = useTools({
 	renderRange: () => updateVisibleRange(),
 	processMapInBatches: (map, callback, batchSize) =>
 		processMapInBatches(map, callback, batchSize),
-})
-
-// 计算总高度
-const totalHeight = computed(() => {
-	let height = 0
-	for (let i = 0; i < sheet.config.rowCount; i++) {
-		height += useResizeHook.getRowHeight(i)
-	}
-	return height
-})
-
-// 计算总宽度
-const totalWidth = computed(() => {
-	let width = 0
-	for (let i = 0; i < sheet.config.colCount; i++) {
-		width += useResizeHook.getColWidth(i)
-	}
-	return width
 })
 
 // 可见范围的响应式引用
@@ -769,6 +759,9 @@ const onZoomInput = async () => {
 
 			lastZoom = currentZoom
 			onScroll()
+			if (lastZoom < 1) {
+				updateVisibleRange()
+			}
 		})
 	}, 16)
 }
@@ -1161,7 +1154,10 @@ defineExpose({
 					}px - ${scrollbarWidth}px)`,
 				}"
 			>
-				<div class="virtual-phantom" :style="{width: totalWidth + 'px'}"></div>
+				<div
+					class="virtual-phantom"
+					:style="{width: visibleRangeRef?.metrics?.totalWidth + 'px'}"
+				></div>
 				<div
 					class="virtual-content alphabet-cells"
 					:style="{
@@ -1219,10 +1215,14 @@ defineExpose({
 					width: numberWidth + 'px',
 				}"
 			>
-				<div class="virtual-phantom" :style="{height: totalHeight + 'px'}"></div>
+				<div
+					class="virtual-phantom"
+					:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
+				></div>
 				<div
 					class="virtual-content number-cells"
 					:style="{
+						fontSize: `${sheet.config.zoom < 1 ? 13 * sheet.config.zoom : 13}px`,
 						transform: `translate(0, ${offsetTop}px)`,
 						width: `${numberWidth}px`,
 					}"
@@ -1269,8 +1269,8 @@ defineExpose({
 				<div
 					class="virtual-phantom"
 					:style="{
-						height: totalHeight + 'px',
-						width: totalWidth + 'px',
+						height: visibleRangeRef?.metrics?.totalHeight + 'px',
+						width: visibleRangeRef?.metrics?.totalWidth + 'px',
 					}"
 				></div>
 
@@ -1399,7 +1399,10 @@ defineExpose({
 					width: fnWidth + 'px',
 				}"
 			>
-				<div class="virtual-phantom" :style="{height: totalHeight + 'px'}"></div>
+				<div
+					class="virtual-phantom"
+					:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
+				></div>
 				<div
 					class="virtual-content"
 					:style="{
@@ -1433,7 +1436,7 @@ defineExpose({
 				v-if="useResizeHook.isResizing.value && useResizeHook.resizingRow.value"
 				class="grid-lines-row"
 				:style="{
-					width: totalWidth + 'px',
+					width: visibleRangeRef?.metrics?.totalWidth + 'px',
 				}"
 			></div>
 
@@ -1442,7 +1445,7 @@ defineExpose({
 				v-if="useResizeHook.isResizing.value && useResizeHook.resizingCol.value"
 				class="grid-lines-col"
 				:style="{
-					height: totalHeight + 'px',
+					height: visibleRangeRef?.metrics?.totalHeight + 'px',
 				}"
 			></div>
 

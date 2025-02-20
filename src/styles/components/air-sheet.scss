@@ -282,7 +282,7 @@
 
 		overflow: hidden;
 		user-select: none;
-		transition: font-size 0.15s linear;
+		transition: width 0.15s linear, font-size 0.15s linear;
 		will-change: contents;
 
 		> :deep(div) {
@@ -323,7 +323,6 @@
 			display: flex;
 			justify-content: center;
 			position: relative;
-			transition: height 0.15s linear;
 			will-change: height;
 			span {
 				color: rgba(var(--z-font-color-rgb), 1);
