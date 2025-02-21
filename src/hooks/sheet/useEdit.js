@@ -1,4 +1,4 @@
-import {reactive, nextTick} from 'vue'
+import {ref, reactive, nextTick} from 'vue'
 import {ElMessage} from 'element-plus'
 
 export const useEdit = (id, config) => {
@@ -6,6 +6,7 @@ export const useEdit = (id, config) => {
 	let initialized = false
 	let container = null
 	let enter = false
+	const editing = ref(false)
 
 	const enterContainer = () => {
 		enter = true
@@ -24,14 +25,7 @@ export const useEdit = (id, config) => {
 		}
 
 		// 允许的特殊按键：退格键、删除键、方向键等
-		const allowedKeys = [
-			'Backspace',
-			'Delete',
-			'ArrowLeft',
-			'ArrowRight',
-			'ArrowUp',
-			'ArrowDown',
-		]
+		const allowedKeys = ['Backspace', 'Delete']
 
 		// 如果是功能键，不执行编辑
 		if (e.key && e.key.startsWith('F') && /^\d+$/.test(e.key.slice(1))) {
@@ -81,6 +75,7 @@ export const useEdit = (id, config) => {
 		selection.addRange(range)
 
 		cellEl.focus()
+		editing.value = true
 
 		const setRowHeight = async () => {
 			const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
@@ -136,6 +131,7 @@ export const useEdit = (id, config) => {
 			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
+			editing.value = false
 			setTimeout(() => setRowHeight(), 0)
 		}
 
@@ -199,6 +195,7 @@ export const useEdit = (id, config) => {
 	// onDeactivated(() => destroy())
 
 	return {
+		editing,
 		init,
 		destroy,
 		startEdit,

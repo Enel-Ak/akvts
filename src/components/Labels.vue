@@ -108,7 +108,6 @@ const onCancelItem = (item) => {
 	if (item.path) {
 		const name = item.path.split('/').pop().split('?')[0] || 'index'
 		keepAlive.removeInclude(name)
-		console.log('removeInclude', name)
 	}
 
 	nextTick(() => {
@@ -237,7 +236,6 @@ const handleRouter = (to) => {
 	if (current.value.path) {
 		const name = current.value.path.split('/').pop().split('?')[0] || 'index'
 		keepAlive.addInclude(name)
-		console.log('addInclude', name)
 	}
 	console.log('Labels Current', current.value)
 

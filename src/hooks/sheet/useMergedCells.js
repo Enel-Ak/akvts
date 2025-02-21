@@ -88,7 +88,7 @@ export const useMergedCells = (config) => {
 			for (let i = cell.colIndex; i < cell.colIndex + colspan; i++) {
 				cw += useResizeHook.getColWidth(i)
 			}
-
+			// 合并单元格
 			return {
 				height: `${rh || rowHeight}px`,
 				width: `${cw || colWidth}px`,
@@ -109,6 +109,7 @@ export const useMergedCells = (config) => {
 				cell.colIndex >= mergedCol &&
 				cell.colIndex < mergedCol + value.colspan
 			) {
+				// 在合并单元格内
 				return {
 					height: `${useResizeHook.getRowHeight(cell.rowIndex)}px`,
 					width: `${useResizeHook.getColWidth(cell.colIndex)}px`,

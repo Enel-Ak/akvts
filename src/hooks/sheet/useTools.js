@@ -662,6 +662,7 @@ export const useTools = (config) => {
 		}
 		const file = event.target.files[0]
 		if (!file) return
+		sheet.celldata.clear()
 		const result = await useExcelHook.readExcelFile(file)
 		if (result.success) {
 			console.log('Excel导入成功', sheet.celldata)

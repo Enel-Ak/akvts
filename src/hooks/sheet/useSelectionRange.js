@@ -454,26 +454,27 @@ export const useSelectionRange = (containerId, config = {}) => {
 		// 检查是否在合并单元格内
 		const mergedCell = useMergedCellsHook.findMergedCell?.(startRow, startCol)
 		if (mergedCell && !force) {
-			selectionStart.value = {
-				row: mergedCell.row,
-				col: mergedCell.col,
-				mergedCell,
+			ranged.value = {
+				start: {
+					row: mergedCell.row,
+					col: mergedCell.col,
+				},
+				end: {
+					row: mergedCell.row + mergedCell.rowspan - 1,
+					col: mergedCell.col + mergedCell.colspan - 1,
+				},
 			}
-			selectionEnd.value = {
-				row: mergedCell.row + mergedCell.rowspan - 1,
-				col: mergedCell.col + mergedCell.colspan - 1,
-				mergedCell,
+		} else {
+			ranged.value = {
+				start: {
+					row: startRow,
+					col: startCol,
+				},
+				end: {
+					row: endRow,
+					col: endCol,
+				},
 			}
-		}
-		ranged.value = {
-			start: {
-				row: startRow,
-				col: startCol,
-			},
-			end: {
-				row: endRow,
-				col: endCol,
-			},
 		}
 
 		console.log('设置选区范围', ranged.value)
@@ -587,6 +588,100 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	}
 
+	// 键盘事件
+	const handleKeyDown = (e) => {
+		const editing = container.querySelector('[contenteditable="true"]')
+		if (editing) return
+
+		// 允许的特殊按键：方向键
+		const allowedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab']
+		if (allowedKeys.includes(e.key)) {
+			e.preventDefault()
+
+			const key = e.key
+			const moveLeft = () => {
+				if (ranged.value.start.col === 0) return
+
+				ranged.value = {
+					start: {
+						row: ranged.value.start.row,
+						col: ranged.value.start.col - 1,
+					},
+					end: {
+						row: ranged.value.end.row,
+						col: ranged.value.end.col - 1,
+					},
+				}
+			}
+			const moveRight = () => {
+				if (
+					ranged.value.start.col === sheet.config.colCount - 1 ||
+					ranged.value.end.col >= sheet.config.colCount - 1
+				)
+					return
+
+				ranged.value = {
+					start: {
+						row: ranged.value.start.row,
+						col: ranged.value.start.col + 1,
+					},
+					end: {
+						row: ranged.value.end.row,
+						col: ranged.value.end.col + 1,
+					},
+				}
+			}
+			const moveUp = () => {
+				if (ranged.value.start.row === 0) return
+
+				ranged.value = {
+					start: {
+						row: ranged.value.start.row - 1,
+						col: ranged.value.start.col,
+					},
+					end: {
+						row: ranged.value.end.row - 1,
+						col: ranged.value.end.col,
+					},
+				}
+			}
+			const moveDown = () => {
+				if (
+					ranged.value.start.row === sheet.config.rowCount - 1 ||
+					ranged.value.end.row >= sheet.config.rowCount - 1
+				)
+					return
+
+				ranged.value = {
+					start: {
+						row: ranged.value.start.row + 1,
+						col: ranged.value.start.col,
+					},
+					end: {
+						row: ranged.value.end.row + 1,
+						col: ranged.value.end.col,
+					},
+				}
+			}
+
+			switch (key) {
+				case 'ArrowLeft':
+					moveLeft()
+					break
+				case 'Tab':
+				case 'ArrowRight':
+					moveRight()
+					break
+				case 'ArrowUp':
+					moveUp()
+					break
+				case 'ArrowDown':
+					moveDown()
+					break
+			}
+		}
+	}
+
 	// 清除选区的方法
 	const clear = () => {
 		selecting.value = false
@@ -607,6 +702,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			window.removeEventListener('mouseup', handleMouseUp)
 			document.removeEventListener('mousemove', handleDragMove)
 			document.removeEventListener('mouseup', handleDragEnd)
+			document.removeEventListener('keydown', handleKeyDown)
 		}
 	}
 
@@ -631,6 +727,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 		// 拖拽相关事件
 		document.addEventListener('mousemove', handleDragMove)
 		document.addEventListener('mouseup', handleDragEnd)
+
+		// 键盘相关事件
+		document.addEventListener('keydown', handleKeyDown)
 	}
 
 	// 更新统计信息

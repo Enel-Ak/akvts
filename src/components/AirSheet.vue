@@ -227,6 +227,7 @@ const useExcelHook = useExcel({
 	loadingText,
 	loadingProgress,
 	useEditHook,
+	useResizeHook,
 	useMergedCellsHook,
 	useSelectionRangeHook,
 })
@@ -355,22 +356,23 @@ const visibleCells = (row) => {
 
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
-	// const rowHeight = useResizeHook.getRowHeight(row.rowIndex)
 
 	for (let i = start; i < end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
 		const mergedCell = useMergedCellsHook.findMergedCell(row.rowIndex, i)
-		const isMergedStart = mergedCell && mergedCell.row === row.rowIndex && mergedCell.col === i
-		const originalValue = sheet.celldata.get(row.rowIndex)?.[i] || null
-
-		// 如果不是合并单元格，或者是合并单元格的起始位置，则显示值
 		let value = null
+
 		if (mergedCell) {
-			if (isMergedStart) {
-				value = originalValue
+			if (mergedCell.row === row.rowIndex && mergedCell.col === i) {
+				// 如果是合并单元格的起始位置，设置值
+				value = sheet.celldata.get(row.rowIndex)?.[i] || ''
+			} else {
+				// 如果在合并单元格内部，不设置值
+				value = ''
 			}
 		} else {
-			value = originalValue
+			// 普通单元格，正常取值
+			value = sheet.celldata.get(row.rowIndex)?.[i] || ''
 		}
 
 		if (!sheet.celldata.get(row.rowIndex)) {
@@ -379,7 +381,7 @@ const visibleCells = (row) => {
 
 		cells.push({
 			rowIndex: row.rowIndex,
-			rowHeight: row.rowHeight,
+			rowHeight: useResizeHook.getRowHeight(row.rowIndex),
 			colIndex: i,
 			colWidth: useResizeHook.getColWidth(i),
 			value,
@@ -488,14 +490,14 @@ const visibleTitles = computed(() => {
 
 // 计算自定义列偏移量（与内容完全对齐）
 const getOffsetStyle = (cell) => {
-	return useMergedCellsHook.getCellStyle(cell, {
+	const style = useMergedCellsHook.getCellStyle(cell, {
 		offsetLeft: offsetLeft.value,
 		offsetTop: offsetTop.value,
 	})
+	return style
 }
 
 const isMergedCellStart = (cell) => {
-	// const mergedCells = useMergedCellsHook.getMergedCells()
 	const mergedCells = sheet.config.mergedCells
 	if (Object.keys(mergedCells).length === 0) {
 		return false

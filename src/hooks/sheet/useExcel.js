@@ -8,6 +8,7 @@ export const useExcel = (config = {}) => {
 		loadingText,
 		loadingProgress,
 		useEditHook,
+		useResizeHook,
 		useMergedCellsHook,
 		useSelectionRangeHook,
 	} = config
@@ -16,7 +17,7 @@ export const useExcel = (config = {}) => {
 
 	// 处理单元格值
 	const processCellValue = (cell) => {
-		if (!cell || cell.value === null || cell.value === undefined) {
+		if (!cell || cell.value === undefined) {
 			return ''
 		}
 
@@ -41,7 +42,7 @@ export const useExcel = (config = {}) => {
 				return cell.text || ''
 			default:
 				// 处理对象类型的值
-				if (typeof cell.value === 'object') {
+				if (cell.value && typeof cell.value === 'object') {
 					return cell.text || ''
 				}
 				return (cell.value || '').toString()
@@ -49,12 +50,33 @@ export const useExcel = (config = {}) => {
 	}
 
 	// 分批处理数据
-	const processBatch = (worksheet, rowCount, colCount, startRow, startCol, batchSize = 100) => {
+	const processBatch = (worksheet, rowCount, colCount, startRow, startCol, batchSize = 5000) => {
 		return new Promise((resolve) => {
 			let currentRow = 1
 			let currentCol = 1
 			const totalCells = rowCount * colCount
 			let processedCells = 0
+
+			// 预处理合并单元格信息，使用更高效的数据结构
+			const mergeMap = new Map()
+			if (worksheet._merges) {
+				Object.entries(worksheet._merges).forEach(([key, merge]) => {
+					if (typeof merge !== 'object' || !merge.top) return
+					// 为每个被合并的单元格创建快速查找
+					for (let r = merge.top; r <= merge.bottom; r++) {
+						for (let c = merge.left; c <= merge.right; c++) {
+							mergeMap.set(`${r}-${c}`, {
+								isStart: r === merge.top && c === merge.left,
+								top: merge.top,
+								left: merge.left,
+							})
+						}
+					}
+				})
+			}
+
+			// 批量收集数据，减少DOM更新
+			const batchData = []
 
 			const processNextBatch = () => {
 				let cellsInBatch = 0
@@ -63,14 +85,18 @@ export const useExcel = (config = {}) => {
 
 					while (currentCol <= colCount && cellsInBatch < batchSize) {
 						const cell = row.getCell(currentCol)
-						const value = processCellValue(cell)
+						const mergeInfo = mergeMap.get(`${currentRow}-${currentCol}`)
 
-						useEditHook.setCellValue(
-							currentRow - 1 + startRow,
-							currentCol - 1 + startCol,
-							value,
-							true
-						)
+						// 使用批量数据收集替代直接更新
+						batchData.push({
+							row: currentRow - 1 + startRow,
+							col: currentCol - 1 + startCol,
+							value: mergeInfo
+								? mergeInfo.isStart
+									? processCellValue(cell)
+									: ''
+								: processCellValue(cell),
+						})
 
 						currentCol++
 						cellsInBatch++
@@ -83,19 +109,30 @@ export const useExcel = (config = {}) => {
 					}
 				}
 
+				// 批量更新数据
+				if (batchData.length > 0) {
+					// 使用requestAnimationFrame确保不阻塞UI
+					requestAnimationFrame(() => {
+						batchData.forEach((item) => {
+							useEditHook.setCellValue(item.row, item.col, item.value, true)
+						})
+						batchData.length = 0 // 清空数组但保持引用
+					})
+				}
+
 				// 更新进度
 				const progress = Math.floor((processedCells / totalCells) * 100)
 				loadingText.value = `正在导入Excel文件...`
 				loadingProgress.value = progress
 
 				if (currentRow <= rowCount) {
-					requestAnimationFrame(processNextBatch)
+					setTimeout(processNextBatch, 0) // 使用setTimeout给UI线程喘息的机会
 				} else {
 					resolve()
 				}
 			}
 
-			requestAnimationFrame(processNextBatch)
+			processNextBatch()
 		})
 	}
 
@@ -107,6 +144,12 @@ export const useExcel = (config = {}) => {
 			importing.value = true
 			loadingText.value = '正在导入Excel文件...'
 			loading.value = true
+			sheet.config.zoom = 1
+
+			// 等待 zoom 还原
+			await new Promise((resolve) => {
+				setTimeout(() => resolve(), 150)
+			})
 
 			const workbook = new ExcelJS.Workbook()
 			const arrayBuffer = await file.arrayBuffer()
@@ -155,6 +198,8 @@ export const useExcel = (config = {}) => {
 				})
 			}
 
+			useSelectionRangeHook.setRange(0, 0, 0, 0)
+
 			return {success: true}
 		} catch (error) {
 			console.error('Excel导入失败:', error)
@@ -176,7 +221,7 @@ export const useExcel = (config = {}) => {
 		colCount,
 		startRow,
 		startCol,
-		batchSize = 100
+		batchSize = 5000
 	) => {
 		return new Promise((resolve) => {
 			let currentRow = 1
