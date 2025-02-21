@@ -1047,18 +1047,15 @@ defineExpose({
 						<Icons icon-name="BorderRight"></Icons>
 						<span>右边框</span>
 					</div>
-				</div>
-			</div>
-
-			<div v-if="sheet.config.border" class="group">
-				<div class="item border-color" @click="useToolsHook.setBorderColor">
-					<Icons icon-name="BorderColor"></Icons>
-					<span>边框颜色</span>
-					<input
-						type="color"
-						@input="useToolsHook.setBorderColor($event)"
-						@change="useToolsHook.borderColorChanged"
-					/>
+					<div class="item border-color" @click="useToolsHook.setBorderColor">
+						<Icons icon-name="BorderColor"></Icons>
+						<span>颜色</span>
+						<input
+							type="color"
+							@input="useToolsHook.setBorderColor($event)"
+							@change="useToolsHook.borderColorChanged"
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -1113,12 +1110,12 @@ defineExpose({
 			<div class="group" v-if="sheet.config.import || sheet.config.export">
 				<div v-if="sheet.config.import" class="item import">
 					<Icons icon-name="Import"></Icons>
-					<span>导入Excel</span>
+					<span>导入</span>
 					<input type="file" @change="useToolsHook.importExcel" />
 				</div>
 				<div v-if="sheet.config.export" class="item" @click="useToolsHook.exportExcel">
 					<Icons icon-name="Export"></Icons>
-					<span>导出Excel</span>
+					<span>导出</span>
 				</div>
 			</div>
 
@@ -1246,7 +1243,7 @@ defineExpose({
 					<template v-for="row of visibleRows" :key="row.rowIndex">
 						<div
 							class="number-cell"
-							:style="{height: `${row.rowHeight}px`}"
+							:style="{height: `${row.rowHeight}px`, width: `${numberWidth}px`}"
 							:class="{
 								selection: useSelectionRangeHook.setSelectionClass(row),
 							}"
