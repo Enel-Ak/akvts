@@ -72,6 +72,7 @@ export function useHistory(config) {
 				loadingProgress.value = -1
 
 				const state = history.pop()
+
 				// 撤销修改配置
 				sheet.config = state.config
 
@@ -264,7 +265,7 @@ export function useHistory(config) {
 					useMergedCellsHook.setMergeCells(mergedCells)
 				}
 
-				// renderRange()
+				await renderRange()
 			} catch (error) {
 				console.error('处理数据时出错:', error)
 			} finally {

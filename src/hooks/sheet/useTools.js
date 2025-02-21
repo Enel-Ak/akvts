@@ -335,6 +335,11 @@ export const useTools = (config) => {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
 		}
+
+		if (!addRowCount.value) {
+			addRowCount.value = 1
+		}
+
 		const ranged = useSelectionRangeHook.ranged
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
 		const insertRowIndex = isEnd ? sheet.config.rowCount : endRow + 1
@@ -488,6 +493,11 @@ export const useTools = (config) => {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return
 		}
+
+		if (!addColumnCount.value) {
+			addColumnCount.value = 1
+		}
+
 		const ranged = useSelectionRangeHook.ranged
 		if (!ranged) return
 

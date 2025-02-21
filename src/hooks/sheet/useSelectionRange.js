@@ -599,6 +599,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			e.preventDefault()
 
 			const key = e.key
+
 			const moveLeft = () => {
 				if (ranged.value.start.col === 0) return
 
@@ -613,6 +614,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 					},
 				}
 			}
+
 			const moveRight = () => {
 				if (
 					ranged.value.start.col === sheet.config.colCount - 1 ||
@@ -631,6 +633,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 					},
 				}
 			}
+
 			const moveUp = () => {
 				if (ranged.value.start.row === 0) return
 
@@ -645,6 +648,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 					},
 				}
 			}
+
 			const moveDown = () => {
 				if (
 					ranged.value.start.row === sheet.config.rowCount - 1 ||
@@ -682,6 +686,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 	}
 
+	const handleKeyUp = (e) => {}
+
 	// 清除选区的方法
 	const clear = () => {
 		selecting.value = false
@@ -703,6 +709,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 			document.removeEventListener('mousemove', handleDragMove)
 			document.removeEventListener('mouseup', handleDragEnd)
 			document.removeEventListener('keydown', handleKeyDown)
+			document.removeEventListener('keyup', handleKeyUp)
 		}
 	}
 
@@ -730,6 +737,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 		// 键盘相关事件
 		document.addEventListener('keydown', handleKeyDown)
+		document.addEventListener('keyup', handleKeyUp)
 	}
 
 	// 更新统计信息

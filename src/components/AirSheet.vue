@@ -217,7 +217,7 @@ const useHistoryHook = useHistory({
 	sheet,
 	useMergedCellsHook,
 	useSelectionRangeHook,
-	renderRange: async () => awaitupdateVisibleRange(),
+	renderRange: async () => await updateVisibleRange(),
 	processMapInBatches: (map, callback, batchSize = 5000) =>
 		processMapInBatches(map, callback, batchSize),
 })
@@ -1071,6 +1071,7 @@ defineExpose({
 					<input
 						v-model.number="useToolsHook.addRowCount.value"
 						type="number"
+						min="1"
 						value="1"
 					/>
 				</div>
@@ -1089,6 +1090,7 @@ defineExpose({
 					<input
 						v-model.number="useToolsHook.addColumnCount.value"
 						type="number"
+						min="1"
 						value="1"
 					/>
 				</div>
