@@ -43,8 +43,8 @@ export const useEdit = (id, config) => {
 			return
 		}
 
-		const rowIndex = cell.row || cell.rowIndex
-		const colIndex = cell.col || cell.colIndex
+		const rowIndex = cell.row ?? cell.rowIndex
+		const colIndex = cell.col ?? cell.colIndex
 
 		// 不允许编辑
 		if (!sheet.config.edit) {
