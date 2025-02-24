@@ -738,6 +738,9 @@ export const useTools = (config) => {
 		ElMessage.success(`已解锁`)
 	}
 
+	// 冻结
+	const setFreeze = () => {}
+
 	return {
 		fonts,
 		fontSize,

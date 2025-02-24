@@ -42,6 +42,7 @@ const fns = [
 ]
 
 onMounted(() => {
+	// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
 	// sheetRef.value.setMergeCell(5, 4, 4, 4)
 	// sheetRef.value.setMergeCell(1, 5, 4, 4)
 	// sheetRef.value.setCellValue(0, 0, 'hello')

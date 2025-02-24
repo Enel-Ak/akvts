@@ -480,6 +480,13 @@ export const useSelectionRange = (containerId, config = {}) => {
 		console.log('设置选区范围', ranged.value)
 	}
 
+	// 根据鼠标位置获取单元格
+	const getRange = (e) => {
+		const pos = limitRange(getCellPosition(e))
+		if (!pos) return null
+		return pos
+	}
+
 	// 获取框选范围的起始单元格
 	const getStartCell = () => {
 		if (!ranged.value) return null
@@ -763,6 +770,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		init,
 		getStartCell,
 		getEndCell,
+		getRange,
 		setRange,
 		setSelectionClass,
 		drag: handleDragStart,

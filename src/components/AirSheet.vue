@@ -22,7 +22,13 @@ import {useTools} from '@/hooks/sheet/useTools'
 import {useMouseRight} from '@/hooks/sheet/useMouseRight'
 import {ElMessage} from 'element-plus'
 
-const emits = defineEmits(['update:modelValue', 'cellClick', 'cellBlur'])
+const emits = defineEmits([
+	'update:modelValue',
+	'cellClick',
+	'cellBlur',
+	'cellDragOver',
+	'cellDrop',
+])
 
 // 核心配置参数
 const props = defineProps({
@@ -809,6 +815,20 @@ const onZoomReset = async () => {
 	}, 200)
 }
 
+// 拖拽到单元格时
+let dropCell = null
+const onCellcellDragOver = (event) => {
+	event.preventDefault()
+	dropCell = useSelectionRangeHook.getRange(event)
+	emits('cellDragOver', dropCell)
+}
+
+const onCellDrop = (event) => {
+	event.preventDefault()
+	emits('cellDrop', dropCell)
+	dropCell = null
+}
+
 const init = async () => {
 	initialData()
 
@@ -856,6 +876,10 @@ const init = async () => {
 
 		scrollbarWidth.value = outer.offsetWidth - inner.offsetWidth
 		outer.parentNode.removeChild(outer)
+
+		// 加入拖拽到单元格的监听
+		containerRef.value.addEventListener('cellDragOver', onCellcellDragOver)
+		containerRef.value.addEventListener('drop', onCellDrop)
 	})
 }
 
@@ -916,6 +940,16 @@ defineExpose({
 	setRange: useSelectionRangeHook.setRange,
 	setMergeCell: useMergedCellsHook.setMergeCell,
 	setCellValue: useEditHook.setCellValue,
+	setCellBackground: (row, col, rowspan, colspan, color) => {
+		useToolsHook.setCellStyle({
+			type: 'bg',
+			value: color,
+			row,
+			col,
+			rowspan,
+			colspan,
+		})
+	},
 	getSheet: () => {
 		return JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]}))
 	},
