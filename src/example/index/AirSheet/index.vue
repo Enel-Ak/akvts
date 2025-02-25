@@ -4,15 +4,19 @@ import {onMounted, ref} from 'vue'
 const sheetRef = ref()
 const config = {
 	config: {
+		freezeCount: {
+			row: 1,
+			col: 1,
+		},
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
 	},
-	// celldata: Array.from({length: 5000}, (_, r) => {
-	// 	return Array.from({length: 10}, (_, c) => {
-	// 		return `R${r + 1}-C${c + 1}`
-	// 	})
-	// }),
-	celldata: [],
+	celldata: Array.from({length: 1000}, (_, r) => {
+		return Array.from({length: 10}, (_, c) => {
+			return `R${r + 1}-C${c + 1}`
+		})
+	}),
+	// celldata: [],
 }
 
 const config2 = {

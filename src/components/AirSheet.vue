@@ -37,7 +37,7 @@ const props = defineProps({
 	// 总行数
 	rowCount: {type: Number, default: 100}, // 最大 671087
 	// 总列数
-	colCount: {type: Number, default: 15},
+	colCount: {type: Number, default: 26},
 	// 单元格高度
 	rowHeight: {type: Number, default: 25},
 	// 单元格宽度
@@ -82,7 +82,12 @@ const sheet = reactive({
 		lock: true, // 锁定
 		unlock: true, // 解锁
 		zoom: 1, //缩放
+		freeze: true, // 冻结
 
+		freezeCount: {
+			row: props.modelValue?.config.freezeCount.row || 0,
+			col: props.modelValue?.config.freezeCount.col || 0,
+		},
 		mergedCells: {},
 		lockCells: {},
 		cellStyle: {
@@ -333,7 +338,7 @@ const updateVisibleRange = async () => {
 	}
 }
 
-// 生成可见行数据
+// 生成可视行数据
 const visibleRows = computed(() => {
 	const rows = []
 
@@ -345,16 +350,17 @@ const visibleRows = computed(() => {
 	const end = Math.min(sheet.config.rowCount, endRow)
 
 	for (let i = start; i < end; i++) {
-		rows.push({
+		const row = {
 			rowIndex: i,
 			rowHeight: useResizeHook.getRowHeight(i),
 			config: {},
-		})
+		}
+		rows.push(row)
 	}
 	return rows
 })
 
-// 生成可见列数据
+// 生成可视列数据
 const visibleCells = (row) => {
 	const cells = []
 	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return cells
@@ -1169,6 +1175,20 @@ defineExpose({
 				</div>
 			</div>
 
+			<div class="group group-merge">
+				<div class="item" @click="useToolsHook.setFreeze">
+					<Icons icon-name="Freeze"></Icons>
+					<span>冻结</span>
+				</div>
+				<div class="merge freeze-merge shadow-12">
+					<span>行</span>
+					<input type="number" v-model.number="useToolsHook.freezeRow.value" />
+					&nbsp;
+					<span>列</span>
+					<input type="number" v-model.number="useToolsHook.freezeCol.value" />
+				</div>
+			</div>
+
 			<div class="group">
 				<div
 					class="item"
@@ -1209,6 +1229,8 @@ defineExpose({
 					class="virtual-phantom"
 					:style="{width: visibleRangeRef?.metrics?.totalWidth + 'px'}"
 				></div>
+
+				<!-- 主体字母 -->
 				<div
 					class="virtual-content alphabet-cells"
 					:style="{
@@ -1270,6 +1292,8 @@ defineExpose({
 					class="virtual-phantom"
 					:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
 				></div>
+
+				<!-- 主体序号 -->
 				<div
 					class="virtual-content number-cells"
 					:style="{

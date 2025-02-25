@@ -130,6 +130,7 @@ export const useMergedCells = (config) => {
 
 	// 清除合并单元格
 	const clearMergedCells = () => {
+		sheet.config.mergedCells = {}
 		mergedCells.clear()
 	}
 

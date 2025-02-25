@@ -739,7 +739,9 @@ export const useTools = (config) => {
 	}
 
 	// 冻结
-	const setFreeze = () => {}
+	const freezeRow = ref(1)
+	const freezeCol = ref(1)
+	const setFreeze = (r, c) => {}
 
 	return {
 		fonts,
@@ -763,6 +765,10 @@ export const useTools = (config) => {
 		setMerge,
 		setBorder,
 		setAlign,
+
+		freezeRow,
+		freezeCol,
+		setFreeze,
 
 		addRowCount,
 		addRow,

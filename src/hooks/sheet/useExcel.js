@@ -142,9 +142,12 @@ export const useExcel = (config = {}) => {
 
 		try {
 			importing.value = true
-			loadingText.value = '正在导入Excel文件...'
 			loading.value = true
+			loadingText.value = '正在导入Excel文件...'
+			loadingProgress.value = 0
+
 			sheet.config.zoom = 1
+			useMergedCellsHook.clearMergedCells()
 
 			// 等待 zoom 还原
 			await new Promise((resolve) => {
