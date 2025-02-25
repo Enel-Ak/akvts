@@ -917,6 +917,29 @@ const clearData = () => {
 	sheet.celldata.clear()
 }
 
+// 判断是否为移动设备
+const isMobile = () => {
+	// 检查是否支持触摸事件
+	const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+	// 检查屏幕宽度是否小于768px（平板/手机）
+	const isSmallScreen = window.innerWidth < 768
+
+	// 检查userAgent是否包含移动设备标识
+	const ua = navigator.userAgent.toLowerCase()
+	const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|windows phone/.test(ua)
+
+	return hasTouchSupport && (isSmallScreen || isMobileUA)
+}
+
+// 判断移动端是否横向
+const isLandscape = () => {
+	if (isMobile()) {
+		return window.innerWidth > window.innerHeight
+	}
+	return false
+}
+
 // 初始化
 onMounted(() => {
 	useSelectionRangeHook.setRange(0, 0, 0, 0)
@@ -965,9 +988,13 @@ defineExpose({
 })
 </script>
 <template>
-	<div class="air-sheet-component" :style="{height: containerHeight}">
+	<div
+		class="air-sheet-component"
+		:style="{height: containerHeight}"
+		:class="{mobile: isMobile()}"
+	>
 		<!-- 工具栏 -->
-		<div class="toolbar" :style="{}">
+		<div v-if="(isMobile() && isLandscape()) || !isMobile()" class="toolbar" :style="{}">
 			<div v-if="sheet.config.font" class="group font-layout h-full">
 				<div class="item font">
 					<!-- 字体 -->
@@ -1535,7 +1562,7 @@ defineExpose({
 		</div>
 
 		<!-- 状态栏 -->
-		<div class="statusbar" :style="{}">
+		<div v-if="(isMobile() && isLandscape()) || !isMobile()" class="statusbar" :style="{}">
 			<div class="statistics">
 				<span>行 = </span>
 				{{ sheet.config.rowCount }}
@@ -1591,6 +1618,12 @@ defineExpose({
 				<span>{{ loadingText }}</span>
 				<span v-if="loadingProgress !== -1">{{ loadingProgress }}%</span>
 			</div>
+		</div>
+
+		<!-- 移动端不是横向提醒 -->
+		<div class="mobile-landscape-notice" v-if="isMobile() && !isLandscape()">
+			<Icons icon-name="Rotate" size="58px" color="#fff"></Icons>
+			<span>此操作需要横向屏幕</span>
 		</div>
 	</div>
 </template>

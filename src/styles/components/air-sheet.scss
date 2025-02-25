@@ -499,81 +499,6 @@
 	}
 }
 
-.freeze-container {
-	position: fixed;
-	top: 0;
-	left: 0;
-	z-index: 100;
-	pointer-events: auto;
-	background: #fff;
-	will-change: transform;
-
-	.freeze-rows,
-	.freeze-cols,
-	.freeze-corner {
-		position: absolute;
-		overflow: hidden;
-		background: #fff;
-		will-change: transform;
-	}
-
-	.freeze-rows {
-		top: 0;
-		left: 0;
-		z-index: 101;
-		transition: transform 0.1s ease;
-	}
-
-	.freeze-cols {
-		top: 0;
-		left: 0;
-		z-index: 102;
-		transition: transform 0.1s ease;
-	}
-
-	.freeze-corner {
-		top: 0;
-		left: 0;
-		z-index: 103;
-	}
-
-	.freeze-line {
-		position: absolute;
-		z-index: 104;
-		pointer-events: none;
-		will-change: transform;
-
-		&--vertical {
-			width: 2px;
-			height: 100%;
-			background: linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
-			transition: transform 0.1s ease;
-		}
-
-		&--horizontal {
-			width: 100%;
-			height: 2px;
-			background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
-		}
-	}
-
-	.row {
-		display: flex;
-		align-items: center;
-	}
-
-	.cell {
-		display: flex;
-		align-items: center;
-		padding: 0 4px;
-		border-right: 1px solid #e0e0e0;
-		border-bottom: 1px solid #e0e0e0;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-}
-
 .btn {
 	border-top: none !important;
 }
@@ -700,6 +625,71 @@
 			width: 16px;
 			height: 16px;
 			margin-right: 8px;
+		}
+	}
+}
+
+.air-sheet-component.mobile {
+	.toolbar {
+		.group {
+			height: 38px;
+		}
+		.item {
+			justify-content: center;
+			span {
+				display: none;
+			}
+			&.font select {
+				width: 60px;
+			}
+		}
+
+		.border-merge {
+			left: calc(100% - 108px);
+		}
+	}
+	.mobile-landscape-notice {
+		@keyframes rotateMobile {
+			0% {
+				transform: rotate(0deg);
+			}
+			50% {
+				transform: rotate(45deg);
+			}
+			60% {
+				transform: rotate(0deg);
+			}
+			70% {
+				transform: rotate(35deg);
+			}
+			80% {
+				transform: rotate(0deg);
+			}
+			90% {
+				transform: rotate(25deg);
+			}
+			100% {
+				transform: rotate(0deg);
+			}
+		}
+		align-items: center;
+		background-color: rgba(0, 0, 0, 0.7);
+		color: #ffffff;
+		display: flex;
+		font-size: 20px;
+		flex-direction: column;
+		justify-content: center;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 999;
+		i {
+			animation: rotateMobile 1.5s linear infinite;
+		}
+		span {
+			padding: 30px 0 0 0;
 		}
 	}
 }
