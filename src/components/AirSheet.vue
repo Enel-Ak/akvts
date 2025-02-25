@@ -85,15 +85,15 @@ const sheet = reactive({
 		freeze: true, // 冻结
 
 		freezeCount: {
-			row: props.modelValue?.config.freezeCount.row || 0,
-			col: props.modelValue?.config.freezeCount.col || 0,
+			row: props.modelValue?.config?.freezeCount?.row || 0,
+			col: props.modelValue?.config?.freezeCount?.col || 0,
 		},
 		mergedCells: {},
 		lockCells: {},
 		cellStyle: {
-			...props.modelValue?.config.cellStyle,
+			...props.modelValue?.config?.cellStyle,
 		},
-		cellKeys: props.modelValue?.config.cellKeys || [],
+		cellKeys: props.modelValue?.config?.cellKeys || [],
 		rowCount: 0,
 		colCount: 0,
 	},
