@@ -1569,7 +1569,7 @@ defineExpose({
 
 		<!-- 状态栏 -->
 		<div
-			v-if="sheet.config.showStatusBar && ((isMobile() && isLandscape() || !isMobile())"
+			v-if="sheet.config.showStatusBar && ((isMobile() && isLandscape()) || !isMobile())"
 			class="statusbar"
 			:style="{}"
 		>
