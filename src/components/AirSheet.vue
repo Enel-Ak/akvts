@@ -62,6 +62,7 @@ const props = defineProps({
 // 保存数据
 const sheet = reactive({
 	config: {
+		showHorizontalScreen: true, // 移动端不是横向提醒
 		showToolbar: true, // 工具栏
 		showStatusBar: true, // 状态栏
 		font: true, // 字体
@@ -998,7 +999,7 @@ defineExpose({
 		<!-- 工具栏 -->
 		<div
 			v-if="sheet.config.showToolbar && ((isMobile() && isLandscape()) || !isMobile())"
-			class="toolbar)"
+			class="toolbar"
 			:style="{}"
 		>
 			<div v-if="sheet.config.font" class="group font-layout h-full">
@@ -1631,7 +1632,10 @@ defineExpose({
 		</div>
 
 		<!-- 移动端不是横向提醒 -->
-		<div class="mobile-landscape-notice" v-if="isMobile() && !isLandscape()">
+		<div
+			class="mobile-landscape-notice"
+			v-if="sheet.config.showHorizontalScreen && isMobile() && !isLandscape()"
+		>
 			<Icons icon-name="Rotate" size="58px" color="#fff"></Icons>
 			<span>此操作需要横向屏幕</span>
 		</div>
