@@ -88,15 +88,17 @@ const sheet = reactive({
 		freeze: true, // 冻结
 
 		freezeCount: {
-			row: props.modelValue?.config?.freezeCount?.row || 0,
-			col: props.modelValue?.config?.freezeCount?.col || 0,
+			row: 0,
+			col: 0,
 		},
+
 		mergedCells: {},
 		lockCells: {},
-		cellStyle: {
-			...props.modelValue?.config?.cellStyle,
-		},
-		cellKeys: props.modelValue?.config?.cellKeys || [],
+		cellStyle: {},
+		cellKeys: [],
+
+		...props.modelValue?.config,
+
 		rowCount: 0,
 		colCount: 0,
 	},
@@ -994,7 +996,7 @@ defineExpose({
 	<div
 		class="air-sheet-component"
 		:style="{height: containerHeight}"
-		:class="{mobile: isMobile()}"
+		:class="{mobile: isMobile(), btn: !sheet.config.showToolbar}"
 	>
 		<!-- 工具栏 -->
 		<div

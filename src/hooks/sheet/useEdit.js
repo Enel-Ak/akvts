@@ -17,7 +17,14 @@ export const useEdit = (id, config) => {
 	}
 
 	const startEdit = (e, cell = useSelectionRangeHook.getStartCell()) => {
+		console.log(123, sheet.config.edit)
 		if (!enter || !cell) return
+
+		// 不允许编辑
+		if (!sheet.config.edit) {
+			ElMessage.warning('当前表格不支持编辑')
+			return
+		}
 
 		// 检查是否有组合键按下
 		if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
@@ -39,12 +46,6 @@ export const useEdit = (id, config) => {
 
 		const rowIndex = cell.row ?? cell.rowIndex
 		const colIndex = cell.col ?? cell.colIndex
-
-		// 不允许编辑
-		if (!sheet.config.edit) {
-			ElMessage.warning('当前表格不支持编辑')
-			return
-		}
 
 		// 不允许编辑锁定的单元格
 		if (sheet.config.lockCells[`${rowIndex}-${colIndex}`]) {

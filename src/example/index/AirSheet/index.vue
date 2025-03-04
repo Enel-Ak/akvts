@@ -4,6 +4,8 @@ import {onMounted, ref} from 'vue'
 const sheetRef = ref()
 const config = {
 	config: {
+		// showToolbar: false,
+		// edit: false,
 		freezeCount: {
 			row: 1,
 			col: 1,
