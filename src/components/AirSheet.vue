@@ -62,6 +62,8 @@ const props = defineProps({
 // 保存数据
 const sheet = reactive({
 	config: {
+		showToolbar: true, // 工具栏
+		showStatusBar: true, // 状态栏
 		font: true, // 字体
 		color: true, // 颜色
 		fill: true, // 填充
@@ -994,7 +996,11 @@ defineExpose({
 		:class="{mobile: isMobile()}"
 	>
 		<!-- 工具栏 -->
-		<div v-if="(isMobile() && isLandscape()) || !isMobile()" class="toolbar" :style="{}">
+		<div
+			v-if="sheet.config.showToolbar && ((isMobile() && isLandscape()) || !isMobile())"
+			class="toolbar)"
+			:style="{}"
+		>
 			<div v-if="sheet.config.font" class="group font-layout h-full">
 				<div class="item font">
 					<!-- 字体 -->
@@ -1562,7 +1568,11 @@ defineExpose({
 		</div>
 
 		<!-- 状态栏 -->
-		<div v-if="(isMobile() && isLandscape()) || !isMobile()" class="statusbar" :style="{}">
+		<div
+			v-if="sheet.config.showStatusBar && ((isMobile() && isLandscape() || !isMobile())"
+			class="statusbar"
+			:style="{}"
+		>
 			<div class="statistics">
 				<span>行 = </span>
 				{{ sheet.config.rowCount }}
