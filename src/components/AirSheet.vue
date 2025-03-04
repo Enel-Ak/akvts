@@ -63,7 +63,7 @@ const props = defineProps({
 const sheet = reactive({
 	config: {
 		showHorizontalScreen: true, // 移动端不是横向提醒
-		showToolbar: true, // 工具栏
+		showToolBar: true, // 工具栏
 		showStatusBar: true, // 状态栏
 		font: true, // 字体
 		color: true, // 颜色
@@ -996,11 +996,11 @@ defineExpose({
 	<div
 		class="air-sheet-component"
 		:style="{height: containerHeight}"
-		:class="{mobile: isMobile(), btn: !sheet.config.showToolbar}"
+		:class="{mobile: isMobile(), btn: !sheet.config.showToolBar}"
 	>
 		<!-- 工具栏 -->
 		<div
-			v-if="sheet.config.showToolbar && ((isMobile() && isLandscape()) || !isMobile())"
+			v-if="sheet.config.showToolBar && ((isMobile() && isLandscape()) || !isMobile())"
 			class="toolbar"
 			:style="{}"
 		>
