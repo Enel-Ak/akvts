@@ -867,6 +867,7 @@ export const useTools = (config) => {
 	// air转luckysheet
 	const airToLucky = async (sheet) => {
 		const merge = {}
+		const borderInfo = []
 		const celldata = []
 
 		// 合并单元格
@@ -893,6 +894,48 @@ export const useTools = (config) => {
 					if (cellstyle?.bg) {
 						data.v.bg = cellstyle?.bg
 					}
+
+					// 边框
+					if (
+						cellstyle?.b ||
+						cellstyle?.bt ||
+						cellstyle?.bb ||
+						cellstyle?.bl ||
+						cellstyle?.br
+					) {
+						let border = {
+							rangeType: 'cell',
+							value: {
+								row_index: rowIndex,
+								col_index: colIndex,
+							},
+						}
+						if (cellstyle?.b) {
+							Object.assign(border.value, {
+								l: {style: 1, color: 'rgb(0, 0, 0)'},
+								r: {style: 1, color: 'rgb(0, 0, 0)'},
+								t: {style: 1, color: 'rgb(0, 0, 0)'},
+								b: {style: 1, color: 'rgb(0, 0, 0)'},
+							})
+						} else if (cellstyle?.bt) {
+							Object.assign(border.value, {
+								t: {style: 1, color: 'rgb(0, 0, 0)'},
+							})
+						} else if (cellstyle?.bb) {
+							Object.assign(border.value, {
+								b: {style: 1, color: 'rgb(0, 0, 0)'},
+							})
+						} else if (cellstyle?.bl) {
+							Object.assign(border.value, {
+								l: {style: 1, color: 'rgb(0, 0, 0)'},
+							})
+						} else if (cellstyle?.br) {
+							Object.assign(border.value, {
+								r: {style: 1, color: 'rgb(0, 0, 0)'},
+							})
+						}
+						borderInfo.push(border)
+					}
 				}
 				cells.push(data)
 			})
@@ -902,6 +945,7 @@ export const useTools = (config) => {
 
 		return Promise.resolve({
 			merge,
+			borderInfo,
 			celldata,
 		})
 	}
