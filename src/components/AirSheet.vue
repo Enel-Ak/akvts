@@ -105,6 +105,16 @@ const sheet = reactive({
 	celldata: new Map(),
 })
 
+watch(
+	() => props.modelValue,
+	(newVal) => {
+		Object.assign(sheet.config, newVal?.config)
+	},
+	{
+		deep: true,
+	}
+)
+
 const fns = ref(props.modelValue?.fns || [])
 const limit = 30000
 

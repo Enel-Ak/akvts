@@ -2,7 +2,7 @@
 import {onMounted, ref} from 'vue'
 
 const sheetRef = ref()
-const config = {
+const config = ref({
 	config: {
 		// showToolbar: false,
 		// edit: false,
@@ -19,7 +19,7 @@ const config = {
 		})
 	}),
 	// celldata: [],
-}
+})
 
 const config2 = {
 	celldata: Array.from({length: 100}, (_, index) => {
@@ -52,6 +52,12 @@ onMounted(() => {
 	// sheetRef.value.setMergeCell(5, 4, 4, 4)
 	// sheetRef.value.setMergeCell(1, 5, 4, 4)
 	// sheetRef.value.setCellValue(0, 0, 'hello')
+
+	config.value.config.cellStyle = {
+		'1-1': {
+			bg: '#f00',
+		},
+	}
 	setTimeout(() => {
 		// sheetRef.value.setMergeCell(0, 0, 2, 4)
 		// sheetRef.value.setRange(0, 0, 2, 4)
