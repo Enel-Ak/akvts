@@ -1,7 +1,7 @@
 import {useStyle} from './useStyle'
 export const useMergedCells = (config) => {
 	// 基础配置
-	const {sheet, useResizeHook, renderRange, rowHeight, colWidth} = config
+	const {sheet, useResizeHook, renderRange, rowHeight, colWidth, useSelectionRangeHook} = config
 
 	// 存储合并单元格信息
 	let mergedCells = new Map()

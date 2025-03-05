@@ -13,7 +13,7 @@ const config = ref({
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
 	},
-	celldata: Array.from({length: 300000}, (_, r) => {
+	celldata: Array.from({length: 1000}, (_, r) => {
 		return Array.from({length: 10}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
 		})
@@ -67,7 +67,7 @@ onMounted(() => {
 	// config.value.celldata[0][0] = '123'
 
 	setTimeout(() => {
-		// sheetRef.value.setMergeCell(0, 0, 2, 4)
+		sheetRef.value.setMergeCell(0, 0, 2, 4)
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
 		// config.value.celldata[0][0] = '123'

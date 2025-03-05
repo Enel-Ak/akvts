@@ -969,9 +969,7 @@ const isLandscape = () => {
 }
 
 // 初始化
-onMounted(() => {
-	useSelectionRangeHook.setRange(0, 0, 0, 0)
-})
+onMounted(() => {})
 
 onActivated(() => {
 	init()
