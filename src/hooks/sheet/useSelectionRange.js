@@ -452,7 +452,15 @@ export const useSelectionRange = (containerId, config = {}) => {
 	}
 
 	// 设置选区范围
-	const setRange = async (startRow, startCol, endRow = 0, endCol = 0, force = false) => {
+	const setRange = async (
+		startRow,
+		startCol,
+		endRow = 0,
+		endCol = 0,
+		force = false,
+		callback = null,
+		isClear = true
+	) => {
 		// 检查是否在合并单元格内
 		const mergedCell = useMergedCellsHook.findMergedCell?.(startRow, startCol)
 		if (mergedCell && !force) {
@@ -480,6 +488,12 @@ export const useSelectionRange = (containerId, config = {}) => {
 		}
 
 		console.log('设置选区范围', ranged.value)
+		setTimeout(() => {
+			if (typeof callback === 'function') {
+				callback(ranged.value)
+				isClear && clear()
+			}
+		}, 16)
 	}
 
 	// 根据鼠标位置获取单元格

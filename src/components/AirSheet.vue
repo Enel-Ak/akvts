@@ -107,7 +107,9 @@ const sheet = reactive({
 
 watch(
 	() => props.modelValue,
-	(newVal) => updateModeValue(newVal),
+	(newVal) => {
+		updateModeValue(newVal)
+	},
 	{deep: true}
 )
 

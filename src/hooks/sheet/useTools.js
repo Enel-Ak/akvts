@@ -164,7 +164,7 @@ export const useTools = (config) => {
 		setCellStyles(
 			'bc',
 			color,
-			(r, c, {startRow, startCol, endRow, endCol}) => {
+			(r, c) => {
 				const cellStyle = sheet.config.cellStyle[`${r}-${c}`]
 
 				if (
@@ -753,6 +753,9 @@ export const useTools = (config) => {
 				const cellStyle = {}
 				const mergedCells = {}
 
+				let processed = 0
+				const batchSize = 3000
+
 				if (config) {
 					// 合并单元格处理
 					if (config.merge) {
@@ -766,26 +769,47 @@ export const useTools = (config) => {
 
 					// 边框处理
 					if (config.borderInfo) {
-						let startRow = 0
-						let startCol = 0
-						let endRow = 0
-						let endCol = 0
+						// 创建一个映射来跟踪每个单元格
+						const cellMap = {}
 						config.borderInfo.forEach((item) => {
-							startRow = Math.min(startRow, item.value.row_index)
-							startCol = Math.min(startCol, item.value.col_index)
-							endRow = Math.max(endRow, item.value.row_index)
-							endCol = Math.max(endCol, item.value.col_index)
+							const r = item.value.row_index
+							const c = item.value.col_index
+							cellMap[`${r}-${c}`] = true
 						})
-						useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol)
-						setTimeout(() => {
-							setBorder()
-							useSelectionRangeHook.clear()
-						}, 0)
+
+						config.borderInfo.forEach((item) => {
+							const r = item.value.row_index
+							const c = item.value.col_index
+
+							if (!cellStyle[`${r}-${c}`]) {
+								cellStyle[`${r}-${c}`] = {}
+							}
+
+							// 使用精确的边框定义，指定每个边的边框
+							const borderTop = !cellMap[`${r - 1}-${c}`]
+							const borderRight = !cellMap[`${r}-${c + 1}`]
+							const borderBottom = !cellMap[`${r + 1}-${c}`]
+							const borderLeft = !cellMap[`${r}-${c - 1}`]
+
+							// 设置每个边的边框
+							if (borderTop) {
+								cellStyle[`${r}-${c}`].bt = true
+							}
+
+							if (borderLeft) {
+								cellStyle[`${r}-${c}`].bl = true
+							}
+
+							cellStyle[`${r}-${c}`].br = true
+							cellStyle[`${r}-${c}`].bb = true
+
+							// 设置边框颜色（如果需要）
+							if (borderTop || borderRight || borderBottom || borderLeft) {
+								// cellStyle[`${r}-${c}`].bc = '#000000' // 边框颜色
+							}
+						})
 					}
 				}
-
-				let processed = 0
-				const batchSize = 3000
 
 				function processBatch() {
 					const start = performance.now()
