@@ -777,7 +777,10 @@ export const useTools = (config) => {
 							endCol = Math.max(endCol, item.value.col_index)
 						})
 						useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol)
-						setTimeout(() => setBorder(), 0)
+						setTimeout(() => {
+							setBorder()
+							useSelectionRangeHook.clear()
+						}, 0)
 					}
 				}
 
@@ -820,7 +823,7 @@ export const useTools = (config) => {
 					} else {
 						loadingProgress.value = 100
 						loading.value = false
-
+						renderRange()
 						resolve({
 							config: {
 								cellStyle,
