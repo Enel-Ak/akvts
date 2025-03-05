@@ -745,7 +745,7 @@ export const useTools = (config) => {
 	const setFreeze = (r, c) => {}
 
 	// luckysheet转air
-	const luckyToAir = async (config, data) => {
+	const luckyToAir = (config, data) => {
 		return new Promise((resolve, reject) => {
 			try {
 				const total = data.length
@@ -777,10 +777,7 @@ export const useTools = (config) => {
 							endCol = Math.max(endCol, item.value.col_index)
 						})
 						useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol)
-						setTimeout(() => {
-							setBorder()
-							useSelectionRangeHook.clear()
-						}, 0)
+						setTimeout(() => setBorder(), 0)
 					}
 				}
 
@@ -823,6 +820,7 @@ export const useTools = (config) => {
 					} else {
 						loadingProgress.value = 100
 						loading.value = false
+
 						resolve({
 							config: {
 								cellStyle,
