@@ -754,6 +754,7 @@ export const useTools = (config) => {
 				const mergedCells = {}
 
 				if (config) {
+					// 合并单元格处理
 					if (config.merge) {
 						Object.entries(config.merge).forEach(([key, value]) => {
 							mergedCells[`${value.r}-${value.c}`] = {
@@ -761,6 +762,25 @@ export const useTools = (config) => {
 								colspan: value.cs,
 							}
 						})
+					}
+
+					// 边框处理
+					if (config.borderInfo) {
+						let startRow = 0
+						let startCol = 0
+						let endRow = 0
+						let endCol = 0
+						config.borderInfo.forEach((item) => {
+							startRow = Math.min(startRow, item.value.row_index)
+							startCol = Math.min(startCol, item.value.col_index)
+							endRow = Math.max(endRow, item.value.row_index)
+							endCol = Math.max(endCol, item.value.col_index)
+						})
+						useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol)
+						setTimeout(() => {
+							setBorder()
+							useSelectionRangeHook.clear()
+						}, 0)
 					}
 				}
 

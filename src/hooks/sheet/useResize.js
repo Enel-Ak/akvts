@@ -256,6 +256,10 @@ export const useResize = (config = {}) => {
 		})
 	}
 
+	const clear = () => {
+		renderRequests.clear()
+	}
+
 	const destroy = () => {
 		worker.terminate()
 		renderRequests.clear()
@@ -302,6 +306,7 @@ export const useResize = (config = {}) => {
 		setColWidth,
 		rowHeights,
 		colWidths,
+		clear,
 		destroy,
 	}
 }

@@ -1428,7 +1428,7 @@ defineExpose({
 									}"
 								>
 									<div
-										v-html="useEditHook.formattedValue(cell.value)"
+										v-html="useEditHook.formattedValue(cell.value, cell)"
 										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
 										:class="{
 											merged: isMergedCellStart(cell),
@@ -1444,7 +1444,7 @@ defineExpose({
 								</div>
 								<div
 									v-else
-									v-html="useEditHook.formattedValue(cell.value)"
+									v-html="useEditHook.formattedValue(cell.value, cell)"
 									:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
 									:class="{
 										merged: isMergedCellStart(cell),

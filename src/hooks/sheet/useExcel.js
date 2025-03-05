@@ -147,6 +147,16 @@ export const useExcel = (config = {}) => {
 			loadingProgress.value = 0
 
 			sheet.config.zoom = 1
+			sheet.config.freezeCount = {
+				row: 0,
+				col: 0,
+			}
+			sheet.config.mergedCells = {}
+			sheet.config.lockCells = {}
+			sheet.config.cellStyle = {}
+
+			useResizeHook.clear()
+			useSelectionRangeHook.setRange(0, 0, 0, 0)
 			useMergedCellsHook.clearMergedCells()
 
 			// 等待 zoom 还原

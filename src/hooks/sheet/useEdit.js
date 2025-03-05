@@ -77,32 +77,52 @@ export const useEdit = (id, config) => {
 		cellEl.focus()
 		editing.value = true
 
-		const setRowHeight = async () => {
-			const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
+		const blur = () => {
+			// if (cellEl.innerText === '') {
+			// 	cellEl.innerText = originalValue
+			// }
+			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
+			cellEl.removeAttribute('contenteditable')
+			cellEl.removeEventListener('blur', blur)
+			editing.value = false
+			setTimeout(() => setRowHeight(rowIndex, colIndex), 0)
+		}
 
-			// 计算实际内容高度
-			let contentHeight = 0
-			for (const node of cellEl.childNodes) {
-				contentHeight += node.offsetHeight
-			}
+		cellEl.addEventListener('blur', blur)
+	}
 
-			// 如果是合并单元格
-			if (merge) {
-				// 获取合并区域内所有行的当前高度
-				const rowHeights = Array(merge.rowspan)
-					.fill(0)
-					.map((_, index) => useResizeHook.getRowHeight(merge.row + index))
+	const setRowHeight = async (rowIndex, colIndex, needRender = true, needSetRange = true) => {
+		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
+		if (!cellEl) return
 
-				const mergedTotalHeight = rowHeights.reduce((total, height) => total + height, 0)
+		const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
 
-				// 如果内容高度超过合并单元格总高度
-				if (contentHeight > mergedTotalHeight) {
-					// 计算需要增加的高度
-					const additionalHeight = contentHeight - mergedTotalHeight
-					// 将额外高度添加到第一行
-					const newFirstRowHeight = rowHeights[0] + additionalHeight
-					useResizeHook.setRowHeight(merge.row, newFirstRowHeight)
+		// 计算实际内容高度
+		let contentHeight = 0
+		for (const node of cellEl.childNodes) {
+			contentHeight += node.offsetHeight
+		}
 
+		if (contentHeight < useResizeHook.getRowHeight(rowIndex)) return
+
+		// 如果是合并单元格
+		if (merge) {
+			// 获取合并区域内所有行的当前高度
+			const rowHeights = Array(merge.rowspan)
+				.fill(0)
+				.map((_, index) => useResizeHook.getRowHeight(merge.row + index))
+
+			const mergedTotalHeight = rowHeights.reduce((total, height) => total + height, 0)
+
+			// 如果内容高度超过合并单元格总高度
+			if (contentHeight > mergedTotalHeight) {
+				// 计算需要增加的高度
+				const additionalHeight = contentHeight - mergedTotalHeight
+				// 将额外高度添加到第一行
+				const newFirstRowHeight = rowHeights[0] + additionalHeight
+				useResizeHook.setRowHeight(merge.row, newFirstRowHeight)
+
+				if (needSetRange) {
 					await nextTick()
 					useSelectionRangeHook.setRange(
 						merge.row,
@@ -112,38 +132,30 @@ export const useEdit = (id, config) => {
 						true
 					)
 				}
-			} else {
-				// 非合并单元格的情况
-				if (contentHeight > useResizeHook.getRowHeight(rowIndex)) {
-					useResizeHook.setRowHeight(rowIndex, contentHeight)
-					await nextTick()
-					useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
-				}
 			}
-
-			renderRange()
+		} else if (contentHeight > useResizeHook.getRowHeight(rowIndex)) {
+			// 非合并单元格的情况
+			useResizeHook.setRowHeight(rowIndex, contentHeight)
+			if (needSetRange) {
+				await nextTick()
+				useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
+			}
 		}
 
-		const blur = () => {
-			// if (cellEl.innerText === '') {
-			// 	cellEl.innerText = originalValue
-			// }
-			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
-			cellEl.removeAttribute('contenteditable')
-			cellEl.removeEventListener('blur', blur)
-			editing.value = false
-			setTimeout(() => setRowHeight(), 0)
-		}
-
-		cellEl.addEventListener('blur', blur)
+		needRender && renderRange()
 	}
 
-	const formattedValue = (val) => {
+	const formattedValue = (val, cell) => {
 		if (!val) return ''
 		let html = ''
-		const arr = val.split('\n')
+		const arr = val.toString().split('\n')
 		for (let item of arr) {
 			html += `<div>${item}</div>`
+		}
+
+		//动态处理高度
+		if ((arr.length > 1 || arr[0].length > 10) && cell) {
+			setTimeout(() => setRowHeight(cell.rowIndex, cell.colIndex, false, false), 0)
 		}
 		return html
 	}

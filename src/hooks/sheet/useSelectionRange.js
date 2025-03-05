@@ -223,6 +223,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 
 	// 计算选区序号和字母样式
 	const setSelectionClass = (row, col) => {
+		if (!ranged.value) return
+
 		const rowIndex = row?.rowIndex
 		const colIndex = col?.colIndex
 
@@ -576,7 +578,9 @@ export const useSelectionRange = (containerId, config = {}) => {
 					// 非合并单元格正常计算平均值
 					const rowData = sheet.celldata.get(row)
 					if (rowData) {
-						const cellData = rowData[col]?.trim()
+						console.log(111, rowData, col)
+
+						const cellData = rowData[col]?.toString().trim()
 						if (cellData && !isNaN(cellData)) {
 							sum += parseFloat(cellData)
 							values.push(parseFloat(cellData))
