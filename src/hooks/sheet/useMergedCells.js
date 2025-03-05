@@ -62,8 +62,13 @@ export const useMergedCells = (config) => {
 	}
 
 	// 设置合并单元格
-	const setMergeCells = (cellMap) => {
-		mergedCells = cellMap
+	const setMergeCells = (cellMap, isReplace = true) => {
+		if (isReplace) {
+			mergedCells = cellMap
+		} else {
+			mergedCells = new Map([...mergedCells, ...cellMap])
+		}
+
 		sheet.config.mergedCells = getMergedCells()
 	}
 

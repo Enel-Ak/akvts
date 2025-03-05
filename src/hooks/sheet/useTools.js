@@ -6,6 +6,7 @@ export const useTools = (config) => {
 		limit,
 		loading,
 		loadingText,
+		loadingProgress,
 		containerRef,
 		useExcelHook,
 		useResizeHook,
@@ -743,6 +744,123 @@ export const useTools = (config) => {
 	const freezeCol = ref(1)
 	const setFreeze = (r, c) => {}
 
+	// luckysheet转air
+	const luckyToAir = async (config, data) => {
+		return new Promise((resolve, reject) => {
+			try {
+				const total = data.length
+				const celldata = []
+				const cellStyle = {}
+				const mergedCells = {}
+
+				if (config) {
+					if (config.merge) {
+						Object.entries(config.merge).forEach(([key, value]) => {
+							mergedCells[`${value.r}-${value.c}`] = {
+								rowspan: value.rs,
+								colspan: value.cs,
+							}
+						})
+					}
+				}
+
+				let processed = 0
+				const batchSize = 3000
+
+				function processBatch() {
+					const start = performance.now()
+					let count = 0
+
+					while (
+						processed < total &&
+						count < batchSize &&
+						performance.now() - start < 16
+					) {
+						const item = data[processed]
+
+						if (!celldata[item.r]) {
+							celldata[item.r] = []
+						}
+						celldata[item.r][item.c] = item.v.v
+
+						// 背景
+						if (item?.v?.bg) {
+							if (!cellStyle[item.r + '-' + item.c]) {
+								cellStyle[item.r + '-' + item.c] = {}
+							}
+							cellStyle[item.r + '-' + item.c]['bg'] = item.v.bg
+						}
+
+						processed++
+						count++
+					}
+
+					loadingText.value = `数据转换中...`
+					loadingProgress.value = Math.floor((processed / total) * 100)
+
+					if (processed < total) {
+						requestAnimationFrame(processBatch)
+					} else {
+						loadingProgress.value = 100
+						loading.value = false
+						resolve({
+							config: {
+								cellStyle,
+								mergedCells,
+							},
+							celldata,
+						})
+					}
+				}
+				requestAnimationFrame(processBatch)
+			} catch (e) {
+				reject(e)
+			}
+		})
+	}
+
+	// air转luckysheet
+	const airToLucky = async (sheet) => {
+		const merge = {}
+		const celldata = []
+
+		// 合并单元格
+		Object.entries(sheet.config.mergedCells).forEach(([key, value]) => {
+			const [r, c] = key.split('-').map(Number)
+			merge[`${r}_${c}`] = {
+				r,
+				c,
+				rs: value.rowspan,
+				cs: value.colspan,
+			}
+		})
+
+		// 单元格数据
+		loading.value = true
+		loadingText.value = '数据转换中...'
+		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+			const cells = []
+			rowData.forEach((cell, colIndex) => {
+				const data = {r: rowIndex, c: colIndex, v: {v: cell}}
+				const cellstyle = sheet.config.cellStyle[rowIndex + '-' + colIndex]
+				if (cellstyle) {
+					// 背景
+					if (cellstyle?.bg) {
+						data.v.bg = cellstyle?.bg
+					}
+				}
+				cells.push(data)
+			})
+			celldata.push(cells)
+		})
+		loading.value = false
+
+		return Promise.resolve({
+			merge,
+			celldata,
+		})
+	}
+
 	return {
 		fonts,
 		fontSize,
@@ -783,5 +901,8 @@ export const useTools = (config) => {
 
 		setLocked,
 		setUnlocked,
+
+		luckyToAir,
+		airToLucky,
 	}
 }

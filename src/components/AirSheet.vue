@@ -107,13 +107,8 @@ const sheet = reactive({
 
 watch(
 	() => props.modelValue,
-	(newVal) => {
-		Object.assign(sheet.config, newVal?.config)
-		initialData()
-	},
-	{
-		deep: true,
-	}
+	(newVal) => updateModeValue(newVal),
+	{deep: true}
 )
 
 const fns = ref(props.modelValue?.fns || [])
@@ -128,36 +123,52 @@ const initialData = () => {
 
 	if (total >= limit) {
 		loading.value = true
-		loadingProgress.value = -1
+		loadingProgress.value = 0
 		loadingText.value = '数据量较大, 请稍后...'
 	}
 
-	const batchSize = 3000
 	let processed = 0
+	const batchSize = 3000
 
 	function processBatch() {
 		const start = performance.now()
+		let count = 0
 
-		while (processed < total && performance.now() - start < 16) {
+		while (processed < total && count < batchSize && performance.now() - start < 16) {
 			const row = celldata[processed]
 			if (row) {
 				sheet.celldata.set(processed, row)
 			}
 			processed++
+			count++
 		}
 
+		loadingText.value = `正在加载数据...`
+		loadingProgress.value = Math.floor((processed / total) * 100)
+
 		if (processed < total) {
-			if (processed % batchSize === 0) {
-				loadingText.value = `正在加载数据...`
-				loadingProgress.value = Math.floor((processed / total) * 100)
-			}
 			requestAnimationFrame(processBatch)
 		} else {
-			loading.value = false
-			useHistoryHook.saveHistory()
+			loadingText.value = '加载完成'
+			loadingProgress.value = 100
+			setTimeout(() => {
+				loading.value = false
+				useHistoryHook.saveHistory()
+			}, 500)
 		}
 	}
 	requestAnimationFrame(processBatch)
+}
+
+// sheet 配置变更时
+const updateModeValue = (newVal) => {
+	Object.assign(sheet.config, newVal?.config)
+	// 合并单元格处理
+	if (newVal?.config?.mergedCells) {
+		const mergeCells = new Map(Object.entries(newVal.config.mergedCells))
+		useMergedCellsHook.setMergeCells(mergeCells, false)
+	}
+	initialData()
 }
 
 // 容器
@@ -263,6 +274,7 @@ const useToolsHook = useTools({
 	limit,
 	loading,
 	loadingText,
+	loadingProgress,
 	containerRef,
 	useExcelHook,
 	useResizeHook,
@@ -995,12 +1007,10 @@ defineExpose({
 			colspan,
 		})
 	},
-	getSheet: () => {
-		return JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]}))
-	},
-	getSheetData: () => {
-		return JSON.parse(JSON.stringify([...sheet.celldata]))
-	},
+	getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
+	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+	luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
+	airToLucky: async () => await useToolsHook.airToLucky(sheet),
 })
 </script>
 <template>

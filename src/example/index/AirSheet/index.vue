@@ -13,7 +13,7 @@ const config = ref({
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
 	},
-	celldata: Array.from({length: 1000}, (_, r) => {
+	celldata: Array.from({length: 300000}, (_, r) => {
 		return Array.from({length: 10}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
 		})
@@ -58,12 +58,40 @@ onMounted(() => {
 			bg: '#f00',
 		},
 	}
+	config.value.config.mergedCells = {
+		'1-3': {
+			rowspan: 2,
+			colspan: 2,
+		},
+	}
+	// config.value.celldata[0][0] = '123'
+
 	setTimeout(() => {
 		// sheetRef.value.setMergeCell(0, 0, 2, 4)
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
-		config.value.celldata[0][0] = '123'
-	}, 1000)
+		// config.value.celldata[0][0] = '123'
+		// sheetRef.value.airToLucky().then((res) => {
+		// 	console.log(99, res)
+		// })
+		// sheetRef.value
+		// 	.luckyToAir(
+		// 		{
+		// 			merge: {
+		// 				'4_4': {r: 4, c: 4, rs: 2, cs: 2},
+		// 			},
+		// 		},
+		// 		[
+		// 			{r: 0, c: 0, v: {v: '123'}},
+		// 			{r: 0, c: 1, v: {v: '3123'}},
+		// 		]
+		// 	)
+		// 	.then((res) => {
+		// 		console.log(99, res)
+		// 		config.value.config = res.config
+		// 		config.value.celldata = res.celldata
+		// 	})
+	}, 5000)
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
 
