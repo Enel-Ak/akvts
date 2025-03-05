@@ -62,6 +62,7 @@ onMounted(() => {
 		// sheetRef.value.setMergeCell(0, 0, 2, 4)
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
+		config.value.celldata[0][0] = '123'
 	}, 1000)
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })

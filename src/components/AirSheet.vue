@@ -109,6 +109,7 @@ watch(
 	() => props.modelValue,
 	(newVal) => {
 		Object.assign(sheet.config, newVal?.config)
+		initialData()
 	},
 	{
 		deep: true,
