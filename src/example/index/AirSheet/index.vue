@@ -58,12 +58,12 @@ onMounted(() => {
 			bg: '#f00',
 		},
 	}
-	config.value.config.mergedCells = {
-		'1-3': {
-			rowspan: 2,
-			colspan: 2,
-		},
-	}
+	// config.value.config.mergedCells = {
+	// 	'1-3': {
+	// 		rowspan: 2,
+	// 		colspan: 2,
+	// 	},
+	// }
 	// config.value.celldata[0][0] = '123'
 
 	setTimeout(() => {

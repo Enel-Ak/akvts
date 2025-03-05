@@ -17,7 +17,6 @@ export const useEdit = (id, config) => {
 	}
 
 	const startEdit = (e, cell = useSelectionRangeHook.getStartCell()) => {
-		console.log(123, sheet.config.edit)
 		if (!enter || !cell) return
 
 		// 不允许编辑
