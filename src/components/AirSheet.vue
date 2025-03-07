@@ -991,6 +991,26 @@ const setSelectionRange = () => {
 		return
 	}
 
+	if (r < 1) {
+		ElMessage.error('开始行不能小于1')
+		return
+	}
+
+	if (rr > sheet.config.rowCount) {
+		ElMessage.error('结束行不能大于总行数')
+		return
+	}
+
+	if (c < 1) {
+		ElMessage.error('开始列不能小于1')
+		return
+	}
+
+	if (cc > sheet.config.colCount) {
+		ElMessage.error('结束列不能大于总列数')
+		return
+	}
+
 	useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
 }
 
