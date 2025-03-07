@@ -115,6 +115,12 @@ watch(
 
 const fns = ref(props.modelValue?.fns || [])
 const limit = 30000
+const selectionRange = ref({
+	r: 0,
+	c: 0,
+	rr: 0,
+	cc: 0,
+})
 
 // 初始数据处理
 const initialData = () => {
@@ -962,6 +968,48 @@ const isMobile = () => {
 	return hasTouchSupport && (isSmallScreen || isMobileUA)
 }
 
+// 移动端设置框选
+const setSelectionRange = () => {
+	const {r, rr, c, cc} = selectionRange.value
+	if (r > rr) {
+		ElMessage.error('开始行不能大于结束行')
+		return
+	}
+
+	if (rr < r) {
+		ElMessage.error('结束行不能小于开始行')
+		return
+	}
+
+	if (c > cc) {
+		ElMessage.error('开始列不能大于结束列')
+		return
+	}
+
+	if (cc < c) {
+		ElMessage.error('结束列不能小于开始列')
+		return
+	}
+
+	useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
+}
+
+watch(
+	() => useSelectionRangeHook?.ranged,
+	(newVal) => {
+		if (newVal) {
+			const {start, end} = newVal
+			selectionRange.value = {
+				r: start.row + 1,
+				rr: end.row + 1,
+				c: start.col + 1,
+				cc: end.col + 1,
+			}
+		}
+	},
+	{deep: true}
+)
+
 // 判断移动端是否横向
 const isLandscape = () => {
 	if (isMobile()) {
@@ -974,6 +1022,13 @@ const isLandscape = () => {
 onMounted(() => {
 	setTimeout(() => {
 		useSelectionRangeHook.setRange(0, 0, 0, 0)
+		const {start, end} = useSelectionRangeHook.ranged
+		selectionRange.value = {
+			r: start.row + 1,
+			c: start.col + 1,
+			rr: end.row + 1,
+			cc: end.col + 1,
+		}
 	}, 0)
 })
 
@@ -1637,6 +1692,30 @@ defineExpose({
 			<!-- 滚动渲染提示, 数据小于限制时显示 -->
 			<div class="scroll-tip" v-if="!lastScroll && sheet.config.rowCount < limit">
 				<Icons icon-name="Loading" class="loading-animation"></Icons>
+			</div>
+		</div>
+
+		<!-- 移动端设置框选 -->
+		<div v-if="isMobile() && sheet.config.edit" class="mobile-selection">
+			<div>
+				开始行<input type="number" v-model="selectionRange.r" @change="setSelectionRange" />
+			</div>
+			<div>
+				结束行<input
+					type="number"
+					v-model="selectionRange.rr"
+					@change="setSelectionRange"
+				/>
+			</div>
+			<div>
+				开始列<input type="number" v-model="selectionRange.c" @change="setSelectionRange" />
+			</div>
+			<div>
+				结束列<input
+					type="number"
+					v-model="selectionRange.cc"
+					@change="setSelectionRange"
+				/>
 			</div>
 		</div>
 

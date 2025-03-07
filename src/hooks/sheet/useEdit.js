@@ -61,6 +61,13 @@ export const useEdit = (id, config) => {
 
 		cellEl.setAttribute('contenteditable', 'true')
 
+		// 体验优化而已
+		if (cellEl.innerText === '') {
+			cellEl.style.lineHeight = useResizeHook.getRowHeight(rowIndex) - 1 + 'px'
+		} else {
+			cellEl.style.lineHeight = 'inherit'
+		}
+
 		// 未双击, 直接输入清空所有内容
 		if (cell.rowIndex === undefined) {
 			cellEl.innerText = ''
