@@ -671,7 +671,25 @@
 		.border-merge {
 			left: calc(100% - 108px);
 		}
+
+		&.mobile {
+			flex-wrap: nowrap;
+			overflow: hidden;
+			overflow-x: auto;
+			min-width: 100%;
+
+			.group-merge {
+				overflow: visible;
+			}
+		}
 	}
+
+	.statusbar.mobile {
+		overflow: hidden;
+		overflow-x: auto;
+		white-space: nowrap;
+	}
+
 	.mobile-landscape-notice {
 		align-items: center;
 		background-color: rgba(0, 0, 0, 0.7);

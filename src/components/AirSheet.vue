@@ -971,7 +971,11 @@ const isLandscape = () => {
 }
 
 // 初始化
-onMounted(() => {})
+onMounted(() => {
+	setTimeout(() => {
+		useSelectionRangeHook.setRange(0, 0, 0, 0)
+	}, 0)
+})
 
 onActivated(() => {
 	init()
@@ -1021,8 +1025,12 @@ defineExpose({
 	>
 		<!-- 工具栏 -->
 		<div
-			v-if="sheet.config.showToolBar && ((isMobile() && isLandscape()) || !isMobile())"
+			v-if="
+				sheet.config.showToolBar &&
+				((isMobile() && isLandscape()) || !isMobile() || !sheet.config.showHorizontalScreen)
+			"
 			class="toolbar"
+			:class="{mobile: isMobile()}"
 			:style="{}"
 		>
 			<div v-if="sheet.config.font" class="group font-layout h-full">
@@ -1593,8 +1601,12 @@ defineExpose({
 
 		<!-- 状态栏 -->
 		<div
-			v-if="sheet.config.showStatusBar && ((isMobile() && isLandscape()) || !isMobile())"
+			v-if="
+				sheet.config.showStatusBar &&
+				((isMobile() && isLandscape()) || !isMobile() || !sheet.config.showHorizontalScreen)
+			"
 			class="statusbar"
+			:class="{mobile: isMobile()}"
 			:style="{}"
 		>
 			<div class="statistics">
