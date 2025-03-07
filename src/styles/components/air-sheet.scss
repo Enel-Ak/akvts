@@ -681,6 +681,10 @@
 			.group-merge {
 				overflow: visible;
 			}
+
+			.item.font {
+				flex-wrap: nowrap;
+			}
 		}
 	}
 
