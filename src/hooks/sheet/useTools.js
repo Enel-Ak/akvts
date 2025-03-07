@@ -223,89 +223,86 @@ export const useTools = (config) => {
 
 	// 边框
 	const setBorder = (border = true, direction = null, save = true) => {
-		setCellStyles(
-			'b',
-			null,
-			(r, c) => {
-				// 删除边框样式
-				if (!border && !direction) {
-					// 无边框
-					if (sheet.config.cellStyle[`${r}-${c}`]) {
-						delete sheet.config.cellStyle[`${r}-${c}`].b
-						delete sheet.config.cellStyle[`${r}-${c}`].bt
-						delete sheet.config.cellStyle[`${r}-${c}`].bb
-						delete sheet.config.cellStyle[`${r}-${c}`].bl
-						delete sheet.config.cellStyle[`${r}-${c}`].br
-						delete sheet.config.cellStyle[`${r}-${c}`].btc
-						delete sheet.config.cellStyle[`${r}-${c}`].brc
-						delete sheet.config.cellStyle[`${r}-${c}`].blc
-						delete sheet.config.cellStyle[`${r}-${c}`].bbc
+		const handleBorder = (r, c) => {
+			// 删除边框样式
+			if (!border && !direction) {
+				// 无边框
+				if (sheet.config.cellStyle[`${r}-${c}`]) {
+					delete sheet.config.cellStyle[`${r}-${c}`].b
+					delete sheet.config.cellStyle[`${r}-${c}`].bt
+					delete sheet.config.cellStyle[`${r}-${c}`].bb
+					delete sheet.config.cellStyle[`${r}-${c}`].bl
+					delete sheet.config.cellStyle[`${r}-${c}`].br
+					delete sheet.config.cellStyle[`${r}-${c}`].btc
+					delete sheet.config.cellStyle[`${r}-${c}`].brc
+					delete sheet.config.cellStyle[`${r}-${c}`].blc
+					delete sheet.config.cellStyle[`${r}-${c}`].bbc
 
-						// 如果没有其他样式，删除整个样式对象
-						if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
-							delete sheet.config.cellStyle[`${r}-${c}`]
-						}
+					// 如果没有其他样式，删除整个样式对象
+					if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
+						delete sheet.config.cellStyle[`${r}-${c}`]
 					}
-					return
 				}
+				return
+			}
 
-				if (border && !direction) {
-					// 点边框时删除其他边框
-					try {
-						delete sheet.config.cellStyle[`${r}-${c}`].bt
-						delete sheet.config.cellStyle[`${r}-${c}`].bb
-						delete sheet.config.cellStyle[`${r}-${c}`].bl
-						delete sheet.config.cellStyle[`${r}-${c}`].br
-					} catch {}
+			// 点边框时删除其他边框
+			if (border && !direction) {
+				try {
+					delete sheet.config.cellStyle[`${r}-${c}`].bt
+					delete sheet.config.cellStyle[`${r}-${c}`].bb
+					delete sheet.config.cellStyle[`${r}-${c}`].bl
+					delete sheet.config.cellStyle[`${r}-${c}`].br
+				} catch {}
+			}
+
+			// 如果没有cellStyle对象，创建一个
+			if (!sheet.config.cellStyle[`${r}-${c}`]) {
+				sheet.config.cellStyle[`${r}-${c}`] = {}
+			}
+
+			// 创建一个映射来跟踪每个单元格
+			const cellMap = {}
+			Object.entries(sheet.config.cellStyle).forEach(([key, value]) => {
+				const [r, c] = key.split('-').map(Number)
+				if (value.bt || value.bb || value.bl || value.br) {
+					cellMap[`${r}-${c}`] = true
 				}
+			})
 
-				// 如果没有cellStyle对象，创建一个
-				if (!sheet.config.cellStyle[`${r}-${c}`]) {
-					sheet.config.cellStyle[`${r}-${c}`] = {}
-				}
+			// 使用精确的边框定义，指定每个边的边框
+			const borderTop = !cellMap[`${r - 1}-${c}`]
+			const borderRight = !cellMap[`${r}-${c + 1}`]
+			const borderBottom = !cellMap[`${r + 1}-${c}`]
+			const borderLeft = !cellMap[`${r}-${c - 1}`]
 
-				// 创建一个映射来跟踪每个单元格
-				const cellMap = {}
-				Object.entries(sheet.config.cellStyle).forEach(([key, value]) => {
-					const [r, c] = key.split('-').map(Number)
-					if (value.bt || value.bb || value.bl || value.br) {
-						cellMap[`${r}-${c}`] = true
-					}
-				})
-
-				// 使用精确的边框定义，指定每个边的边框
-				const borderTop = !cellMap[`${r - 1}-${c}`]
-				const borderRight = !cellMap[`${r}-${c + 1}`]
-				const borderBottom = !cellMap[`${r + 1}-${c}`]
-				const borderLeft = !cellMap[`${r}-${c - 1}`]
-
-				if (direction) {
-					if (direction === 'top') {
-						sheet.config.cellStyle[`${r}-${c}`].bt = true
-					} else if (direction === 'bottom') {
-						sheet.config.cellStyle[`${r}-${c}`].bb = true
-					} else if (direction === 'left') {
-						sheet.config.cellStyle[`${r}-${c}`].bl = true
-					} else if (direction === 'right') {
-						sheet.config.cellStyle[`${r}-${c}`].br = true
-					}
-					return
-				}
-
-				// 设置每个边的边框
-				if (borderTop) {
+			// 单边框
+			if (direction) {
+				if (direction === 'top') {
 					sheet.config.cellStyle[`${r}-${c}`].bt = true
-				}
-
-				if (borderLeft) {
+				} else if (direction === 'bottom') {
+					sheet.config.cellStyle[`${r}-${c}`].bb = true
+				} else if (direction === 'left') {
 					sheet.config.cellStyle[`${r}-${c}`].bl = true
+				} else if (direction === 'right') {
+					sheet.config.cellStyle[`${r}-${c}`].br = true
 				}
+				return
+			}
 
-				sheet.config.cellStyle[`${r}-${c}`].br = true
-				sheet.config.cellStyle[`${r}-${c}`].bb = true
-			},
-			save
-		)
+			// 设置每个边的边框
+			if (borderTop) {
+				sheet.config.cellStyle[`${r}-${c}`].bt = true
+			}
+
+			if (borderLeft) {
+				sheet.config.cellStyle[`${r}-${c}`].bl = true
+			}
+
+			sheet.config.cellStyle[`${r}-${c}`].br = true
+			sheet.config.cellStyle[`${r}-${c}`].bb = true
+		}
+		setCellStyles('', null, (r, c) => handleBorder(r, c), save)
 	}
 
 	// 对齐

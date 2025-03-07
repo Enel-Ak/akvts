@@ -67,23 +67,6 @@ export const useStyle = (cellStyle, zoom) => {
 				style['align-items'] = alignItems(value)
 				style['text-align'] = value
 				break
-			case 'b': {
-				if (value === 'cross') {
-					style[border('all')] = line
-				} else if (value === 'top') {
-					style[border('top')] = line
-					style[border('bottom')] = line
-					style[border('right')] = line
-				} else if (value === 'left') {
-					style[border('left')] = line
-					style[border('right')] = line
-					style[border('bottom')] = line
-				} else if (value === 'all') {
-					style[border('right')] = line
-					style[border('bottom')] = line
-				}
-				break
-			}
 			case 'bt':
 				style[border('top')] = line
 				break
