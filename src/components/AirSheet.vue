@@ -1356,7 +1356,8 @@ defineExpose({
 				</div>
 			</div>
 
-			<div class="group" :class="{'group-merge': !isMobile()}">
+			<!-- 冻结 -->
+			<div v-if="sheet.config.freeze" class="group" :class="{'group-merge': !isMobile()}">
 				<div class="item" @click="useToolsHook.setFreeze">
 					<Icons icon-name="Freeze"></Icons>
 					<span>冻结</span>
