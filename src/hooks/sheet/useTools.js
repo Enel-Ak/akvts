@@ -226,7 +226,7 @@ export const useTools = (config) => {
 		setCellStyles(
 			'b',
 			null,
-			(r, c, {startRow, startCol, endRow, endCol}) => {
+			(r, c) => {
 				// 删除边框样式
 				if (!border && !direction) {
 					// 无边框
@@ -264,41 +264,45 @@ export const useTools = (config) => {
 					sheet.config.cellStyle[`${r}-${c}`] = {}
 				}
 
-				if (border === null && direction) {
+				// 创建一个映射来跟踪每个单元格
+				const cellMap = {}
+				Object.entries(sheet.config.cellStyle).forEach(([key, value]) => {
+					const [r, c] = key.split('-').map(Number)
+					if (value.bt || value.bb || value.bl || value.br) {
+						cellMap[`${r}-${c}`] = true
+					}
+				})
+
+				// 使用精确的边框定义，指定每个边的边框
+				const borderTop = !cellMap[`${r - 1}-${c}`]
+				const borderRight = !cellMap[`${r}-${c + 1}`]
+				const borderBottom = !cellMap[`${r + 1}-${c}`]
+				const borderLeft = !cellMap[`${r}-${c - 1}`]
+
+				if (direction) {
 					if (direction === 'top') {
-						sheet.config.cellStyle[`${r}-${c}`].bt = 'borderTop'
+						sheet.config.cellStyle[`${r}-${c}`].bt = true
 					} else if (direction === 'bottom') {
-						sheet.config.cellStyle[`${r}-${c}`].bb = 'borderBottom'
+						sheet.config.cellStyle[`${r}-${c}`].bb = true
 					} else if (direction === 'left') {
-						sheet.config.cellStyle[`${r}-${c}`].bl = 'borderLeft'
+						sheet.config.cellStyle[`${r}-${c}`].bl = true
 					} else if (direction === 'right') {
-						sheet.config.cellStyle[`${r}-${c}`].br = 'borderRight'
+						sheet.config.cellStyle[`${r}-${c}`].br = true
 					}
 					return
 				}
 
-				// 第一行第一列的交叉单元格
-				if (r === startRow && c === startCol) {
-					sheet.config.cellStyle[`${r}-${c}`].b = 'cross'
-					return
+				// 设置每个边的边框
+				if (borderTop) {
+					sheet.config.cellStyle[`${r}-${c}`].bt = true
 				}
 
-				// 第一行
-				if (r === startRow) {
-					sheet.config.cellStyle[`${r}-${c}`].b = 'top'
-					return
+				if (borderLeft) {
+					sheet.config.cellStyle[`${r}-${c}`].bl = true
 				}
 
-				// 第一列
-				if (c === startCol) {
-					sheet.config.cellStyle[`${r}-${c}`].b = 'left'
-					return
-				}
-
-				// 其他内部单元格
-				if (r <= endRow && c <= endCol) {
-					sheet.config.cellStyle[`${r}-${c}`].b = 'all'
-				}
+				sheet.config.cellStyle[`${r}-${c}`].br = true
+				sheet.config.cellStyle[`${r}-${c}`].bb = true
 			},
 			save
 		)

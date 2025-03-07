@@ -655,6 +655,8 @@
 
 .air-sheet-component.mobile {
 	.toolbar {
+		position: relative;
+		z-index: 2;
 		.group {
 			height: 38px;
 		}
@@ -677,10 +679,6 @@
 			overflow: hidden;
 			overflow-x: auto;
 			min-width: 100%;
-
-			.group-merge {
-				overflow: visible;
-			}
 
 			.item.font {
 				flex-wrap: nowrap;

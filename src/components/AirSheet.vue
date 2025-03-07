@@ -1128,12 +1128,53 @@ defineExpose({
 				</div>
 			</div>
 
-			<div class="group group-merge" v-if="sheet.config.border">
-				<div class="item" @click="useToolsHook.setBorder()">
-					<Icons icon-name="Border"></Icons>
-					<span>边框</span>
+			<!-- 边框 -->
+			<template v-if="!isMobile()">
+				<div class="group group-merge" v-if="sheet.config.border">
+					<div class="item" @click="useToolsHook.setBorder()">
+						<Icons icon-name="Border"></Icons>
+						<span>边框</span>
+					</div>
+					<div class="merge border-merge shadow-12">
+						<div class="item" @click="useToolsHook.setBorder(false)">
+							<Icons icon-name="UnBorder"></Icons>
+							<span>无边框</span>
+						</div>
+						<div class="item" @click="useToolsHook.setBorder(null, 'top')">
+							<Icons icon-name="BorderTop"></Icons>
+							<span>上边框</span>
+						</div>
+						<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
+							<Icons icon-name="BorderBottom"></Icons>
+							<span>下边框</span>
+						</div>
+						<div class="item" @click="useToolsHook.setBorder(null, 'left')">
+							<Icons icon-name="BorderLeft"></Icons>
+							<span>左边框</span>
+						</div>
+						<div class="item" @click="useToolsHook.setBorder(null, 'right')">
+							<Icons icon-name="BorderRight"></Icons>
+							<span>右边框</span>
+						</div>
+						<div class="item border-color" @click="useToolsHook.setBorderColor">
+							<Icons icon-name="BorderColor"></Icons>
+							<span>颜色</span>
+							<input
+								type="color"
+								@input="useToolsHook.setBorderColor($event)"
+								@change="useToolsHook.borderColorChanged"
+							/>
+						</div>
+					</div>
 				</div>
-				<div class="merge border-merge shadow-12">
+			</template>
+			<template v-else>
+				<div class="group" v-if="sheet.config.border">
+					<div class="item" @click="useToolsHook.setBorder()">
+						<Icons icon-name="Border"></Icons>
+						<span>边框</span>
+					</div>
+
 					<div class="item" @click="useToolsHook.setBorder(false)">
 						<Icons icon-name="UnBorder"></Icons>
 						<span>无边框</span>
@@ -1164,15 +1205,15 @@ defineExpose({
 						/>
 					</div>
 				</div>
-			</div>
+			</template>
 
-			<div v-if="sheet.config.addRow" class="group group-merge">
+			<div v-if="sheet.config.addRow" class="group" :class="{'group-merge': !isMobile()}">
 				<div class="item" @click="useToolsHook.addRow($event, false)">
 					<Icons icon-name="AddRow"></Icons>
 					<span>添加行</span>
 				</div>
 
-				<div class="merge add-row-merge shadow-12">
+				<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
 					<input
 						v-model.number="useToolsHook.addRowCount.value"
 						type="number"
@@ -1182,7 +1223,7 @@ defineExpose({
 				</div>
 			</div>
 
-			<div v-if="sheet.config.addColumn" class="group group-merge">
+			<div v-if="sheet.config.addColumn" class="group" :class="{'group-merge': !isMobile()}">
 				<div
 					v-if="sheet.config.addColumn"
 					class="item"
@@ -1191,7 +1232,7 @@ defineExpose({
 					<Icons icon-name="AddColumn"></Icons>
 					<span>添加列</span>
 				</div>
-				<div class="merge add-column-merge shadow-12">
+				<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
 					<input
 						v-model.number="useToolsHook.addColumnCount.value"
 						type="number"
@@ -1240,12 +1281,12 @@ defineExpose({
 				</div>
 			</div>
 
-			<div class="group group-merge">
+			<div class="group" :class="{'group-merge': !isMobile()}">
 				<div class="item" @click="useToolsHook.setFreeze">
 					<Icons icon-name="Freeze"></Icons>
 					<span>冻结</span>
 				</div>
-				<div class="merge freeze-merge shadow-12">
+				<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
 					<span>行</span>
 					<input type="number" v-model.number="useToolsHook.freezeRow.value" />
 					&nbsp;
