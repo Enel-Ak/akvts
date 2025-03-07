@@ -102,8 +102,6 @@ export const useEdit = (id, config) => {
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
 		if (!cellEl) return
 
-		const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
-
 		// 计算实际内容高度
 		let contentHeight = 0
 		for (const node of cellEl.childNodes) {
@@ -112,6 +110,7 @@ export const useEdit = (id, config) => {
 
 		if (contentHeight < useResizeHook.getRowHeight(rowIndex)) return
 
+		const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
 		// 如果是合并单元格
 		if (merge) {
 			// 获取合并区域内所有行的当前高度
@@ -152,6 +151,7 @@ export const useEdit = (id, config) => {
 		needRender && renderRange()
 	}
 
+	const settingsCache = new Map()
 	const formattedValue = (val, cell) => {
 		if (!val) return ''
 		let html = ''
@@ -161,7 +161,12 @@ export const useEdit = (id, config) => {
 		}
 
 		//动态处理高度
-		if ((arr.length > 1 || arr[0].length > 10) && cell) {
+		if (
+			(arr.length > 1 || arr[0].length > 10) &&
+			cell &&
+			!settingsCache.has(`${cell.rowIndex}-${cell.colIndex}`)
+		) {
+			settingsCache.set(`${cell.rowIndex}-${cell.colIndex}`, cell)
 			setTimeout(() => setRowHeight(cell.rowIndex, cell.colIndex, false, false), 0)
 		}
 		return html

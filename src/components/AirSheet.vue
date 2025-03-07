@@ -350,18 +350,31 @@ const processMapInBatches = (map, callback, batchSize = 5000) => {
 // 更新可见范围
 const updateVisibleRange = async () => {
 	try {
+		const currentZoom = sheet.config.zoom || 1
+
+		const rowHeights = {}
+		const colWidths = {}
+
+		for (const [index, height] of Object.entries(useResizeHook.rowHeights)) {
+			rowHeights[index] = height * currentZoom
+		}
+
+		for (const [index, width] of Object.entries(useResizeHook.colWidths)) {
+			colWidths[index] = width * currentZoom
+		}
+
 		const renderData = {
 			scrollTop: scrollTop.value,
 			scrollLeft: scrollLeft.value,
-			viewportHeight: viewportHeight.value,
-			viewportWidth: viewportWidth.value,
+			viewportHeight: viewportHeight.value / currentZoom,
+			viewportWidth: viewportWidth.value / currentZoom,
 			rowCount: sheet.config.rowCount,
 			colCount: sheet.config.colCount,
 			buffer: props.buffer,
 			defaultRowHeight: props.rowHeight * sheet.config.zoom,
 			defaultColWidth: props.colWidth * sheet.config.zoom,
-			rowHeights: useResizeHook.rowHeights,
-			colWidths: useResizeHook.colWidths,
+			rowHeights,
+			colWidths,
 			mergedCells: JSON.parse(JSON.stringify(sheet.config.mergedCells)),
 		}
 
@@ -607,11 +620,12 @@ const onScroll = async (e) => {
 		loadingText.value = '数据量较大, 请稍后...'
 	}
 
+	const currentZoom = sheet.config.zoom || 1
 	const newScrollTop = containerRef.value.scrollTop
 	const newScrollLeft = containerRef.value.scrollLeft
 
 	// 在滚动时更新原始滚动位置
-	originalScrollTop = newScrollTop / (sheet.config.zoom || 1)
+	originalScrollTop = newScrollTop / currentZoom
 
 	const alphabet = alphabetRef.value
 	const number = numberRef.value
@@ -809,15 +823,18 @@ const onZoomInput = async () => {
 
 			lastZoom = currentZoom
 			onScroll()
-			if (lastZoom < 1) {
-				updateVisibleRange()
-			}
+			// if (lastZoom < 1) {
+			updateVisibleRange()
+			// }
 		})
 	}, 16)
 }
 
 const onZoomChange = () => {
 	originalScrollTop = -1
+	if (lastZoom < 1) {
+		updateVisibleRange()
+	}
 }
 
 const onZoomSize = (size) => {
@@ -1759,6 +1776,24 @@ defineExpose({
 			:class="{mobile: isMobile()}"
 			:style="{}"
 		>
+			<div class="zoom">
+				<span>
+					<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
+				</span>
+				<Icons icon-name="Remove" @click="onZoomSize(-0.1)"></Icons>
+				<input
+					v-model.number="sheet.config.zoom"
+					type="range"
+					min="0.5"
+					max="3"
+					step="0.01"
+					@input="onZoomInput"
+					@change="onZoomChange"
+				/>
+				<Icons icon-name="Add" @click="onZoomSize(0.1)"></Icons>
+				<Icons icon-name="Restore" @click="onZoomReset"></Icons>
+			</div>
+			<div class="flx"></div>
 			<div class="statistics">
 				<span>行 = </span>
 				{{ sheet.config.rowCount }}
@@ -1785,25 +1820,6 @@ defineExpose({
 			<div class="statistics">
 				<span>计数 = </span>
 				{{ useSelectionRangeHook.statistics.count }}
-			</div>
-
-			<div class="flx"></div>
-			<div class="zoom">
-				<span>
-					<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
-				</span>
-				<Icons icon-name="Remove" @click="onZoomSize(-0.1)"></Icons>
-				<input
-					v-model.number="sheet.config.zoom"
-					type="range"
-					min="0.5"
-					max="3"
-					step="0.01"
-					@input="onZoomInput"
-					@change="onZoomChange"
-				/>
-				<Icons icon-name="Add" @click="onZoomSize(0.1)"></Icons>
-				<Icons icon-name="Restore" @click="onZoomReset"></Icons>
 			</div>
 		</div>
 
