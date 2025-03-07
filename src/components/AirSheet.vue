@@ -1011,6 +1011,10 @@ const setSelectionRange = () => {
 		return
 	}
 
+	if (!r || !rr || !c || !cc) {
+		return
+	}
+
 	useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
 }
 

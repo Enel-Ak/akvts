@@ -721,17 +721,16 @@
 		font-size: 11px;
 		overflow: hidden;
 		overflow-x: auto;
-		padding: 5px 0;
+		padding: 5px 0 6px 0;
 		white-space: nowrap;
 		div {
+			align-items: center;
+			display: flex;
 			padding: 0 8px;
 		}
 		input {
-			border-radius: 0;
-			border-bottom: 1px solid var(--z-line);
-			background: var(--z-sheet-virtual);
+			border-radius: 2px;
 			margin-left: 5px;
-			padding: 0 5px;
 			text-align: center;
 			width: 30px;
 		}
