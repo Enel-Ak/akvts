@@ -1696,7 +1696,12 @@ defineExpose({
 		</div>
 
 		<!-- 移动端设置框选 -->
-		<div v-if="isMobile() && sheet.config.edit" class="mobile-selection">
+		<div
+			v-if="isMobile() && sheet.config.edit"
+			class="mobile-selection"
+			@keydown.stop
+			@click.stop
+		>
 			<div>
 				开始行<input type="number" v-model="selectionRange.r" @change="setSelectionRange" />
 			</div>
