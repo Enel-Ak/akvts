@@ -735,4 +735,9 @@
 			width: 30px;
 		}
 	}
+
+	input[disabled] {
+		background-color: var(--z-sheet-active);
+		opacity: 0.3;
+	}
 }

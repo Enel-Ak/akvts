@@ -115,6 +115,9 @@ watch(
 
 const fns = ref(props.modelValue?.fns || [])
 const limit = 30000
+
+// 移动端设置宽高/框选范围
+const selectionSize = ref({w: 0, h: 0})
 const selectionRange = ref({
 	r: 0,
 	c: 0,
@@ -986,6 +989,11 @@ const isMobile = () => {
 }
 
 // 移动端设置框选
+const mobileRCReadOnly = computed(() => {
+	const {r, c, rr, cc} = selectionRange.value
+	return !(r === rr && c === cc)
+})
+
 const setSelectionRange = () => {
 	const {r, rr, c, cc} = selectionRange.value
 	if (r > rr) {
@@ -1035,11 +1043,27 @@ const setSelectionRange = () => {
 	useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
 }
 
+const mobileSetRowHeight = (e) => {
+	const {r, c} = selectionRange.value
+	useResizeHook.setRowHeight(r - 1, e.target.value)
+	useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
+}
+
+const mobileSetColWidth = () => {
+	const {r, c} = selectionRange.value
+	useResizeHook.setColWidth(c - 1, selectionSize.value.w)
+	useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
+}
+
 watch(
 	() => useSelectionRangeHook?.ranged,
 	(newVal) => {
 		if (newVal) {
 			const {start, end} = newVal
+			selectionSize.value = {
+				w: useResizeHook.getColWidth(start.col),
+				h: useResizeHook.getRowHeight(start.row),
+			}
 			selectionRange.value = {
 				r: start.row + 1,
 				rr: end.row + 1,
@@ -1069,6 +1093,10 @@ onMounted(() => {
 			c: start.col + 1,
 			rr: end.row + 1,
 			cc: end.col + 1,
+		}
+		selectionSize.value = {
+			w: useResizeHook.getColWidth(0),
+			h: useResizeHook.getRowHeight(0),
 		}
 	}, 0)
 })
@@ -1455,6 +1483,7 @@ defineExpose({
 							>
 								<span>{{ alphabet.title }}</span>
 								<div
+									v-if="!isMobile()"
 									class="resize-handle"
 									:class="{
 										resizing:
@@ -1517,6 +1546,7 @@ defineExpose({
 							<span>{{ row.rowIndex + 1 }}</span>
 
 							<div
+								v-if="!isMobile()"
 								class="resize-handle"
 								:class="{
 									resizing:
@@ -1744,6 +1774,25 @@ defineExpose({
 			@keydown.stop
 			@click.stop
 		>
+			<div>
+				行高
+				<input
+					:disabled="mobileRCReadOnly"
+					type="number"
+					v-model="selectionSize.h"
+					@change="mobileSetRowHeight"
+				/>
+			</div>
+			<div style="border-right: 1px solid var(--z-line)">
+				列宽
+				<input
+					:disabled="mobileRCReadOnly"
+					type="number"
+					v-model="selectionSize.w"
+					@change="mobileSetColWidth"
+				/>
+			</div>
+
 			<div>
 				开始行<input type="number" v-model="selectionRange.r" @change="setSelectionRange" />
 			</div>
