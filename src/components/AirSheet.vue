@@ -35,9 +35,9 @@ const props = defineProps({
 	modelValue: {type: Object, default: () => {}},
 
 	// 总行数
-	rowCount: {type: Number, default: 100}, // 最大 671087
+	rowCount: {type: Number, default: 40}, // 最大 671087
 	// 总列数
-	colCount: {type: Number, default: 26},
+	colCount: {type: Number, default: 13},
 	// 单元格高度
 	rowHeight: {type: Number, default: 25},
 	// 单元格宽度
