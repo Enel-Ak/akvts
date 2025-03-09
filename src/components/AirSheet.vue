@@ -129,6 +129,16 @@ const selectionRange = ref({
 const initialData = () => {
 	if (!props.modelValue?.celldata) return
 
+	if (props.modelValue?.celldata) {
+		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)
+		sheet.config.colCount = props.modelValue.celldata
+			.map((d) => d.length)
+			.reduce((a, b) => Math.max(a, b), props.colCount)
+	} else {
+		sheet.config.rowCount = Math.min(props.rowCount, 671087)
+		sheet.config.colCount = Math.min(props.colCount, 240)
+	}
+
 	const celldata = props.modelValue.celldata
 	const total = celldata.length
 
@@ -901,16 +911,6 @@ const onCellDrop = (event) => {
 
 const init = async () => {
 	initialData()
-
-	if (props.modelValue?.celldata) {
-		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)
-		sheet.config.colCount = props.modelValue.celldata
-			.map((d) => d.length)
-			.reduce((a, b) => Math.max(a, b), props.colCount)
-	} else {
-		sheet.config.rowCount = Math.min(props.rowCount, 671087)
-		sheet.config.colCount = Math.min(props.colCount, 240)
-	}
 
 	useResizeHook.init()
 	useMergedCellsHook.init()
