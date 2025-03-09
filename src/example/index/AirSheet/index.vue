@@ -14,9 +14,10 @@ const config = ref({
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
 	},
-	celldata: Array.from({length: 1000}, (_, r) => {
+	celldata: Array.from({length: 40}, (_, r) => {
 		return Array.from({length: 10}, (_, c) => {
 			return `R${r + 1}-C${c + 1}`
+			// return undefined
 		})
 	}),
 	// celldata: [],
@@ -1565,19 +1566,19 @@ const bba = {
 }
 
 onMounted(() => {
-	sheetRef.value
-		.luckyToAir(aab.globalStyle, [
-			...JSON.parse(aab.header),
-			...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
-		])
-		.then((res) => {
-			Object.assign(config.value, {
-				config: {
-					...res.config,
-				},
-				celldata: res.celldata,
-			})
-		})
+	// sheetRef.value
+	// 	.luckyToAir(aab.globalStyle, [
+	// 		...JSON.parse(aab.header),
+	// 		...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
+	// 	])
+	// 	.then((res) => {
+	// 		Object.assign(config.value, {
+	// 			config: {
+	// 				...res.config,
+	// 			},
+	// 			celldata: res.celldata,
+	// 		})
+	// 	})
 
 	// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
 	// sheetRef.value.setMergeCell(5, 4, 4, 4)

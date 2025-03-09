@@ -132,14 +132,21 @@ const initialData = () => {
 	const celldata = props.modelValue.celldata
 	const total = celldata.length
 
+	let processed = 0
+	const batchSize = 3000
+
+	if (total < batchSize) {
+		celldata.forEach((row, index) => {
+			sheet.celldata.set(index, row)
+		})
+		return
+	}
+
 	if (total >= limit) {
 		loading.value = true
 		loadingProgress.value = 0
 		loadingText.value = '数据量较大, 请稍后...'
 	}
-
-	let processed = 0
-	const batchSize = 3000
 
 	function processBatch() {
 		const start = performance.now()
@@ -165,6 +172,7 @@ const initialData = () => {
 			setTimeout(() => {
 				loading.value = false
 				useHistoryHook.saveHistory()
+				console.log(999, sheet.celldata)
 			}, 500)
 		}
 	}
