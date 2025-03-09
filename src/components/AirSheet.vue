@@ -1133,6 +1133,9 @@ defineExpose({
 	setRange: useSelectionRangeHook.setRange,
 	setMergeCell: useMergedCellsHook.setMergeCell,
 	setCellValue: useEditHook.setCellValue,
+	setLocked: useToolsHook.setLocked,
+	setUnlocked: useToolsHook.setUnlocked,
+
 	setCellBackground: (row, col, rowspan, colspan, color) => {
 		useToolsHook.setCellStyle({
 			type: 'bg',
@@ -1143,8 +1146,10 @@ defineExpose({
 			colspan,
 		})
 	},
+
 	getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
 	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+
 	luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
 	airToLucky: async () => await useToolsHook.airToLucky(sheet),
 })

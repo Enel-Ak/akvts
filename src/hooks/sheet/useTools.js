@@ -1,5 +1,7 @@
 import {ref, nextTick, reactive} from 'vue'
+import useGuid from '@/hooks/useGuid'
 import {ElMessage} from 'element-plus'
+
 export const useTools = (config) => {
 	const {
 		sheet,
@@ -745,6 +747,81 @@ export const useTools = (config) => {
 	const freezeCol = ref(1)
 	const setFreeze = (r, c) => {}
 
+	// 解析Excel单元格引用格式(如 "C1:D1" 或 "1-4")，返回起始和结束的行列索引
+	const parseCellRange = (range) => {
+		// 解析列标识(A,B,C等)为数字索引(0,1,2等)
+		const colToIndex = (col) => {
+			let index = 0
+			for (let i = 0; i < col.length; i++) {
+				index = index * 26 + (col.charCodeAt(i) - 'A'.charCodeAt(0))
+			}
+			return index
+		}
+
+		// 数字索引转Excel列标识(0->A, 1->B, etc)
+		const indexToCol = (index) => {
+			index = Math.max(0, index) // 确保不会出现负数
+			let col = ''
+			do {
+				col = String.fromCharCode((index % 26) + 'A'.charCodeAt(0)) + col
+				index = Math.floor(index / 26) - 1
+			} while (index >= 0)
+			return col || 'A' // 如果是0，返回'A'
+		}
+
+		// 尝试匹配数字格式 (如 "0-0"，第一个数字是行号，第二个数字是列号)
+		const numberPattern = /^(\d+)-(\d+)$/
+		const numberMatch = range.match(numberPattern)
+		if (numberMatch) {
+			const [, row, col] = numberMatch
+			const rowNumber = parseInt(row) + 1 // 转为1基数
+			const colLetter = indexToCol(parseInt(col)) // 转换列号为字母
+
+			return {
+				start: {
+					row: parseInt(row), // 保持0基数
+					col: parseInt(col), // 保持0基数
+				},
+				end: {
+					row: parseInt(row), // 保持0基数
+					col: parseInt(col), // 保持0基数
+				},
+				format: {
+					start: colLetter,
+					end: colLetter,
+				},
+				sqref: `${colLetter}${rowNumber}:${colLetter}${rowNumber}`, // Excel格式使用1基数
+			}
+		}
+
+		// 匹配Excel格式 (如 "C1:D1")
+		const pattern = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/
+		const match = range.match(pattern)
+		if (!match) {
+			throw new Error(
+				'无效的单元格范围格式，正确格式例如: "A1:B2" 或 "0-0"（第一个数字是行号，第二个数字是列号）'
+			)
+		}
+
+		const [, startCol, startRow, endCol, endRow] = match
+
+		return {
+			start: {
+				row: parseInt(startRow) - 1, // 转为0基数
+				col: colToIndex(startCol),
+			},
+			end: {
+				row: parseInt(endRow) - 1, // 转为0基数
+				col: colToIndex(endCol),
+			},
+			format: {
+				start: startCol,
+				end: endCol,
+			},
+			sqref: `${startCol}${startRow}:${endCol}${endRow}`, // 保持原始Excel格式
+		}
+	}
+
 	// luckysheet转air
 	const luckyToAir = (config, data) => {
 		return new Promise((resolve, reject) => {
@@ -810,6 +887,30 @@ export const useTools = (config) => {
 							}
 						})
 					}
+
+					// 处理锁定单元格
+					if (
+						config.authority &&
+						config.authority.allowRangeList &&
+						config.authority.allowRangeList.length > 0
+					) {
+						try {
+							config.authority.allowRangeList.forEach((item) => {
+								const {start, end} = parseCellRange(item.sqref)
+								const startRow = Math.min(start.row, end.row)
+								const startCol = Math.min(start.col, end.col)
+								const endRow = Math.max(start.row, end.row)
+								const endCol = Math.max(start.col, end.col)
+								for (let row = startRow; row <= endRow; row++) {
+									for (let col = startCol; col <= endCol; col++) {
+										sheet.config.lockCells[`${row}-${col}`] = true
+									}
+								}
+							})
+						} catch (e) {
+							console.log(e)
+						}
+					}
 				}
 
 				function processBatch() {
@@ -828,12 +929,43 @@ export const useTools = (config) => {
 						}
 						celldata[item.r][item.c] = item.v.v
 
+						if (!cellStyle[item.r + '-' + item.c]) {
+							cellStyle[item.r + '-' + item.c] = {}
+						}
+
 						// 背景
 						if (item?.v?.bg) {
-							if (!cellStyle[item.r + '-' + item.c]) {
-								cellStyle[item.r + '-' + item.c] = {}
-							}
 							cellStyle[item.r + '-' + item.c]['bg'] = item.v.bg
+						}
+
+						// 粗体
+						if (item?.v?.bl) {
+							cellStyle[item.r + '-' + item.c]['bold'] = true
+						}
+
+						// 斜体
+						if (item?.v?.it) {
+							cellStyle[item.r + '-' + item.c]['italic'] = true
+						}
+
+						// 下划线
+						if (item?.v?.un) {
+							cellStyle[item.r + '-' + item.c]['underline'] = true
+						}
+
+						// 删除线
+						if (item?.v?.st) {
+							cellStyle[item.r + '-' + item.c]['strikethrough'] = true
+						}
+
+						// 颜色
+						if (item?.v?.fc) {
+							cellStyle[item.r + '-' + item.c]['color'] = item.v.fc
+						}
+
+						// 字体大小
+						if (item?.v?.fs) {
+							cellStyle[item.r + '-' + item.c]['size'] = item.v.fs
 						}
 
 						processed++
@@ -868,6 +1000,9 @@ export const useTools = (config) => {
 	// air转luckysheet
 	const airToLucky = async (sheet) => {
 		const merge = {}
+		const authority = {
+			allowRangeList: [],
+		}
 		const borderInfo = []
 		const celldata = []
 
@@ -882,6 +1017,19 @@ export const useTools = (config) => {
 			}
 		})
 
+		// 锁定单元格处理
+		Object.entries(sheet.config.lockCells).forEach(([key, value]) => {
+			const range = parseCellRange(key)
+			authority.allowRangeList.push({
+				sqref: range.sqref,
+				password: useGuid(),
+				name: 'NotEditableDiy',
+				hintText: '单元格不可编辑!',
+				algorithmName: 'None',
+				saltValue: null,
+			})
+		})
+
 		// 单元格数据
 		loading.value = true
 		loadingText.value = '数据转换中...'
@@ -890,10 +1038,41 @@ export const useTools = (config) => {
 			rowData.forEach((cell, colIndex) => {
 				const data = {r: rowIndex, c: colIndex, v: {v: cell}}
 				const cellstyle = sheet.config.cellStyle[rowIndex + '-' + colIndex]
+
 				if (cellstyle) {
 					// 背景
 					if (cellstyle?.bg) {
 						data.v.bg = cellstyle?.bg
+					}
+
+					// 粗体
+					if (cellstyle?.bold) {
+						data.v.bl = 1
+					}
+
+					// 斜体
+					if (cellstyle?.italic) {
+						data.v.it = 1
+					}
+
+					// 下划线
+					if (cellstyle?.underline) {
+						data.v.un = 1
+					}
+
+					// 删除线
+					if (cellstyle?.strikethrough) {
+						data.v.st = 1
+					}
+
+					// 颜色
+					if (cellstyle?.color) {
+						data.v.fc = cellstyle?.color
+					}
+
+					// 字体大小
+					if (cellstyle?.size) {
+						data.v.fc = cellstyle?.size
 					}
 
 					// 边框
@@ -946,6 +1125,7 @@ export const useTools = (config) => {
 
 		return Promise.resolve({
 			merge,
+			authority,
 			borderInfo,
 			celldata,
 		})
