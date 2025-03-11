@@ -968,6 +968,18 @@ export const useTools = (config) => {
 							cellStyle[item.r + '-' + item.c]['size'] = item.v.fs
 						}
 
+						// 对齐
+						if (item?.v?.ht) {
+							const ht = Number(item.v.ht)
+							let align = 'left'
+							if (ht === 0) {
+								align = 'center'
+							} else if (ht === 2) {
+								align = 'right'
+							}
+							cellStyle[item.r + '-' + item.c]['align'] = align
+						}
+
 						processed++
 						count++
 					}
@@ -1072,7 +1084,18 @@ export const useTools = (config) => {
 
 					// 字体大小
 					if (cellstyle?.size) {
-						data.v.fc = cellstyle?.size
+						data.v.fs = cellstyle?.size
+					}
+
+					// 对齐
+					if (cellstyle?.align) {
+						let ht = 1 // 左对齐
+						if (cellstyle?.align === 'center') {
+							ht = 0 // 居中对齐
+						} else if (cellstyle?.align === 'right') {
+							ht = 2 // 右对齐
+						}
+						data.v.ht = ht
 					}
 
 					// 边框
@@ -1090,26 +1113,26 @@ export const useTools = (config) => {
 								col_index: colIndex,
 							},
 						}
-						if (cellstyle?.b) {
-							Object.assign(border.value, {
-								l: {style: 1, color: 'rgb(0, 0, 0)'},
-								r: {style: 1, color: 'rgb(0, 0, 0)'},
-								t: {style: 1, color: 'rgb(0, 0, 0)'},
-								b: {style: 1, color: 'rgb(0, 0, 0)'},
-							})
-						} else if (cellstyle?.bt) {
+
+						if (cellstyle?.bt) {
 							Object.assign(border.value, {
 								t: {style: 1, color: 'rgb(0, 0, 0)'},
 							})
-						} else if (cellstyle?.bb) {
+						}
+
+						if (cellstyle?.bb) {
 							Object.assign(border.value, {
 								b: {style: 1, color: 'rgb(0, 0, 0)'},
 							})
-						} else if (cellstyle?.bl) {
+						}
+
+						if (cellstyle?.bl) {
 							Object.assign(border.value, {
 								l: {style: 1, color: 'rgb(0, 0, 0)'},
 							})
-						} else if (cellstyle?.br) {
+						}
+
+						if (cellstyle?.br) {
 							Object.assign(border.value, {
 								r: {style: 1, color: 'rgb(0, 0, 0)'},
 							})
