@@ -850,9 +850,21 @@ export const useTools = (config) => {
 						// 创建一个映射来跟踪每个单元格
 						const cellMap = {}
 						config.borderInfo.forEach((item) => {
-							const r = item.value.row_index
-							const c = item.value.col_index
-							cellMap[`${r}-${c}`] = true
+							if (item.rangeType && item.rangeType === 'cell') {
+								const r = item.value.row_index
+								const c = item.value.col_index
+								cellMap[`${r}-${c}`] = true
+							} else if (item.rangeType && item.rangeType === 'range') {
+								item.range.forEach((r) => {
+									const [startRow, endRow] = r.row
+									const [startCol, endCol] = r.column
+									for (let row = startRow; row <= endRow; row++) {
+										for (let col = startCol; col <= endCol; col++) {
+											cellMap[`${row}-${col}`] = true
+										}
+									}
+								})
+							}
 						})
 
 						config.borderInfo.forEach((item) => {
