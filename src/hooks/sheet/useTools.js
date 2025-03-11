@@ -858,15 +858,17 @@ export const useTools = (config) => {
 								item.range.forEach((r) => {
 									const [startRow, endRow] = r.row
 									const [startCol, endCol] = r.column
+
 									for (let row = startRow; row <= endRow; row++) {
 										for (let col = startCol; col <= endCol; col++) {
 											cellMap[`${row}-${col}`] = true
-											if (!item.value) {
-												item.value = {
+											config.borderInfo.push({
+												rangeType: 'cell',
+												value: {
 													row_index: row,
 													col_index: col,
-												}
-											}
+												},
+											})
 										}
 									}
 								})
@@ -874,34 +876,36 @@ export const useTools = (config) => {
 						})
 
 						config.borderInfo.forEach((item) => {
-							const r = item.value.row_index
-							const c = item.value.col_index
+							if (item.value) {
+								const r = item.value.row_index
+								const c = item.value.col_index
 
-							if (!cellStyle[`${r}-${c}`]) {
-								cellStyle[`${r}-${c}`] = {}
-							}
+								if (!cellStyle[`${r}-${c}`]) {
+									cellStyle[`${r}-${c}`] = {}
+								}
 
-							// 使用精确的边框定义，指定每个边的边框
-							const borderTop = !cellMap[`${r - 1}-${c}`]
-							const borderRight = !cellMap[`${r}-${c + 1}`]
-							const borderBottom = !cellMap[`${r + 1}-${c}`]
-							const borderLeft = !cellMap[`${r}-${c - 1}`]
+								// 使用精确的边框定义，指定每个边的边框
+								const borderTop = !cellMap[`${r - 1}-${c}`]
+								const borderRight = !cellMap[`${r}-${c + 1}`]
+								const borderBottom = !cellMap[`${r + 1}-${c}`]
+								const borderLeft = !cellMap[`${r}-${c - 1}`]
 
-							// 设置每个边的边框
-							if (borderTop) {
-								cellStyle[`${r}-${c}`].bt = true
-							}
+								// 设置每个边的边框
+								if (borderTop) {
+									cellStyle[`${r}-${c}`].bt = true
+								}
 
-							if (borderLeft) {
-								cellStyle[`${r}-${c}`].bl = true
-							}
+								if (borderLeft) {
+									cellStyle[`${r}-${c}`].bl = true
+								}
 
-							cellStyle[`${r}-${c}`].br = true
-							cellStyle[`${r}-${c}`].bb = true
+								cellStyle[`${r}-${c}`].br = true
+								cellStyle[`${r}-${c}`].bb = true
 
-							// 设置边框颜色（如果需要）
-							if (borderTop || borderRight || borderBottom || borderLeft) {
-								// cellStyle[`${r}-${c}`].bc = '#000000' // 边框颜色
+								// 设置边框颜色（如果需要）
+								if (borderTop || borderRight || borderBottom || borderLeft) {
+									// cellStyle[`${r}-${c}`].bc = '#000000' // 边框颜色
+								}
 							}
 						})
 					}
