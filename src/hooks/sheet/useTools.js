@@ -861,6 +861,12 @@ export const useTools = (config) => {
 									for (let row = startRow; row <= endRow; row++) {
 										for (let col = startCol; col <= endCol; col++) {
 											cellMap[`${row}-${col}`] = true
+											if (!item.value) {
+												item.value = {
+													row_index: row,
+													col_index: col,
+												}
+											}
 										}
 									}
 								})
