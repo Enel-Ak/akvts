@@ -88,13 +88,13 @@ export const useTools = (config) => {
 	// 设置字体
 	const setFont = (e) => {
 		const font = e.target.value
-		setCellStyles('font', font)
+		setCellStyles('ff', font)
 	}
 
 	// 设置字体大小
 	const setFontSize = (e) => {
 		const size = e.target.value
-		setCellStyles('size', size)
+		setCellStyles('fs', size)
 		setTimeout(() => {
 			const ranged = useSelectionRangeHook.ranged
 			if (!ranged) return
@@ -134,7 +134,7 @@ export const useTools = (config) => {
 			fontSaved = true
 		}
 		const color = e.target.value
-		setCellStyles('color', color, null, false)
+		setCellStyles('fc', color, null, false)
 	}
 	const fontColorChanged = (e) => {
 		fontSaved = false
@@ -318,17 +318,17 @@ export const useTools = (config) => {
 
 	// 斜体
 	const setItalic = () => {
-		setCellStyles('italic', true)
+		setCellStyles('it', true)
 	}
 
 	// 下划线
 	const setUnderline = () => {
-		setCellStyles('underline', true)
+		setCellStyles('un', true)
 	}
 
 	// 删除线
 	const setStrikethrough = () => {
-		setCellStyles('strikethrough', true)
+		setCellStyles('st', true)
 	}
 
 	// 添加行
@@ -966,28 +966,33 @@ export const useTools = (config) => {
 
 						// 斜体
 						if (item?.v?.it) {
-							cellStyle[item.r + '-' + item.c]['italic'] = true
+							cellStyle[item.r + '-' + item.c]['it'] = true
 						}
 
 						// 下划线
 						if (item?.v?.un) {
-							cellStyle[item.r + '-' + item.c]['underline'] = true
+							cellStyle[item.r + '-' + item.c]['un'] = true
 						}
 
 						// 删除线
 						if (item?.v?.st) {
-							cellStyle[item.r + '-' + item.c]['strikethrough'] = true
+							cellStyle[item.r + '-' + item.c]['st'] = true
 						}
 
 						// 颜色
 						if (item?.v?.fc) {
-							cellStyle[item.r + '-' + item.c]['color'] = item.v.fc
+							cellStyle[item.r + '-' + item.c]['fc'] = item.v.fc
 						}
 
 						// 字体大小
 						if (item?.v?.fs) {
 							const size = parseInt(item.v.fs)
-							cellStyle[item.r + '-' + item.c]['size'] = parseInt(size)
+							cellStyle[item.r + '-' + item.c]['fs'] = parseInt(size)
+						}
+
+						// 字体
+						if (item?.v?.ff) {
+							cellStyle[item.r + '-' + item.c]['ff'] = item.v.ff
 						}
 
 						// 对齐
@@ -1085,28 +1090,33 @@ export const useTools = (config) => {
 					}
 
 					// 斜体
-					if (cellstyle?.italic) {
+					if (cellstyle?.it) {
 						data.v.it = 1
 					}
 
 					// 下划线
-					if (cellstyle?.underline) {
+					if (cellstyle?.un) {
 						data.v.un = 1
 					}
 
 					// 删除线
-					if (cellstyle?.strikethrough) {
+					if (cellstyle?.st) {
 						data.v.st = 1
 					}
 
 					// 颜色
-					if (cellstyle?.color) {
-						data.v.fc = cellstyle?.color
+					if (cellstyle?.fc) {
+						data.v.fc = cellstyle?.fc
 					}
 
 					// 字体大小
-					if (cellstyle?.size) {
-						data.v.fs = parseInt(cellstyle?.size)
+					if (cellstyle?.fs) {
+						data.v.fs = parseInt(cellstyle?.fs)
+					}
+
+					// 字体
+					if (cellstyle?.ff) {
+						data.v.f = cellstyle?.ff
 					}
 
 					// 对齐

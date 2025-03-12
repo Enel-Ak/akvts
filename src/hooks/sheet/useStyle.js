@@ -48,13 +48,13 @@ export const useStyle = (cellStyle, zoom) => {
 
 	Object.entries(cellStyle).forEach(([key, value]) => {
 		switch (key) {
-			case 'font':
+			case 'ff':
 				style['font-family'] = value
 				break
-			case 'size':
+			case 'fs':
 				style['font-size'] = value * zoom + 'px'
 				break
-			case 'color':
+			case 'fc':
 				style['color'] = value
 				break
 			case 'bg':
@@ -94,13 +94,13 @@ export const useStyle = (cellStyle, zoom) => {
 			case 'bold':
 				style['font-weight'] = bold(value)
 				break
-			case 'underline':
+			case 'un':
 				style['text-decoration'] = underline(value)
 				break
-			case 'italic':
+			case 'it':
 				style['font-style'] = italic(value)
 				break
-			case 'strikethrough':
+			case 'st':
 				style['text-decoration'] = strikethrough(value)
 				break
 			default:
