@@ -1116,7 +1116,7 @@ export const useTools = (config) => {
 
 					// 字体
 					if (cellstyle?.ff) {
-						data.v.f = cellstyle?.ff
+						data.v.ff = cellstyle?.ff
 					}
 
 					// 对齐
