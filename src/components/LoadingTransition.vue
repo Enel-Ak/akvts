@@ -41,7 +41,7 @@ watch(
 )
 </script>
 <template>
-	<div class="akvts-loading-transition" :style="{justifyContent: jc, fontSize: size}">
+	<div class="akvts-loading-transition" :style="{justifyContent: jc}">
 		<Icons icon-name="Loading" :color="_iconColor"></Icons>
 		<span>
 			<slot name="text">
