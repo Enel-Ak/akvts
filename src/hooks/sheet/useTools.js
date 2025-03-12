@@ -95,7 +95,7 @@ export const useTools = (config) => {
 	const setFontSize = (e) => {
 		const size = e.target.value
 		setCellStyles('size', size)
-		nextTick(() => {
+		setTimeout(() => {
 			const ranged = useSelectionRangeHook.ranged
 			if (!ranged) return
 
@@ -117,14 +117,13 @@ export const useTools = (config) => {
 						Array.from(cell.childNodes).reduce((h, node) => h + node.offsetHeight, 0)
 					)
 				)
-
 				if (maxHeight > useResizeHook.getRowHeight(row)) {
 					useResizeHook.setRowHeight(row, maxHeight)
 				}
 			}
 
 			useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol, true)
-		})
+		}, 151)
 	}
 
 	// 设置字体颜色
@@ -988,7 +987,7 @@ export const useTools = (config) => {
 						// 字体大小
 						if (item?.v?.fs) {
 							const size = parseInt(item.v.fs)
-							cellStyle[item.r + '-' + item.c]['size'] = size + 'px'
+							cellStyle[item.r + '-' + item.c]['size'] = parseInt(size)
 						}
 
 						// 对齐
