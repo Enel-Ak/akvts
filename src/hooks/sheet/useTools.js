@@ -987,7 +987,8 @@ export const useTools = (config) => {
 
 						// 字体大小
 						if (item?.v?.fs) {
-							cellStyle[item.r + '-' + item.c]['size'] = item.v.fs
+							const size = parseInt(item.v.fs)
+							cellStyle[item.r + '-' + item.c]['size'] = size + 'px'
 						}
 
 						// 对齐
@@ -1106,7 +1107,7 @@ export const useTools = (config) => {
 
 					// 字体大小
 					if (cellstyle?.size) {
-						data.v.fs = cellstyle?.size
+						data.v.fs = parseInt(cellstyle?.size)
 					}
 
 					// 对齐
