@@ -333,7 +333,14 @@
 		}
 
 		&.lock {
-			background-color: var(--z-sheet-virtual);
+			// background-color: var(--z-sheet-virtual);
+			background: repeating-linear-gradient(
+				125deg,
+				rgba(var(--z-font-color-rgb), 0.1),
+				rgba(var(--z-font-color-rgb), 0.2) 1px,
+				rgba(var(--z-font-color-rgb), 0) 1px,
+				rgba(var(--z-font-color-rgb), 0) 5px
+			);
 		}
 
 		&:focus {
