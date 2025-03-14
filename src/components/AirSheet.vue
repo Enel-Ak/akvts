@@ -20,7 +20,14 @@ import {useCopy} from '@/hooks/sheet/useCopy'
 import {useExcel} from '@/hooks/sheet/useExcel'
 import {useTools} from '@/hooks/sheet/useTools'
 import {useMouseRight} from '@/hooks/sheet/useMouseRight'
+import {useTouch} from '@/hooks/sheet/useTouch'
 import {ElMessage} from 'element-plus'
+
+const statusType = {
+	normal: 0,
+	loading: 1,
+	error: 2,
+}
 
 const emits = defineEmits([
 	'update:modelValue',
@@ -43,7 +50,7 @@ const props = defineProps({
 	// 单元格宽度
 	colWidth: {type: Number, default: 100},
 	// 缓冲区大小(额外渲染的行数)
-	buffer: {type: Number, default: 10},
+	buffer: {type: Number, default: 5},
 
 	// 序号
 	enableNumber: {type: Boolean, default: true},
@@ -57,6 +64,10 @@ const props = defineProps({
 	fns: {type: Array, default: () => []},
 
 	height: {type: [Number, String], default: 0},
+
+	// 设置状态遮罩完全就由父组件控制
+	status: {type: Number, default: 0}, // 0: normal, 1: loading, 2: error
+	statusText: {type: String, default: '数据加载中...'},
 })
 
 // 保存数据
@@ -326,6 +337,20 @@ const useCopyHook = useCopy({
 })
 const useMouseRightHook = useMouseRight(id)
 
+const useTouchHook = useTouch({
+	id,
+	sheet,
+	renderRange: async () => {
+		// 确保在缩放后正确更新可见范围
+		await updateVisibleRange()
+		onScroll()
+	},
+	onZoom: (zoom) => {
+		// 设置缩放比例
+		sheet.config.zoom = zoom
+	},
+})
+
 // 可见范围的响应式引用
 const visibleRangeRef = ref({
 	startRow: 0,
@@ -384,19 +409,21 @@ const updateVisibleRange = async () => {
 			colWidths[index] = width * currentZoom
 		}
 
+		// 确保滚动位置与缩放比例匹配
 		const renderData = {
 			scrollTop: scrollTop.value,
 			scrollLeft: scrollLeft.value,
-			viewportHeight: viewportHeight.value / currentZoom,
-			viewportWidth: viewportWidth.value / currentZoom,
+			viewportHeight: viewportHeight.value,
+			viewportWidth: viewportWidth.value,
 			rowCount: sheet.config.rowCount,
 			colCount: sheet.config.colCount,
 			buffer: props.buffer,
-			defaultRowHeight: props.rowHeight * sheet.config.zoom,
-			defaultColWidth: props.colWidth * sheet.config.zoom,
+			defaultRowHeight: props.rowHeight * currentZoom,
+			defaultColWidth: props.colWidth * currentZoom,
 			rowHeights,
 			colWidths,
 			mergedCells: JSON.parse(JSON.stringify(sheet.config.mergedCells)),
+			zoom: currentZoom,
 		}
 
 		const result = await useSheetRenderHook.getRenderResult(renderData)
@@ -624,10 +651,10 @@ let scrollTimer = null
 let rafId = null
 const lastScroll = ref(false)
 const onScroll = async (e) => {
-	if (lastScroll.value) {
-		lastScroll.value = false
-		return
-	}
+	// if (lastScroll.value) {
+	// 	lastScroll.value = false
+	// 	return
+	// }
 
 	// 清除之前的定时器和动画帧
 	clearTimeout(scrollTimer)
@@ -668,6 +695,9 @@ const onScroll = async (e) => {
 		if (fn) {
 			fn.scrollTop = newScrollTop
 		}
+
+		// 在RAF中立即更新可见范围，提高响应速度
+		updateVisibleRange()
 	})
 
 	// 使用防抖处理最后一次滚动位置
@@ -697,12 +727,12 @@ const onScroll = async (e) => {
 			if (sheet.config.rowCount >= limit) {
 				loading.value = false
 			}
+
+			// 确保最后一次滚动后也更新可见范围
+			updateVisibleRange()
 		})
 	}, 150)
 }
-
-// 监听滚动位置变化
-watch([scrollTop, scrollLeft], () => updateVisibleRange(), {immediate: true})
 
 // 恢复滚动位置
 
@@ -898,12 +928,16 @@ const onZoomReset = async () => {
 // 拖拽到单元格时
 let dropCell = null
 const onCellcellDragOver = (event) => {
+	console.log('onCellcellDragOver', event)
+
 	event.preventDefault()
 	dropCell = useSelectionRangeHook.getRange(event)
 	emits('cellDragOver', dropCell)
 }
 
 const onCellDrop = (event) => {
+	console.log('onCellDrop', event)
+
 	event.preventDefault()
 	emits('cellDrop', dropCell)
 	dropCell = null
@@ -920,6 +954,7 @@ const init = async () => {
 	useCopyHook.init()
 	useHistoryHook.init()
 	useMouseRightHook.init()
+	useTouchHook.init()
 
 	nextTick(async () => {
 		updateViewportSize()
@@ -1886,11 +1921,15 @@ defineExpose({
 		</div>
 
 		<!-- 遮罩 -->
-		<div class="mask" :class="{active: loading}">
+		<div class="mask" :class="{active: loading || status === statusType.loading}">
 			<div>
 				<Icons icon-name="Loading" class="loading-animation"></Icons>
-				<span>{{ loadingText }}</span>
-				<span v-if="loadingProgress !== -1">{{ loadingProgress }}%</span>
+				<span>
+					{{ status === statusType.loading ? statusText : loadingText }}
+				</span>
+				<span v-if="loadingProgress !== -1 && status === statusType.normal">
+					{{ loadingProgress }}%
+				</span>
 			</div>
 		</div>
 

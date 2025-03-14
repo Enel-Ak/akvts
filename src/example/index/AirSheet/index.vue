@@ -247,9 +247,9 @@ onMounted(() => {
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
 		// config.value.celldata[0][0] = '123'
-		sheetRef.value.airToLucky().then((res) => {
-			console.log(99, res)
-		})
+		// sheetRef.value.airToLucky().then((res) => {
+		// 	console.log(99, res)
+		// })
 		// sheetRef.value
 		// 	.luckyToAir(
 		// 		{

@@ -28,22 +28,22 @@ export const useStyle = (cellStyle, zoom) => {
 
 	// 加粗
 	const bold = (value) => {
-		return value === true ? 'bold' : 'normal'
+		return value === true || value === 1 ? 'bold' : 'normal'
 	}
 
 	// 下划线
 	const underline = (value) => {
-		return value === true ? 'underline' : 'normal'
+		return value === true || value === 1 ? 'underline' : 'normal'
 	}
 
 	// 斜体
 	const italic = (value) => {
-		return value === true ? 'italic' : 'normal'
+		return value === true || value === 1 ? 'italic' : 'normal'
 	}
 
 	// 删除线
 	const strikethrough = (value) => {
-		return value === true ? 'line-through' : 'normal'
+		return value === true || value === 1 ? 'line-through' : 'normal'
 	}
 
 	Object.entries(cellStyle).forEach(([key, value]) => {
