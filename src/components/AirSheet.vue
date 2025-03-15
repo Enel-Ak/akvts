@@ -229,7 +229,7 @@ const containerHeight = computed(() => {
 const initialized = ref(false)
 const loading = ref(false)
 const loadingText = ref('正在处理数据...')
-const loadingProgress = ref(0)
+const loadingProgress = ref(-1)
 const containerRef = ref()
 const alphabetRef = ref()
 const numberRef = ref()

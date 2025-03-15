@@ -100,23 +100,6 @@ export function useTouch(options) {
 			// 重置节流相关变量
 			lastZoomCallTime = 0
 			lastZoomValue = initialZoom.value
-
-			// 保存缩放前的滚动位置
-			if (container) {
-				scrollPositionBeforeZoom.top = container.scrollTop
-				scrollPositionBeforeZoom.left = container.scrollLeft
-
-				// 计算视口中心点在内容中的相对位置
-				const viewportWidth = container.clientWidth
-				const viewportHeight = container.clientHeight
-				const scrollWidth = container.scrollWidth
-				const scrollHeight = container.scrollHeight
-
-				scrollPositionBeforeZoom.centerX =
-					(scrollPositionBeforeZoom.left + viewportWidth / 2) / scrollWidth
-				scrollPositionBeforeZoom.centerY =
-					(scrollPositionBeforeZoom.top + viewportHeight / 2) / scrollHeight
-			}
 		}
 	}
 
@@ -164,13 +147,6 @@ export function useTouch(options) {
 					if (renderRange && typeof renderRange === 'function') {
 						setTimeout(() => {
 							renderRange()
-
-							// 在渲染范围更新后还原滚动位置
-							if (onRestoreScroll && typeof onRestoreScroll === 'function') {
-								setTimeout(() => {
-									onRestoreScroll(scrollPositionBeforeZoom, currentZoom.value)
-								}, 50) // 添加小延迟确保渲染已完成
-							}
 						}, 50) // 添加小延迟确保缩放已应用
 					}
 
