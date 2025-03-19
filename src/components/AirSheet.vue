@@ -1155,6 +1155,8 @@ onDeactivated(() => {
 			left: containerRef.value.scrollLeft,
 		}
 	}
+	destroy()
+	clearData()
 })
 
 onUnmounted(() => {
