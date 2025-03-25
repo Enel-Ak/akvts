@@ -33,9 +33,16 @@ const jc = computed(() => {
 	return _jc
 })
 
-const _size = computed(() => props.size)
+const _size = ref(props.size)
 const _color = ref(props.color)
 const _iconColor = ref(props.color)
+
+watch(
+	() => props.size,
+	(val) => {
+		_size.value = val
+	}
+)
 
 watch(
 	() => props.color,
@@ -47,7 +54,7 @@ watch(
 </script>
 <template>
 	<div class="akvts-loading-transition" :style="{justifyContent: jc}">
-		<Icons icon-name="Loading" :color="_iconColor" :size="size"></Icons>
+		<Icons icon-name="Loading" :color="_iconColor" :size="_size"></Icons>
 		<span>
 			<slot name="text">
 				{{ text }}
