@@ -324,8 +324,7 @@ const onButtonClick = () => {
 				</Form>
 			</div>
 		</template>
-		<LoadingTransition></LoadingTransition>
-
+		<LoadingTransition />
 		<el-button @click="formRef.clear(true)">手动清空</el-button>
 		<FormItem
 			v-model="formItemTest"

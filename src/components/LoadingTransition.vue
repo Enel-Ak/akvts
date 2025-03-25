@@ -98,7 +98,7 @@ watch(
 	}
 
 	span {
-		font-size: v-bind(_size);
+		font-size: v-bind(_size) !important;
 		color: v-bind(_color);
 		// transform: translateY(-0.5px);
 		small::after {
@@ -106,11 +106,6 @@ watch(
 			animation: more 2s linear infinite;
 			color: v-bind(_color);
 		}
-	}
-
-	:deep(svg) {
-		width: 13px !important;
-		height: 13px !important;
 	}
 }
 </style>
