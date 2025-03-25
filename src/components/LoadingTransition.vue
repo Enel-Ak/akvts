@@ -14,6 +14,10 @@ const props = defineProps({
 		type: String,
 		default: 'center',
 	},
+	size: {
+		type: [String, Number],
+		default: '14px',
+	},
 })
 
 const jc = computed(() => {
@@ -29,6 +33,7 @@ const jc = computed(() => {
 	return _jc
 })
 
+const _size = computed(() => props.size)
 const _color = ref(props.color)
 const _iconColor = ref(props.color)
 
@@ -42,7 +47,7 @@ watch(
 </script>
 <template>
 	<div class="akvts-loading-transition" :style="{justifyContent: jc}">
-		<Icons icon-name="Loading" :color="_iconColor"></Icons>
+		<Icons icon-name="Loading" :color="_iconColor" :size="size"></Icons>
 		<span>
 			<slot name="text">
 				{{ text }}
@@ -86,7 +91,7 @@ watch(
 	}
 
 	span {
-		font-size: torem(12px);
+		font-size: v-bind(_size);
 		color: v-bind(_color);
 		// transform: translateY(-0.5px);
 		small::after {
