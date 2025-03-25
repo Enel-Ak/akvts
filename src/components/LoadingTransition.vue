@@ -15,7 +15,7 @@ const props = defineProps({
 		default: 'center',
 	},
 	size: {
-		type: [String, Number],
+		type: String,
 		default: '14px',
 	},
 })
