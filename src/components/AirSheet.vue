@@ -77,6 +77,7 @@ const sheet = reactive({
 		showToolBar: true, // 工具栏
 		showStatusBar: true, // 状态栏
 		font: true, // 字体
+		format: true, // 单元格格式
 		color: true, // 颜色
 		fill: true, // 填充
 		bold: true, // 加粗
@@ -96,7 +97,7 @@ const sheet = reactive({
 		lock: true, // 锁定
 		unlock: true, // 解锁
 		zoom: 1, //缩放
-		freeze: true, // 冻结
+		freeze: false, // 冻结
 
 		freezeCount: {
 			row: 0,
@@ -349,6 +350,34 @@ const useTouchHook = useTouch({
 		// 设置缩放比例
 		sheet.config.zoom = zoom
 	},
+})
+
+// 单元格选中后激活该单元格已有样式
+const setActiveTool = computed(() => {
+	return (style) => {
+		const ranged = useSelectionRangeHook.ranged
+		const startRow = Math.min(ranged.start.row, ranged.end.row)
+		const startCol = Math.min(ranged.start.col, ranged.end.col)
+		const endRow = Math.max(ranged.start.row, ranged.end.row)
+		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		const cellStyle = sheet.config.cellStyle[`${startRow}-${startCol}`]
+		const isLock = sheet.config.lockCells[`${startRow}-${startCol}`]
+
+		const data = {
+			value: null,
+			active: false,
+			lock: isLock,
+		}
+
+		if ((startRow !== endRow && startCol !== endCol) || !style || !cellStyle) {
+			return data
+		}
+
+		data.value = cellStyle[style]
+		data.active = Object.keys(cellStyle).includes(style)
+
+		return data
+	}
 })
 
 // 可见范围的响应式引用
@@ -1172,6 +1201,8 @@ defineExpose({
 	setCellValue: useEditHook.setCellValue,
 	setLocked: useToolsHook.setLocked,
 	setUnlocked: useToolsHook.setUnlocked,
+	importExcel: useToolsHook.importExcel,
+	exportExcel: useToolsHook.exportExcel,
 
 	setCellBackground: (row, col, rowspan, colspan, color) => {
 		useToolsHook.setCellStyle({
@@ -1209,27 +1240,52 @@ defineExpose({
 		>
 			<div v-if="sheet.config.font" class="group font-layout h-full">
 				<div class="item font">
-					<!-- 字体 -->
-					<select value="FZSSJW, sans-serif" @change="useToolsHook.setFont($event)">
+					<div>
+						<!-- 字体 -->
+						<select
+							:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
+							@change="useToolsHook.setFont($event)"
+						>
+							<option
+								v-for="[key, value] of Object.entries(useToolsHook.fonts)"
+								:key="value"
+								:value="value"
+							>
+								{{ key }}
+							</option>
+						</select>
+						<!-- 字号 -->
+						<select
+							:value="setActiveTool('fs').value || 13"
+							@change="useToolsHook.setFontSize($event)"
+						>
+							<option v-for="size in useToolsHook.fontSize" :key="size" :value="size">
+								{{ size }}
+							</option>
+						</select>
+					</div>
+					<!-- 格式 -->
+					<select
+						:value="setActiveTool('fmt').value || 'normal'"
+						@change="useToolsHook.setFormat($event)"
+					>
 						<option
-							v-for="[key, value] of Object.entries(useToolsHook.fonts)"
+							v-for="[key, value] of Object.entries(useToolsHook.formatList)"
 							:key="value"
 							:value="value"
 						>
 							{{ key }}
 						</option>
 					</select>
-					<!-- 字号 -->
-					<select value="13" @change="useToolsHook.setFontSize($event)">
-						<option v-for="size in useToolsHook.fontSize" :key="size" :value="size">
-							{{ size }}
-						</option>
-					</select>
 				</div>
 			</div>
 
 			<div v-if="sheet.config.color || sheet.config.fill" class="group">
-				<div v-if="sheet.config.color" class="item color">
+				<div
+					v-if="sheet.config.color"
+					class="item color"
+					:class="{active: setActiveTool('fc').active}"
+				>
 					<Icons icon-name="Font"></Icons>
 					<span>颜色</span>
 					<input
@@ -1238,7 +1294,11 @@ defineExpose({
 						@change="useToolsHook.fontColorChanged($event)"
 					/>
 				</div>
-				<div v-if="sheet.config.fill" class="item color">
+				<div
+					v-if="sheet.config.fill"
+					class="item color"
+					:class="{active: setActiveTool('bg').active}"
+				>
 					<Icons icon-name="FillColor"></Icons>
 					<span class="fill-color">填充</span>
 					<input
@@ -1258,21 +1318,37 @@ defineExpose({
 					sheet.config.strikethrough
 				"
 			>
-				<div v-if="sheet.config.bold" class="item" @click="useToolsHook.setBold">
+				<div
+					v-if="sheet.config.bold"
+					class="item"
+					:class="{active: setActiveTool('bold').active}"
+					@click="useToolsHook.setBold"
+				>
 					<Icons icon-name="Bold"></Icons>
 					<span>加粗</span>
 				</div>
-				<div v-if="sheet.config.italic" class="item" @click="useToolsHook.setItalic">
+				<div
+					v-if="sheet.config.italic"
+					class="item"
+					:class="{active: setActiveTool('it').active}"
+					@click="useToolsHook.setItalic"
+				>
 					<Icons icon-name="Italic"></Icons>
 					<span>倾斜</span>
 				</div>
-				<div v-if="sheet.config.underline" class="item" @click="useToolsHook.setUnderline">
+				<div
+					v-if="sheet.config.underline"
+					class="item"
+					:class="{active: setActiveTool('un').active}"
+					@click="useToolsHook.setUnderline"
+				>
 					<Icons icon-name="Underline"></Icons>
 					<span>下划线</span>
 				</div>
 				<div
 					v-if="sheet.config.strikethrough"
 					class="item"
+					:class="{active: setActiveTool('st').active}"
 					@click="useToolsHook.setStrikethrough"
 				>
 					<Icons icon-name="Strikethrough"></Icons>
@@ -1281,15 +1357,27 @@ defineExpose({
 			</div>
 
 			<div class="group" v-if="sheet.config.align">
-				<div class="item" @click="useToolsHook.setAlign('left')">
+				<div
+					class="item"
+					:class="{active: setActiveTool('align').value === 'left'}"
+					@click="useToolsHook.setAlign('left')"
+				>
 					<Icons icon-name="AlignLeft"></Icons>
 					<span>左对齐</span>
 				</div>
-				<div class="item" @click="useToolsHook.setAlign('center')">
+				<div
+					class="item"
+					:class="{active: setActiveTool('align').value === 'center'}"
+					@click="useToolsHook.setAlign('center')"
+				>
 					<Icons icon-name="AlignCenter"></Icons>
 					<span>居中</span>
 				</div>
-				<div class="item" @click="useToolsHook.setAlign('right')">
+				<div
+					class="item"
+					:class="{active: setActiveTool('align').value === 'right'}"
+					@click="useToolsHook.setAlign('right')"
+				>
 					<Icons icon-name="AlignRight"></Icons>
 					<span>右对齐</span>
 				</div>
@@ -1305,7 +1393,11 @@ defineExpose({
 			<!-- 边框 -->
 			<template v-if="!isMobile()">
 				<div class="group group-merge" v-if="sheet.config.border">
-					<div class="item" @click="useToolsHook.setBorder()">
+					<div
+						class="item"
+						:class="{active: setActiveTool('bl').active}"
+						@click="useToolsHook.setBorder()"
+					>
 						<Icons icon-name="Border"></Icons>
 						<span>边框</span>
 					</div>
@@ -1445,7 +1537,12 @@ defineExpose({
 
 			<!-- 锁定解锁 -->
 			<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
-				<div v-if="sheet.config.lock" class="item" @click="useToolsHook.setLocked">
+				<div
+					v-if="sheet.config.lock"
+					class="item"
+					:class="{active: setActiveTool('lock').lock}"
+					@click="useToolsHook.setLocked"
+				>
 					<Icons icon-name="CellLock"></Icons>
 					<span>锁定</span>
 				</div>

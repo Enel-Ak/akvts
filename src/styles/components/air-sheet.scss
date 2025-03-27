@@ -125,7 +125,8 @@
 			transform: scale(0.85);
 		}
 
-		&:hover {
+		&:hover,
+		&.active {
 			background-color: var(--z-sheet-active);
 			color: var(--z-font-color);
 			:deep(svg) {
@@ -135,7 +136,8 @@
 
 		&.font {
 			flex-wrap: wrap;
-			flex-direction: row;
+			flex-direction: column;
+			padding: 0;
 			select {
 				border: 1px solid var(--z-line);
 				background-color: var(--z-theme);
@@ -144,14 +146,20 @@
 				flex: 1;
 				font-size: 12px;
 				padding: 2px;
-
+			}
+			> div > select {
 				&:nth-child(1) {
-					border-radius: 4px 0 0 4px;
+					border-radius: 4px 0 0 0;
 				}
 				&:nth-child(2) {
-					border-radius: 0 4px 4px 0;
+					border-radius: 0 4px 0 0;
 					margin-left: -1px;
 				}
+			}
+			> select {
+				border-radius: 0 0 4px 4px;
+				margin-top: -1px;
+				width: 131px;
 			}
 			&:hover {
 				background-color: transparent;

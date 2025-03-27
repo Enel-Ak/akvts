@@ -31,6 +31,13 @@ export const useTools = (config) => {
 	}
 	const fontSize = [12, 13, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]
 
+	const formatList = {
+		常规: 'normal',
+		'短日期(yyyy/MM/dd)': 'shortDate',
+		'长日期(yyyy年MM月dd日)': 'longDate',
+		'时间(HH:mm:ss)': 'time',
+	}
+
 	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
 	const setCellStyles = (type, val, fn, save = true) => {
 		if (isLocked()) {
@@ -124,6 +131,12 @@ export const useTools = (config) => {
 
 			useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol, true)
 		}, 151)
+	}
+
+	// 设置单元格格式
+	const setFormat = (e) => {
+		const format = e.target.value
+		setCellStyles('fmt', format)
 	}
 
 	// 设置字体颜色
@@ -1189,11 +1202,13 @@ export const useTools = (config) => {
 	return {
 		fonts,
 		fontSize,
+		formatList,
 
 		setCellStyle,
 
 		setFont,
 		setFontSize,
+		setFormat,
 		setFontColor,
 		fontColorChanged,
 		setFillColor,
