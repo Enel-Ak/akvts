@@ -126,7 +126,7 @@ const onClickText = (e, item) => {
 		opacity: 0.5;
 		position: relative;
 		padding: 0 torem(20px) torem(20px) torem(20px);
-
+		word-break: break-all;
 		.icon {
 			color: var(--z-bg);
 			left: torem(-10.515px);
