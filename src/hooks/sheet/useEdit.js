@@ -63,6 +63,7 @@ export const useEdit = (id, config) => {
 
 		// 体验优化而已
 		if (cellEl.innerText === '') {
+			// 单行的时候行高和高度一样
 			cellEl.style.lineHeight = useResizeHook.getRowHeight(rowIndex) - 1 + 'px'
 		} else {
 			cellEl.style.lineHeight = 'inherit'
@@ -84,11 +85,15 @@ export const useEdit = (id, config) => {
 		cellEl.focus()
 		editing.value = true
 
+		cellEl.innerText = setCellFormat(cellEl.innerText, rowIndex, colIndex)
+
 		const blur = () => {
-			// if (cellEl.innerText === '') {
-			// 	cellEl.innerText = originalValue
-			// }
-			sheet.celldata.get(rowIndex)[colIndex] = cellEl.innerText
+			sheet.celldata.get(rowIndex)[colIndex] = setCellFormat(
+				cellEl.innerText,
+				rowIndex,
+				colIndex,
+				true
+			)
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
 			editing.value = false
@@ -96,6 +101,60 @@ export const useEdit = (id, config) => {
 		}
 
 		cellEl.addEventListener('blur', blur)
+	}
+
+	const setCellFormat = (text, rowIndex, colIndex, format = false) => {
+		const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
+		let output = text
+		try {
+			if (fmt) {
+				switch (fmt) {
+					case 'shortDate':
+						if (format) {
+							let [_, year, month, day] = output.match(/^(\d{4})(\d{2})(\d{2})/)
+
+							if (month < 1) {
+								month = 1
+							}
+
+							if (month > 12) {
+								month = 12
+							}
+
+							if (day < 1) {
+								day = 1
+							}
+
+							if (day > 31) {
+								day = 31
+							}
+
+							if (month === 2 && day > 29) {
+								if (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) {
+									day = 29
+								} else {
+									day = 28
+								}
+							}
+
+							output = `${year}/${month}/${day}`
+						} else {
+							output = output.replace(/\//g, '')
+						}
+						break
+				}
+
+				if (!format) {
+					// 还原的时候
+					sheet.celldata.get(rowIndex)[colIndex] = output
+				}
+			}
+		} catch (error) {
+			ElMessage.error(`格式错误,请检查内容`)
+			useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
+		}
+
+		return output
 	}
 
 	const setRowHeight = async (rowIndex, colIndex, needRender = true, needSetRange = true) => {
