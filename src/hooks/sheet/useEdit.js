@@ -1,4 +1,5 @@
 import {ref, reactive, nextTick} from 'vue'
+import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
 
 export const useEdit = (id, config) => {
@@ -53,7 +54,6 @@ export const useEdit = (id, config) => {
 		}
 
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
-		// const originalValue = cellEl?.innerText
 
 		if (!cellEl || cellEl.getAttribute('contenteditable')) {
 			return
@@ -61,18 +61,20 @@ export const useEdit = (id, config) => {
 
 		cellEl.setAttribute('contenteditable', 'true')
 
-		// 体验优化而已
+		// 优化体验而已
 		if (cellEl.innerText === '') {
-			// 单行的时候行高和高度一样
 			cellEl.style.lineHeight = useResizeHook.getRowHeight(rowIndex) - 1 + 'px'
-		} else {
-			cellEl.style.lineHeight = 'inherit'
 		}
 
 		// 未双击, 直接输入清空所有内容
 		if (cell.rowIndex === undefined) {
 			cellEl.innerText = ''
 		}
+
+		cellEl.innerText = setCellFormat(cellEl.innerText, rowIndex, colIndex)
+
+		cellEl.focus()
+		editing.value = true
 
 		// 将光标移到文本末尾
 		const range = document.createRange()
@@ -81,11 +83,6 @@ export const useEdit = (id, config) => {
 		range.collapse(false)
 		selection.removeAllRanges()
 		selection.addRange(range)
-
-		cellEl.focus()
-		editing.value = true
-
-		cellEl.innerText = setCellFormat(cellEl.innerText, rowIndex, colIndex)
 
 		const blur = () => {
 			sheet.celldata.get(rowIndex)[colIndex] = setCellFormat(
@@ -96,21 +93,33 @@ export const useEdit = (id, config) => {
 			)
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
+			cellEl.removeEventListener('input', input)
 			editing.value = false
 			setTimeout(() => setRowHeight(rowIndex, colIndex), 0)
 		}
 
+		const input = () => {
+			// 体验优化而已
+			cellEl.style.removeProperty('line-height')
+		}
+
+		cellEl.addEventListener('input', input)
 		cellEl.addEventListener('blur', blur)
 	}
 
-	const setCellFormat = (text, rowIndex, colIndex, format = false) => {
+	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
 		const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
 		let output = text
 		try {
 			if (fmt) {
 				switch (fmt) {
-					case 'shortDate':
+					case formatMap.ShortDate:
 						if (format) {
+							// 格式本来正确, 保证match不报错
+							if (/^\d{4}\/\d{2}\/\d{2}$/.test(output)) {
+								output = output.replace(/\//g, '')
+							}
+
 							let [_, year, month, day] = output.match(/^(\d{4})(\d{2})(\d{2})/)
 
 							if (month < 1) {
@@ -142,15 +151,108 @@ export const useEdit = (id, config) => {
 							output = output.replace(/\//g, '')
 						}
 						break
+					case formatMap.LongDate:
+						if (format) {
+							// 格式本来正确, 保证match不报错
+							if (/^\d{4}年\d{2}月\d{2}日$/.test(output)) {
+								output = output.replace(/\//g, '')
+							}
+
+							let [_, year, month, day] = output.match(/^(\d{4})(\d{2})(\d{2})/)
+
+							if (month < 1) {
+								month = 1
+							}
+
+							if (month > 12) {
+								month = 12
+							}
+
+							if (day < 1) {
+								day = 1
+							}
+
+							if (day > 31) {
+								day = 31
+							}
+
+							if (month === 2 && day > 29) {
+								if (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) {
+									day = 29
+								} else {
+									day = 28
+								}
+							}
+
+							output = `${year}年${month}月${day}日`
+						} else {
+							output = output.replace(/年|月|日/g, '')
+						}
+						break
+					case formatMap.Time:
+						if (format) {
+							// 格式本来正确, 保证match不报错
+							if (/^\d{2}:\d{2}:\d{2}$/.test(output)) {
+								output = output.replace(/\//g, '')
+							}
+
+							let [_, hour, minute, second] = output.match(/^(\d{2})(\d{2})(\d{2})/)
+
+							if (hour < 0) {
+								hour = 0
+							}
+
+							if (minute < 0) {
+								minute = 0
+							}
+
+							if (second < 0) {
+								second = 0
+							}
+
+							if (hour > 23) {
+								hour = 23
+							}
+
+							if (minute > 59) {
+								minute = 59
+							}
+
+							if (second > 59) {
+								second = 59
+							}
+
+							output = `${hour}:${minute}:${second}`
+						} else {
+							output = output.replace(/:/g, '')
+						}
+						break
+					case formatMap.RMB:
+						if (format) {
+							if (!/^[0-9.]+$/.test(output)) {
+								throw new Error()
+							}
+							output =
+								Number(output)
+									.toFixed(2)
+									.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '元'
+						} else {
+							output = output.replace(/元|,/g, '')
+						}
+						break
 				}
 
 				if (!format) {
 					// 还原的时候
 					sheet.celldata.get(rowIndex)[colIndex] = output
 				}
+
+				if (el) {
+					el.innerText = output
+				}
 			}
 		} catch (error) {
-			ElMessage.error(`格式错误,请检查内容`)
+			ElMessage.error(`${fmt}格式错误, 请检查内容`)
 			useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
 		}
 
@@ -284,6 +386,7 @@ export const useEdit = (id, config) => {
 		startEdit,
 		formattedValue,
 		setCellValue,
+		setCellFormat,
 		getCellValue,
 	}
 }

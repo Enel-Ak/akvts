@@ -10,6 +10,7 @@ export const useTools = (config) => {
 		loadingText,
 		loadingProgress,
 		containerRef,
+		useEditHook,
 		useExcelHook,
 		useResizeHook,
 		useHistoryHook,
@@ -19,24 +20,6 @@ export const useTools = (config) => {
 		renderRange,
 		processMapInBatches,
 	} = config
-
-	// 预置字体列表
-	const fonts = {
-		宋体: 'FZSSJW, sans-serif',
-		楷体: 'FZKTJW, sans-serif',
-		黑体: 'FZHTJW, sans-serif',
-		Arial: 'Arial, sans-serif',
-		Helvetica: 'Helvetica, sans-serif',
-		'Courier New': 'Courier New, sans-serif',
-	}
-	const fontSize = [12, 13, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]
-
-	const formatList = {
-		常规: 'normal',
-		'短日期(yyyy/MM/dd)': 'shortDate',
-		'长日期(yyyy年MM月dd日)': 'longDate',
-		'时间(HH:mm:ss)': 'time',
-	}
 
 	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
 	const setCellStyles = (type, val, fn, save = true) => {
@@ -137,6 +120,13 @@ export const useTools = (config) => {
 	const setFormat = (e) => {
 		const format = e.target.value
 		setCellStyles('fmt', format)
+
+		const cell = useSelectionRangeHook.getStartCell()
+		const el = containerRef.value.querySelector(`[data-cell="${cell.row}-${cell.col}"]`)
+
+		if (el) {
+			useEditHook.setCellFormat(el.innerText, cell.row, cell.col, true, el)
+		}
 	}
 
 	// 设置字体颜色
@@ -1200,10 +1190,6 @@ export const useTools = (config) => {
 	}
 
 	return {
-		fonts,
-		fontSize,
-		formatList,
-
 		setCellStyle,
 
 		setFont,

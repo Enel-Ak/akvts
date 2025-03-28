@@ -22,6 +22,7 @@ import {useTools} from '@/hooks/sheet/useTools'
 import {useMouseRight} from '@/hooks/sheet/useMouseRight'
 import {useTouch} from '@/hooks/sheet/useTouch'
 import {ElMessage} from 'element-plus'
+import {fonts, fontSize, formatMap} from '@/hooks/sheet/define'
 
 const statusType = {
 	normal: 0,
@@ -317,6 +318,7 @@ const useToolsHook = useTools({
 	loadingText,
 	loadingProgress,
 	containerRef,
+	useEditHook,
 	useExcelHook,
 	useResizeHook,
 	useHistoryHook,
@@ -633,6 +635,35 @@ const getOffsetStyle = (cell) => {
 		offsetTop: offsetTop.value,
 	})
 	return style
+}
+
+const getCellClass = (cell) => {
+	const isLocked = sheet.config.lockCells[`${cell.rowIndex}-${cell.colIndex}`]
+	const style = sheet.config.cellStyle[`${cell.rowIndex}-${cell.colIndex}`]
+	let fmtClass = ''
+	switch (style?.fmt) {
+		case formatMap.ShortDate:
+			fmtClass = 'short-date'
+			break
+		case formatMap.LongDate:
+			fmtClass = 'long-date'
+			break
+		case formatMap.Time:
+			fmtClass = 'time'
+			break
+		case formatMap.RMB:
+			fmtClass = 'rmb'
+			break
+		default:
+			fmtClass = ''
+			break
+	}
+	return {
+		lock: isLocked,
+		fmt: style?.fmt,
+		[fmtClass]: !!fmtClass,
+		merged: isMergedCellStart(cell),
+	}
 }
 
 const isMergedCellStart = (cell) => {
@@ -1247,7 +1278,7 @@ defineExpose({
 							@change="useToolsHook.setFont($event)"
 						>
 							<option
-								v-for="[key, value] of Object.entries(useToolsHook.fonts)"
+								v-for="[key, value] of Object.entries(fonts)"
 								:key="value"
 								:value="value"
 							>
@@ -1259,22 +1290,22 @@ defineExpose({
 							:value="setActiveTool('fs').value || 13"
 							@change="useToolsHook.setFontSize($event)"
 						>
-							<option v-for="size in useToolsHook.fontSize" :key="size" :value="size">
+							<option v-for="size in fontSize" :key="size" :value="size">
 								{{ size }}
 							</option>
 						</select>
 					</div>
 					<!-- 格式 -->
 					<select
-						:value="setActiveTool('fmt').value || 'normal'"
+						:value="setActiveTool('fmt').value || formatMap.Normal"
 						@change="useToolsHook.setFormat($event)"
 					>
 						<option
-							v-for="[key, value] of Object.entries(useToolsHook.formatList)"
-							:key="value"
+							v-for="[key, value] of Object.entries(formatMap)"
+							:key="key"
 							:value="value"
 						>
-							{{ key }}
+							{{ value }}
 						</option>
 					</select>
 				</div>
@@ -1771,12 +1802,7 @@ defineExpose({
 									v-else
 									v-html="useEditHook.formattedValue(cell.value, cell)"
 									:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
-									:class="{
-										merged: isMergedCellStart(cell),
-										lock: sheet.config.lockCells[
-											`${cell.rowIndex}-${cell.colIndex}`
-										],
-									}"
+									:class="getCellClass(cell)"
 									:style="getOffsetStyle(cell)"
 									@click="onClickCell($event, cell)"
 									@dblclick.stop="useEditHook.startEdit($event, cell)"

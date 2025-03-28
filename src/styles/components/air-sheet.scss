@@ -317,28 +317,25 @@
 		color: var(--z-font-color);
 		display: flex;
 		flex-direction: column;
+		line-height: 1.45;
 		justify-content: center;
 		padding: 0 4px;
+		position: relative;
 
 		overflow: hidden;
 		user-select: none;
 		transition: width 0.15s linear, font-size 0.15s linear;
 		will-change: contents;
 
+		:deep(.cell-i) {
+			position: absolute;
+		}
+
 		> :deep(div) {
-			line-height: 1;
 			word-break: break-all;
 
 			&:not(.merged, .resize-handle) {
 				pointer-events: none;
-			}
-
-			&:first-child {
-				padding-top: 2px;
-			}
-
-			&:last-child {
-				padding-bottom: 2px;
 			}
 		}
 
@@ -356,6 +353,37 @@
 		&:focus {
 			background-color: var(--z-theme);
 			outline: none;
+		}
+
+		&.fmt {
+			padding-right: 35px;
+			word-break: break-all;
+
+			&.short-date,
+			&.long-date,
+			&.time,
+			&.rmb {
+				background-size: 18px 18px;
+				background-repeat: no-repeat;
+				background-position: 95% center;
+			}
+
+			&.short-date,
+			&.long-date {
+				background-image: url(@/assets/sheet/calendar.png);
+			}
+
+			&.time {
+				background-image: url(@/assets/sheet/time.png);
+			}
+
+			&.rmb {
+				align-items: flex-end;
+				background-image: url(@/assets/sheet/yuan.png);
+				background-position: 5px center;
+				padding-right: 5px;
+				padding-left: 35px;
+			}
 		}
 	}
 
@@ -683,8 +711,31 @@
 			span {
 				display: none;
 			}
-			&.font select {
-				width: 60px;
+			&.font {
+				flex-direction: row;
+				> div {
+					display: flex;
+					select {
+						border-radius: 0;
+
+						&:first-child {
+							border-radius: 4px 0 0 4px;
+						}
+						&:last-child {
+							border-radius: 0;
+						}
+					}
+				}
+
+				> select {
+					border-radius: 0 4px 4px 0;
+					margin-top: 0;
+					margin-left: -1px;
+				}
+
+				select {
+					width: 50px;
+				}
 			}
 		}
 

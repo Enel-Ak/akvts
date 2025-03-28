@@ -314,13 +314,15 @@ export function useCopy(config) {
 				useMergedCellsHook.setMergeCell(merge.r, merge.c, merge.rs, merge.cs)
 			})
 
-			useSelectionRangeHook.setRange(
-				baseRow,
-				baseCol,
-				baseRow + pasteData.data.length - 1,
-				baseCol + pasteData.data[0].length - 1,
-				true
-			)
+			setTimeout(() => {
+				useSelectionRangeHook.setRange(
+					baseRow,
+					baseCol,
+					baseRow + pasteData.data.length - 1,
+					baseCol + pasteData.data[0].length - 1,
+					true
+				)
+			}, 16.7)
 		}
 
 		// 处理高度
