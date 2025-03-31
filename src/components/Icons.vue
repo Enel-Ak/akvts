@@ -14,6 +14,14 @@ const props = defineProps({
 		type: String,
 		default: 'var(--z-font-color)',
 	},
+	fill: {
+		type: String,
+		default: '',
+	},
+	stroke: {
+		type: String,
+		default: '',
+	},
 	size: {
 		type: [String, Number],
 		default: '18px',
@@ -55,8 +63,8 @@ const svgContent = computed(() => {
 		result = result.replace(/stop-color="currentColor"/g, `stop-color="${props.color}"`)
 
 		// 替换其他颜色属性
-		result = result.replace(/fill="currentColor"/g, `fill="${props.color}"`)
-		result = result.replace(/stroke="currentColor"/g, `stroke="${props.color}"`)
+		result = result.replace(/fill="currentColor"/g, `fill="${props.fill || props.color}"`)
+		result = result.replace(/stroke="currentColor"/g, `stroke="${props.stroke || props.color}"`)
 	}
 
 	return result
