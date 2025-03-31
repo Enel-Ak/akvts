@@ -32,16 +32,44 @@ const iconSize = computed(() => {
 	return _size
 })
 
-const iconColor = computed(() => props.color)
+// 生成唯一ID
+const uniqueId = `icon-${Math.random().toString(36).slice(2)}`
+
+// 处理SVG内容，替换颜色和ID
+const svgContent = computed(() => {
+	const content = props.svg || Icons[props.iconName] || ''
+	if (!content) return ''
+
+	let result = content
+
+	// 为SVG中的ID添加唯一标识，避免多个图标ID冲突
+	// 替换linearGradient的id
+	result = result.replace(/id="([^"]+)"/g, `id="$1-${uniqueId}"`)
+
+	// 替换引用原ID的url(#id)
+	result = result.replace(/url\(#([^)]+)\)/g, `url(#$1-${uniqueId})`)
+
+	// 只有当颜色不是默认值时才替换颜色
+	if (props.color !== 'var(--z-font-color)' && props.color !== 'currentColor') {
+		// 替换 stop-color="currentColor"
+		result = result.replace(/stop-color="currentColor"/g, `stop-color="${props.color}"`)
+
+		// 替换其他颜色属性
+		result = result.replace(/fill="currentColor"/g, `fill="${props.color}"`)
+		result = result.replace(/stroke="currentColor"/g, `stroke="${props.color}"`)
+	}
+
+	return result
+})
 </script>
 <template>
-	<i class="akvts-icons" v-html="svg || Icons[iconName]"></i>
+	<i :key="uniqueId" class="akvts-icons" v-html="svgContent"></i>
 </template>
 <style scoped lang="scss">
 .akvts-icons {
 	display: flex;
+	:deep(i),
 	:deep(svg) {
-		color: v-bind(iconColor);
 		font-size: v-bind(iconSize);
 		height: 1em !important;
 		width: 1em !important;
