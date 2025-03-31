@@ -109,7 +109,7 @@ export const useEdit = (id, config) => {
 
 	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
 		const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
-		let output = text
+		let output = text.replace(/\W/g, '')
 		try {
 			if (fmt) {
 				switch (fmt) {

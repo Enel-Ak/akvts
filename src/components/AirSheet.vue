@@ -1298,7 +1298,12 @@ defineExpose({
 					<!-- 格式 -->
 					<select
 						:value="setActiveTool('fmt').value || formatMap.Normal"
-						@change="useToolsHook.setFormat($event)"
+						@change="
+							($event) => {
+								useToolsHook.setFormat($event)
+								useHistoryHook.saveHistory()
+							}
+						"
 					>
 						<option
 							v-for="[key, value] of Object.entries(formatMap)"
