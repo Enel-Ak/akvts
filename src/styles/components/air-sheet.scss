@@ -196,7 +196,7 @@
 	}
 }
 
-.statusbar {
+.statebar {
 	align-items: center;
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
@@ -756,7 +756,7 @@
 		}
 	}
 
-	.statusbar.mobile {
+	.statebar.mobile {
 		overflow: hidden;
 		overflow-x: auto;
 		white-space: nowrap;
