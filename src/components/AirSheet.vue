@@ -24,7 +24,7 @@ import {useTouch} from '@/hooks/sheet/useTouch'
 import {ElMessage} from 'element-plus'
 import {fonts, fontSize, formatMap} from '@/hooks/sheet/define'
 
-const statusType = {
+const stateType = {
 	normal: 0,
 	loading: 1,
 	error: 2,
@@ -67,8 +67,8 @@ const props = defineProps({
 	height: {type: [Number, String], default: 0},
 
 	// 设置状态遮罩完全就由父组件控制
-	status: {type: Number, default: 0}, // 0: normal, 1: loading, 2: error
-	statusText: {type: String, default: '数据加载中...'},
+	state: {type: Number, default: 0}, // 0: normal, 1: loading, 2: error
+	stateText: {type: String, default: '数据加载中...'},
 })
 
 // 保存数据
@@ -76,7 +76,7 @@ const sheet = reactive({
 	config: {
 		showHorizontalScreen: true, // 移动端不是横向提醒
 		showToolBar: true, // 工具栏
-		showStatusBar: true, // 状态栏
+		showstateBar: true, // 状态栏
 		font: true, // 字体
 		format: true, // 单元格格式
 		color: true, // 颜色
@@ -1996,10 +1996,10 @@ defineExpose({
 		<!-- 状态栏 -->
 		<div
 			v-if="
-				sheet.config.showStatusBar &&
+				sheet.config.showstateBar &&
 				((isMobile() && isLandscape()) || !isMobile() || !sheet.config.showHorizontalScreen)
 			"
-			class="statusbar"
+			class="statebar"
 			:class="{mobile: isMobile()}"
 			:style="{}"
 		>
@@ -2051,13 +2051,13 @@ defineExpose({
 		</div>
 
 		<!-- 遮罩 -->
-		<div class="mask" :class="{active: loading || status === statusType.loading}">
+		<div class="mask" :class="{active: loading || state === stateType.loading}">
 			<div>
 				<Icons icon-name="Loading" class="loading-animation"></Icons>
 				<span>
-					{{ status === statusType.loading ? statusText : loadingText }}
+					{{ state === stateType.loading ? stateText : loadingText }}
 				</span>
-				<span v-if="loadingProgress !== -1 && status === statusType.normal">
+				<span v-if="loadingProgress !== -1 && state === stateType.normal">
 					{{ loadingProgress }}%
 				</span>
 			</div>
