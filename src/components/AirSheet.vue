@@ -1940,7 +1940,7 @@ defineExpose({
 
 				<!-- 公式菜单 -->
 				<div
-					v-if="useEditHook.isFormula.value"
+					v-if="useEditHook.isFormula.value && sheet.config.edit"
 					class="context-menu shadow-12"
 					:style="{...useEditHook.formulaStyle.value, width: '145px'}"
 				>
