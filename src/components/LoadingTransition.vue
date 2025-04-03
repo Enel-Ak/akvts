@@ -55,7 +55,7 @@ watch(
 </script>
 <template>
 	<div class="akvts-loading-transition" :style="{justifyContent: jc}">
-		<Icons :key="id" icon-name="Loading" :color="_iconColor" :size="_size"></Icons>
+		<Icons :key="id" name="Loading" :color="_iconColor" :size="_size"></Icons>
 		<span>
 			<slot name="text">
 				{{ text }}

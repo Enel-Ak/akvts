@@ -246,6 +246,9 @@ watch(
 	() => [current.value?.modifiedTitle, current.value?.label],
 	(newVal) => {
 		const [modifiedTitle, label] = newVal
+		if (!modifiedTitle || !label) {
+			return
+		}
 		console.log('Labels Current Title Changed', modifiedTitle, label)
 		if (modifiedTitle || label.includes('-')) {
 			// 获取根据导航名称获取导航
@@ -264,7 +267,8 @@ watch(
 				emits('update:modelValue', current.value.id)
 			})
 		}
-	}
+	},
+	{deep: true, immediate: true}
 )
 
 watch(
@@ -380,7 +384,7 @@ defineExpose({
 				/>
 				<Icons
 					v-if="index > 0"
-					icon-name="Cancel"
+					name="Cancel"
 					color="var(--z-nav-font-active)"
 					size="15px"
 					@click.stop="onCancelItem(item)"
@@ -391,7 +395,7 @@ defineExpose({
 
 		<el-dropdown v-if="items.length > $props.max" :hide-on-click="false" class="more">
 			<span class="el-dropdown-link df aic">
-				<Icons icon-name="More"></Icons>
+				<Icons name="More"></Icons>
 			</span>
 			<template #dropdown>
 				<el-dropdown-menu popper-class="labels-component-popper">

@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
 					<el-icon>
 						<Icons
 							:svg="item.iconSvg"
-							:icon-name="item.icon"
+							:name="item.icon"
 							color="var(--z-nav-font-color)"
 						></Icons>
 					</el-icon>
@@ -227,7 +227,7 @@ onBeforeUnmount(() => {
 					<template #title>
 						<Icons
 							:svg="item.iconSvg"
-							:icon-name="item.icon"
+							:name="item.icon"
 							color="var(--z-nav-font-color)"
 							style="margin-left: 3px; margin-right: 8px"
 						></Icons>

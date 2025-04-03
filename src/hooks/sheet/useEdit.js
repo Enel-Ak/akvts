@@ -1,4 +1,4 @@
-import {ref, reactive, nextTick} from 'vue'
+import {ref, reactive, nextTick, watch} from 'vue'
 import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
 
@@ -7,7 +7,11 @@ export const useEdit = (id, config) => {
 	let initialized = false
 	let container = null
 	let enter = false
+	const inputValue = ref('')
 	const editing = ref(false)
+
+	const isFormula = ref(false)
+	const formulaStyle = ref({})
 
 	const enterContainer = () => {
 		enter = true
@@ -15,6 +19,55 @@ export const useEdit = (id, config) => {
 
 	const leaveContainer = () => {
 		enter = false
+	}
+
+	// 将数字转换为Excel样式的列标题 (A-Z, AA-AZ等)
+	const titleCache = new Map()
+	const convertTitle = (input) => {
+		// 如果输入是数字，转换为字母
+		if (typeof input === 'number') {
+			if (input < 0) return ''
+
+			// 使用缓存提高性能
+			if (titleCache.has(input)) {
+				return titleCache.get(input)
+			}
+
+			let title = ''
+			let n = input
+
+			// 转换算法
+			while (n >= 0) {
+				// 获取当前位的字母 (A-Z)
+				title = String.fromCharCode(65 + (n % 26)) + title
+				// 计算下一位
+				n = Math.floor(n / 26) - 1
+			}
+
+			// 保存到缓存
+			titleCache.set(input, title)
+			return title
+		}
+		// 如果输入是字母，转换为数字
+		else if (typeof input === 'string') {
+			const str = input.toUpperCase()
+			let result = 0
+
+			// 遍历字符串中的每个字符
+			for (let i = 0; i < str.length; i++) {
+				// 获取当前字符的ASCII码并转换为0-25的数字
+				const charCode = str.charCodeAt(i) - 65
+
+				// 累加结果：每个位置的字母值乘以26的幂
+				result = result * 26 + charCode + 1
+			}
+
+			// 因为Excel列是从1开始的，但我们的索引是从0开始的，所以减1
+			return result - 1
+		}
+
+		// 如果输入既不是数字也不是字符串，返回空字符串
+		return ''
 	}
 
 	const startEdit = (e, cell = useSelectionRangeHook.getStartCell()) => {
@@ -84,6 +137,22 @@ export const useEdit = (id, config) => {
 		selection.removeAllRanges()
 		selection.addRange(range)
 
+		const setFormula = () => {
+			isFormula.value = true
+			const cellRect = cellEl.getBoundingClientRect()
+			const containerRect = container.getBoundingClientRect()
+
+			// 考虑滚动条位置
+			const scrollLeft = container.scrollLeft || 0
+			const scrollTop = container.scrollTop || 0
+
+			formulaStyle.value = {
+				left: cellRect.left - containerRect.left + scrollLeft + 'px',
+				top: cellRect.bottom - containerRect.top + scrollTop + 'px',
+				width: cellRect.width + 'px',
+			}
+		}
+
 		const blur = () => {
 			sheet.celldata.get(rowIndex)[colIndex] = setCellFormat(
 				cellEl.innerText,
@@ -91,16 +160,38 @@ export const useEdit = (id, config) => {
 				colIndex,
 				true
 			)
+
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
 			cellEl.removeEventListener('input', input)
 			editing.value = false
-			setTimeout(() => setRowHeight(rowIndex, colIndex), 0)
+
+			// 使用延时处理，给公式菜单点击事件留出执行时间
+			setTimeout(() => {
+				isFormula.value = false
+				formulaStyle.value = {}
+				setRowHeight(rowIndex, colIndex)
+				setFormulaValue()
+			}, 100)
 		}
 
 		const input = () => {
 			// 体验优化而已
 			cellEl.style.removeProperty('line-height')
+
+			// 检查是否是公式
+			if (cellEl.innerText.startsWith('=')) {
+				setFormula()
+			}
+
+			inputValue.value = cellEl.innerText
+		}
+
+		// 检查是否是公式
+		if (e.key === '=') {
+			cellEl.innerText = ''
+			delete sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+			setFormula()
 		}
 
 		cellEl.addEventListener('input', input)
@@ -109,9 +200,12 @@ export const useEdit = (id, config) => {
 
 	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
 		const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
-		let output = text.replace(/\W/g, '')
+		const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+
+		let output = text
 		try {
 			if (fmt) {
+				output = output.replace(/\/|年|月|日|元|,|:/g, '')
 				switch (fmt) {
 					case formatMap.ShortDate:
 						if (format) {
@@ -251,16 +345,133 @@ export const useEdit = (id, config) => {
 					el.innerText = output
 				}
 			}
+
+			if (formula) {
+				if (format) {
+					sheet.config.cellFormula[`${rowIndex}-${colIndex}`] = output
+				} else {
+					output = formula
+				}
+			}
 		} catch (error) {
 			ElMessage.error(`${fmt}格式错误, 请检查内容`)
 			useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
 		}
-
 		return output
+	}
+
+	const setCellFormula = (key, _) => {
+		const ranged = useSelectionRangeHook.ranged
+		const r = Math.min(ranged.start.row, ranged.end.row)
+		const c = Math.min(ranged.start.col, ranged.end.col)
+		const rr = Math.max(ranged.start.row, ranged.end.row)
+		const cc = Math.max(ranged.start.col, ranged.end.col)
+
+		for (let row = r; row <= rr; row++) {
+			for (let col = c; col <= cc; col++) {
+				const oldFormula = sheet.config.cellFormula[`${row}-${col}`]
+				if (oldFormula) {
+					// 取出公式中的参数
+					const params = oldFormula.match(/\(([^)]*)\)/)
+					if (params) {
+						sheet.config.cellFormula[`${row}-${col}`] = `=${key}(${params[1]})`
+					}
+				} else {
+					sheet.config.cellFormula[`${row}-${col}`] = `=${key}()`
+				}
+				inputValue.value = sheet.config.cellFormula[`${row}-${col}`]
+			}
+		}
+		setFormulaValue()
+	}
+
+	const setFormulaValue = () => {
+		try {
+			const formulas = sheet.config.cellFormula
+
+			// 遍历所有公式单元格
+			Object.entries(formulas).forEach(([key, formula]) => {
+				if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) {
+					return
+				}
+
+				// 提取行列索引
+				const [rowIndex, colIndex] = key.split('-').map(Number)
+
+				// 提取公式名称和参数
+				const match = formula.match(/=([A-Z]+)\(([^)]*)\)/)
+				if (!match) return
+
+				const [_, functionName, params] = match
+				const paramsList = params.split(',').filter((p) => p.trim())
+
+				// 解析单元格引用并获取值
+				const getCellValue = (cellRef) => {
+					// 解析单元格引用，如 A1, B2 等
+					const colStr = cellRef.match(/[A-Z]+/)[0]
+					const rowStr = cellRef.match(/\d+/)[0]
+
+					// 转换为行列索引
+					const col = convertTitle(colStr)
+					const row = parseInt(rowStr) - 1 // 转为0基索引
+
+					// 获取单元格值
+					if (sheet.celldata.has(row) && sheet.celldata.get(row)[col] !== undefined) {
+						const value = sheet.celldata.get(row)[col]
+						// 尝试转换为数字
+						return isNaN(Number(value)) ? 0 : Number(value)
+					}
+					return 0
+				}
+
+				// 获取参数值
+				const values = paramsList.map((param) => {
+					// 如果是单元格引用
+					if (/^[A-Z]+\d+$/.test(param.trim())) {
+						return getCellValue(param.trim())
+					}
+					// 如果是数字
+					return isNaN(Number(param)) ? 0 : Number(param)
+				})
+
+				// 根据函数名执行相应计算
+				let result
+				switch (functionName) {
+					case 'SUM':
+						result = values.reduce((sum, val) => sum + val, 0)
+						break
+					case 'AVERAGE':
+						result = values.length
+							? values.reduce((sum, val) => sum + val, 0) / values.length
+							: 0
+						break
+					case 'MAX':
+						result = values.length ? Math.max(...values) : 0
+						break
+					case 'MIN':
+						result = values.length ? Math.min(...values) : 0
+						break
+					default:
+						result = formula
+				}
+
+				// 设置单元格显示值
+				if (sheet.celldata.has(rowIndex)) {
+					if (!sheet.celldata.get(rowIndex)) {
+						sheet.celldata.set(rowIndex, [])
+					}
+					// 确保 0 值也能正确显示
+					sheet.celldata.get(rowIndex)[colIndex] = result === 0 ? '0' : result
+				}
+			})
+		} catch (error) {
+			console.error('公式计算错误:', error)
+		}
 	}
 
 	const setRowHeight = async (rowIndex, colIndex, needRender = true, needSetRange = true) => {
 		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
+
 		if (!cellEl) return
 
 		// 计算实际内容高度
@@ -330,28 +541,49 @@ export const useEdit = (id, config) => {
 			settingsCache.set(`${cell.rowIndex}-${cell.colIndex}`, cell)
 			setTimeout(() => setRowHeight(cell.rowIndex, cell.colIndex, false, false), 0)
 		}
+
 		return html
 	}
 
 	const setCellValue = (rowIndex, colIndex, value, create = false) => {
-		if (sheet.celldata.get(rowIndex)) {
-			if (colIndex > sheet.config.colCount) {
-				sheet.config.colCount = colIndex + 1
+		let r = rowIndex
+		let c = colIndex
+		const range = useSelectionRangeHook.ranged
+
+		if (range && !r && !c) {
+			r = Math.min(range.start.row, range.end.row)
+			c = Math.min(range.start.col, range.end.col)
+		}
+
+		if (sheet.celldata.get(r)) {
+			if (c > sheet.config.colCount) {
+				sheet.config.colCount = c + 1
 			}
-			sheet.celldata.get(rowIndex)[colIndex] = value
+			sheet.celldata.get(r)[c] = value
 		} else if (create) {
-			if (!sheet.celldata.get(rowIndex)) {
-				sheet.celldata.set(rowIndex, reactive([]))
-				if (rowIndex > sheet.config.rowCount) {
-					sheet.config.rowCount = rowIndex + 1
+			if (!sheet.celldata.get(r)) {
+				sheet.celldata.set(r, reactive([]))
+				if (r > sheet.config.rowCount) {
+					sheet.config.rowCount = r + 1
 				}
 			}
-			sheet.celldata.get(rowIndex)[colIndex] = value
+			sheet.celldata.get(r)[c] = value
+		}
+
+		// 计算公式处理
+		const formula = sheet.config.cellFormula[`${r}-${c}`]
+		if (formula) {
+			sheet.config.cellFormula[`${r}-${c}`] = value
+			setFormulaValue()
 		}
 	}
 
 	const getCellValue = (rowIndex, colIndex) => {
 		if (sheet.celldata.get(rowIndex)) {
+			const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+			if (formula) {
+				return formula
+			}
 			return sheet.celldata.get(rowIndex)[colIndex]
 		}
 		return ''
@@ -375,17 +607,34 @@ export const useEdit = (id, config) => {
 		document.addEventListener('keydown', startEdit)
 	}
 
+	watch(
+		() => useSelectionRangeHook.ranged,
+		() => {
+			const ranged = useSelectionRangeHook.ranged
+			if (!ranged) return
+			const startRow = Math.min(ranged.start.row, ranged.end.row)
+			const startCol = Math.min(ranged.start.col, ranged.end.col)
+			inputValue.value = getCellValue(startRow, startCol)
+		},
+		{deep: true}
+	)
+
 	// onMounted(() => init())
 	// onActivated(() => init())
 	// onDeactivated(() => destroy())
 
 	return {
+		inputValue,
 		editing,
+		isFormula,
+		formulaStyle,
+
 		init,
 		destroy,
 		startEdit,
 		formattedValue,
 		setCellValue,
+		setCellFormula,
 		setCellFormat,
 		getCellValue,
 	}

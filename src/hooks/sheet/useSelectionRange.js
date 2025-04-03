@@ -614,7 +614,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	// 键盘事件
 	const handleKeyDown = (e) => {
 		const editing = container.querySelector('[contenteditable="true"]')
-		if (editing) return
+		if (editing || !ranged.value) return
 
 		// 允许的特殊按键：方向键
 		const allowedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab']

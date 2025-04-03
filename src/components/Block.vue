@@ -338,7 +338,7 @@ defineExpose({
 			<el-button v-if="enableExpandContent" size="small" @click.stop="onExpendContent">
 				{{ expendContentOpen ? collapseContentText : expandContentText }}
 				<Icons
-					icon-name="Expand"
+					name="Expand"
 					:style="{rotate: expendContentOpen ? '180deg' : '0deg'}"
 				></Icons>
 			</el-button>
@@ -356,7 +356,7 @@ defineExpose({
 				:class="{open: expandBlock}"
 				v-if="enableExpandButton"
 			>
-				<Icons v-if="expandVertical" icon-name="Expand"></Icons>
+				<Icons v-if="expandVertical" name="Expand"></Icons>
 				<template v-else>
 					{{ expandBlock ? '收起' : '展开' }}
 				</template>
@@ -404,7 +404,7 @@ defineExpose({
 			</div>
 		</div>
 
-		<Icons v-if="!expandBlock" icon-name="More" class="more"></Icons>
+		<Icons v-if="!expandBlock" name="More" class="more"></Icons>
 
 		<div v-if="!expandBlock && !expandVertical" class="collapsed-controller" @click="onExpand">
 			<slot name="collapsed">{{ collapsedText }}</slot>

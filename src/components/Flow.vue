@@ -751,7 +751,7 @@ defineExpose({
 							<span>{{ props.label ?? '-' }}</span>
 							<Icons
 								v-if="props.data.canDelete && !disabled"
-								icon-name="Clear2"
+								name="Clear2"
 								size="12"
 								color="var(--z-nav-font-color)"
 								@click.stop="onRemoveNode(props.id, props)"
@@ -800,7 +800,7 @@ defineExpose({
 							<span>{{ props.label ?? '-' }}</span>
 							<Icons
 								v-if="!disabled"
-								icon-name="Clear2"
+								name="Clear2"
 								size="12"
 								color="var(--z-nav-font-color)"
 								@click.stop="onRemoveNode(props.id, props)"
@@ -849,7 +849,7 @@ defineExpose({
 							<span>{{ props.label ?? '-' }}</span>
 
 							<Icons
-								icon-name="Clear2"
+								name="Clear2"
 								size="12"
 								color="var(--z-nav-font-color)"
 								@click.stop="onRemoveNode(props.id, props)"

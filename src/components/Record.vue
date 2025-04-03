@@ -91,7 +91,7 @@ const onClickText = (e, item) => {
 				</slot>
 			</div>
 			<Icons
-				:icon-name="icons[item.type] || icons.default"
+				:name="icons[item.type] || icons.default"
 				class="icon"
 				color="var(--z-nav-font-color)"
 			></Icons>

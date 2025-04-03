@@ -87,7 +87,7 @@ const handleAddNode = (str) => {
 			@mouseleave="onMouseLeave"
 		>
 			<div class="add-nodes">
-				<Icons icon-name="Create" color="var(--z-font-color)"></Icons>
+				<Icons name="Create" color="var(--z-font-color)"></Icons>
 			</div>
 
 			<div class="settings shadow-4" v-if="show">
@@ -98,7 +98,12 @@ const handleAddNode = (str) => {
 					@click="handleAddNode(FlowNodeTypes.Condition)"
 				>
 					<span>
-						<svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="45"
+							height="45"
+							viewBox="0 0 45 45"
+						>
 							<g id="分支条件" transform="translate(-1244 -572)">
 								<g id="组_17" data-name="组 17">
 									<circle
@@ -110,7 +115,11 @@ const handleAddNode = (str) => {
 										transform="translate(1244 572)"
 										fill="#52c1f5"
 									/>
-									<g id="组_10" data-name="组 10" transform="translate(1013.946 504.588)">
+									<g
+										id="组_10"
+										data-name="组 10"
+										transform="translate(1013.946 504.588)"
+									>
 										<path
 											id="路径_24"
 											data-name="路径 24"
@@ -173,7 +182,12 @@ const handleAddNode = (str) => {
 					@click="handleAddNode(FlowNodeTypes.Review)"
 				>
 					<span>
-						<svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="45"
+							height="45"
+							viewBox="0 0 45 45"
+						>
 							<g id="审核人" transform="translate(-1311 -572)">
 								<circle
 									id="椭圆_39"
@@ -202,7 +216,12 @@ const handleAddNode = (str) => {
 					@click="handleAddNode(FlowNodeTypes.Report)"
 				>
 					<span>
-						<svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="45"
+							height="45"
+							viewBox="0 0 45 45"
+						>
 							<g id="填报人" transform="translate(-1311 -631)">
 								<circle
 									id="椭圆_40"

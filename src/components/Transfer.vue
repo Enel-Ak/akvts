@@ -133,7 +133,7 @@ defineExpose({
 					@input="onQueryInput"
 				>
 					<template #prefix>
-						<Icons icon-name="Search" color="var(--z-font-color)"></Icons>
+						<Icons name="Search" color="var(--z-font-color)"></Icons>
 					</template>
 				</el-input>
 			</slot>

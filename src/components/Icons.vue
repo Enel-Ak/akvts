@@ -2,7 +2,7 @@
 import Icons from '@/enum/useIconsEnum'
 import {computed} from 'vue'
 const props = defineProps({
-	iconName: {
+	name: {
 		type: String,
 		default: '',
 	},
@@ -45,7 +45,7 @@ const uniqueId = `icon-${Math.random().toString(36).slice(2)}`
 
 // 处理SVG内容，替换颜色和ID
 const svgContent = computed(() => {
-	const content = props.svg || Icons[props.iconName] || ''
+	const content = props.svg || Icons[props.iconName] || Icons[props.name] || ''
 	if (!content) return ''
 
 	let result = content
@@ -58,7 +58,7 @@ const svgContent = computed(() => {
 	result = result.replace(/url\(#([^)]+)\)/g, `url(#$1-${uniqueId})`)
 
 	// 只有当颜色不是默认值时才替换颜色
-	if (props.color !== 'var(--z-font-color)' && props.color !== 'currentColor') {
+	if (props.color !== 'var(--z-font-color)') {
 		// 替换 stop-color="currentColor"
 		result = result.replace(/stop-color="currentColor"/g, `stop-color="${props.color}"`)
 

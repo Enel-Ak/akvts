@@ -988,7 +988,7 @@ defineExpose({
 					size="small"
 					@click="onDialog('create')"
 				>
-					<Icons icon-name="Create" color="var(--z-nav-font-color)" size="16" />
+					<Icons name="Create" color="var(--z-nav-font-color)" size="16" />
 					{{ props.createText }}
 				</el-button>
 				<slot name="toolbarLeft"> </slot>
@@ -1139,7 +1139,7 @@ defineExpose({
 							>
 								<Icons
 									v-if="btn.icon"
-									:icon-name="btn.icon"
+									:name="btn.icon"
 									:size="btn.iconSize || 14"
 									:color="btn.iconColor || 'var(--z-nav-font-color)'"
 								/>
@@ -1166,7 +1166,7 @@ defineExpose({
 									>
 										<Icons
 											v-if="btn.icon"
-											:icon-name="btn.icon"
+											:name="btn.icon"
 											:size="btn.iconSize || 14"
 											:color="btn.iconColor || 'var(--z-nav-font-color)'"
 										/>
@@ -1183,7 +1183,7 @@ defineExpose({
 						size="small"
 						@click.stop="onDialog('edit', scoped)"
 					>
-						<Icons icon-name="Edit" color="var(--z-nav-font-color)" size="16" />
+						<Icons name="Edit" color="var(--z-nav-font-color)" size="16" />
 						{{ props.editText }}
 					</el-button>
 
@@ -1196,11 +1196,7 @@ defineExpose({
 					>
 						<template #reference>
 							<el-button size="small" type="danger" @click.stop>
-								<Icons
-									icon-name="Delete"
-									color="var(--z-nav-font-color)"
-									size="14"
-								/>
+								<Icons name="Delete" color="var(--z-nav-font-color)" size="14" />
 								{{ props.deleteText }}
 							</el-button>
 						</template>

@@ -16,3 +16,10 @@ export const formatMap = {
 	LongDate: '长日期(yyyy年MM月dd日)',
 	Time: '时间(HH:mm:ss)',
 }
+
+export const formulaMap = {
+	SUM: '求和 (Sum)',
+	AVERAGE: '平均值 (Average)',
+	MAX: '最大值 (Max)',
+	MIN: '最小值 (Min)',
+}

@@ -95,7 +95,7 @@ onUnmounted(() => {
 		<template v-if="model === 'habf'">
 			<div class="container-header" v-if="frame.includes('header')">
 				<div v-if="enableExpand" class="expand" @click="onExpand">
-					<Icons icon-name="Back" size="12" color="var(--z-font-color)"></Icons>
+					<Icons name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
 				<slot name="header"></slot>
 			</div>

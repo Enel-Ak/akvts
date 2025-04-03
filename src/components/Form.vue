@@ -429,18 +429,18 @@ defineExpose({
 				v-if="buttonVertical === 'top' && enableButton && !formDisabled && !grid"
 			>
 				<el-button v-if="enableReset" @click="onResetFields" :size="size">
-					<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
+					<Icons name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
 					重置
 				</el-button>
 				<el-button v-if="enableClear" @click="onClear" :size="size">
-					<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
+					<Icons name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
 				<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
 					<Icons
 						v-if="!isLoading"
-						icon-name="Send"
+						name="Send"
 						color="#fff"
 						class="mg-right-5"
 						:size="getIconSize()"
@@ -505,18 +505,18 @@ defineExpose({
 					v-if="buttonVertical === 'flowing' && enableButton && !formDisabled && !grid"
 				>
 					<el-button v-if="enableReset" @click="onResetFields" :size="size">
-						<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
+						<Icons name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
 						重置
 					</el-button>
 					<el-button v-if="enableClear" @click="onClear" :size="size">
-						<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
+						<Icons name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
 						清空
 					</el-button>
 					<slot name="buttons"></slot>
 					<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
 						<Icons
 							v-if="!isLoading"
-							icon-name="Send"
+							name="Send"
 							color="#fff"
 							class="mg-right-5"
 							:size="getIconSize()"
@@ -531,18 +531,18 @@ defineExpose({
 				v-if="buttonVertical === 'bottom' && enableButton && !formDisabled && !grid"
 			>
 				<el-button v-if="enableReset" @click="onResetFields" :size="size">
-					<Icons icon-name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
+					<Icons name="Reset" class="mg-right-5" :size="getIconSize()"></Icons>
 					重置
 				</el-button>
 				<el-button v-if="enableClear" @click="onClear" :size="size">
-					<Icons icon-name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
+					<Icons name="Clear" class="mg-right-5" :size="getIconSize()"></Icons>
 					清空
 				</el-button>
 				<slot name="buttons"></slot>
 				<el-button :loading="isLoading" type="primary" @click="onSubmit" :size="size">
 					<Icons
 						v-if="!isLoading"
-						icon-name="Send"
+						name="Send"
 						color="#fff"
 						class="mg-right-5"
 						:size="getIconSize()"

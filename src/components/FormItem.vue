@@ -447,7 +447,7 @@ defineExpose({
 				<template #title>
 					<div class="group-title">
 						<Icons
-							icon-name="ArrowRight2"
+							name="ArrowRight2"
 							color="var(--z-font-color)"
 							size="15px"
 							class="mg-right-5"

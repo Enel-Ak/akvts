@@ -22,7 +22,7 @@ import {useTools} from '@/hooks/sheet/useTools'
 import {useMouseRight} from '@/hooks/sheet/useMouseRight'
 import {useTouch} from '@/hooks/sheet/useTouch'
 import {ElMessage} from 'element-plus'
-import {fonts, fontSize, formatMap} from '@/hooks/sheet/define'
+import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 
 const stateType = {
 	normal: 0,
@@ -62,7 +62,7 @@ const props = defineProps({
 	enableFn: {type: Boolean, default: true},
 	// 操作列宽度
 	fnWidth: {type: Number, default: 120},
-	fns: {type: Array, default: () => []},
+	// fns: {type: Array, default: () => []},
 
 	height: {type: [Number, String], default: 0},
 
@@ -97,6 +97,7 @@ const sheet = reactive({
 		edit: true, // 编辑
 		lock: true, // 锁定
 		unlock: true, // 解锁
+		formula: true, // 公式
 		zoom: 1, //缩放
 		freeze: false, // 冻结
 
@@ -109,6 +110,7 @@ const sheet = reactive({
 		lockCells: {},
 		cellStyle: {},
 		cellKeys: [],
+		cellFormula: {},
 
 		...props.modelValue?.config,
 
@@ -289,6 +291,7 @@ const useEditHook = useEdit(id, {
 	useMergedCellsHook,
 	useSelectionRangeHook,
 	renderRange: async () => await updateVisibleRange(),
+	containerId: id,
 })
 const useHistoryHook = useHistory({
 	loading,
@@ -358,6 +361,17 @@ const useTouchHook = useTouch({
 const setActiveTool = computed(() => {
 	return (style) => {
 		const ranged = useSelectionRangeHook.ranged
+
+		const data = {
+			value: null,
+			active: false,
+			lock: false,
+		}
+
+		if (!ranged) {
+			return data
+		}
+
 		const startRow = Math.min(ranged.start.row, ranged.end.row)
 		const startCol = Math.min(ranged.start.col, ranged.end.col)
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
@@ -365,12 +379,7 @@ const setActiveTool = computed(() => {
 		const cellStyle = sheet.config.cellStyle[`${startRow}-${startCol}`]
 		const isLock = sheet.config.lockCells[`${startRow}-${startCol}`]
 
-		const data = {
-			value: null,
-			active: false,
-			lock: isLock,
-		}
-
+		data.lock = isLock
 		if ((startRow !== endRow && startCol !== endCol) || !style || !cellStyle) {
 			return data
 		}
@@ -640,6 +649,8 @@ const getOffsetStyle = (cell) => {
 const getCellClass = (cell) => {
 	const isLocked = sheet.config.lockCells[`${cell.rowIndex}-${cell.colIndex}`]
 	const style = sheet.config.cellStyle[`${cell.rowIndex}-${cell.colIndex}`]
+	const formula = sheet.config.cellFormula[`${cell.rowIndex}-${cell.colIndex}`]
+
 	let fmtClass = ''
 	switch (style?.fmt) {
 		case formatMap.ShortDate:
@@ -661,6 +672,7 @@ const getCellClass = (cell) => {
 	return {
 		lock: isLocked,
 		fmt: style?.fmt,
+		formula: !!formula,
 		[fmtClass]: !!fmtClass,
 		merged: isMergedCellStart(cell),
 	}
@@ -1322,7 +1334,7 @@ defineExpose({
 					class="item color"
 					:class="{active: setActiveTool('fc').active}"
 				>
-					<Icons icon-name="Font"></Icons>
+					<Icons name="Font"></Icons>
 					<span>颜色</span>
 					<input
 						type="color"
@@ -1335,7 +1347,7 @@ defineExpose({
 					class="item color"
 					:class="{active: setActiveTool('bg').active}"
 				>
-					<Icons icon-name="FillColor"></Icons>
+					<Icons name="FillColor"></Icons>
 					<span class="fill-color">填充</span>
 					<input
 						type="color"
@@ -1360,7 +1372,7 @@ defineExpose({
 					:class="{active: setActiveTool('bold').active}"
 					@click="useToolsHook.setBold"
 				>
-					<Icons icon-name="Bold"></Icons>
+					<Icons name="Bold"></Icons>
 					<span>加粗</span>
 				</div>
 				<div
@@ -1369,7 +1381,7 @@ defineExpose({
 					:class="{active: setActiveTool('it').active}"
 					@click="useToolsHook.setItalic"
 				>
-					<Icons icon-name="Italic"></Icons>
+					<Icons name="Italic"></Icons>
 					<span>倾斜</span>
 				</div>
 				<div
@@ -1378,7 +1390,7 @@ defineExpose({
 					:class="{active: setActiveTool('un').active}"
 					@click="useToolsHook.setUnderline"
 				>
-					<Icons icon-name="Underline"></Icons>
+					<Icons name="Underline"></Icons>
 					<span>下划线</span>
 				</div>
 				<div
@@ -1387,7 +1399,7 @@ defineExpose({
 					:class="{active: setActiveTool('st').active}"
 					@click="useToolsHook.setStrikethrough"
 				>
-					<Icons icon-name="Strikethrough"></Icons>
+					<Icons name="Strikethrough"></Icons>
 					<span>删除线</span>
 				</div>
 			</div>
@@ -1398,7 +1410,7 @@ defineExpose({
 					:class="{active: setActiveTool('align').value === 'left'}"
 					@click="useToolsHook.setAlign('left')"
 				>
-					<Icons icon-name="AlignLeft"></Icons>
+					<Icons name="AlignLeft"></Icons>
 					<span>左对齐</span>
 				</div>
 				<div
@@ -1406,7 +1418,7 @@ defineExpose({
 					:class="{active: setActiveTool('align').value === 'center'}"
 					@click="useToolsHook.setAlign('center')"
 				>
-					<Icons icon-name="AlignCenter"></Icons>
+					<Icons name="AlignCenter"></Icons>
 					<span>居中</span>
 				</div>
 				<div
@@ -1414,14 +1426,14 @@ defineExpose({
 					:class="{active: setActiveTool('align').value === 'right'}"
 					@click="useToolsHook.setAlign('right')"
 				>
-					<Icons icon-name="AlignRight"></Icons>
+					<Icons name="AlignRight"></Icons>
 					<span>右对齐</span>
 				</div>
 			</div>
 
 			<div class="group" v-if="sheet.config.merge">
 				<div class="item" @click="useToolsHook.setMerge()">
-					<Icons icon-name="Merge"></Icons>
+					<Icons name="Merge"></Icons>
 					<span>合并</span>
 				</div>
 			</div>
@@ -1434,32 +1446,32 @@ defineExpose({
 						:class="{active: setActiveTool('bl').active}"
 						@click="useToolsHook.setBorder()"
 					>
-						<Icons icon-name="Border"></Icons>
+						<Icons name="Border"></Icons>
 						<span>边框</span>
 					</div>
 					<div class="merge border-merge shadow-12">
 						<div class="item" @click="useToolsHook.setBorder(false)">
-							<Icons icon-name="UnBorder"></Icons>
+							<Icons name="UnBorder"></Icons>
 							<span>无边框</span>
 						</div>
 						<div class="item" @click="useToolsHook.setBorder(null, 'top')">
-							<Icons icon-name="BorderTop"></Icons>
+							<Icons name="BorderTop"></Icons>
 							<span>上边框</span>
 						</div>
 						<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
-							<Icons icon-name="BorderBottom"></Icons>
+							<Icons name="BorderBottom"></Icons>
 							<span>下边框</span>
 						</div>
 						<div class="item" @click="useToolsHook.setBorder(null, 'left')">
-							<Icons icon-name="BorderLeft"></Icons>
+							<Icons name="BorderLeft"></Icons>
 							<span>左边框</span>
 						</div>
 						<div class="item" @click="useToolsHook.setBorder(null, 'right')">
-							<Icons icon-name="BorderRight"></Icons>
+							<Icons name="BorderRight"></Icons>
 							<span>右边框</span>
 						</div>
 						<div class="item border-color" @click="useToolsHook.setBorderColor">
-							<Icons icon-name="BorderColor"></Icons>
+							<Icons name="BorderColor"></Icons>
 							<span>颜色</span>
 							<input
 								type="color"
@@ -1473,32 +1485,32 @@ defineExpose({
 			<template v-else>
 				<div class="group" v-if="sheet.config.border">
 					<div class="item" @click="useToolsHook.setBorder()">
-						<Icons icon-name="Border"></Icons>
+						<Icons name="Border"></Icons>
 						<span>边框</span>
 					</div>
 
 					<div class="item" @click="useToolsHook.setBorder(false)">
-						<Icons icon-name="UnBorder"></Icons>
+						<Icons name="UnBorder"></Icons>
 						<span>无边框</span>
 					</div>
 					<div class="item" @click="useToolsHook.setBorder(null, 'top')">
-						<Icons icon-name="BorderTop"></Icons>
+						<Icons name="BorderTop"></Icons>
 						<span>上边框</span>
 					</div>
 					<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
-						<Icons icon-name="BorderBottom"></Icons>
+						<Icons name="BorderBottom"></Icons>
 						<span>下边框</span>
 					</div>
 					<div class="item" @click="useToolsHook.setBorder(null, 'left')">
-						<Icons icon-name="BorderLeft"></Icons>
+						<Icons name="BorderLeft"></Icons>
 						<span>左边框</span>
 					</div>
 					<div class="item" @click="useToolsHook.setBorder(null, 'right')">
-						<Icons icon-name="BorderRight"></Icons>
+						<Icons name="BorderRight"></Icons>
 						<span>右边框</span>
 					</div>
 					<div class="item border-color" @click="useToolsHook.setBorderColor">
-						<Icons icon-name="BorderColor"></Icons>
+						<Icons name="BorderColor"></Icons>
 						<span>颜色</span>
 						<input
 							type="color"
@@ -1511,7 +1523,7 @@ defineExpose({
 
 			<div v-if="sheet.config.addRow" class="group" :class="{'group-merge': !isMobile()}">
 				<div class="item" @click="useToolsHook.addRow($event, false)">
-					<Icons icon-name="AddRow"></Icons>
+					<Icons name="AddRow"></Icons>
 					<span>添加行</span>
 				</div>
 
@@ -1531,7 +1543,7 @@ defineExpose({
 					class="item"
 					@click="useToolsHook.addColumn($event, false)"
 				>
-					<Icons icon-name="AddColumn"></Icons>
+					<Icons name="AddColumn"></Icons>
 					<span>添加列</span>
 				</div>
 				<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
@@ -1546,7 +1558,7 @@ defineExpose({
 
 			<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
 				<div v-if="sheet.config.removeRow" class="item" @click="useToolsHook.removeRow">
-					<Icons icon-name="RemoveRow"></Icons>
+					<Icons name="RemoveRow"></Icons>
 					<span>删除行</span>
 				</div>
 				<div
@@ -1554,19 +1566,19 @@ defineExpose({
 					class="item"
 					@click="useToolsHook.removeColumn"
 				>
-					<Icons icon-name="RemoveColumn"></Icons>
+					<Icons name="RemoveColumn"></Icons>
 					<span>删除列</span>
 				</div>
 			</div>
 
 			<div class="group" v-if="sheet.config.import || sheet.config.export">
 				<div v-if="sheet.config.import" class="item import">
-					<Icons icon-name="Import"></Icons>
+					<Icons name="Import"></Icons>
 					<span>导入</span>
 					<input type="file" @change="useToolsHook.importExcel" />
 				</div>
 				<div v-if="sheet.config.export" class="item" @click="useToolsHook.exportExcel">
-					<Icons icon-name="Export"></Icons>
+					<Icons name="Export"></Icons>
 					<span>导出</span>
 				</div>
 			</div>
@@ -1579,19 +1591,45 @@ defineExpose({
 					:class="{active: setActiveTool('lock').lock}"
 					@click="useToolsHook.setLocked"
 				>
-					<Icons icon-name="CellLock"></Icons>
+					<Icons name="CellLock"></Icons>
 					<span>锁定</span>
 				</div>
 				<div v-if="sheet.config.unlock" class="item" @click="useToolsHook.setUnlocked">
-					<Icons icon-name="CellUnlock"></Icons>
+					<Icons name="CellUnlock"></Icons>
 					<span>解锁</span>
+				</div>
+			</div>
+
+			<!-- 公式 -->
+			<div class="group" v-if="sheet.config.formula" :class="{'group-merge': !isMobile()}">
+				<div class="item">
+					<Icons name="Fx"></Icons>
+					<span>公式</span>
+				</div>
+				<div v-if="!isMobile()" class="merge formula-merge shadow-12">
+					<div class="item" @click="useEditHook.setCellFormula('SUM')">
+						<Icons name="Fx" svg="Su"></Icons>
+						<span>求和</span>
+					</div>
+					<div class="item" @click="useEditHook.setCellFormula('AVERAGE')">
+						<Icons name="Fx" svg="Av"></Icons>
+						<span>平均值</span>
+					</div>
+					<div class="item" @click="useEditHook.setCellFormula('MAX')">
+						<Icons name="Fx" svg="Ma"></Icons>
+						<span>最大值</span>
+					</div>
+					<div class="item" @click="useEditHook.setCellFormula('MIN')">
+						<Icons name="Fx" svg="Mi"></Icons>
+						<span>最小值</span>
+					</div>
 				</div>
 			</div>
 
 			<!-- 冻结 -->
 			<div v-if="sheet.config.freeze" class="group" :class="{'group-merge': !isMobile()}">
 				<div class="item" @click="useToolsHook.setFreeze">
-					<Icons icon-name="Freeze"></Icons>
+					<Icons name="Freeze"></Icons>
 					<span>冻结</span>
 				</div>
 				<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
@@ -1612,12 +1650,22 @@ defineExpose({
 						cursor: !useHistoryHook.canUndo() ? 'not-allowed' : 'pointer',
 					}"
 				>
-					<Icons icon-name="Undo"></Icons>
+					<Icons name="Undo"></Icons>
 					<span>撤销</span>
 				</div>
 			</div>
 
 			<div class="group flx brn"></div>
+		</div>
+
+		<div class="inputbar">
+			<input
+				v-model="useEditHook.inputValue.value"
+				type="text"
+				@input="useEditHook.setCellValue(null, null, $event.target.value)"
+				@keydown.stop
+				@keyup.stop
+			/>
 		</div>
 
 		<!-- Sheet -->
@@ -1850,7 +1898,7 @@ defineExpose({
 						class="menu-item"
 						@click="useToolsHook.addRow($event, false)"
 					>
-						<Icons icon-name="AddRow"></Icons>
+						<Icons name="AddRow"></Icons>
 						<span>添加行</span>
 					</div>
 					<div
@@ -1858,7 +1906,7 @@ defineExpose({
 						class="menu-item"
 						@click="useToolsHook.addColumn($event, false)"
 					>
-						<Icons icon-name="AddColumn"></Icons>
+						<Icons name="AddColumn"></Icons>
 						<span>添加列</span>
 					</div>
 					<div
@@ -1866,7 +1914,7 @@ defineExpose({
 						class="menu-item"
 						@click="useToolsHook.removeRow"
 					>
-						<Icons icon-name="RemoveRow"></Icons>
+						<Icons name="RemoveRow"></Icons>
 						<span>删除行</span>
 					</div>
 					<div
@@ -1874,8 +1922,25 @@ defineExpose({
 						class="menu-item"
 						@click="useToolsHook.removeColumn"
 					>
-						<Icons icon-name="RemoveColumn"></Icons>
+						<Icons name="RemoveColumn"></Icons>
 						<span>删除列</span>
+					</div>
+				</div>
+
+				<!-- 公式菜单 -->
+				<div
+					v-if="useEditHook.isFormula.value"
+					class="context-menu shadow-12"
+					:style="{...useEditHook.formulaStyle.value, width: '145px'}"
+				>
+					<div
+						class="menu-item"
+						v-for="(value, key) of formulaMap"
+						:key="key"
+						@click="useEditHook.setCellFormula(key, value)"
+					>
+						<Icons name="Fx" />
+						{{ value }}
 					</div>
 				</div>
 			</div>
@@ -1941,7 +2006,7 @@ defineExpose({
 
 			<!-- 滚动渲染提示, 数据小于限制时显示 -->
 			<div class="scroll-tip" v-if="!lastScroll && sheet.config.rowCount < limit">
-				<Icons icon-name="Loading" class="loading-animation"></Icons>
+				<Icons name="Loading" class="loading-animation"></Icons>
 			</div>
 		</div>
 
@@ -2007,7 +2072,7 @@ defineExpose({
 				<span>
 					<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
 				</span>
-				<Icons icon-name="Remove" @click="onZoomSize(-0.1)"></Icons>
+				<Icons name="Remove" @click="onZoomSize(-0.1)"></Icons>
 				<input
 					v-model.number="sheet.config.zoom"
 					type="range"
@@ -2017,8 +2082,8 @@ defineExpose({
 					@input="onZoomInput"
 					@change="onZoomChange"
 				/>
-				<Icons icon-name="Add" @click="onZoomSize(0.1)"></Icons>
-				<Icons icon-name="Restore" @click="onZoomReset"></Icons>
+				<Icons name="Add" @click="onZoomSize(0.1)"></Icons>
+				<Icons name="Restore" @click="onZoomReset"></Icons>
 			</div>
 			<div class="flx"></div>
 			<div class="statistics">
@@ -2053,7 +2118,7 @@ defineExpose({
 		<!-- 遮罩 -->
 		<div class="mask" :class="{active: loading || state === stateType.loading}">
 			<div>
-				<Icons icon-name="Loading" class="loading-animation"></Icons>
+				<Icons name="Loading" class="loading-animation"></Icons>
 				<span>
 					{{ state === stateType.loading ? stateText : loadingText }}
 				</span>
@@ -2068,7 +2133,7 @@ defineExpose({
 			class="mobile-landscape-notice"
 			v-if="sheet.config.showHorizontalScreen && isMobile() && !isLandscape()"
 		>
-			<Icons icon-name="Rotate" size="58px" color="#fff"></Icons>
+			<Icons name="Rotate" size="58px" color="#fff"></Icons>
 			<span>此操作需要横向屏幕</span>
 		</div>
 	</div>

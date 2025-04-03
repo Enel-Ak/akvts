@@ -345,39 +345,39 @@ const onButtonClick = () => {
 		></FormItem>
 		<el-button @click="handValidate">手动校验</el-button>
 		<div class="df aic">
-			<Icons icon-name="Home" color="#f00"></Icons>
-			<Icons icon-name="Setting" size="16px"></Icons>
-			<Icons icon-name="Create"></Icons>
-			<Icons icon-name="Edit"></Icons>
-			<Icons icon-name="Delete"></Icons>
-			<Icons icon-name="Send"></Icons>
-			<Icons icon-name="Cancel"></Icons>
-			<Icons icon-name="Reset"></Icons>
-			<Icons icon-name="Clear"></Icons>
-			<Icons icon-name="Clear2"></Icons>
-			<Icons icon-name="Eye"></Icons>
-			<Icons icon-name="Lock"></Icons>
-			<Icons icon-name="Unlock"></Icons>
-			<Icons icon-name="Warning"></Icons>
-			<Icons icon-name="Warning2"></Icons>
-			<Icons icon-name="User"></Icons>
-			<Icons icon-name="ArrowRight"></Icons>
-			<Icons icon-name="ArrowRight2"></Icons>
-			<Icons icon-name="RotateRight"></Icons>
-			<Icons icon-name="Sun"></Icons>
-			<Icons icon-name="Moon"></Icons>
-			<Icons icon-name="List"></Icons>
-			<Icons icon-name="File"></Icons>
-			<Icons icon-name="Upload"></Icons>
-			<Icons icon-name="Download"></Icons>
-			<Icons icon-name="Appendix"></Icons>
-			<Icons icon-name="Notifications"></Icons>
-			<Icons icon-name="Done"></Icons>
-			<Icons icon-name="Back"></Icons>
-			<Icons icon-name="More"></Icons>
-			<Icons icon-name="Language"></Icons>
-			<Icons icon-name="Thumbtack"></Icons>
-			<Icons icon-name="Loading"></Icons>
+			<Icons name="Home" color="#f00"></Icons>
+			<Icons name="Setting" size="16px"></Icons>
+			<Icons name="Create"></Icons>
+			<Icons name="Edit"></Icons>
+			<Icons name="Delete"></Icons>
+			<Icons name="Send"></Icons>
+			<Icons name="Cancel"></Icons>
+			<Icons name="Reset"></Icons>
+			<Icons name="Clear"></Icons>
+			<Icons name="Clear2"></Icons>
+			<Icons name="Eye"></Icons>
+			<Icons name="Lock"></Icons>
+			<Icons name="Unlock"></Icons>
+			<Icons name="Warning"></Icons>
+			<Icons name="Warning2"></Icons>
+			<Icons name="User"></Icons>
+			<Icons name="ArrowRight"></Icons>
+			<Icons name="ArrowRight2"></Icons>
+			<Icons name="RotateRight"></Icons>
+			<Icons name="Sun"></Icons>
+			<Icons name="Moon"></Icons>
+			<Icons name="List"></Icons>
+			<Icons name="File"></Icons>
+			<Icons name="Upload"></Icons>
+			<Icons name="Download"></Icons>
+			<Icons name="Appendix"></Icons>
+			<Icons name="Notifications"></Icons>
+			<Icons name="Done"></Icons>
+			<Icons name="Back"></Icons>
+			<Icons name="More"></Icons>
+			<Icons name="Language"></Icons>
+			<Icons name="Thumbtack"></Icons>
+			<Icons name="Loading"></Icons>
 		</div>
 
 		<TableV2
