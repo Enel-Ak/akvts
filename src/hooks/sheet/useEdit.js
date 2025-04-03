@@ -23,6 +23,20 @@ export const useEdit = (id, config) => {
 
 	// 将数字转换为Excel样式的列标题 (A-Z, AA-AZ等)
 	const titleCache = new Map()
+	const MAX_CACHE_SIZE = 5000 // 设置缓存大小上限
+
+	// 清理缓存的函数
+	const cleanTitleCache = () => {
+		if (titleCache.size > MAX_CACHE_SIZE) {
+			// 删除最早添加的20%的缓存项
+			const keysToDelete = Array.from(titleCache.keys()).slice(
+				0,
+				Math.floor(MAX_CACHE_SIZE * 0.2)
+			)
+			keysToDelete.forEach((key) => titleCache.delete(key))
+		}
+	}
+
 	const convertTitle = (input) => {
 		// 如果输入是数字，转换为字母
 		if (typeof input === 'number') {
@@ -46,6 +60,10 @@ export const useEdit = (id, config) => {
 
 			// 保存到缓存
 			titleCache.set(input, title)
+
+			// 检查并清理缓存
+			cleanTitleCache()
+
 			return title
 		}
 		// 如果输入是字母，转换为数字
@@ -390,81 +408,120 @@ export const useEdit = (id, config) => {
 		try {
 			const formulas = sheet.config.cellFormula
 
-			// 遍历所有公式单元格
-			Object.entries(formulas).forEach(([key, formula]) => {
-				if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) {
-					return
-				}
+			// 预编译正则表达式，避免重复创建
+			const formulaRegex = /=([A-Z]+)\(([^)]*)\)/
+			const colRegex = /[A-Z]+/
+			const rowRegex = /\d+/
+			const cellRefRegex = /^[A-Z]+\d+$/
 
-				// 提取行列索引
-				const [rowIndex, colIndex] = key.split('-').map(Number)
+			// 获取所有公式条目
+			const formulaEntries = Object.entries(formulas)
 
-				// 提取公式名称和参数
-				const match = formula.match(/=([A-Z]+)\(([^)]*)\)/)
-				if (!match) return
+			// 分批处理公式，每批处理100个
+			const batchSize = 100
+			let currentBatch = 0
 
-				const [_, functionName, params] = match
-				const paramsList = params.split(',').filter((p) => p.trim())
+			const processNextBatch = () => {
+				// 计算当前批次的起始和结束索引
+				const startIdx = currentBatch * batchSize
+				const endIdx = Math.min(startIdx + batchSize, formulaEntries.length)
 
-				// 解析单元格引用并获取值
-				const getCellValue = (cellRef) => {
-					// 解析单元格引用，如 A1, B2 等
-					const colStr = cellRef.match(/[A-Z]+/)[0]
-					const rowStr = cellRef.match(/\d+/)[0]
+				// 如果已处理完所有批次，则退出
+				if (startIdx >= formulaEntries.length) return
 
-					// 转换为行列索引
-					const col = convertTitle(colStr)
-					const row = parseInt(rowStr) - 1 // 转为0基索引
+				// 处理当前批次的公式
+				for (let i = startIdx; i < endIdx; i++) {
+					const [key, formula] = formulaEntries[i]
 
-					// 获取单元格值
-					if (sheet.celldata.has(row) && sheet.celldata.get(row)[col] !== undefined) {
-						const value = sheet.celldata.get(row)[col]
-						// 尝试转换为数字
-						return isNaN(Number(value)) ? 0 : Number(value)
+					// 跳过无效公式
+					if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) {
+						continue
 					}
-					return 0
-				}
 
-				// 获取参数值
-				const values = paramsList.map((param) => {
-					// 如果是单元格引用
-					if (/^[A-Z]+\d+$/.test(param.trim())) {
-						return getCellValue(param.trim())
+					// 提取行列索引
+					const [rowIndex, colIndex] = key.split('-').map(Number)
+
+					// 提取公式名称和参数
+					const match = formula.match(formulaRegex)
+					if (!match) continue
+
+					const [_, functionName, params] = match
+					const paramsList = params.split(',').filter((p) => p.trim())
+
+					// 解析单元格引用并获取值 - 使用闭包避免重复创建函数
+					const getCellValue = (cellRef) => {
+						// 解析单元格引用，如 A1, B2 等
+						const colStr = cellRef.match(colRegex)[0]
+						const rowStr = cellRef.match(rowRegex)[0]
+
+						// 转换为行列索引
+						const col = convertTitle(colStr)
+						const row = parseInt(rowStr) - 1 // 转为0基索引
+
+						// 获取单元格值
+						if (sheet.celldata.has(row) && sheet.celldata.get(row)[col] !== undefined) {
+							const value = sheet.celldata.get(row)[col]
+							// 尝试转换为数字
+							return isNaN(Number(value)) ? 0 : Number(value)
+						}
+						return 0
 					}
-					// 如果是数字
-					return isNaN(Number(param)) ? 0 : Number(param)
-				})
 
-				// 根据函数名执行相应计算
-				let result
-				switch (functionName) {
-					case 'SUM':
-						result = values.reduce((sum, val) => sum + val, 0)
-						break
-					case 'AVERAGE':
-						result = values.length
-							? values.reduce((sum, val) => sum + val, 0) / values.length
-							: 0
-						break
-					case 'MAX':
-						result = values.length ? Math.max(...values) : 0
-						break
-					case 'MIN':
-						result = values.length ? Math.min(...values) : 0
-						break
-					default:
-						result = formula
-				}
-
-				// 设置单元格显示值
-				if (sheet.celldata.has(rowIndex)) {
-					if (!sheet.celldata.get(rowIndex)) {
-						sheet.celldata.set(rowIndex, [])
+					// 获取参数值 - 重用数组减少内存分配
+					const values = []
+					for (let j = 0; j < paramsList.length; j++) {
+						const param = paramsList[j].trim()
+						// 如果是单元格引用
+						if (cellRefRegex.test(param)) {
+							values.push(getCellValue(param))
+						} else {
+							// 如果是数字
+							values.push(isNaN(Number(param)) ? 0 : Number(param))
+						}
 					}
-					// 确保 0 值也能正确显示
-					sheet.celldata.get(rowIndex)[colIndex] = result === 0 ? '0' : result
+
+					// 根据函数名执行相应计算
+					let result
+					switch (functionName) {
+						case 'SUM':
+							result = values.reduce((sum, val) => sum + val, 0)
+							break
+						case 'AVERAGE':
+							result = values.length
+								? values.reduce((sum, val) => sum + val, 0) / values.length
+								: 0
+							break
+						case 'MAX':
+							result = values.length ? Math.max(...values) : 0
+							break
+						case 'MIN':
+							result = values.length ? Math.min(...values) : 0
+							break
+						default:
+							result = formula
+					}
+
+					// 设置单元格显示值
+					if (sheet.celldata.has(rowIndex)) {
+						if (!sheet.celldata.get(rowIndex)) {
+							sheet.celldata.set(rowIndex, [])
+						}
+						// 确保 0 值也能正确显示
+						sheet.celldata.get(rowIndex)[colIndex] = result === 0 ? '0' : result
+					}
 				}
-			})
+
+				// 增加批次计数
+				currentBatch++
+
+				// 如果还有更多批次要处理，使用setTimeout让UI线程有喘息机会
+				if (currentBatch * batchSize < formulaEntries.length) {
+					setTimeout(processNextBatch, 0)
+				}
+			}
+
+			// 开始处理第一批
+			processNextBatch()
 		} catch (error) {
 			console.error('公式计算错误:', error)
 		}
@@ -525,6 +582,20 @@ export const useEdit = (id, config) => {
 	}
 
 	const settingsCache = new Map()
+	const MAX_SETTINGS_CACHE_SIZE = 1000 // 设置缓存大小上限
+
+	// 清理设置缓存的函数
+	const cleanSettingsCache = () => {
+		if (settingsCache.size > MAX_SETTINGS_CACHE_SIZE) {
+			// 删除最早添加的20%的缓存项
+			const keysToDelete = Array.from(settingsCache.keys()).slice(
+				0,
+				Math.floor(MAX_SETTINGS_CACHE_SIZE * 0.2)
+			)
+			keysToDelete.forEach((key) => settingsCache.delete(key))
+		}
+	}
+
 	const formattedValue = (val, cell) => {
 		if (!val) return ''
 		let html = ''
@@ -540,6 +611,8 @@ export const useEdit = (id, config) => {
 			!settingsCache.has(`${cell.rowIndex}-${cell.colIndex}`)
 		) {
 			settingsCache.set(`${cell.rowIndex}-${cell.colIndex}`, cell)
+			// 检查并清理缓存
+			cleanSettingsCache()
 			setTimeout(() => setRowHeight(cell.rowIndex, cell.colIndex, false, false), 0)
 		}
 

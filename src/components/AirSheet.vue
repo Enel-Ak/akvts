@@ -1951,7 +1951,7 @@ defineExpose({
 						@click="useEditHook.setCellFormula(key, value)"
 					>
 						<Icons name="Fx" />
-						{{ value }}
+						<span>{{ value }}</span>
 					</div>
 				</div>
 			</div>
