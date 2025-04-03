@@ -1669,7 +1669,7 @@ defineExpose({
 			<div class="group flx brn"></div>
 		</div>
 
-		<div class="inputbar">
+		<div v-if="sheet.config.edit" class="inputbar">
 			<input
 				v-model="useEditHook.inputValue.value"
 				type="text"
