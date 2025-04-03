@@ -100,6 +100,7 @@ const sheet = reactive({
 		formula: true, // 公式
 		zoom: 1, //缩放
 		freeze: false, // 冻结
+		full: true,
 
 		freezeCount: {
 			row: 0,
@@ -238,6 +239,8 @@ const containerRef = ref()
 const alphabetRef = ref()
 const numberRef = ref()
 const fnRef = ref()
+
+const full = ref(false)
 
 // 滚动位置
 const scrollTop = ref(0)
@@ -1269,7 +1272,7 @@ defineExpose({
 	<div
 		class="air-sheet-component"
 		:style="{height: containerHeight}"
-		:class="{mobile: isMobile(), btn: !sheet.config.showToolBar}"
+		:class="{mobile: isMobile(), full: full, btn: !sheet.config.showToolBar}"
 	>
 		<!-- 工具栏 -->
 		<div
@@ -1603,26 +1606,34 @@ defineExpose({
 			<!-- 公式 -->
 			<div class="group" v-if="sheet.config.formula" :class="{'group-merge': !isMobile()}">
 				<div class="item">
-					<Icons name="Fx"></Icons>
+					<Icons name="Sum"></Icons>
 					<span>公式</span>
 				</div>
 				<div v-if="!isMobile()" class="merge formula-merge shadow-12">
 					<div class="item" @click="useEditHook.setCellFormula('SUM')">
-						<Icons name="Fx" svg="Su"></Icons>
+						<Icons name="Fx"></Icons>
 						<span>求和</span>
 					</div>
 					<div class="item" @click="useEditHook.setCellFormula('AVERAGE')">
-						<Icons name="Fx" svg="Av"></Icons>
+						<Icons name="Fx"></Icons>
 						<span>平均值</span>
 					</div>
 					<div class="item" @click="useEditHook.setCellFormula('MAX')">
-						<Icons name="Fx" svg="Ma"></Icons>
+						<Icons name="Fx"></Icons>
 						<span>最大值</span>
 					</div>
 					<div class="item" @click="useEditHook.setCellFormula('MIN')">
-						<Icons name="Fx" svg="Mi"></Icons>
+						<Icons name="Fx"></Icons>
 						<span>最小值</span>
 					</div>
+				</div>
+			</div>
+
+			<!-- 全屏 -->
+			<div v-if="sheet.config.full" class="group" :class="{'group-merge': !isMobile()}">
+				<div class="item" @click="full = !full">
+					<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
+					<span>{{ full ? '退出' : '全屏' }}</span>
 				</div>
 			</div>
 

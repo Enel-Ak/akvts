@@ -354,7 +354,8 @@ export const useEdit = (id, config) => {
 				}
 			}
 		} catch (error) {
-			ElMessage.error(`${fmt}格式错误, 请检查内容`)
+			// ElMessage.error(`${fmt}格式错误, 请检查内容`)
+			console.error(`${fmt}格式错误, 请检查内容`)
 			useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
 		}
 		return output
@@ -576,10 +577,21 @@ export const useEdit = (id, config) => {
 			sheet.config.cellFormula[`${r}-${c}`] = value
 			setFormulaValue()
 		}
+
+		// 处理格式
+		const fmt = sheet.config.cellStyle[`${r}-${c}`]?.fmt
+		if (fmt) {
+			sheet.celldata.get(r)[c] = setCellFormat(sheet.celldata.get(r)[c], r, c, true)
+		}
 	}
 
 	const getCellValue = (rowIndex, colIndex) => {
 		if (sheet.celldata.get(rowIndex)) {
+			const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
+			if (fmt) {
+				return sheet.celldata.get(rowIndex)?.[colIndex]?.replace(/\/|年|月|日|:|,|元/g, '')
+			}
+
 			const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
 			if (formula) {
 				return formula

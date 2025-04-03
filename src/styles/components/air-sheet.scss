@@ -7,6 +7,14 @@
 	overflow: hidden;
 	position: relative;
 	width: 100%;
+
+	&.full {
+		height: 100%;
+		left: 0;
+		position: fixed;
+		top: 0;
+		z-index: 9;
+	}
 }
 
 .toolbar {
