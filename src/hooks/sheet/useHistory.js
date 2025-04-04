@@ -12,7 +12,7 @@ export function useHistory(config) {
 		useSelectionRangeHook,
 	} = config
 	const history = []
-	const max = 50
+	const max = 200
 
 	// 准备修改前保存当前状态
 	const saveHistory = (data = null, type = 'edit') => {

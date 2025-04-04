@@ -1850,12 +1850,7 @@ defineExpose({
 									<div
 										v-html="useEditHook.formattedValue(cell.value, cell)"
 										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
-										:class="{
-											merged: isMergedCellStart(cell),
-											lock: sheet.config.lockCells[
-												`${cell.rowIndex}-${cell.colIndex}`
-											],
-										}"
+										:class="getCellClass(cell)"
 										:style="getOffsetStyle(cell)"
 										class="cell"
 										@dblclick.stop="useEditHook.startEdit($event, cell)"
