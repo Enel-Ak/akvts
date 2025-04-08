@@ -82,7 +82,7 @@ export default ({mode}) => {
 			lib: {
 				entry: path.resolve(__dirname, 'src/index.js'), // 组件入口
 				name: 'akvts', // 库名称
-				fileName: (format) => `akvts.${format}.js`, // 打包后的文件名
+				fileName: (format) => `index.${format}.js`, // 打包后的文件名改为index.es.js
 				formats: ['es'], // 只保留ES模块格式，减少重复代码
 			},
 			rollupOptions: {
