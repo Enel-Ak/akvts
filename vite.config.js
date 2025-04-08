@@ -5,6 +5,7 @@ import path from 'path'
 import ElementPlus from 'unplugin-element-plus/vite'
 import viteCompression from 'vite-plugin-compression'
 import VueSetupExtend from 'vite-plugin-vue-setup-extend'
+import {visualizer} from 'rollup-plugin-visualizer'
 
 export default ({mode}) => {
 	const env = loadEnv(mode, process.cwd())
@@ -42,8 +43,8 @@ export default ({mode}) => {
 				verbose: true,
 				disable: false,
 				threshold: 10240,
-				algorithm: 'gzip',
-				ext: '.gz',
+				algorithm: 'brotliCompress',
+				ext: '.br',
 			}),
 			pages({
 				dirs: 'src/example',
@@ -64,30 +65,66 @@ export default ({mode}) => {
 					}
 				},
 			}),
+			visualizer({
+				filename: './dist/stats.html',
+				open: true,
+				gzipSize: true,
+				brotliSize: true,
+			}),
 		],
 		build: {
+			minify: 'terser',
+			assetsInlineLimit: 4096, // 将小于4kb的资源内联为base64
+			assetsDir: 'assets',
+			reportCompressedSize: true,
+			chunkSizeWarningLimit: 500, // 降低警告阈值，更早发现大文件
+			sourcemap: false,
 			lib: {
 				entry: path.resolve(__dirname, 'src/index.js'), // 组件入口
 				name: 'akvts', // 库名称
 				fileName: (format) => `akvts.${format}.js`, // 打包后的文件名
+				formats: ['es'], // 只保留ES模块格式，减少重复代码
 			},
 			rollupOptions: {
-				external: ['vue', 'vue-router', 'axios', 'pinia'],
+				external: [
+					'vue',
+					'vue-router',
+					'axios',
+					'pinia',
+					'element-plus',
+					'@element-plus/icons-vue',
+					'lodash-es',
+					// 添加更多外部依赖
+					'dayjs',
+					'echarts',
+					'sortablejs',
+				],
 				output: {
 					globals: {
 						vue: 'Vue',
 						'vue-router': 'VueRouter',
 						axios: 'axios',
 						pinia: 'Pinia',
+						'element-plus': 'ElementPlus',
+						'@element-plus/icons-vue': 'ElementPlusIconsVue',
+						'lodash-es': '_',
+						dayjs: 'dayjs',
+						echarts: 'echarts',
+						sortablejs: 'Sortable',
 					},
 					exports: 'named',
-					// 强制压缩输出文件
-					// entryFileNames: '[name]-[hash].js',
-					// chunkFileNames: '[name]-[hash].js',
 					compact: true,
+					// 优化CSS输出
+					assetFileNames: (assetInfo) => {
+						if (assetInfo.name.endsWith('.css')) {
+							return 'styles/[name][extname]'
+						}
+						return 'assets/[name][extname]'
+					},
+					preserveModules: true, // 保留模块结构
+					preserveModulesRoot: 'src', // 模块根目录
 				},
 			},
-			minify: 'terser',
 			terserOptions: {
 				format: {
 					beautify: false, // 不美化输出
@@ -97,8 +134,12 @@ export default ({mode}) => {
 					//生产环境时移除console
 					drop_console: true,
 					drop_debugger: true,
+					pure_funcs: ['console.log'],
+					passes: 2, // 多次优化
 				},
-				mangle: true, // 添加此行以启用代码混淆
+				mangle: {
+					toplevel: true, // 混淆顶级变量
+				},
 			},
 		},
 	})
