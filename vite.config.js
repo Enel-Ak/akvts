@@ -117,7 +117,7 @@ export default ({mode}) => {
 					// 优化CSS输出
 					assetFileNames: (assetInfo) => {
 						if (assetInfo.name.endsWith('.css')) {
-							return 'styles/[name][extname]'
+							return 'style.css' // 直接输出到dist根目录
 						}
 						return 'assets/[name][extname]'
 					},

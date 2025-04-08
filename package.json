@@ -19,8 +19,17 @@
 		"./src/directive": {
 			"import": "./src/directive/index.js"
 		},
+		"./src/styles/main.scss": {
+			"import": "./src/styles/main.scss"
+		},
+		"./src/styles/element/index.scss": {
+			"import": "./src/styles/element/index.scss"
+		},
 		"./src/styles/*": {
 			"import": "./src/styles/*"
+		},
+		"./dist/style.css": {
+			"import": "./dist/style.css"
 		}
 	},
 	"type": "module",
