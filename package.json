@@ -12,6 +12,15 @@
 		},
 		"./styles/*": {
 			"import": "./dist/styles/*"
+		},
+		"./directive/*": {
+			"import": "./dist/directive/*"
+		},
+		"./src/directive": {
+			"import": "./src/directive/index.js"
+		},
+		"./src/styles/*": {
+			"import": "./src/styles/*"
 		}
 	},
 	"type": "module",
