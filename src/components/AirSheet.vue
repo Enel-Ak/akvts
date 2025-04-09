@@ -121,14 +121,6 @@ const sheet = reactive({
 	celldata: new Map(),
 })
 
-watch(
-	() => props.modelValue,
-	(newVal) => {
-		updateModeValue(newVal)
-	},
-	{deep: true}
-)
-
 const fns = ref(props.modelValue?.fns || [])
 const limit = 30000
 
@@ -198,22 +190,10 @@ const initialData = () => {
 			setTimeout(() => {
 				loading.value = false
 				useHistoryHook.saveHistory()
-				console.log(999, sheet.celldata)
-			}, 500)
+			}, 250)
 		}
 	}
 	requestAnimationFrame(processBatch)
-}
-
-// sheet 配置变更时
-const updateModeValue = (newVal) => {
-	Object.assign(sheet.config, newVal?.config)
-	// 合并单元格处理
-	if (newVal?.config?.mergedCells) {
-		const mergeCells = new Map(Object.entries(newVal.config.mergedCells))
-		useMergedCellsHook.setMergeCells(mergeCells, false)
-	}
-	initialData()
 }
 
 // 容器
@@ -900,10 +880,12 @@ const onClickCell = (e, cell) => {
 
 // 单元格编辑失去焦点后
 const onCellBlur = (event, cell) => {
-	useHistoryHook.saveHistory(cell)
 	setTimeout(() => {
 		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
-		emits('cellBlur', val, cell) // 新值，旧值
+		const oldVal = cell.value
+		if (val !== oldVal) {
+			useHistoryHook.saveHistory(cell)
+		}
 		console.log('单元格编辑', val, cell)
 	}, 0)
 }
@@ -998,6 +980,17 @@ const onZoomReset = async () => {
 		originalScrollTop = -1
 		lastZoom = 1
 	}, 200)
+}
+
+// 文本框输入
+let inputTimer = null
+const onInput = (event) => {
+	useEditHook.setCellValue(null, null, event.target.value)
+
+	// 清除之前的定时器
+	clearTimeout(inputTimer)
+	// 设置新的定时器
+	inputTimer = setTimeout(() => useEditHook.setRowHeight(null, null), 250)
 }
 
 // 拖拽到单元格时
@@ -1670,10 +1663,9 @@ defineExpose({
 		</div>
 
 		<div v-if="sheet.config.edit" class="inputbar">
-			<input
+			<textarea
 				v-model="useEditHook.inputValue.value"
-				type="text"
-				@input="useEditHook.setCellValue(null, null, $event.target.value)"
+				@input="onInput"
 				@keydown.stop
 				@keyup.stop
 			/>

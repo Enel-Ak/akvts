@@ -14,13 +14,13 @@ const config = ref({
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
 	},
-	// celldata: Array.from({length: 40000}, (_, r) => {
-	// 	return Array.from({length: 20}, (_, c) => {
-	// 		return `R${r + 1}-C${c + 1}`
-	// 		// return undefined
-	// 	})
-	// }),
-	celldata: [],
+	celldata: Array.from({length: 40000}, (_, r) => {
+		return Array.from({length: 20}, (_, c) => {
+			return `R${r + 1}-C${c + 1}`
+			// return undefined
+		})
+	}),
+	// celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',

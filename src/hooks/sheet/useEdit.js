@@ -186,11 +186,13 @@ export const useEdit = (id, config) => {
 
 			// 使用延时处理，给公式菜单点击事件留出执行时间
 			setTimeout(() => {
-				isFormula.value = false
 				formulaStyle.value = {}
 				setRowHeight(rowIndex, colIndex)
-				setFormulaValue()
-			}, 100)
+				if (isFormula.value) {
+					setFormulaValue()
+					isFormula.value = false
+				}
+			}, 250)
 		}
 
 		const input = () => {
@@ -528,7 +530,16 @@ export const useEdit = (id, config) => {
 	}
 
 	const setRowHeight = async (rowIndex, colIndex, needRender = true, needSetRange = true) => {
-		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
+		let r = rowIndex
+		let c = colIndex
+		const range = useSelectionRangeHook.ranged
+
+		if (range && !r && !c) {
+			r = Math.min(range.start.row, range.end.row)
+			c = Math.min(range.start.col, range.end.col)
+		}
+
+		const cellEl = container.querySelector(`[data-cell="${r}-${c}"]`)
 
 		if (!cellEl) return
 
@@ -538,9 +549,9 @@ export const useEdit = (id, config) => {
 			contentHeight += node.offsetHeight
 		}
 
-		if (contentHeight < useResizeHook.getRowHeight(rowIndex)) return
+		if (contentHeight < useResizeHook.getRowHeight(r)) return
 
-		const merge = useMergedCellsHook.findMergedCell(rowIndex, colIndex)
+		const merge = useMergedCellsHook.findMergedCell(r, c)
 		// 如果是合并单元格
 		if (merge) {
 			// 获取合并区域内所有行的当前高度
@@ -569,12 +580,12 @@ export const useEdit = (id, config) => {
 					)
 				}
 			}
-		} else if (contentHeight > useResizeHook.getRowHeight(rowIndex)) {
+		} else if (contentHeight > useResizeHook.getRowHeight(r)) {
 			// 非合并单元格的情况
-			useResizeHook.setRowHeight(rowIndex, contentHeight)
+			useResizeHook.setRowHeight(r, contentHeight)
 			if (needSetRange) {
 				await nextTick()
-				useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex, true)
+				useSelectionRangeHook.setRange(r, c, r, c, true)
 			}
 		}
 
@@ -721,6 +732,7 @@ export const useEdit = (id, config) => {
 		setCellValue,
 		setCellFormula,
 		setCellFormat,
+		setRowHeight,
 		getCellValue,
 	}
 }
