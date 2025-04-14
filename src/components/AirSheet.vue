@@ -880,9 +880,9 @@ const onClickCell = (e, cell) => {
 
 // 单元格编辑失去焦点后
 const onCellBlur = (event, cell) => {
+	const oldVal = cell.value
 	setTimeout(() => {
 		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
-		const oldVal = cell.value
 		if (val !== oldVal) {
 			useHistoryHook.saveHistory(cell)
 		}
@@ -984,13 +984,38 @@ const onZoomReset = async () => {
 
 // 文本框输入
 let inputTimer = null
+let inputRange = null
+let inputHistory = null
 const onInput = (event) => {
+	const range = useSelectionRangeHook.getRangeData()
+	if (
+		!inputRange ||
+		range.startRow !== inputRange.startRow ||
+		range.startCol !== inputRange.startCol
+	) {
+		inputRange = range
+		inputHistory = sheet.celldata.get(range.startRow)?.[range.startCol]
+	}
 	useEditHook.setCellValue(null, null, event.target.value)
 
 	// 清除之前的定时器
 	clearTimeout(inputTimer)
 	// 设置新的定时器
-	inputTimer = setTimeout(() => useEditHook.setRowHeight(null, null), 250)
+	inputTimer = setTimeout(() => {
+		useEditHook.setRowHeight(null, null)
+	}, 250)
+}
+
+const onInputBlur = () => {
+	if (!inputRange) return
+	const cell = {
+		rowIndex: inputRange.startRow,
+		colIndex: inputRange.startCol,
+		value: inputHistory,
+	}
+	useHistoryHook.saveHistory(cell)
+	inputHistory = null
+	inputRange = null
 }
 
 // 拖拽到单元格时
@@ -999,7 +1024,7 @@ const onCellcellDragOver = (event) => {
 	console.log('onCellcellDragOver', event)
 
 	event.preventDefault()
-	dropCell = useSelectionRangeHook.getRange(event)
+	dropCell = useSelectionRangeHook.getRangeByMouse(event)
 	emits('cellDragOver', dropCell)
 }
 
@@ -1666,6 +1691,7 @@ defineExpose({
 			<textarea
 				v-model="useEditHook.inputValue.value"
 				@input="onInput"
+				@blur="onInputBlur"
 				@keydown.stop
 				@keyup.stop
 			/>

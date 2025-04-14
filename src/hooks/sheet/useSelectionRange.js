@@ -497,7 +497,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	}
 
 	// 根据鼠标位置获取单元格
-	const getRange = (e) => {
+	const getRangeByMouse = (e) => {
 		const pos = limitRange(getCellPosition(e))
 		if (!pos) return null
 		return pos
@@ -537,7 +537,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	}
 
 	// 快速获取选区数据
-	const rangeData = () => {
+	const getRangeData = () => {
 		const startRow = Math.min(ranged.value.start.row, ranged.value.end.row)
 		const endRow = Math.max(ranged.value.start.row, ranged.value.end.row)
 		const startCol = Math.min(ranged.value.start.col, ranged.value.end.col)
@@ -553,7 +553,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 	// 状态栏显示的统计信息
 	const getStatistics = () => {
 		if (!ranged.value) return 0
-		const {startRow, endRow, startCol, endCol} = rangeData()
+		const {startRow, endRow, startCol, endCol} = getRangeData()
 
 		let count = 0
 		let sum = 0
@@ -786,7 +786,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		init,
 		getStartCell,
 		getEndCell,
-		getRange,
+		getRangeByMouse,
+		getRangeData,
 		setRange,
 		setSelectionClass,
 		drag: handleDragStart,
