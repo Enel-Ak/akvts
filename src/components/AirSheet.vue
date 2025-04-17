@@ -1694,6 +1694,7 @@ defineExpose({
 				@blur="onInputBlur"
 				@keydown.stop
 				@keyup.stop
+				@paste.stop
 			/>
 		</div>
 

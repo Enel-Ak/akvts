@@ -185,13 +185,11 @@ export const useEdit = (id, config) => {
 			editing.value = false
 
 			// 使用延时处理，给公式菜单点击事件留出执行时间
+			nextTick(() => setFormulaValue())
 			setTimeout(() => {
 				formulaStyle.value = {}
 				setRowHeight(rowIndex, colIndex)
-				if (isFormula.value) {
-					setFormulaValue()
-					isFormula.value = false
-				}
+				isFormula.value = false
 			}, 250)
 		}
 
@@ -374,7 +372,7 @@ export const useEdit = (id, config) => {
 				}
 			}
 		} catch (error) {
-			// ElMessage.error(`${fmt}格式错误, 请检查内容`)
+			// ElMes	sage.error(`${fmt}格式错误, 请检查内容`)
 			console.error(`${fmt}格式错误, 请检查内容`)
 			useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
 		}
