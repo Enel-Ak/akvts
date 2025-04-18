@@ -188,8 +188,9 @@ export const useEdit = (id, config) => {
 			nextTick(() => setFormulaValue())
 			setTimeout(() => {
 				formulaStyle.value = {}
-				setRowHeight(rowIndex, colIndex)
 				isFormula.value = false
+
+				setRowHeight(rowIndex, colIndex)
 			}, 250)
 		}
 
@@ -532,10 +533,12 @@ export const useEdit = (id, config) => {
 		let c = colIndex
 		const range = useSelectionRangeHook.ranged
 
-		if (range && !r && !c) {
+		if (range && !r && !c && r !== 0 && c !== 0) {
 			r = Math.min(range.start.row, range.end.row)
 			c = Math.min(range.start.col, range.end.col)
 		}
+
+		console.log(111, r, c)
 
 		const cellEl = container.querySelector(`[data-cell="${r}-${c}"]`)
 
