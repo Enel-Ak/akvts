@@ -378,6 +378,7 @@ const onButtonClick = () => {
 			<Icons name="Language"></Icons>
 			<Icons name="Thumbtack"></Icons>
 			<Icons name="Loading"></Icons>
+			<Icons name="Chat"></Icons>
 		</div>
 
 		<TableV2
