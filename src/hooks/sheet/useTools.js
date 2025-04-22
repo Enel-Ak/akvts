@@ -749,6 +749,23 @@ export const useTools = (config) => {
 	const freezeCol = ref(1)
 	const setFreeze = (r, c) => {}
 
+	const clearAll = () => {
+		const ranged = useSelectionRangeHook.ranged
+		if (!ranged) return
+
+		const startRow = Math.min(ranged.start.row, ranged.end.row)
+		const startCol = Math.min(ranged.start.col, ranged.end.col)
+		const endRow = Math.max(ranged.start.row, ranged.end.row)
+		const endCol = Math.max(ranged.start.col, ranged.end.col)
+
+		for (let row = startRow; row <= endRow; row++) {
+			for (let col = startCol; col <= endCol; col++) {
+				delete sheet.config.cellStyle[`${row}-${col}`]
+				delete sheet.config.cellFormula[`${row}-${col}`]
+			}
+		}
+	}
+
 	// 解析Excel单元格引用格式(如 "C1:D1" 或 "1-4")，返回起始和结束的行列索引
 	const parseCellRange = (range) => {
 		// 解析列标识(A,B,C等)为数字索引(0,1,2等)
@@ -1230,5 +1247,7 @@ export const useTools = (config) => {
 
 		luckyToAir,
 		airToLucky,
+
+		clearAll,
 	}
 }

@@ -1002,6 +1002,7 @@ const onInput = (event) => {
 	clearTimeout(inputTimer)
 	// 设置新的定时器
 	inputTimer = setTimeout(() => {
+		useEditHook.setFormulaValue()
 		useEditHook.setRowHeight(null, null)
 	}, 250)
 }
@@ -1667,6 +1668,13 @@ defineExpose({
 					&nbsp;
 					<span>列</span>
 					<input type="number" v-model.number="useToolsHook.freezeCol.value" />
+				</div>
+			</div>
+
+			<div class="group">
+				<div class="item" @click="useToolsHook.clearAll">
+					<Icons name="Clear3"></Icons>
+					<span>清除</span>
 				</div>
 			</div>
 

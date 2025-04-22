@@ -375,7 +375,7 @@ export const useEdit = (id, config) => {
 		} catch (error) {
 			// ElMes	sage.error(`${fmt}格式错误, 请检查内容`)
 			console.error(`${fmt}格式错误, 请检查内容`)
-			useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
+			// useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
 		}
 		return output
 	}
@@ -730,6 +730,7 @@ export const useEdit = (id, config) => {
 		destroy,
 		startEdit,
 		formattedValue,
+		setFormulaValue,
 		setCellValue,
 		setCellFormula,
 		setCellFormat,
