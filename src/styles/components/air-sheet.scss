@@ -217,6 +217,8 @@
 	textarea {
 		border: 1px solid var(--z-line);
 		border-radius: 4px;
+		background-color: var(--z-theme);
+		color: var(--z-font-color);
 		height: 25px;
 		max-height: 25px;
 		line-height: 25px;
