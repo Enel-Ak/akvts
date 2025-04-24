@@ -7,14 +7,14 @@ export const useMergedCells = (config) => {
 	let mergedCells = new Map()
 
 	// 添加合并单元格
-	const setMergeCell = (rowIndex, colIndex, rowspan, colspan) => {
+	const setMergeCell = (rowIndex, colIndex, rowspan, colspan, force = true) => {
 		const currentKey = `${rowIndex}-${colIndex}`
 		const existingMerge = mergedCells.get(currentKey)
 
 		// 检查是否是相同位置的框选
 		if (existingMerge) {
 			// 如果是相同位置，检查大小是否相同
-			if (existingMerge.rowspan === rowspan && existingMerge.colspan === colspan) {
+			if (existingMerge.rowspan === rowspan && existingMerge.colspan === colspan && force) {
 				// 相同位置且相同大小，则取消合并
 				mergedCells.delete(currentKey)
 			} else {

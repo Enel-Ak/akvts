@@ -126,12 +126,14 @@ watch(
 	() => props.modelValue?.config,
 	(newVal) => {
 		sheet.config = Object.assign(sheet.config, newVal)
-		const mergedCells = sheet.config.mergedCells
-		if (Object.keys(mergedCells).length > 0) {
-			Object.entries(mergedCells).forEach(([key, value]) => {
+		const mc = newVal.mergedCells
+		console.log(1111, mc)
+
+		if (Object.keys(mc).length > 0) {
+			Object.entries(mc).forEach(([key, value]) => {
 				const [r, c] = key.split('-').map(Number)
 				const {rowspan: rs, colspan: cs} = value
-				useMergedCellsHook.setMergeCell(r, c, rs, cs)
+				useMergedCellsHook.setMergeCell(r, c, rs, cs, false)
 			})
 		}
 	}
@@ -1259,7 +1261,7 @@ onMounted(() => {
 			w: useResizeHook.getColWidth(0),
 			h: useResizeHook.getRowHeight(0),
 		}
-	}, 150)
+	}, 250)
 })
 
 onActivated(() => {

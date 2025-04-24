@@ -1,5 +1,5 @@
 <script setup name="airsheet">
-import {onMounted, ref} from 'vue'
+import {onActivated, onMounted, ref} from 'vue'
 
 const sheetRef = ref()
 const config = ref({
@@ -1069,7 +1069,7 @@ const bba = {
 	],
 }
 
-onMounted(() => {
+onActivated(() => {
 	sheetRef.value
 		.luckyToAir(aab.globalStyle, [
 			...aab.header,
