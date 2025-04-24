@@ -641,7 +641,7 @@
 
 	&.resizing,
 	&:hover {
-		background-color: var(--z-main);
+		background-color: var(--z-primary);
 		opacity: 1;
 	}
 }
@@ -651,7 +651,7 @@
 	top: 0;
 	left: 1px;
 	height: 1px;
-	background-color: var(--z-main);
+	background-color: var(--z-primary);
 	pointer-events: none;
 	z-index: -1;
 }
@@ -661,7 +661,7 @@
 	top: 1px;
 	left: 0;
 	width: 1px;
-	background-color: var(--z-main);
+	background-color: var(--z-primary);
 	height: 100%;
 	pointer-events: none;
 	z-index: -1;
