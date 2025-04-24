@@ -1,4 +1,5 @@
 import {ref} from 'vue'
+import {useGlobal} from '@/store/useGlobal'
 const currentTheme = ref('light')
 export function useSystemTheme(init = true) {
 	const updateThemeClass = (isDark) => {
@@ -6,6 +7,7 @@ export function useSystemTheme(init = true) {
 		body.classList.remove(isDark ? 'light' : 'dark')
 		body.classList.add(isDark ? 'dark' : 'light')
 		currentTheme.value = isDark ? 'dark' : 'light'
+		useGlobal().setTheme(isDark ? 'dark' : 'light')
 	}
 
 	const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
