@@ -78,7 +78,7 @@ export const useMergedCells = (config) => {
 		const merged = mergedCells.get(key)
 
 		// cellStyle
-		const style = useStyle(sheet.config.cellStyle[key], sheet.config.zoom)
+		const style = useStyle(sheet.config.cellStyle[key], sheet.config.zoom, cell, sheet)
 
 		// 1. 检查是否是合并单元格的起始位置
 		if (merged) {

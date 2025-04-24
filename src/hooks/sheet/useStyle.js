@@ -1,4 +1,4 @@
-export const useStyle = (cellStyle, zoom) => {
+export const useStyle = (cellStyle, zoom, cell, sheet) => {
 	let style = {}
 	let line = `1pt solid #000`
 
@@ -58,7 +58,22 @@ export const useStyle = (cellStyle, zoom) => {
 				style['color'] = value
 				break
 			case 'bg':
-				if (value !== '#ffffff' && value !== '#181818') {
+				const cs = sheet.config.cellStyle[`${cell.rowIndex}-${cell.colIndex}`]
+				if (
+					value !== '#ffffff' &&
+					value !== '#181818' &&
+					value !== '#000000' &&
+					!(
+						cs?.bb ||
+						cs?.bl ||
+						cs?.br ||
+						cs?.bt ||
+						cs?.btc ||
+						cs?.bbc ||
+						cs?.blc ||
+						cs?.brc
+					)
+				) {
 					style['border-color'] = value
 				}
 				style['background-color'] = value

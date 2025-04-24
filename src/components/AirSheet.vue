@@ -121,6 +121,31 @@ const sheet = reactive({
 	celldata: new Map(),
 })
 
+// 配置变化处理
+watch(
+	() => props.modelValue?.config,
+	(newVal) => {
+		sheet.config = Object.assign(sheet.config, newVal)
+		const mergedCells = sheet.config.mergedCells
+		if (Object.keys(mergedCells).length > 0) {
+			Object.entries(mergedCells).forEach(([key, value]) => {
+				const [r, c] = key.split('-').map(Number)
+				const {rowspan: rs, colspan: cs} = value
+				useMergedCellsHook.setMergeCell(r, c, rs, cs)
+			})
+		}
+	}
+)
+
+// 数据变化处理
+watch(
+	() => props.modelValue?.celldata,
+	(newVal) => {
+		sheet.celldata = new Map(newVal)
+		initialData()
+	}
+)
+
 const fns = ref(props.modelValue?.fns || [])
 const limit = 30000
 
@@ -1234,7 +1259,7 @@ onMounted(() => {
 			w: useResizeHook.getColWidth(0),
 			h: useResizeHook.getRowHeight(0),
 		}
-	}, 0)
+	}, 150)
 })
 
 onActivated(() => {
@@ -1282,11 +1307,7 @@ defineExpose({
 	getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
 	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
 
-	luckyToAir: async (config, data) => {
-		const res = await useToolsHook.luckyToAir(config, data)
-		setTimeout(() => initialData(), 0)
-		return res
-	},
+	luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
 	airToLucky: async () => await useToolsHook.airToLucky(sheet),
 })
 </script>
