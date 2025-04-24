@@ -519,7 +519,7 @@ export const useTools = (config) => {
 		try {
 			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
 				// 创建新的行数据数组
-				const newRowData = Array.from(rowData)
+				const newRowData = Array.from(rowData || [])
 
 				// 在指定位置插入空值，根据addColumnCount插入多列
 				for (let i = 0; i < addColumnCount.value; i++) {

@@ -1357,10 +1357,9 @@ defineExpose({
 					<!-- 格式 -->
 					<select
 						:value="setActiveTool('fmt').value || formatMap.Normal"
-						@change="
+						@change.stop="
 							($event) => {
 								useToolsHook.setFormat($event)
-								useHistoryHook.saveHistory()
 							}
 						"
 					>
