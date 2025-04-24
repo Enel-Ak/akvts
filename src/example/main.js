@@ -14,6 +14,8 @@ import 'element-plus/dist/index.css'
 import '@/styles/element/index.scss'
 import '@/styles/main.scss'
 
+import {useSystemTheme} from '@/hooks/useSystemTheme'
+
 const app = createApp(App)
 const pinia = createPinia()
 
@@ -33,6 +35,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 async function initApp() {
 	app.mount('#app')
+	useSystemTheme()
 	document.title = import.meta.env.VITE_TITLE
 }
 

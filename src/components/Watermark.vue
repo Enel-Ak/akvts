@@ -1,5 +1,6 @@
 <script setup>
 import {computed, onMounted, onUnmounted, ref} from 'vue'
+import {currentTheme} from '@/hooks/useSystemTheme'
 import Lock from './Lock.vue'
 
 const props = defineProps({
@@ -107,7 +108,12 @@ const init = () => {
 				el.classList.add('watermark')
 				el.style.background = background
 				el.style.zIndex = props.zIndex
-				el.style.opacity = props.opacity
+				el.style.opacity =
+					props.opacity === 0.3
+						? currentTheme.value === 'dark'
+							? 0.1
+							: 0.3
+						: props.opacity
 			}
 
 			if (!water) {
