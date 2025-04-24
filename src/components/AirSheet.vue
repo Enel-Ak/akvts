@@ -464,7 +464,6 @@ const visibleRows = computed(() => {
 
 	// 使用worker计算的结果
 	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return rows
-
 	const {startRow, endRow} = visibleRangeRef.value.visible
 	const start = Math.max(0, startRow)
 	const end = Math.min(sheet.config.rowCount, endRow)
@@ -1283,7 +1282,11 @@ defineExpose({
 	getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
 	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
 
-	luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
+	luckyToAir: async (config, data) => {
+		const res = await useToolsHook.luckyToAir(config, data)
+		setTimeout(() => initialData(), 0)
+		return res
+	},
 	airToLucky: async () => await useToolsHook.airToLucky(sheet),
 })
 </script>

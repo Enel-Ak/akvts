@@ -630,7 +630,7 @@ export const useTools = (config) => {
 						// 如果合并单元格跨越了删除范围，需要减少 rowspan
 						const overlap = Math.min(endCol - startCol + 1, col + colspan - startCol)
 						newMergedCells.set(key, {
-							rowspan: rowspan,
+							rowspan,
 							colspan: colspan - overlap,
 						})
 					} else {
@@ -813,13 +813,38 @@ export const useTools = (config) => {
 			}
 		}
 
+		// 匹配单个单元格格式 (如 "A1", "B2")
+		const singleCellPattern = /^([A-Z]+)(\d+)$/
+		const singleCellMatch = range.match(singleCellPattern)
+		if (singleCellMatch) {
+			const [, col, row] = singleCellMatch
+			return {
+				start: {
+					row: parseInt(row) - 1, // 转为0基数
+					col: colToIndex(col),
+				},
+				end: {
+					row: parseInt(row) - 1, // 转为0基数
+					col: colToIndex(col),
+				},
+				format: {
+					start: col,
+					end: col,
+				},
+				sqref: `${col}${row}:${col}${row}`, // 保持原始Excel格式
+			}
+		}
+
 		// 匹配Excel格式 (如 "C1:D1")
 		const pattern = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/
-		const match = range.match(pattern)
+		let match = range.match(pattern)
 		if (!match) {
-			throw new Error(
-				'无效的单元格范围格式，正确格式例如: "A1:B2" 或 "0-0"（第一个数字是行号，第二个数字是列号）'
-			)
+			if (!match) {
+				throw new Error(
+					'无效的单元格范围格式，正确格式例如: "A1:B2" 或 "0-0"（第一个数字是行号，第二个数字是列号）' +
+						range
+				)
+			}
 		}
 
 		const [, startCol, startRow, endCol, endRow] = match
@@ -937,14 +962,16 @@ export const useTools = (config) => {
 					) {
 						try {
 							config.authority.allowRangeList.forEach((item) => {
-								const {start, end} = parseCellRange(item.sqref)
-								const startRow = Math.min(start.row, end.row)
-								const startCol = Math.min(start.col, end.col)
-								const endRow = Math.max(start.row, end.row)
-								const endCol = Math.max(start.col, end.col)
-								for (let row = startRow; row <= endRow; row++) {
-									for (let col = startCol; col <= endCol; col++) {
-										sheet.config.lockCells[`${row}-${col}`] = true
+								if (!item.sqref.includes('$')) {
+									const {start, end} = parseCellRange(item.sqref)
+									const startRow = Math.min(start.row, end.row)
+									const startCol = Math.min(start.col, end.col)
+									const endRow = Math.max(start.row, end.row)
+									const endCol = Math.max(start.col, end.col)
+									for (let row = startRow; row <= endRow; row++) {
+										for (let col = startCol; col <= endCol; col++) {
+											sheet.config.lockCells[`${row}-${col}`] = true
+										}
 									}
 								}
 							})
