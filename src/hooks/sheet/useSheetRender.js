@@ -59,6 +59,7 @@ const workerCode = `
 			defaultColWidth,
 			rowHeights = {},
 			colWidths = {},
+			mergedCells = {},
 		} = data
 
 		// 计算可见行范围
@@ -116,13 +117,16 @@ const workerCode = `
 
 		// 计算缓冲区
 		const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
+		
+		// 扩展可见范围以包含合并单元格
+		const expandedRange = expandRangeForMergedCells(bufferRange, mergedCells, colCount, rowCount, colWidths, defaultColWidth)
 
 		return {
 			visible: {
-				startRow: bufferRange.startRow,
-				endRow: bufferRange.endRow,
-				startCol: bufferRange.startCol,
-				endCol: bufferRange.endCol,
+				startRow: expandedRange.startRow,
+				endRow: expandedRange.endRow,
+				startCol: expandedRange.startCol,
+				endCol: expandedRange.endCol,
 			},
 			metrics: {
 				accHeight,
@@ -130,6 +134,43 @@ const workerCode = `
 				accWidth,
 				totalWidth,
 			}
+		}
+	}
+	
+	// 扩展可见范围以包含合并单元格
+	const expandRangeForMergedCells = (range, mergedCells, colCount, rowCount, colWidths, defaultColWidth) => {
+		const { startRow, endRow, startCol, endCol } = range
+		let expandedStartCol = startCol
+		let expandedEndCol = endCol
+		
+		// 检查所有合并单元格
+		for (const key in mergedCells) {
+			const [row, col] = key.split('-').map(Number)
+			const { rowspan, colspan } = mergedCells[key]
+			
+			// 如果合并单元格的行在可见范围内
+			if (row >= startRow && row < endRow) {
+				// 检查合并单元格是否跨越了左边界
+				if (col < startCol && col + colspan > startCol) {
+					expandedStartCol = Math.min(expandedStartCol, col)
+				}
+				
+				// 检查合并单元格是否跨越了右边界
+				if (col < endCol && col + colspan > endCol) {
+					expandedEndCol = Math.max(expandedEndCol, col + colspan)
+				}
+			}
+		}
+		
+		// 确保不超出表格范围
+		expandedStartCol = Math.max(0, expandedStartCol)
+		expandedEndCol = Math.min(colCount, expandedEndCol)
+		
+		return {
+			startRow,
+			endRow,
+			startCol: expandedStartCol,
+			endCol: expandedEndCol
 		}
 	}
 
