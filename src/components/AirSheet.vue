@@ -1247,7 +1247,10 @@ const isLandscape = () => {
 }
 
 // 初始化
-onMounted(() => {
+onMounted(() => {})
+
+onActivated(() => {
+	init()
 	setTimeout(() => {
 		useSelectionRangeHook.setRange(0, 0, 0, 0)
 		const {start, end} = useSelectionRangeHook.ranged
@@ -1262,10 +1265,6 @@ onMounted(() => {
 			h: useResizeHook.getRowHeight(0),
 		}
 	}, 250)
-})
-
-onActivated(() => {
-	init()
 })
 
 onDeactivated(() => {
