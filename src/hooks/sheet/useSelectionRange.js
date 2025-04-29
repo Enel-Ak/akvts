@@ -216,8 +216,8 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return {
 			top: `${(totalOffsetTop + modifiedBefore) * zoom}px`,
 			left: `${(totaloffsetLeft + modifiedColBefore) * zoom}px`,
-			height: `${(totleHeight + modifiedInRange - 0.5) * zoom}px`,
-			width: `${(totleWidth + modifiedColInRange - 0.5) * zoom}px`,
+			height: `${(totleHeight + modifiedInRange) * zoom}px`,
+			width: `${(totleWidth + modifiedColInRange) * zoom}px`,
 		}
 	})
 
