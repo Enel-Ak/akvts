@@ -151,6 +151,13 @@
 	background-color: var(--z-theme) !important;
 }
 
+.el-popper.is-light.el-select__popper {
+	.el-popper__arrow:before {
+		border-bottom-color: transparent !important;
+		border-right-color: transparent !important;
+	}
+}
+
 .el-picker-panel {
 	background-color: var(--z-theme) !important;
 	color: var(--z-font-color) !important;

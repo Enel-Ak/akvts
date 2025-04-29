@@ -134,7 +134,9 @@ const onButtonClick = () => {
 					:enable-label="true"
 					:enable-button-vertical="false"
 					:grid="false"
-					:column-count="4"
+					:label-width="0"
+					:column-count="3"
+					buttonVertical="flowing"
 					:rules="{
 						age: [{required: true, message: '请输入年龄', trigger: 'blur'}],
 					}"
@@ -186,27 +188,27 @@ const onButtonClick = () => {
 						// 		},
 						// 	],
 						// },
+						// {
+						// 	prop: 'age',
+						// 	label: '年龄',
+						// 	type: 'text',
+						// 	inputType: 'number',
+						// 	disabled: false,
+						// },
 						{
-							prop: 'age',
+							prop: 'age1',
 							label: '年龄',
 							type: 'text',
 							inputType: 'number',
 							disabled: false,
 						},
-						// {
-						// 	prop: 'age1',
-						// 	label: '年龄',
-						// 	type: 'text',
-						// 	inputType: 'number',
-						// 	disabled: false,
-						// },
-						// {
-						// 	prop: 'ag223e1',
-						// 	label: '年龄',
-						// 	type: 'text',
-						// 	inputType: 'number',
-						// 	disabled: false,
-						// },
+						{
+							prop: 'ag223e1',
+							label: '年龄',
+							type: 'select',
+							inputType: 'number',
+							disabled: false,
+						},
 						// {
 						// 	prop: 'ag3232e1',
 						// 	label: '年龄',
