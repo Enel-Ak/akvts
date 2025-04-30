@@ -758,8 +758,15 @@ export const useTools = (config) => {
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
 
+		let lockTimer = null
+
 		for (let row = startRow; row <= endRow; row++) {
 			for (let col = startCol; col <= endCol; col++) {
+				if (sheet.config.lockCells[`${row}-${col}`]) {
+					clearTimeout(lockTimer)
+					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
+					continue
+				}
 				delete sheet.config.cellStyle[`${row}-${col}`]
 				delete sheet.config.cellFormula[`${row}-${col}`]
 			}

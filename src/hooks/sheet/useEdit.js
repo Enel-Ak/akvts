@@ -387,8 +387,15 @@ export const useEdit = (id, config) => {
 		const rr = Math.max(ranged.start.row, ranged.end.row)
 		const cc = Math.max(ranged.start.col, ranged.end.col)
 
+		let lockTimer = null
 		for (let row = r; row <= rr; row++) {
 			for (let col = c; col <= cc; col++) {
+				if (sheet.config.lockCells[`${row}-${col}`]) {
+					clearTimeout(lockTimer)
+					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
+					continue
+				}
+
 				const oldFormula = sheet.config.cellFormula[`${row}-${col}`]
 				if (oldFormula) {
 					// 取出公式中的参数
