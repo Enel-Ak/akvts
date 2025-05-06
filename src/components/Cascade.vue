@@ -47,12 +47,12 @@ const cascadeProps = ref(props.oneSelectProps)
 
 const _options = ref(props.options)
 
-const onFormItemChange = (val, item, index, init = true) => {
+const onFormItemChange = (val, item, index, init = true, isDefault = false) => {
 	const nextIndex = index + 1
 	const next = props.options[nextIndex]
 
 	if (next) {
-		if (!init) {
+		if (!isDefault) {
 			for (let i = nextIndex; i < props.options.length; i++) {
 				props.options[i].options = []
 				form.value[props.options[i].prop] = ''
@@ -106,7 +106,7 @@ const setDefaultData = async (val) => {
 			const isInit = !!form.value[item.prop]
 
 			if (props.static || isInit) {
-				onFormItemChange(item.value || form.value[item.prop], item, i, isInit)
+				onFormItemChange(item.value || form.value[item.prop], item, i, isInit, true)
 			}
 
 			if (item.hasOwnProperty('value')) {

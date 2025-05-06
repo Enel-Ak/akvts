@@ -174,9 +174,9 @@ const onClickClear = () => {
 </script>
 <template>
 	<div>
-		<!-- {{ cascadeOneSelect }} -->
+		{{ cascadeOneSelect }}
 		<!-- 静态联动数据用 options -->
-		<!-- <Cascade
+		<Cascade
 			v-model="cascadeOneSelect"
 			:options="options"
 			:one-select="true"
@@ -184,14 +184,14 @@ const onClickClear = () => {
 			:show-all-levels="true"
 			max-level="-1"
 			placeholder="请选择紧凑型联动"
-		></Cascade> -->
+		></Cascade>
 
 		<br />
 		<Cascade v-model="abc" :options="options2" :vertical="true"></Cascade>
 		<br />
-		<!-- <Cascade v-model="cascade" :options="options3" :static="true"></Cascade>
+		<Cascade v-model="cascade" :options="options3" :static="true"></Cascade>
 		<el-button @click="onClickClear">清空</el-button>
-		{{ cascade }} -->
+		{{ cascade }}
 	</div>
 </template>
 <style scoped lang="scss"></style>
