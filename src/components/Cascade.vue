@@ -95,15 +95,15 @@ const setDefaultData = async (val) => {
 				if (
 					(isAllEmpty && i === 0 && !val[i].options.length) ||
 					item.value ||
-					form.value[item.prop] ||
 					val[i - 1]?.value
 				) {
 					await initOptions(val[i], i)
 				}
 			}
 
-			if (props.static) {
-				onFormItemChange(item.value || form.value[item.prop], item, i, false)
+			const isInit = i > 0 && form.value[item.prop]
+			if (props.static || isInit) {
+				onFormItemChange(item.value || form.value[item.prop], item, i, isInit)
 			}
 
 			if (item.hasOwnProperty('value')) {
