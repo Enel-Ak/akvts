@@ -52,9 +52,11 @@ const onFormItemChange = (val, item, index, init = true) => {
 	const next = props.options[nextIndex]
 
 	if (next) {
-		for (let i = nextIndex; i < props.options.length; i++) {
-			props.options[i].options = []
-			form.value[props.options[i].prop] = ''
+		if (!init) {
+			for (let i = nextIndex; i < props.options.length; i++) {
+				props.options[i].options = []
+				form.value[props.options[i].prop] = ''
+			}
 		}
 
 		if (typeof item.beforeInitOptions === 'function') {
@@ -193,7 +195,9 @@ const initOptions = (item, level = 0) => {
 				method: item.method || 'post',
 				params: item.casecadeParams || {},
 				data: item.casecadeData || {},
-				headers: {Urlkey: 'org'},
+				headers: {
+					Urlkey: 'org',
+				},
 			})
 			.then((res) => {
 				// TODO: 这里需要根据实际情况处理返回数据
