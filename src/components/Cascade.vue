@@ -101,7 +101,8 @@ const setDefaultData = async (val) => {
 				}
 			}
 
-			const isInit = i > 0 && form.value[item.prop]
+			const isInit = !!form.value[item.prop]
+
 			if (props.static || isInit) {
 				onFormItemChange(item.value || form.value[item.prop], item, i, isInit)
 			}
