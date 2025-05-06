@@ -20,7 +20,7 @@ const config = ref({
 	// 		// return undefined
 	// 	})
 	// }),
-	// celldata: [],
+	celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',
@@ -1070,19 +1070,19 @@ const bba = {
 }
 
 onActivated(() => {
-	sheetRef.value
-		.luckyToAir(aab.globalStyle, [
-			...aab.header,
-			...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
-		])
-		.then((res) => {
-			Object.assign(config.value, {
-				config: {
-					...res.config,
-				},
-				celldata: res.celldata,
-			})
-		})
+	// sheetRef.value
+	// 	.luckyToAir(aab.globalStyle, [
+	// 		...aab.header,
+	// 		...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
+	// 	])
+	// 	.then((res) => {
+	// 		Object.assign(config.value, {
+	// 			config: {
+	// 				...res.config,
+	// 			},
+	// 			celldata: res.celldata,
+	// 		})
+	// 	})
 
 	// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
 	// sheetRef.value.setMergeCell(5, 4, 4, 4)

@@ -376,6 +376,8 @@ const setActiveTool = computed(() => {
 			value: null,
 			active: false,
 			lock: false,
+			fx: false,
+			fxVal: '',
 		}
 
 		if (!ranged) {
@@ -388,8 +390,12 @@ const setActiveTool = computed(() => {
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
 		const cellStyle = sheet.config.cellStyle[`${startRow}-${startCol}`]
 		const isLock = sheet.config.lockCells[`${startRow}-${startCol}`]
+		const isFx = sheet.config.cellFormula[`${startRow}-${startCol}`]
 
 		data.lock = isLock
+		data.fx = !!isFx
+		data.fxVal = isFx
+
 		if ((startRow !== endRow && startCol !== endCol) || !style || !cellStyle) {
 			return data
 		}
@@ -1489,7 +1495,13 @@ defineExpose({
 				<div class="group group-merge" v-if="sheet.config.border">
 					<div
 						class="item"
-						:class="{active: setActiveTool('bl').active}"
+						:class="{
+							active:
+								setActiveTool('bl').active ||
+								setActiveTool('bt').active ||
+								setActiveTool('br').active ||
+								setActiveTool('bb').active,
+						}"
 						@click="useToolsHook.setBorder()"
 					>
 						<Icons name="Border"></Icons>
@@ -1500,19 +1512,43 @@ defineExpose({
 							<Icons name="UnBorder"></Icons>
 							<span>无边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'top')">
+						<div
+							class="item"
+							:class="{
+								active: setActiveTool('bt').active,
+							}"
+							@click="useToolsHook.setBorder(null, 'top')"
+						>
 							<Icons name="BorderTop"></Icons>
 							<span>上边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
+						<div
+							class="item"
+							:class="{
+								active: setActiveTool('bb').active,
+							}"
+							@click="useToolsHook.setBorder(null, 'bottom')"
+						>
 							<Icons name="BorderBottom"></Icons>
 							<span>下边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'left')">
+						<div
+							class="item"
+							:class="{
+								active: setActiveTool('bl').active,
+							}"
+							@click="useToolsHook.setBorder(null, 'left')"
+						>
 							<Icons name="BorderLeft"></Icons>
 							<span>左边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'right')">
+						<div
+							class="item"
+							:class="{
+								active: setActiveTool('br').active,
+							}"
+							@click="useToolsHook.setBorder(null, 'right')"
+						>
 							<Icons name="BorderRight"></Icons>
 							<span>右边框</span>
 						</div>
@@ -1648,24 +1684,40 @@ defineExpose({
 
 			<!-- 公式 -->
 			<div class="group" v-if="sheet.config.formula" :class="{'group-merge': !isMobile()}">
-				<div class="item">
+				<div class="item" :class="{active: setActiveTool('cellFormula').fx}">
 					<Icons name="Sum"></Icons>
 					<span>公式</span>
 				</div>
 				<div v-if="!isMobile()" class="merge formula-merge shadow-12">
-					<div class="item" @click="useEditHook.setCellFormula('SUM')">
+					<div
+						class="item"
+						:class="{active: setActiveTool('cellFormula').fxVal?.includes('SUM')}"
+						@click="useEditHook.setCellFormula('SUM')"
+					>
 						<Icons name="Fx"></Icons>
 						<span>求和</span>
 					</div>
-					<div class="item" @click="useEditHook.setCellFormula('AVERAGE')">
+					<div
+						class="item"
+						:class="{active: setActiveTool('cellFormula').fxVal?.includes('AVERAGE')}"
+						@click="useEditHook.setCellFormula('AVERAGE')"
+					>
 						<Icons name="Fx"></Icons>
 						<span>平均值</span>
 					</div>
-					<div class="item" @click="useEditHook.setCellFormula('MAX')">
+					<div
+						class="item"
+						:class="{active: setActiveTool('cellFormula').fxVal?.includes('MAX')}"
+						@click="useEditHook.setCellFormula('MAX')"
+					>
 						<Icons name="Fx"></Icons>
 						<span>最大值</span>
 					</div>
-					<div class="item" @click="useEditHook.setCellFormula('MIN')">
+					<div
+						class="item"
+						:class="{active: setActiveTool('cellFormula').fxVal?.includes('MIN')}"
+						@click="useEditHook.setCellFormula('MIN')"
+					>
 						<Icons name="Fx"></Icons>
 						<span>最小值</span>
 					</div>

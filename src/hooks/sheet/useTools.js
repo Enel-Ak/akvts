@@ -759,7 +759,6 @@ export const useTools = (config) => {
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
 
 		let lockTimer = null
-
 		for (let row = startRow; row <= endRow; row++) {
 			for (let col = startCol; col <= endCol; col++) {
 				if (sheet.config.lockCells[`${row}-${col}`]) {
