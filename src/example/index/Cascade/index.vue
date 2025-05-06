@@ -43,20 +43,40 @@ const options = ref([
 	// },
 ])
 
+const abc = ref({
+	first: 'bf393e50e26249e8a97bf72019555fe6',
+	second: 'c02c0d1a73f344d19ce150636781038d',
+	three: '',
+})
 const options2 = ref([
 	{
 		prop: 'first',
 		label: '远程联动1',
 		type: 'select',
-		casecadeUrl: '/api/first',
-		// casecadeParams: {a: 1},
+		method: 'GET',
+		casecadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+		casecadeParams: {},
 		beforeInitOptions: (val, next, item) => {
-			next.casecadeParams = {a: 123}
+			next.casecadeParams.systematicType = 2
+			next.casecadeParams.parentId = val
 		},
 		options: [
-			{label: '选项1', value: 1},
-			{label: '选项2', value: 2},
-			{label: '选项3', value: 3},
+			{
+				label: '党的建设',
+				value: 'bf393e50e26249e8a97bf72019555fe6',
+			},
+			{
+				label: '经济发展',
+				value: 'b426adcfb10e417d94fd44647b5061fb',
+			},
+			{
+				label: '民生服务',
+				value: 'dae6c0c7006d4962adb655d7bceab6b6',
+			},
+			{
+				label: '平安法治',
+				value: '04a2b2a6bf3a436480d99bd086330384',
+			},
 		],
 	},
 	{
@@ -64,16 +84,26 @@ const options2 = ref([
 		type: 'select',
 		label: '远程联动2',
 		placeholder: '请选择上一级',
-		casecadeUrl: '/api/second',
-		casecadeParams: {b: 1},
+		method: 'GET',
+		casecadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+		casecadeParams: {},
+		beforeInitOptions: (val, next, item) => {
+			next.casecadeParams.systematicType = 2
+			next.casecadeParams.parentId = val
+		},
 	},
 	{
 		prop: 'three',
 		type: 'select',
 		label: '远程联动3',
 		placeholder: '请选择上一级',
-		casecadeUrl: '/api/three',
-		casecadeParams: {c: 1},
+		method: 'GET',
+		casecadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+		casecadeParams: {},
+		beforeInitOptions: (val, next, item) => {
+			next.casecadeParams.systematicType = 2
+			next.casecadeParams.parentId = val
+		},
 	},
 ])
 
@@ -144,9 +174,9 @@ const onClickClear = () => {
 </script>
 <template>
 	<div>
-		{{ cascadeOneSelect }}
+		<!-- {{ cascadeOneSelect }} -->
 		<!-- 静态联动数据用 options -->
-		<Cascade
+		<!-- <Cascade
 			v-model="cascadeOneSelect"
 			:options="options"
 			:one-select="true"
@@ -154,14 +184,14 @@ const onClickClear = () => {
 			:show-all-levels="true"
 			max-level="-1"
 			placeholder="请选择紧凑型联动"
-		></Cascade>
+		></Cascade> -->
 
 		<br />
-		<Cascade :options="options2" :vertical="true"></Cascade>
+		<Cascade v-model="abc" :options="options2" :vertical="true"></Cascade>
 		<br />
-		<Cascade v-model="cascade" :options="options3" :static="true"></Cascade>
+		<!-- <Cascade v-model="cascade" :options="options3" :static="true"></Cascade>
 		<el-button @click="onClickClear">清空</el-button>
-		{{ cascade }}
+		{{ cascade }} -->
 	</div>
 </template>
 <style scoped lang="scss"></style>

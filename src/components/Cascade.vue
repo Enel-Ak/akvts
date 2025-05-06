@@ -95,6 +95,7 @@ const setDefaultData = async (val) => {
 				if (
 					(isAllEmpty && i === 0 && !val[i].options.length) ||
 					item.value ||
+					form.value[item.prop] ||
 					val[i - 1]?.value
 				) {
 					await initOptions(val[i], i)
