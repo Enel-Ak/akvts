@@ -753,6 +753,8 @@ export const useTools = (config) => {
 		const ranged = useSelectionRangeHook.ranged
 		if (!ranged) return
 
+		useHistoryHook.saveHistory()
+
 		const startRow = Math.min(ranged.start.row, ranged.end.row)
 		const startCol = Math.min(ranged.start.col, ranged.end.col)
 		const endRow = Math.max(ranged.start.row, ranged.end.row)

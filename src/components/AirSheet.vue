@@ -295,14 +295,6 @@ const useSelectionRangeHook = reactive(
 		},
 	})
 )
-const useEditHook = useEdit(id, {
-	sheet,
-	useResizeHook,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-	renderRange: async () => await updateVisibleRange(),
-	containerId: id,
-})
 const useHistoryHook = useHistory({
 	loading,
 	loadingText,
@@ -313,6 +305,15 @@ const useHistoryHook = useHistory({
 	renderRange: async () => await updateVisibleRange(),
 	processMapInBatches: (map, callback, batchSize = 5000) =>
 		processMapInBatches(map, callback, batchSize),
+})
+const useEditHook = useEdit(id, {
+	sheet,
+	useResizeHook,
+	useHistoryHook,
+	useMergedCellsHook,
+	useSelectionRangeHook,
+	renderRange: async () => await updateVisibleRange(),
+	containerId: id,
 })
 const useExcelHook = useExcel({
 	sheet,

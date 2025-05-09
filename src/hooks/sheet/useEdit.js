@@ -3,7 +3,14 @@ import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
 
 export const useEdit = (id, config) => {
-	const {sheet, renderRange, useResizeHook, useMergedCellsHook, useSelectionRangeHook} = config
+	const {
+		sheet,
+		renderRange,
+		useResizeHook,
+		useHistoryHook,
+		useMergedCellsHook,
+		useSelectionRangeHook,
+	} = config
 	let initialized = false
 	let container = null
 	let enter = false
@@ -386,6 +393,8 @@ export const useEdit = (id, config) => {
 		const c = Math.min(ranged.start.col, ranged.end.col)
 		const rr = Math.max(ranged.start.row, ranged.end.row)
 		const cc = Math.max(ranged.start.col, ranged.end.col)
+
+		useHistoryHook.saveHistory()
 
 		let lockTimer = null
 		for (let row = r; row <= rr; row++) {
