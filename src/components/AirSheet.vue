@@ -1759,7 +1759,13 @@ defineExpose({
 			<div class="group">
 				<div
 					class="item"
-					@click="useHistoryHook.undo"
+					@click="
+						() => {
+							useHistoryHook.undo(() => {
+								useEditHook.setFormulaValue()
+							})
+						}
+					"
 					:style="{
 						opacity: !useHistoryHook.canUndo() ? 0.3 : 1,
 						cursor: !useHistoryHook.canUndo() ? 'not-allowed' : 'pointer',

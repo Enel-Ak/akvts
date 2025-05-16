@@ -557,8 +557,6 @@ export const useEdit = (id, config) => {
 			c = Math.min(range.start.col, range.end.col)
 		}
 
-		console.log(111, r, c)
-
 		const cellEl = container.querySelector(`[data-cell="${r}-${c}"]`)
 
 		if (!cellEl) return

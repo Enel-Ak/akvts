@@ -1,5 +1,5 @@
 import {cloneDeep} from 'lodash'
-import {nextTick, reactive} from 'vue'
+import {reactive} from 'vue'
 export function useHistory(config) {
 	const {
 		sheet,
@@ -62,7 +62,7 @@ export function useHistory(config) {
 	}
 
 	// 撤销
-	const undo = async () => {
+	const undo = async (callback) => {
 		if (!canUndo()) return
 
 		if (history.length > 0) {
@@ -268,6 +268,7 @@ export function useHistory(config) {
 				}
 
 				await renderRange()
+				callback?.()
 			} catch (error) {
 				console.error('处理数据时出错:', error)
 			} finally {
