@@ -394,7 +394,10 @@ export const useEdit = (id, config) => {
 		const rr = Math.max(ranged.start.row, ranged.end.row)
 		const cc = Math.max(ranged.start.col, ranged.end.col)
 
-		useHistoryHook.saveHistory()
+		if (!_) {
+			const value = sheet.celldata.get(r)[c] || ''
+			useHistoryHook.saveHistory({rowIndex: r, colIndex: c, value})
+		}
 
 		let lockTimer = null
 		for (let row = r; row <= rr; row++) {

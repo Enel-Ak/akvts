@@ -1,5 +1,5 @@
 import {cloneDeep} from 'lodash'
-import {reactive} from 'vue'
+import {nextTick, reactive} from 'vue'
 export function useHistory(config) {
 	const {
 		sheet,
@@ -101,6 +101,8 @@ export function useHistory(config) {
 						console.error('撤销单元格修改失败:', error)
 						loading.value = false
 					}
+				} else {
+					sheet.celldata = new Map()
 				}
 
 				// 撤销添加行

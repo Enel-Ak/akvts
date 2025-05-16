@@ -16,7 +16,6 @@ const formItemTest = ref()
 const onFormChange = (val, item) => {}
 
 const collapsed = ref(false)
-
 const tableDefalutData = ref([])
 const onEditChange = (val, record, row, rows, column) => {
 	console.log('onEditChange', val, record, rows, column)
@@ -337,10 +336,10 @@ const onButtonClick = () => {
 					prop: 'formItemTest',
 					type: 'text',
 					label: '测试',
-					// formItemProps: {
-					// rules: [{required: true, validator: qqqq, trigger: 'blur'}],
-					// rules: [{required: true, message: '请输入测试', trigger: 'blur'}],
-					// },
+					formItemProps: {
+						rules: [{required: true, validator: qqqq, trigger: 'blur'}],
+						// rules: [{required: true, message: '请输入测试', trigger: 'blur'}],
+					},
 				},
 			]"
 			:rules="[{required: true, message: '请输入测试', trigger: 'blur'}]"

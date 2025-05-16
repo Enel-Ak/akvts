@@ -295,6 +295,7 @@ const useSelectionRangeHook = reactive(
 		},
 	})
 )
+
 const useHistoryHook = useHistory({
 	loading,
 	loadingText,
