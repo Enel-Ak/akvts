@@ -142,6 +142,142 @@ export const useSelectionRange = (containerId, config = {}) => {
 		return {map: before, sum: beforeSum}
 	}
 
+	const highlightRanges = new Map()
+	const setHighlightRange = (highlight) => {
+		const {id, r, c, rr, cc, value, state} = highlight
+
+		// 计算行高
+		let totalOffsetTop = r * rowHeight
+		let totleHeight = (rr - r + 1) * rowHeight
+
+		// 使用缓存计算修改的行的差值
+		let modifiedBefore = 0
+		let modifiedInRange = 0
+		modifiedRowsCache().map.forEach((diff, row) => {
+			if (row < r) {
+				modifiedBefore += diff
+			} else if (row >= r && row <= rr) {
+				modifiedInRange += diff
+			}
+		})
+
+		// 计算列宽
+		let totaloffsetLeft = c * colWidth
+		let totleWidth = (cc - c + 1) * colWidth
+
+		// 使用缓存计算修改的列的差值
+		let modifiedColBefore = 0
+		let modifiedColInRange = 0
+		modifiedColsCache().map.forEach((diff, col) => {
+			if (col < c) {
+				modifiedColBefore += diff
+			} else if (col >= c && col <= cc) {
+				modifiedColInRange += diff
+			}
+		})
+
+		// 生成随机暖色系, 且不重复、不与已有的颜色重复、不会与已有的颜色相近、颜色不会太浅
+		const randomColor = () => {
+			// 收集已存在的颜色
+			const existingColors = Array.from(highlightRanges.values())
+				.map((style) => style['--z-highlight-color'])
+				.filter(Boolean)
+
+			// 生成暖色系颜色
+			// 暖色系的色相范围大致在 0-60 (红到黄) 和 300-360 (紫红)
+			const generateWarmColor = () => {
+				// 随机选择色相范围：红-黄(0-60)或紫红(300-360)
+				const hueRange = Math.random() > 0.7 ? [300, 360] : [0, 60]
+				const hue = Math.floor(Math.random() * (hueRange[1] - hueRange[0]) + hueRange[0])
+
+				// 较高的饱和度，确保颜色鲜艳
+				const saturation = Math.floor(Math.random() * 30 + 70) // 70-100%
+
+				// 适中的亮度，不会太暗也不会太浅
+				const lightness = Math.floor(Math.random() * 25 + 45) // 45-70%
+
+				return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+			}
+
+			// 检查颜色是否与已有颜色相近
+			const isColorSimilar = (color1, color2) => {
+				// 简单的字符串比较，完全相同的颜色
+				if (color1 === color2) return true
+
+				// 解析 HSL 颜色值进行比较
+				const parseHSL = (hslStr) => {
+					const match = hslStr.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
+					if (!match) return null
+					return {
+						h: parseInt(match[1]),
+						s: parseInt(match[2]),
+						l: parseInt(match[3]),
+					}
+				}
+
+				const hsl1 = parseHSL(color1)
+				const hsl2 = parseHSL(color2)
+
+				if (!hsl1 || !hsl2) return false
+
+				// 计算色相差异（考虑色环）
+				const hueDiff = Math.min(Math.abs(hsl1.h - hsl2.h), 360 - Math.abs(hsl1.h - hsl2.h))
+
+				// 计算饱和度和亮度差异
+				const satDiff = Math.abs(hsl1.s - hsl2.s)
+				const lightDiff = Math.abs(hsl1.l - hsl2.l)
+
+				// 如果色相、饱和度和亮度都很接近，则认为颜色相似
+				return hueDiff < 30 && satDiff < 20 && lightDiff < 20
+			}
+
+			// 尝试生成不重复且不相似的颜色，最多尝试50次
+			let newColor
+			let attempts = 0
+			const maxAttempts = 50
+
+			do {
+				newColor = generateWarmColor()
+				attempts++
+
+				// 检查是否与现有颜色相似
+				const isSimilarToExisting = existingColors.some((existingColor) =>
+					isColorSimilar(newColor, existingColor)
+				)
+
+				if (!isSimilarToExisting || attempts >= maxAttempts) {
+					break
+				}
+			} while (attempts < maxAttempts)
+
+			return newColor
+		}
+
+		let color = null
+
+		if (!highlightRanges.has(id)) {
+			color = randomColor()
+		} else {
+			color = highlightRanges.get(id)['--z-highlight-color']
+		}
+
+		if (state && sheet.celldata.get(r)) {
+			sheet.celldata.get(r)[c] = value
+			highlight.state = 0
+		}
+
+		highlightRanges.set(id, {
+			border: `1px solid ${color}`,
+			top: (totalOffsetTop + modifiedBefore - 0.5) * sheet.config.zoom + 'px',
+			left: (totaloffsetLeft + modifiedColBefore - 0.5) * sheet.config.zoom + 'px',
+			height: (totleHeight + modifiedInRange + 1) * sheet.config.zoom + 'px',
+			width: (totleWidth + modifiedColInRange + 1) * sheet.config.zoom + 'px',
+			'--z-highlight-color': color,
+		})
+
+		return highlightRanges.get(id)
+	}
+
 	// 计算选区类型
 	const rangeClass = computed(() => {
 		if (!selecting.value && !ranged.value) return ''
@@ -790,6 +926,7 @@ export const useSelectionRange = (containerId, config = {}) => {
 		getRangeData,
 		setRange,
 		setSelectionClass,
+		setHighlightRange,
 		drag: handleDragStart,
 		clear,
 		destroy,

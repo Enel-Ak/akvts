@@ -112,6 +112,7 @@ const sheet = reactive({
 		cellStyle: {},
 		cellKeys: [],
 		cellFormula: {},
+		cellMultiple: [],
 
 		...props.modelValue?.config,
 
@@ -452,6 +453,8 @@ const processMapInBatches = (map, callback, batchSize = 5000) => {
 }
 
 // 更新可见范围
+let updateVisibleRangeTimeout = null
+let updateTimer = null
 const updateVisibleRange = async () => {
 	try {
 		const currentZoom = sheet.config.zoom || 1
@@ -487,6 +490,10 @@ const updateVisibleRange = async () => {
 		const result = await useSheetRenderHook.getRenderResult(renderData)
 		if (result) {
 			visibleRangeRef.value = result
+			clearTimeout(updateVisibleRangeTimeout)
+			updateVisibleRangeTimeout = setTimeout(() => {
+				updateTimer = Date.now()
+			}, 100)
 		}
 	} catch (error) {
 		console.error('计算可见范围失败:', error)
@@ -2003,6 +2010,16 @@ defineExpose({
 					:class="useSelectionRangeHook.rangeClass"
 					:style="useSelectionRangeHook.rangeStyle"
 				></div>
+
+				<!-- 高亮在线 -->
+				<div
+					:key="`${updateTimer + index}`"
+					v-for="(item, index) of sheet.config?.cellMultiple"
+					class="highlight"
+					:style="useSelectionRangeHook.setHighlightRange(item)"
+				>
+					<div class="label">{{ item.name }}</div>
+				</div>
 
 				<!-- 右键菜单 -->
 				<div

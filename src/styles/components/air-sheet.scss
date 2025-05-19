@@ -455,6 +455,23 @@
 		}
 	}
 
+	.highlight {
+		position: absolute;
+		pointer-events: none;
+		z-index: 2;
+		.label {
+			background-color: var(--z-highlight-color);
+			border-radius: 3px 3px 0 0;
+			color: #fff;
+			font-size: 10px;
+			height: 18px;
+			padding: 3px 5px;
+			position: absolute;
+			top: -18px;
+			right: -1px;
+		}
+	}
+
 	.freeze-cells {
 		height: fit-content;
 		position: sticky;

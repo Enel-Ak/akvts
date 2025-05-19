@@ -1,5 +1,5 @@
 <script setup name="airsheet">
-import {onActivated, onMounted, ref} from 'vue'
+import {onActivated, ref} from 'vue'
 
 const sheetRef = ref()
 const config = ref({
@@ -13,6 +13,14 @@ const config = ref({
 		},
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
+		cellMultiple: [
+			{id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
+			{id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
+			{id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
+			{id: 4, name: '测试4', r: 3, c: 3, rr: 3, cc: 3, value: '测试内容4', state: 1},
+			{id: 5, name: '测试5', r: 4, c: 4, rr: 4, cc: 4, value: '测试内容5', state: 1},
+			{id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
+		],
 	},
 	// celldata: Array.from({length: 400000}, (_, r) => {
 	// 	return Array.from({length: 20}, (_, c) => {
@@ -1103,6 +1111,36 @@ onActivated(() => {
 	// config.value.celldata[0][0] = '123'
 
 	setTimeout(() => {
+		config.value.config.cellMultiple[1] = {
+			id: 2,
+			name: '测试2',
+			r: 5,
+			c: 3,
+			rr: 5,
+			cc: 3,
+			value: '测试内容2',
+			state: 1,
+		}
+		config.value.config.cellMultiple[3] = {
+			id: 4,
+			name: '测试4变化后',
+			r: 9,
+			c: 2,
+			rr: 9,
+			cc: 2,
+			value: '测试内容4变化后',
+			state: 1,
+		}
+		config.value.config.cellMultiple[5] = {
+			id: 6,
+			name: '测试6变化后',
+			r: 23,
+			c: 7,
+			rr: 23,
+			cc: 7,
+			value: '测试内容6变化后',
+			state: 1,
+		}
 		// sheetRef.value.setMergeCell(0, 0, 2, 4)
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
