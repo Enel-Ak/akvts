@@ -16,7 +16,6 @@ import {ElMessage} from 'element-plus'
 import FormItem from './FormItem.vue'
 import {useGuid} from '@/hooks'
 import Lock from './Lock.vue'
-import {id} from 'element-plus/es/locales.mjs'
 
 const emits = defineEmits([
 	'update:modelValue',
@@ -91,6 +90,7 @@ const props = defineProps({
 	editText: {type: String, default: '编辑'},
 	deleteText: {type: String, default: '删除'},
 
+	selectable: {type: Function, default: () => true},
 	pagination: {type: Object, default: () => ({total: 0, size: 10, page: 1})},
 	stripe: {type: Boolean, default: true},
 	loading: {type: Boolean, default: false},
@@ -1020,6 +1020,7 @@ defineExpose({
 			<el-table-column
 				v-if="enableSelection && !disableTable"
 				:reserve-selection="true"
+				:selectable="selectable"
 				type="selection"
 				width="60"
 				align="center"

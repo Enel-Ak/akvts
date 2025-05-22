@@ -307,6 +307,7 @@ export const useSheetRender = (config) => {
 			}
 		}
 	}
+
 	return {
 		getRenderResult,
 		init,
