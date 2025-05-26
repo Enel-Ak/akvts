@@ -194,4 +194,11 @@ const onClickClear = () => {
 		{{ cascade }}
 	</div>
 </template>
+<route>
+    {
+        meta: {
+            title: '级联',
+        },
+    }
+</route>
 <style scoped lang="scss"></style>

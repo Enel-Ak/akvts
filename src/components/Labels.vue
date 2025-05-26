@@ -313,12 +313,14 @@ onBeforeMount(() => {
 		const existingItem = items.value.find((f) => f.path === currentPath)
 
 		if (existingItem) {
+			console.log(123, existingItem, historyCurrent, current.value)
+			existingItem.label = current.value.label
 			current.value =
 				existingItem.path === historyCurrent.path ? historyCurrent : existingItem
 		} else {
 			const newItem = {
 				id: useGuid(),
-				label: '-未命名',
+				label: current.value.label || current.value.modifiedTitle || '-未命名',
 				path: currentPath,
 			}
 			items.value.splice(1, 0, newItem)

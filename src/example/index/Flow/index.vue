@@ -36,7 +36,7 @@ const flowConfig = ref({
 <route>
     {
         meta: {
-            title: '消息通知',
+            title: '流程组件',
         },
     }
 </route>
