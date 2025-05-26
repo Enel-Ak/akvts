@@ -767,7 +767,13 @@ defineExpose({
 							></Icons>
 						</div>
 						<div class="flow-setting">
-							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+							{{
+								props?.data?.label
+									? props.data.label
+									: disabled
+									? ''
+									: defaultNodeLabel
+							}}
 						</div>
 					</div>
 				</slot>
@@ -816,7 +822,13 @@ defineExpose({
 							></Icons>
 						</div>
 						<div class="flow-setting">
-							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+							{{
+								props?.data?.label
+									? props.data.label
+									: disabled
+									? ''
+									: defaultNodeLabel
+							}}
 						</div>
 					</div>
 				</slot>
@@ -865,7 +877,13 @@ defineExpose({
 							></Icons>
 						</div>
 						<div class="flow-setting">
-							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+							{{
+								props?.data?.label
+									? props.data.label
+									: disabled
+									? ''
+									: defaultNodeLabel
+							}}
 						</div>
 					</div>
 				</slot>
@@ -901,7 +919,13 @@ defineExpose({
 							></Icons>
 						</div>
 						<div class="flow-setting">
-							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+							{{
+								props?.data?.label
+									? props.data.label
+									: disabled
+									? ''
+									: defaultNodeLabel
+							}}
 						</div>
 					</div>
 				</slot>
@@ -937,7 +961,13 @@ defineExpose({
 							></Icons>
 						</div>
 						<div class="flow-setting">
-							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+							{{
+								props?.data?.label
+									? props.data.label
+									: disabled
+									? ''
+									: defaultNodeLabel
+							}}
 						</div>
 					</div>
 				</slot>

@@ -1,5 +1,6 @@
 <script setup name="flow">
 import {ref} from 'vue'
+const flowRef = ref()
 const flowConfig = ref({
 	id: 'abc',
 	label: '发起人',
@@ -9,6 +10,7 @@ const flowConfig = ref({
 			id: 'def',
 			label: '主任务',
 			type: 'main',
+			data: {label: '123'},
 			childNode: [
 				{
 					id: 'ghi',
@@ -28,7 +30,7 @@ const flowConfig = ref({
 		:enable-expand="true"
 		:enable-expand-content="false"
 	>
-		<Flow v-model="flowConfig" width="100%"> </Flow>
+		<Flow ref="flowRef" v-model="flowConfig" width="100%"> </Flow>
 	</Block>
 </template>
 <route>
