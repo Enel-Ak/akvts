@@ -30,7 +30,7 @@ const props = defineProps({
 	addNodeFitView: {type: Boolean, default: true},
 	showButton: {
 		type: String,
-		default: `${FlowNodeTypes.Condition},${FlowNodeTypes.Report},${FlowNodeTypes.Review}`,
+		default: `${FlowNodeTypes.Condition},${FlowNodeTypes.Report},${FlowNodeTypes.Review},${FlowNodeTypes.Main},${FlowNodeTypes.Sub}`,
 	},
 
 	templateCode: {type: String, default: ''},
@@ -146,7 +146,15 @@ const setDefalutNodes = () => {
 const nodeConfigToFlow = (node, parentNode, depth = 0) => {
 	// 非网关节点
 	if (!node) return
-	if ([FlowNodeTypes.Input, FlowNodeTypes.Report, FlowNodeTypes.Review].includes(node.type)) {
+	if (
+		[
+			FlowNodeTypes.Input,
+			FlowNodeTypes.Report,
+			FlowNodeTypes.Review,
+			FlowNodeTypes.Main,
+			FlowNodeTypes.Sub,
+		].includes(node.type)
+	) {
 		nodes.value.push({
 			id: node.id,
 			type: node.type,
@@ -845,6 +853,78 @@ defineExpose({
 										fill="#fff"
 									/>
 								</g>
+							</svg>
+							<span>{{ props.label ?? '-' }}</span>
+
+							<Icons
+								name="Clear2"
+								size="12"
+								color="var(--z-nav-font-color)"
+								@click.stop="onRemoveNode(props.id, props)"
+								class="close-node"
+							></Icons>
+						</div>
+						<div class="flow-setting">
+							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+						</div>
+					</div>
+				</slot>
+				<Handle type="source" :position="Position.Bottom" />
+			</template>
+
+			<!-- 主任务 -->
+			<template #[`node-${FlowNodeTypes.Main}`]="props">
+				<Handle type="target" :position="Position.Top" />
+				<slot :name="`node-${FlowNodeTypes.Main}`" :props="props">
+					<div class="vue-flow__node-default">
+						<div class="flow-title report">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+							>
+								<!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE -->
+								<path
+									fill="currentColor"
+									d="m10.95 16.866l4.958-4.958l-.72-.72l-4.244 4.245l-2.138-2.139l-.714.714zM5 21V3h9.5L19 7.5V21zm9-13h4l-4-4z"
+								/>
+							</svg>
+							<span>{{ props.label ?? '-' }}</span>
+							<Icons
+								v-if="!disabled"
+								name="Clear2"
+								size="12"
+								color="var(--z-nav-font-color)"
+								@click.stop="onRemoveNode(props.id, props)"
+								class="close-node"
+							></Icons>
+						</div>
+						<div class="flow-setting">
+							{{ props?.data?.label || disabled ? '' : defaultNodeLabel }}
+						</div>
+					</div>
+				</slot>
+				<Handle type="source" :position="Position.Bottom" />
+			</template>
+
+			<!-- 子任务 -->
+			<template #[`node-${FlowNodeTypes.Sub}`]="props">
+				<Handle type="target" :position="Position.Top" />
+				<slot :name="`node-${FlowNodeTypes.Sub}`" :props="props">
+					<div class="vue-flow__node-default">
+						<div class="flow-title review">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+							>
+								<!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE -->
+								<path
+									fill="currentColor"
+									d="m10.95 16.866l4.958-4.958l-.72-.72l-4.244 4.245l-2.138-2.139l-.714.714zM5 21V3h9.5L19 7.5V21zm9-13h4l-4-4z"
+								/>
 							</svg>
 							<span>{{ props.label ?? '-' }}</span>
 

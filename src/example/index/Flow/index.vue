@@ -7,13 +7,13 @@ const flowConfig = ref({
 	childNode: [
 		{
 			id: 'def',
-			label: '填报',
-			type: 'report',
+			label: '主任务',
+			type: 'main',
 			childNode: [
 				{
 					id: 'ghi',
-					label: '审核',
-					type: 'review',
+					label: '子任务',
+					type: 'sub',
 				},
 			],
 		},

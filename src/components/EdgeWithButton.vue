@@ -244,6 +244,51 @@ const handleAddNode = (str) => {
 					</span>
 					填报
 				</div>
+
+				<div
+					v-if="showButton?.includes(FlowNodeTypes.Main)"
+					class="btn main"
+					@click="handleAddNode(FlowNodeTypes.Main)"
+				>
+					<span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="22"
+							height="22"
+							viewBox="0 0 24 24"
+						>
+							<!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE -->
+							<path
+								fill="#fff"
+								d="m10.95 16.866l4.958-4.958l-.72-.72l-4.244 4.245l-2.138-2.139l-.714.714zM5 21V3h9.5L19 7.5V21zm9-13h4l-4-4z"
+							/>
+						</svg>
+					</span>
+					主任务
+				</div>
+
+				<div
+					v-if="showButton?.includes(FlowNodeTypes.Sub)"
+					class="btn sub"
+					@click="handleAddNode(FlowNodeTypes.Sub)"
+				>
+					<span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="22"
+							height="22"
+							viewBox="0 0 24 24"
+						>
+							<!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE -->
+							<path
+								fill="#fff"
+								d="m10.95 16.866l4.958-4.958l-.72-.72l-4.244 4.245l-2.138-2.139l-.714.714zM5 21V3h9.5L19 7.5V21zm9-13h4l-4-4z"
+							/>
+						</svg>
+					</span>
+					子任务
+				</div>
+
 				<div class="des-node">
 					<span>{{ source.label }}</span>
 					<i class="icon i-ic-baseline-keyboard-double-arrow-right"></i>
@@ -343,7 +388,7 @@ const handleAddNode = (str) => {
 		transition: all 0.15s linear;
 		width: calc(50% - 2.5px);
 
-		&:nth-child(3n) {
+		&:nth-child(2n-1) {
 			margin-right: 0;
 		}
 
@@ -361,7 +406,9 @@ const handleAddNode = (str) => {
 
 		&.review,
 		&.condition,
-		&.report {
+		&.report,
+		&.main,
+		&.sub {
 			span {
 				align-items: center;
 				border-radius: 100%;
@@ -377,7 +424,8 @@ const handleAddNode = (str) => {
 			}
 		}
 
-		&.review {
+		&.review,
+		&.sub {
 			span {
 				background-color: #fe933e;
 			}
@@ -389,7 +437,8 @@ const handleAddNode = (str) => {
 			}
 		}
 
-		&.report {
+		&.report,
+		&.main {
 			span {
 				background-color: #1890ff;
 			}

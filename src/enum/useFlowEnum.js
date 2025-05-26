@@ -5,6 +5,8 @@ export const FlowNodeTypes = {
 	Review: 'review',
 	Gateway: 'gateway',
 	Condition: 'condition',
+	Main: 'main',
+	Sub: 'sub',
 }
 
 export const FlowNodeTypeNames = {
@@ -14,4 +16,6 @@ export const FlowNodeTypeNames = {
 	[FlowNodeTypes.Review]: '审核',
 	[FlowNodeTypes.Gateway]: '网关',
 	[FlowNodeTypes.Condition]: '条件',
+	[FlowNodeTypes.Main]: '主任务',
+	[FlowNodeTypes.Sub]: '子任务',
 }
