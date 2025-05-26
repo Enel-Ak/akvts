@@ -313,7 +313,6 @@ onBeforeMount(() => {
 		const existingItem = items.value.find((f) => f.path === currentPath)
 
 		if (existingItem) {
-			console.log(123, existingItem, historyCurrent, current.value)
 			existingItem.label = current.value.label
 			current.value =
 				existingItem.path === historyCurrent.path ? historyCurrent : existingItem

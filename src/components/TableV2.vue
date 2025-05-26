@@ -809,9 +809,6 @@ const setFnWidth = (again = false) => {
 }
 
 const setEval = (str, row) => {
-	if (!str || !row) {
-		return true
-	}
 	try {
 		const func = new Function('row', `return ${str}`)
 		return func(row)
