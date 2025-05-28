@@ -1789,6 +1789,7 @@ defineExpose({
 		<div v-if="sheet.config.edit" class="inputbar">
 			<textarea
 				v-model="useEditHook.inputValue.value"
+				:disabled="setActiveTool('lock').lock"
 				@input="onInput"
 				@blur="onInputBlur"
 				@keydown.stop
