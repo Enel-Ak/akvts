@@ -39,6 +39,8 @@ const props = defineProps({
 	disabled: {type: Boolean, default: false},
 	nodeInfoSize: {type: Array, default: () => ['20%', 'auto']},
 	showNodeInfo: {type: Boolean, default: true},
+
+	subtasksParallel: {type: Boolean, default: true},
 })
 
 const {toObject, addNodes, removeNodes, addEdges, removeEdges, findNode, findEdge, fitView} =
@@ -368,7 +370,7 @@ const onAddCondition = (edgeProps) => {
 }
 
 const onAddNodeDefault = (type, edgeProps) => {
-	getNodeConfigById(nodeConfig.value, edgeProps.source).then((node) => {
+	getNodeConfigById(nodeConfig.value, edgeProps.source).then((node, parentNode) => {
 		const nodeTypeCount = toObject().nodes.filter((f) => f.type === type).length
 
 		const newNode = {
@@ -379,7 +381,19 @@ const onAddNodeDefault = (type, edgeProps) => {
 			data: {},
 		}
 
-		node.childNode = [newNode]
+		if (props.subtasksParallel) {
+			if (parentNode && parentNode.type === FlowNodeTypes.Main) {
+				parentNode.childNode.push(newNode)
+			} else if (node.type === FlowNodeTypes.Main) {
+				newNode.childNode = []
+				node.childNode.push(newNode)
+			} else {
+				ElMessage.warning('不允许从非主任务创建子任务')
+			}
+		} else {
+			node.childNode = [newNode]
+		}
+
 		resetNode()
 	})
 }

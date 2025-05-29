@@ -37,10 +37,10 @@ const onBeforeRowEdit = (row, column, event) => {
 	// row.uui = 789
 }
 onMounted(() => {
-	tableDefalutData.value = [
-		{id: 'test1', uui: 0, def: 1},
-		{id: 'test2', uui: 1},
-	]
+	// tableDefalutData.value = [
+	// 	{id: 'test1', uui: 0, def: 1},
+	// 	{id: 'test2', uui: 1},
+	// ]
 })
 
 const qqqq = (rule, value, callback) => {
@@ -384,12 +384,17 @@ const onButtonClick = () => {
 
 		<TableV2
 			ref="tableRef"
+			url="http://100.92.0.180:8001/api/newFeature/mission-objectives?taskName=&skipCount=0&maxResultCount=10"
 			v-model="tableDefalutData"
+			:headers="{
+				Authorization:
+					'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NDg0ODg0NjgsImV4cCI6MTc0ODY2MDQ2OCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc0ODQ4NzA0NCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkzIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzA4MDcxODI5NTA0Iiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5pWw5o2u5a-85Ye6Iiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7ws5Yy65Y6_5Y-w6LSm6L-Q57u05ZGYLOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjItZDMyZC1iYTNiLTYyYzhkODI4ODMxMyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjItYmRlMy1lNjRlLTYxYTFmM2FlYzk5MCIsImlhdCI6MTc0ODQ4ODQ2OCwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.G61InmQrwTZxKGng4_uo-UkspsgsmaddGofM5qe4HQMwDxcitdmzS_bxULZxbS0lsXMhs4IJ9vUkkOnP_ixpjVsNgl8mTaf9YK33aBEQX3b1r35wt0KxOMFKEoAIwyy9GfDfK2t7PvwtB3mXAA0-OXzIaldkvr6znKCWn4t0rLpcrHgVNPfd0TUrBZ2FUX1XbyNVAa1z-q4FhLaU_v_oC_-h0bmnTSlkoAZH1e-dDAYbBUcNV2PYWLx2rPNqo3zT1JX0Mld5vepSRp1z0DDsCG_Z3iCihr1sNHbDLWZiYqbX7cold0T79WpnGiNO_EVlQSIu_a4fIF1S8-lqjabb2w',
+			}"
 			:enableSelection="true"
-			:auto-height="true"
+			:auto-height="false"
 			:form-column-count="2"
 			:enableLatestData="false"
-			:enable-row-edit="true"
+			:enable-row-edit="false"
 			status="none"
 			@edit-change="onEditChange"
 			@form-changed="onFormChanged"
