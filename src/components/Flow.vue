@@ -40,7 +40,7 @@ const props = defineProps({
 	nodeInfoSize: {type: Array, default: () => ['20%', 'auto']},
 	showNodeInfo: {type: Boolean, default: true},
 
-	subtasksParallel: {type: Boolean, default: true},
+	subtasksParallel: {type: Boolean, default: false},
 })
 
 const {toObject, addNodes, removeNodes, addEdges, removeEdges, findNode, findEdge, fitView} =
