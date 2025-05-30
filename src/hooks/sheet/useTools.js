@@ -360,12 +360,14 @@ export const useTools = (config) => {
 
 		try {
 			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-				if (rowIndex < insertRowIndex) {
-					newMap.set(rowIndex, rowData)
-				} else {
-					newMap.set(rowIndex + addRowCount.value, rowData)
+				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+					if (rowIndex < insertRowIndex) {
+						newMap.set(rowIndex, rowData)
+					} else {
+						newMap.set(rowIndex + addRowCount.value, rowData)
+					}
+					newMap.set(insertRowIndex, reactive([]))
 				}
-				newMap.set(insertRowIndex, reactive([]))
 			})
 
 			// 处理合并单元格
@@ -427,12 +429,14 @@ export const useTools = (config) => {
 
 		try {
 			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-				if (rowIndex < startRow) {
-					newMap.set(rowIndex, rowData)
-				} else if (rowIndex > endRow) {
-					newMap.set(rowIndex - deleteCount, rowData)
-				} else {
-					deletedRows.set(`${rowIndex}`, {rowData, deleteCount})
+				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+					if (rowIndex < startRow) {
+						newMap.set(rowIndex, rowData)
+					} else if (rowIndex > endRow) {
+						newMap.set(rowIndex - deleteCount, rowData)
+					} else {
+						deletedRows.set(`${rowIndex}`, {rowData, deleteCount})
+					}
 				}
 			})
 
@@ -518,16 +522,18 @@ export const useTools = (config) => {
 
 		try {
 			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-				// 创建新的行数据数组
-				const newRowData = Array.from(rowData || [])
+				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+					// 创建新的行数据数组
+					const newRowData = Array.from(rowData || [])
 
-				// 在指定位置插入空值，根据addColumnCount插入多列
-				for (let i = 0; i < addColumnCount.value; i++) {
-					newRowData.splice(insertColIndex + i, 0, '')
+					// 在指定位置插入空值，根据addColumnCount插入多列
+					for (let i = 0; i < addColumnCount.value; i++) {
+						newRowData.splice(insertColIndex + i, 0, '')
+					}
+
+					// 更新到新Map
+					newMap.set(rowIndex, reactive(newRowData))
 				}
-
-				// 更新到新Map
-				newMap.set(rowIndex, reactive(newRowData))
 			})
 
 			// 更新sheet.celldata
@@ -596,22 +602,24 @@ export const useTools = (config) => {
 
 		try {
 			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-				const newRowData = []
-				rowData.forEach((cellData, colIndex) => {
-					if (colIndex < startCol) {
-						newRowData[colIndex] = cellData
-					} else if (colIndex > endCol) {
-						newRowData[colIndex - deleteCount] = cellData
-					} else {
-						const row = deletedCols.get(rowIndex)
-						if (row) {
-							row.push({rowIndex, colIndex, value: cellData})
+				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+					const newRowData = []
+					rowData.forEach((cellData, colIndex) => {
+						if (colIndex < startCol) {
+							newRowData[colIndex] = cellData
+						} else if (colIndex > endCol) {
+							newRowData[colIndex - deleteCount] = cellData
 						} else {
-							deletedCols.set(rowIndex, [{rowIndex, colIndex, value: cellData}])
+							const row = deletedCols.get(rowIndex)
+							if (row) {
+								row.push({rowIndex, colIndex, value: cellData})
+							} else {
+								deletedCols.set(rowIndex, [{rowIndex, colIndex, value: cellData}])
+							}
 						}
-					}
-				})
-				newMap.set(rowIndex, reactive(newRowData))
+					})
+					newMap.set(rowIndex, reactive(newRowData))
+				}
 			})
 
 			// 保存历史
@@ -1127,109 +1135,112 @@ export const useTools = (config) => {
 		// 单元格数据
 		loading.value = true
 		loadingText.value = '数据转换中...'
+
 		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
 			const cells = []
-			rowData.forEach((cell, colIndex) => {
-				const data = {r: rowIndex, c: colIndex, v: {v: cell}}
-				const cellstyle = sheet.config.cellStyle[rowIndex + '-' + colIndex]
+			if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+				rowData.forEach((cell, colIndex) => {
+					const data = {r: rowIndex, c: colIndex, v: {v: cell}}
+					const cellstyle = sheet.config.cellStyle[rowIndex + '-' + colIndex]
 
-				if (cellstyle) {
-					// 背景
-					if (cellstyle?.bg) {
-						data.v.bg = cellstyle?.bg
-					}
-
-					// 粗体
-					if (cellstyle?.bold) {
-						data.v.bl = 1
-					}
-
-					// 斜体
-					if (cellstyle?.it) {
-						data.v.it = 1
-					}
-
-					// 下划线
-					if (cellstyle?.un) {
-						data.v.un = 1
-					}
-
-					// 删除线
-					if (cellstyle?.st) {
-						data.v.st = 1
-					}
-
-					// 颜色
-					if (cellstyle?.fc) {
-						data.v.fc = cellstyle?.fc
-					}
-
-					// 字体大小
-					if (cellstyle?.fs) {
-						data.v.fs = parseInt(cellstyle?.fs)
-					}
-
-					// 字体
-					if (cellstyle?.ff) {
-						data.v.ff = cellstyle?.ff
-					}
-
-					// 对齐
-					if (cellstyle?.align) {
-						let ht = 1 // 左对齐
-						if (cellstyle?.align === 'center') {
-							ht = 0 // 居中对齐
-						} else if (cellstyle?.align === 'right') {
-							ht = 2 // 右对齐
-						}
-						data.v.ht = ht
-					}
-
-					// 边框
-					if (
-						cellstyle?.b ||
-						cellstyle?.bt ||
-						cellstyle?.bb ||
-						cellstyle?.bl ||
-						cellstyle?.br
-					) {
-						let border = {
-							rangeType: 'cell',
-							value: {
-								row_index: rowIndex,
-								col_index: colIndex,
-							},
+					if (cellstyle) {
+						// 背景
+						if (cellstyle?.bg) {
+							data.v.bg = cellstyle?.bg
 						}
 
-						if (cellstyle?.bt) {
-							Object.assign(border.value, {
-								t: {style: 1, color: 'rgb(0, 0, 0)'},
-							})
+						// 粗体
+						if (cellstyle?.bold) {
+							data.v.bl = 1
 						}
 
-						if (cellstyle?.bb) {
-							Object.assign(border.value, {
-								b: {style: 1, color: 'rgb(0, 0, 0)'},
-							})
+						// 斜体
+						if (cellstyle?.it) {
+							data.v.it = 1
 						}
 
-						if (cellstyle?.bl) {
-							Object.assign(border.value, {
-								l: {style: 1, color: 'rgb(0, 0, 0)'},
-							})
+						// 下划线
+						if (cellstyle?.un) {
+							data.v.un = 1
 						}
 
-						if (cellstyle?.br) {
-							Object.assign(border.value, {
-								r: {style: 1, color: 'rgb(0, 0, 0)'},
-							})
+						// 删除线
+						if (cellstyle?.st) {
+							data.v.st = 1
 						}
-						borderInfo.push(border)
+
+						// 颜色
+						if (cellstyle?.fc) {
+							data.v.fc = cellstyle?.fc
+						}
+
+						// 字体大小
+						if (cellstyle?.fs) {
+							data.v.fs = parseInt(cellstyle?.fs)
+						}
+
+						// 字体
+						if (cellstyle?.ff) {
+							data.v.ff = cellstyle?.ff
+						}
+
+						// 对齐
+						if (cellstyle?.align) {
+							let ht = 1 // 左对齐
+							if (cellstyle?.align === 'center') {
+								ht = 0 // 居中对齐
+							} else if (cellstyle?.align === 'right') {
+								ht = 2 // 右对齐
+							}
+							data.v.ht = ht
+						}
+
+						// 边框
+						if (
+							cellstyle?.b ||
+							cellstyle?.bt ||
+							cellstyle?.bb ||
+							cellstyle?.bl ||
+							cellstyle?.br
+						) {
+							let border = {
+								rangeType: 'cell',
+								value: {
+									row_index: rowIndex,
+									col_index: colIndex,
+								},
+							}
+
+							if (cellstyle?.bt) {
+								Object.assign(border.value, {
+									t: {style: 1, color: 'rgb(0, 0, 0)'},
+								})
+							}
+
+							if (cellstyle?.bb) {
+								Object.assign(border.value, {
+									b: {style: 1, color: 'rgb(0, 0, 0)'},
+								})
+							}
+
+							if (cellstyle?.bl) {
+								Object.assign(border.value, {
+									l: {style: 1, color: 'rgb(0, 0, 0)'},
+								})
+							}
+
+							if (cellstyle?.br) {
+								Object.assign(border.value, {
+									r: {style: 1, color: 'rgb(0, 0, 0)'},
+								})
+							}
+							borderInfo.push(border)
+						}
 					}
-				}
-				cells.push(data)
-			})
-			celldata.push(cells)
+					cells.push(data)
+				})
+				celldata.push(cells)
+			}
 		})
 		loading.value = false
 
