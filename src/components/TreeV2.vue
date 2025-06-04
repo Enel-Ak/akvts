@@ -6,6 +6,7 @@ import Lock from './Lock.vue'
 const emits = defineEmits(['update:modelValue', 'nodeClick'])
 const props = defineProps({
 	url: {type: String, default: ''},
+	headers: {type: Object, default: () => ({})},
 	method: {type: String, default: 'get'},
 	loading: {type: Boolean, default: false},
 	data: {type: Array, default: () => []},
@@ -49,6 +50,7 @@ const GetList = (isLeaf = false, fn) => {
 			url: props.url,
 			method: props.method,
 			params: _reqParams.value,
+			headers: props.headers,
 		})
 		.then((res) => {
 			const {value, label, children} = props.props
