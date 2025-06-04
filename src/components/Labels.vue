@@ -319,7 +319,7 @@ onBeforeMount(() => {
 		} else {
 			const newItem = {
 				id: useGuid(),
-				label: current.value.label || current.value.modifiedTitle || '-未命名',
+				label: current.value?.label || current.value?.modifiedTitle || '-未命名',
 				path: currentPath,
 			}
 			items.value.splice(1, 0, newItem)
