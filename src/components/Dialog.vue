@@ -18,6 +18,7 @@ const props = defineProps({
 	enableClickModal: {type: Boolean, default: false},
 	enablePopconfirm: {type: Boolean, default: false},
 	loading: {type: Boolean, default: false},
+	loadingText: {type: String, default: '正在获取数据源'},
 	delay: {type: Number, default: 0},
 })
 
@@ -150,7 +151,7 @@ onMounted(() => {
 		</el-scrollbar>
 
 		<div class="loading" v-if="loading">
-			<LoadingTransition text="正在获取数据源" />
+			<LoadingTransition :text="loadingText" />
 		</div>
 
 		<template #footer>
