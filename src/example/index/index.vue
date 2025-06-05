@@ -113,6 +113,7 @@ const handValidate = () => {
 const onButtonClick = () => {
 	tableRef.value.cancelEdit(['test1'])
 }
+const showDialog = ref(true)
 </script>
 <template>
 	<Block
@@ -327,6 +328,9 @@ const onButtonClick = () => {
 		</template>
 		<LoadingTransition />
 		<LoadingTransition color="#f00" />
+		<Dialog v-model="showDialog" title="加载状态" :loading="true">
+			<p style="width: 100%; height: 400px">123</p>
+		</Dialog>
 		<el-button @click="formRef.clear(true)">手动清空</el-button>
 		<FormItem
 			v-model="formItemTest"

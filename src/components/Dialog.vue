@@ -131,8 +131,8 @@ onMounted(() => {
 	>
 		<template #header>
 			<div class="header-title">
-				<i class="icon i-ic-twotone-padding"></i>
-				<slot name="header">
+				<LoadingTransition v-if="loading" text="" />
+				<slot name="header" v-else>
 					<span>{{ $attrs.title }}</span>
 				</slot>
 			</div>
@@ -148,6 +148,10 @@ onMounted(() => {
 			<slot name="default"></slot>
 			<Lock v-model="unLock"></Lock>
 		</el-scrollbar>
+
+		<div class="loading" v-if="loading">
+			<LoadingTransition text="正在获取数据源" />
+		</div>
 
 		<template #footer>
 			<slot name="footer-button"></slot>
@@ -184,6 +188,17 @@ onMounted(() => {
 	border-radius: torem(4px) !important;
 	overflow: hidden;
 	padding: 0 !important;
+
+	.loading {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: absolute;
+		width: 100%;
+		height: calc(100% - 45px - 53px);
+		top: 45px;
+		z-index: 1;
+	}
 
 	.dialog-scrollbar {
 		> .el-scrollbar__wrap {
