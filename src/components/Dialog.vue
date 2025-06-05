@@ -131,7 +131,7 @@ onMounted(() => {
 	>
 		<template #header>
 			<div class="header-title">
-				<LoadingTransition v-if="loading" text="" />
+				<LoadingTransition v-if="loading" text="" color="var(--z-nav-font-color)" />
 				<slot name="header" v-else>
 					<span>{{ $attrs.title }}</span>
 				</slot>
@@ -190,13 +190,14 @@ onMounted(() => {
 	padding: 0 !important;
 
 	.loading {
-		display: flex;
 		align-items: center;
+		background-color: rgba(var(--z-theme-rgb), 0.7);
+		display: flex;
+		height: calc(100% - 45px - 53px);
 		justify-content: center;
 		position: absolute;
-		width: 100%;
-		height: calc(100% - 45px - 53px);
 		top: 45px;
+		width: 100%;
 		z-index: 1;
 	}
 
