@@ -25,7 +25,9 @@ const col = props.col
 		:width="col.attrs?.width || col.width || 'auto'"
 		:sortable="col.attrs?.sortable || col.sortable"
 		:type="col.attrs?.expand || col.expand ? 'expand' : 'default'"
-		:show-overflow-tooltip="!enableRowEdit"
+		:show-overflow-tooltip="
+			!enableRowEdit || (col.hasOwnProperty('tooltip') ? col.tooltip : true)
+		"
 		max-width="120"
 		ellipsis
 	>
@@ -54,7 +56,9 @@ const col = props.col
 		:width="col.attrs?.width || col.width || 'auto'"
 		:sortable="col.attrs?.sortable || col.sortable"
 		:type="col.attrs?.expand || col.expand ? 'expand' : 'default'"
-		:show-overflow-tooltip="!enableRowEdit"
+		:show-overflow-tooltip="
+			!enableRowEdit || (col.hasOwnProperty('tooltip') ? col.tooltip : true)
+		"
 		min-width="120"
 		ellipsis
 	>
