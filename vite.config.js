@@ -6,7 +6,6 @@ import ElementPlus from 'unplugin-element-plus/vite'
 import viteCompression from 'vite-plugin-compression'
 import VueSetupExtend from 'vite-plugin-vue-setup-extend'
 import {visualizer} from 'rollup-plugin-visualizer'
-import strip from 'rollup-plugin-strip'
 
 export default ({mode}) => {
 	const env = loadEnv(mode, process.cwd())
@@ -71,16 +70,6 @@ export default ({mode}) => {
 				open: true,
 				gzipSize: true,
 				brotliSize: true,
-			}),
-			strip({
-				functions: [
-					'console.log',
-					'console.info',
-					'console.debug',
-					'console.warn',
-					'console.error',
-				],
-				sourceMap: false,
 			}),
 		],
 		build: {
