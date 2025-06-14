@@ -59,9 +59,6 @@ importers:
       husky:
         specifier: 9.1.7
         version: 9.1.7
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       pinia:
         specifier: 2.2.6
         version: 2.2.6(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3))
@@ -93,8 +90,14 @@ importers:
       crypto-js:
         specifier: 4.2.0
         version: 4.2.0
+      install:
+        specifier: ^0.13.0
+        version: 0.13.0
+      rollup-plugin-strip:
+        specifier: ^1.2.2
+        version: 1.2.2
       rollup-plugin-visualizer:
-        specifier: ^5.14.0
+        specifier: 5.14.0
         version: 5.14.0(rollup@4.39.0)
       terser:
         specifier: 5.36.0
@@ -103,7 +106,7 @@ importers:
         specifier: 5.4.11
         version: 5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0)
       vite-plugin-vue-setup-extend:
-        specifier: ^0.4.0
+        specifier: 0.4.0
         version: 0.4.0(vite@5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0))
 
 packages:
@@ -1406,6 +1409,9 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
+  estree-walker@0.6.1:
+    resolution: {integrity: sha512-SqmZANLWS0mnatqbSfRP5g8OXZC12Fgg1IwNtLsyHDzJizORW4khDfjPqJZsemPWBB2uqykUah5YpQ6epsqC/w==}
+
   estree-walker@2.0.2:
     resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
 
@@ -1658,6 +1664,10 @@ packages:
 
   insert-text-at-cursor@0.3.0:
     resolution: {integrity: sha512-/nPtyeX9xPUvxZf+r0518B7uqNKlP+LqNJqSiXFEaa2T71rWIwTVXGH7hB9xO/EVdwa5/pWlFCPwShOW81XIxQ==}
+
+  install@0.13.0:
+    resolution: {integrity: sha512-zDml/jzr2PKU9I8J/xyZBQn8rPCAY//UOYNmR01XwNwyfhEWObo2SWfSl1+0tm1u6PhxLwDnfsT/6jB7OUxqFA==}
+    engines: {node: '>= 0.10'}
 
   internmap@1.0.1:
     resolution: {integrity: sha512-lDB5YccMydFBtasVtxnZ3MRBHuaoE8GKsppq+EchKL2U4nK/DmEpPHNH8MZe5HkMtpSiTSOZwfN0tzYjO/lJEw==}
@@ -2327,6 +2337,10 @@ packages:
   robust-predicates@3.0.2:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
 
+  rollup-plugin-strip@1.2.2:
+    resolution: {integrity: sha512-n6hmt7ben8txSrpEXvRd0aNApQTpexst0qSu6QFzOSrb7EE2yPVIlEK0n4RWYT1gieBkSN7ECvYvY/g7OsQMLA==}
+    deprecated: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-strip
+
   rollup-plugin-visualizer@5.14.0:
     resolution: {integrity: sha512-VlDXneTDaKsHIw8yzJAFWtrzguoJ/LnQ+lMpoVfYJ3jJF4Ihe5oYLAqLklIK/35lgUY+1yEzCkHyZ1j4A5w5fA==}
     engines: {node: '>=18'}
@@ -2339,6 +2353,9 @@ packages:
         optional: true
       rollup:
         optional: true
+
+  rollup-pluginutils@2.8.2:
+    resolution: {integrity: sha512-EEp9NhnUkwY8aif6bxgovPHMoMoNr2FulJziTndpt5H9RdwC47GSGuII9XxpSdzVGM0GWrNPHV6ie1LTNJPaLQ==}
 
   rollup@4.39.0:
     resolution: {integrity: sha512-thI8kNc02yNvnmJp8dr3fNWJ9tCONDhp6TV35X6HkKGGs9E6q7YWCHbe5vKiTa7TAiNcFEmXKj3X/pG2b3ci0g==}
@@ -4116,6 +4133,8 @@ snapshots:
 
   esprima@4.0.1: {}
 
+  estree-walker@0.6.1: {}
+
   estree-walker@2.0.2: {}
 
   exceljs@4.4.0:
@@ -4411,6 +4430,8 @@ snapshots:
   ini@4.1.1: {}
 
   insert-text-at-cursor@0.3.0: {}
+
+  install@0.13.0: {}
 
   internmap@1.0.1: {}
 
@@ -5115,6 +5136,12 @@ snapshots:
 
   robust-predicates@3.0.2: {}
 
+  rollup-plugin-strip@1.2.2:
+    dependencies:
+      estree-walker: 0.6.1
+      magic-string: 0.25.9
+      rollup-pluginutils: 2.8.2
+
   rollup-plugin-visualizer@5.14.0(rollup@4.39.0):
     dependencies:
       open: 8.4.2
@@ -5123,6 +5150,10 @@ snapshots:
       yargs: 17.7.2
     optionalDependencies:
       rollup: 4.39.0
+
+  rollup-pluginutils@2.8.2:
+    dependencies:
+      estree-walker: 0.6.1
 
   rollup@4.39.0:
     dependencies:
