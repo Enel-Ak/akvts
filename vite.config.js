@@ -121,7 +121,7 @@ export default ({mode}) => {
 						}
 						return 'assets/[name][extname]'
 					},
-					preserveModules: true, // 保留模块结构
+					preserveModules: false, // 保留模块结构
 					preserveModulesRoot: 'src', // 模块根目录
 				},
 			},
