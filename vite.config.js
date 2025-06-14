@@ -109,6 +109,7 @@ export default ({mode}) => {
 						'element-plus': 'ElementPlus',
 						'@element-plus/icons-vue': 'ElementPlusIconsVue',
 						'lodash-es': '_',
+						lodash: '_',
 						dayjs: 'dayjs',
 						echarts: 'echarts',
 						sortablejs: 'Sortable',

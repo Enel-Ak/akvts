@@ -1,4 +1,4 @@
-import {cloneDeep} from 'lodash'
+import {cloneDeep} from 'lodash-es'
 import {reactive} from 'vue'
 export function useHistory(config) {
 	const {

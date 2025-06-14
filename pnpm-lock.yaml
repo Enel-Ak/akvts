@@ -44,6 +44,9 @@ importers:
       dagre:
         specifier: 0.8.5
         version: 0.8.5
+      dayjs:
+        specifier: 1.11.0
+        version: 1.11.0
       echarts:
         specifier: 5.5.1
         version: 5.5.1
@@ -59,6 +62,9 @@ importers:
       husky:
         specifier: 9.1.7
         version: 9.1.7
+      lodash-es:
+        specifier: 4.17.21
+        version: 4.17.21
       pinia:
         specifier: 2.2.6
         version: 2.2.6(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3))
@@ -68,6 +74,9 @@ importers:
       sass-loader:
         specifier: 16.0.3
         version: 16.0.3(sass@1.81.0)
+      sortablejs:
+        specifier: 1.15.0
+        version: 1.15.0
       unplugin-element-plus:
         specifier: 0.8.0
         version: 0.8.0(rollup@4.39.0)
@@ -76,7 +85,7 @@ importers:
         version: 0.5.1(vite@5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0))
       vite-plugin-pages:
         specifier: 0.32.3
-        version: 0.32.3(@vue/compiler-sfc@3.5.13)(vite@5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0))
+        version: 0.32.3(@vue/compiler-sfc@3.5.13)(vite@5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0))(vue-router@4.4.5(vue@3.5.13(typescript@5.8.3)))
       vue:
         specifier: 3.5.13
         version: 3.5.13(typescript@5.8.3)
@@ -634,7 +643,7 @@ packages:
     os: [win32]
 
   '@sxzz/popperjs-es@2.11.7':
-    resolution: {integrity: sha512-Ccy0NlLkzr0Ex2FKvh2X+OyERHXJ88XJ1MXtsI9y9fGexlaXaVTPzBCRBwIxFkORuOb+uBqeu+RqnpgYTEZRUQ==}
+    resolution: {integrity: sha512-Ccy0NlLkzr0Ex2FKvh2X+OyERHXJ88XJ1MXtsI9y9fGexlaXaVTPzBCRBwIxFkORuOb+uBqeu+RqnpgYTEZRUQ==, tarball: http://100.112.13.71:8001/repository/npm/@sxzz/popperjs-es/-/popperjs-es-2.11.7.tgz}
 
   '@types/conventional-commits-parser@5.0.1':
     resolution: {integrity: sha512-7uz5EHdzz2TqoMfV7ee61Egf5y6NkcO4FB/1iCCQnbeiI1F3xzv3vK5dBCXUCLQgGYS+mUeigK1iKQzvED+QnQ==}
@@ -1243,8 +1252,11 @@ packages:
     resolution: {integrity: sha512-wAV9QHOsNbwnWdNW2FYvE1P56wtgSbM+3SZcdGiWQILwVjACCXDCI3Ai8QlCjMDB8YK5zySiXZYBiwGmNY3lnw==}
     engines: {node: '>=12'}
 
+  dayjs@1.11.0:
+    resolution: {integrity: sha512-JLC809s6Y948/FuCZPm5IX8rRhQwOiyMb2TfVVQEixG7P8Lm/gt5S7yoQZmC8x1UehI9Pb7sksEt4xx14m+7Ug==, tarball: http://100.112.13.71:8001/repository/npm/dayjs/-/dayjs-1.11.0.tgz}
+
   dayjs@1.11.13:
-    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
+    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==, tarball: http://100.112.13.71:8001/repository/npm/dayjs/-/dayjs-1.11.13.tgz}
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -1860,7 +1872,7 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   lodash-es@4.17.21:
-    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==, tarball: http://100.112.13.71:8001/repository/npm/lodash-es/-/lodash-es-4.17.21.tgz}
 
   lodash-unified@1.0.3:
     resolution: {integrity: sha512-WK9qSozxXOD7ZJQlpSqOT+om2ZfcT4yO+03FuzAHD0wF6S0l0090LRPDx3vhTTLZ8cFKpBn+IOcVXK6qOcIlfQ==}
@@ -2436,6 +2448,9 @@ packages:
   snapdragon@0.8.2:
     resolution: {integrity: sha512-FtyOnWN/wCHTVXOMwvSv26d+ko5vWlIDD6zoUJ7LW8vh+ZBC8QdljveRP+crNrtBwioEUWy/4dMtbBjA4ioNlg==}
     engines: {node: '>=0.10.0'}
+
+  sortablejs@1.15.0:
+    resolution: {integrity: sha512-bv9qgVMjUMf89wAvM6AxVvS/4MX3sPeN0+agqShejLU5z5GX4C75ow1O2e5k4L6XItUyAK3gH6AxSbXrOM5e8w==, tarball: http://100.112.13.71:8001/repository/npm/sortablejs/-/sortablejs-1.15.0.tgz}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -3953,6 +3968,8 @@ snapshots:
 
   dargs@8.1.0: {}
 
+  dayjs@1.11.0: {}
+
   dayjs@1.11.13: {}
 
   debug@2.6.9:
@@ -4125,7 +4142,7 @@ snapshots:
   exceljs@4.4.0:
     dependencies:
       archiver: 5.3.2
-      dayjs: 1.11.13
+      dayjs: 1.11.0
       fast-csv: 4.3.6
       jszip: 3.10.1
       readable-stream: 3.6.2
@@ -5237,6 +5254,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  sortablejs@1.15.0: {}
+
   source-map-js@1.2.1: {}
 
   source-map-resolve@0.5.3:
@@ -5450,7 +5469,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-plugin-pages@0.32.3(@vue/compiler-sfc@3.5.13)(vite@5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0)):
+  vite-plugin-pages@0.32.3(@vue/compiler-sfc@3.5.13)(vite@5.4.11(@types/node@22.14.0)(sass@1.81.0)(terser@5.36.0))(vue-router@4.4.5(vue@3.5.13(typescript@5.8.3))):
     dependencies:
       '@types/debug': 4.1.12
       debug: 4.4.0
@@ -5464,6 +5483,7 @@ snapshots:
       yaml: 2.7.1
     optionalDependencies:
       '@vue/compiler-sfc': 3.5.13
+      vue-router: 4.4.5(vue@3.5.13(typescript@5.8.3))
     transitivePeerDependencies:
       - supports-color
 
