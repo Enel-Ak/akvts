@@ -105,6 +105,7 @@ export default ({mode}) => {
 					'element-plus',
 					'@element-plus/icons-vue',
 					'lodash-es',
+					'lodash',
 					// 添加更多外部依赖
 					'dayjs',
 					'echarts',
