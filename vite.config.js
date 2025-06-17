@@ -7,6 +7,10 @@ import viteCompression from 'vite-plugin-compression'
 import VueSetupExtend from 'vite-plugin-vue-setup-extend'
 import {visualizer} from 'rollup-plugin-visualizer'
 
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import {ElementPlusResolver} from 'unplugin-vue-components/resolvers'
+
 export default ({mode}) => {
 	const env = loadEnv(mode, process.cwd())
 	return defineConfig({
@@ -35,6 +39,24 @@ export default ({mode}) => {
 		},
 		plugins: [
 			vue(),
+
+			// 自动导入 Vue API，比如 ref、computed、defineProps 等
+			AutoImport({
+				imports: ['vue', 'vue-router'],
+				resolvers: [ElementPlusResolver()],
+				dts: 'src/auto-imports.d.ts',
+			}),
+
+			// 自动注册组件（UI库组件）
+			Components({
+				resolvers: [
+					ElementPlusResolver({
+						importStyle: 'sass', // 推荐使用 'sass'，以利用 vite 的 sass 编译缓存
+					}),
+				],
+				dts: 'src/components.d.ts',
+			}),
+
 			VueSetupExtend(),
 			ElementPlus({
 				useSource: true,
@@ -126,6 +148,7 @@ export default ({mode}) => {
 					preserveModules: false, // 保留模块结构
 					preserveModulesRoot: 'src', // 模块根目录
 				},
+				maxParallelFileOps: 5,
 			},
 			terserOptions: {
 				format: {

@@ -1,6 +1,6 @@
 <script setup>
 import {nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch} from 'vue'
-import * as echarts from 'echarts'
+import {init} from 'echarts'
 
 const props = defineProps({
 	option: {
@@ -29,9 +29,7 @@ let chart = null
 let observer = null
 let observerTimer = null
 
-const setConfig = () => {
-	console.log(111)
-}
+const setConfig = () => {}
 
 const initChart = async () => {
 	if (!chartRef.value) return
@@ -48,7 +46,7 @@ const initChart = async () => {
 	if (!chartDom) return
 
 	try {
-		chart = echarts.init(chartDom)
+		chart = init(chartDom)
 		if (props.option && Object.keys(props.option).length > 0) {
 			chart.setOption(props.option)
 		}
