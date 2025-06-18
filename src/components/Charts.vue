@@ -92,6 +92,7 @@ watch(
 		if (newVal && Object.keys(newVal).length > 0) {
 			nextTick(() => {
 				if (chart) {
+					chart.clear()
 					chart.setOption(newVal)
 				} else {
 					initChart()
