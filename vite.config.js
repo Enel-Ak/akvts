@@ -41,21 +41,21 @@ export default ({mode}) => {
 			vue(),
 
 			// 自动导入 Vue API，比如 ref、computed、defineProps 等
-			AutoImport({
-				imports: ['vue', 'vue-router'],
-				resolvers: [ElementPlusResolver()],
-				dts: 'src/auto-imports.d.ts',
-			}),
+			// AutoImport({
+			// 	imports: ['vue', 'vue-router'],
+			// 	resolvers: [ElementPlusResolver()],
+			// 	dts: 'src/auto-imports.d.ts',
+			// }),
 
-			// 自动注册组件（UI库组件）
-			Components({
-				resolvers: [
-					ElementPlusResolver({
-						importStyle: 'sass', // 推荐使用 'sass'，以利用 vite 的 sass 编译缓存
-					}),
-				],
-				dts: 'src/components.d.ts',
-			}),
+			// // 自动注册组件（UI库组件）
+			// Components({
+			// 	resolvers: [
+			// 		ElementPlusResolver({
+			// 			importStyle: 'sass', // 推荐使用 'sass'，以利用 vite 的 sass 编译缓存
+			// 		}),
+			// 	],
+			// 	dts: 'src/components.d.ts',
+			// }),
 
 			VueSetupExtend(),
 			ElementPlus({

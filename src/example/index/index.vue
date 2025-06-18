@@ -349,6 +349,7 @@ const showDialog = ref(true)
 			:rules="[{required: true, message: '请输入测试', trigger: 'blur'}]"
 		></FormItem>
 		<el-button @click="handValidate">手动校验</el-button>
+		<Pagination :total="100" />
 		<div class="df aic">
 			<Icons name="Home" color="#f00"></Icons>
 			<Icons name="Setting" size="16px"></Icons>
