@@ -65,7 +65,7 @@ const onFormItemChange = (val, item, index, init = true, isDefault = false) => {
 
 		if (props.static) {
 			next.options = item.options.find((i) => i.value === val)?.children ?? []
-		} else if (form.value[item.prop] && init && item.casecadeUrl) {
+		} else if (form.value[item.prop] && init && item.cascadeUrl) {
 			initOptions(next, nextIndex)
 		}
 	}
@@ -91,7 +91,7 @@ const setDefaultData = async (val) => {
 		form.value[item.prop] = item.value || (item.multiple ? [] : cascade.value[item.prop] || '')
 
 		if (!props.grid) {
-			if (item.hasOwnProperty('casecadeUrl')) {
+			if (item.hasOwnProperty('cascadeUrl')) {
 				// val[i].options = []
 
 				if (
@@ -184,17 +184,17 @@ const onBlur = () => {
 }
 
 const initOptions = (item, level = 0) => {
-	if (!item.casecadeUrl) {
+	if (!item.cascadeUrl) {
 		return
 	}
 
 	return new Promise((resolve, reject) => {
 		axios
 			.request({
-				url: item.casecadeUrl,
+				url: item.cascadeUrl,
 				method: item.method || 'post',
-				params: item.casecadeParams || {},
-				data: item.casecadeData || {},
+				params: item.cascadeParams || {},
+				data: item.cascadeData || {},
 				headers: {
 					Urlkey: 'org',
 				},

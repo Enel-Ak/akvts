@@ -2,12 +2,12 @@
 import {ref, toRaw} from 'vue'
 
 const emits = defineEmits([
+	'update:modelValue',
 	'query',
 	'collectChange',
 	'transferChange',
 	'addCollect',
 	'deleteCollectGroup',
-	'update:modelValue',
 ])
 
 const props = defineProps({

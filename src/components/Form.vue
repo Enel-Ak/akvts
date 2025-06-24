@@ -19,9 +19,9 @@ const props = defineProps({
 	autoRemote: {type: Boolean, default: true},
 	loading: {type: Boolean, default: false},
 	disable: {type: Boolean, default: false},
-	data: {type: Array, default: () => []}, // 默认值可以从配置的value设置, 但是不支持重置
+	data: {type: Array, default: () => []}, // 默认值可以从配置的value设置, 但是不支持重置 , 弃用
 	props: {type: Object, default: () => []}, // 表单配置, 同data, 后续会废弃data
-	defaultData: {type: Object, default: () => ({})}, // 用于表格的新增/编辑表单
+	defaultData: {type: Object, default: () => ({})}, // 用于表格的新增/编辑表单, 弃用
 	rules: {type: Object, default: () => ({})},
 	labelWidth: {type: [String, Number], default: '100px'},
 	grid: {type: Boolean, default: false},
@@ -37,6 +37,7 @@ const props = defineProps({
 
 	columnCount: {type: [Number, String], default: 1},
 	size: {type: String, default: 'default'},
+
 	doNotClear: {type: Array, default: () => []},
 	doNotInitRemote: {type: Array, default: () => []},
 
@@ -367,9 +368,9 @@ onMounted(() => {
 
 defineExpose({
 	clear: (clearAll = false) => onClear(true, clearAll),
+	submit: () => onSubmit(),
 	resetFields: () => onResetFields(),
 	validate: (callback) => formRef.value.validate((valid) => callback(valid)),
-	submit: () => onSubmit(),
 	disabled: (bool = true) => {
 		console.log('Form Disabled', bool)
 		// important 无论是否有disabled属性都设置

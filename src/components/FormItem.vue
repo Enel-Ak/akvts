@@ -892,7 +892,7 @@ defineExpose({
 							:grid="grid"
 							:form-data="form"
 							:isClear="isClear"
-							:keys="item.cascadekeys"
+							:keys="item.cascadeKeys"
 							:maxLevel="item.cascadeMaxLevel"
 							:options="item.cascadeItems"
 							:static="item.cascadeStatic"

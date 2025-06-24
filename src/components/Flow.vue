@@ -24,7 +24,6 @@ const props = defineProps({
 	modelValue: {type: Object, default: () => ({})},
 	snapToGrid: {type: Boolean, default: true},
 	snapGrid: {type: Array, default: () => [200, 100]},
-	elements: {type: Array, default: () => []},
 	width: {type: [Number, String], default: ''},
 	height: {type: [Number, String], default: ''},
 	addNodeFitView: {type: Boolean, default: true},
@@ -40,7 +39,7 @@ const props = defineProps({
 	nodeInfoSize: {type: Array, default: () => ['20%', 'auto']},
 	showNodeInfo: {type: Boolean, default: true},
 
-	subtasksParallel: {type: Boolean, default: false},
+	subtasksParallel: {type: Boolean, default: false}, // 子任务并行
 })
 
 const {toObject, addNodes, removeNodes, addEdges, removeEdges, findNode, findEdge, fitView} =

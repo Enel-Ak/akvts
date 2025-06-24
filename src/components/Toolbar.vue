@@ -74,6 +74,9 @@ const onBack = () => {
 		margin-right: torem(20px);
 		position: relative;
 		top: 1px;
+		:deep(.akvts-icons) {
+			margin-left: torem(-5px);
+		}
 	}
 
 	> div {

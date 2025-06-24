@@ -61,6 +61,7 @@ const props = defineProps({
 	method: {type: String, default: 'GET'},
 	headers: {type: Object, default: () => ({})},
 	defaultTableData: {type: Object, default: () => []},
+	pagination: {type: Object, default: () => ({total: 0, size: 10, page: 1})},
 	buttons: {type: Array, default: () => []},
 
 	autoHeight: {type: Boolean, default: false},
@@ -81,6 +82,11 @@ const props = defineProps({
 	enableRowEdit: {type: Boolean, default: false}, // 启用行内编辑
 	enableSingleEdit: {type: Boolean, default: true}, // 单行编辑
 	enableLatestData: {type: Boolean, default: true}, // 组件内编辑启用获取最新数据
+	latestDataUrl: {type: String, default: ''}, // 获取最新数据接口
+	latestDataMethod: {type: String, default: 'GET'}, // 获取最新数据接口方法
+	latestDataParams: {type: Object, default: () => ({})}, // 获取最新数据接口参数
+	latestDataData: {type: Object, default: () => ({})}, // 获取最新数据接口数据
+	latestDataHeaders: {type: Object, default: () => ({})}, // 获取最新数据接口头
 
 	createHideColunms: {type: Array, default: () => []},
 	updateHideColunms: {type: Array, default: () => []},
@@ -89,13 +95,16 @@ const props = defineProps({
 	createText: {type: String, default: '新增'},
 	editText: {type: String, default: '编辑'},
 	deleteText: {type: String, default: '删除'},
+	createIcon: {type: String, default: 'Create'},
+	editIcon: {type: String, default: 'Edit'},
+	deleteIcon: {type: String, default: 'Delete'},
+	showButtonIcon: {type: Boolean, default: false},
 
 	selectable: {type: Function, default: () => true},
-	pagination: {type: Object, default: () => ({total: 0, size: 10, page: 1})},
-	stripe: {type: Boolean, default: true},
-	loading: {type: Boolean, default: false},
 
+	stripe: {type: Boolean, default: true},
 	status: {type: String, default: 'none'},
+	loading: {type: Boolean, default: false},
 })
 
 const TableStatusEnum = {
@@ -442,23 +451,27 @@ const onFormSubmit = (form) => {
 	}
 }
 
-const onDialog = async (type, scoped) => {
+const onDialog = async (type, scoped = null) => {
 	console.log('Basic Table Component onDialog', type, scoped)
 
 	isCreate = type === 'create'
-	const str = isCreate ? props.createText : props.editText
+	const str = !scoped ? props.createText : props.editText
 
 	dialogTitle.value = str
 	dialogVisible.value = true
 
 	setTimeout(() => {
-		if (isCreate) {
+		if (!scoped) {
 			formRef.value?.clear()
 			formData.value = {}
 		} else if (props.enableLatestData && props.url) {
 			axios
 				.request({
-					url: `${props.url}/${scoped.row.id}`,
+					url: props.latestDataUrl || `${props.url}/${scoped.row.id}`,
+					method: props.latestDataMethod || 'GET',
+					params: props.latestDataParams || {},
+					data: props.latestDataData || {},
+					headers: props.latestDataHeaders || {},
 				})
 				.then((res) => {
 					emits('formBeforeEdit', res.data, scoped.row)
@@ -898,7 +911,7 @@ defineExpose({
 		})
 	},
 	reload: () => getList(),
-	isCreate: () => isCreate,
+	isCreate: () => isCreate, // 弃用
 	create: (data) => onCreate(data),
 	update: (data) => onUpdate(data),
 	delete: (data) => onDelete({row: data}),
@@ -985,7 +998,12 @@ defineExpose({
 					size="small"
 					@click="onDialog('create')"
 				>
-					<Icons name="Create" color="var(--z-nav-font-color)" size="16" />
+					<Icons
+						v-if="showButtonIcon"
+						:name="createIcon"
+						color="var(--z-nav-font-color)"
+						size="16"
+					/>
 					{{ props.createText }}
 				</el-button>
 				<slot name="toolbarLeft"> </slot>
@@ -1112,7 +1130,6 @@ defineExpose({
 				class="table-component-btns"
 			>
 				<template #="scoped">
-					<slot name="buttons" :row="scoped.row"></slot>
 					<template
 						v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))"
 					>
@@ -1198,6 +1215,7 @@ defineExpose({
 							</el-button>
 						</template>
 					</el-popconfirm>
+					<slot name="buttons" :row="scoped.row"></slot>
 				</template>
 			</el-table-column>
 
