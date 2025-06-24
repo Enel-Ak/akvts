@@ -1040,7 +1040,6 @@ defineExpose({
 			</el-table-column>
 
 			<!-- 表头列表 -->
-
 			<template v-for="col of tableColumns" :key="col.prop">
 				<TableColumn
 					v-if="col.hasOwnProperty('tableShow') ? col.tableShow : true"
