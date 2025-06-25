@@ -11,7 +11,8 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import {ElementPlusResolver} from 'unplugin-vue-components/resolvers'
 
-export default ({mode}) => {
+export default ({mode, command}) => {
+	const isBuild = command === 'build'
 	const env = loadEnv(mode, process.cwd())
 	return defineConfig({
 		base: env.VITE_PUBLIC_PATH,
@@ -168,6 +169,6 @@ export default ({mode}) => {
 				},
 			},
 		},
-		logLevel: 'error',
+		logLevel: isBuild ? 'error' : 'info',
 	})
 }

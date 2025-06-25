@@ -44,7 +44,7 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"build:publish": "npm version patch && vite build && npm publish",
+		"build:publish": "npm version patch && node_modules/vite/bin/vite.js build && npm publish",
 		"preview": "vite preview"
 	},
 	"dependencies": {
