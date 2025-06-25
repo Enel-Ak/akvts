@@ -2,6 +2,7 @@
 import {nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch} from 'vue'
 import {init} from 'echarts'
 
+const emits = defineEmits(['clickItem'])
 const props = defineProps({
 	option: {
 		type: Object,
@@ -29,7 +30,9 @@ let chart = null
 let observer = null
 let observerTimer = null
 
-const setConfig = () => {}
+const setConfig = () => {
+	emits('clickItem', chart, props.option)
+}
 
 const initChart = async () => {
 	if (!chartRef.value) return

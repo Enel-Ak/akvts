@@ -89,6 +89,10 @@ const charts = [
 		content: 'Item 1',
 	},
 ]
+
+const onClickItem = (chart, option) => {
+	console.log(11, chart, option)
+}
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">
@@ -101,7 +105,7 @@ const charts = [
 					:enableExpandContent="false"
 					:enable-close-button="false"
 				>
-					<Charts :option="chart.option" />
+					<Charts :option="chart.option" @click-item="onClickItem" />
 				</Block>
 			</template>
 		</GridLayout>
