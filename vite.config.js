@@ -149,6 +149,7 @@ export default ({mode}) => {
 					preserveModulesRoot: 'src', // 模块根目录
 				},
 				maxParallelFileOps: 5,
+				logLevel: 'silent',
 			},
 			terserOptions: {
 				format: {
@@ -167,5 +168,6 @@ export default ({mode}) => {
 				},
 			},
 		},
+		logLevel: 'error',
 	})
 }
