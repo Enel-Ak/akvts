@@ -8,6 +8,7 @@ import {
 	watch,
 	onDeactivated,
 	onBeforeUnmount,
+	computed,
 } from 'vue'
 
 import axios from 'axios'
@@ -19,6 +20,7 @@ import Lock from './Lock.vue'
 
 const emits = defineEmits([
 	'update:modelValue',
+	'update:showForm',
 	'beforeComplete',
 	'completed',
 	'beforeCreate',
@@ -47,6 +49,8 @@ const emits = defineEmits([
 ])
 const props = defineProps({
 	modelValue: {type: Array, default: () => []},
+	showForm: {type: Boolean, default: false},
+
 	rowKey: {type: String, default: 'id'},
 	autoLoad: {type: Boolean, default: true},
 	emptyText: {type: String, default: '暂无数据'},
@@ -123,7 +127,7 @@ const customSlots = ref([])
 const formRef = ref()
 const formData = ref({})
 const dialogTitle = ref('')
-const dialogVisible = ref(false)
+const dialogVisible = ref(props.showForm)
 
 const currentEditRow = ref(null)
 const currentEditRows = ref([])
@@ -156,6 +160,15 @@ watch(
 		})
 	},
 	{deep: true}
+)
+
+watch(
+	() => props.showForm,
+	(newVal) => {
+		if (newVal) {
+			onDialog('create')
+		}
+	}
 )
 
 watch(
@@ -444,7 +457,7 @@ const onFormBeforeSubmit = (form) => {
 }
 
 const onFormSubmit = (form) => {
-	if (formData.value) {
+	if (formData.value && formData.value.id) {
 		onUpdate({...formData.value, ...form})
 	} else {
 		onCreate(form)
@@ -494,10 +507,12 @@ const onDialogClose = () => {
 const onDialogClosed = () => {
 	formData.value = null
 	emits('dialogClosed')
+	emits('update:showForm', false)
 }
 
 const onDialogOpened = () => {
 	emits('dialogOpened', formData.value)
+	emits('update:showForm', true)
 }
 
 const onClickButton = (btn, row, index) => {

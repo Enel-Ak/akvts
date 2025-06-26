@@ -54,7 +54,7 @@ const options2 = ref([
 		label: '远程联动1',
 		type: 'select',
 		method: 'GET',
-		casecadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
 		casecadeParams: {},
 		beforeInitOptions: (val, next, item) => {
 			next.casecadeParams.systematicType = 2
@@ -85,7 +85,7 @@ const options2 = ref([
 		label: '远程联动2',
 		placeholder: '请选择上一级',
 		method: 'GET',
-		casecadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
 		casecadeParams: {},
 		beforeInitOptions: (val, next, item) => {
 			next.casecadeParams.systematicType = 2
@@ -98,7 +98,7 @@ const options2 = ref([
 		label: '远程联动3',
 		placeholder: '请选择上一级',
 		method: 'GET',
-		casecadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
 		casecadeParams: {},
 		beforeInitOptions: (val, next, item) => {
 			next.casecadeParams.systematicType = 2
