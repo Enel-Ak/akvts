@@ -65,7 +65,7 @@ const abc = [
 		label: '测试',
 		type: 'text',
 		// sortable: true,
-		attrs: {align: 'left'},
+		attrs: {align: 'left', tooltip: true},
 		// tooltip: false,
 
 		width: 400,
