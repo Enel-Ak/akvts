@@ -529,7 +529,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -551,7 +551,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -617,7 +617,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -658,7 +658,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -712,7 +712,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="
 									item?.options?.find((f) => f.value === _form[item.prop])?.label
 								"
@@ -783,7 +783,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -833,7 +833,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -873,7 +873,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -912,7 +912,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
@@ -997,7 +997,7 @@ defineExpose({
 						<template v-if="grid">
 							<span v-if="!_form[item.prop]">-</span>
 							<el-tooltip
-								v-else-if="item.attrs.tooltip"
+								v-else-if="item?.attrs?.tooltip"
 								:content="_form[item.prop]"
 								placement="top"
 								popper-class="custom-tooltip"
