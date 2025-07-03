@@ -55,10 +55,10 @@ const options2 = ref([
 		type: 'select',
 		method: 'GET',
 		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
-		casecadeParams: {},
+		cascadeParams: {},
 		beforeInitOptions: (val, next, item) => {
-			next.casecadeParams.systematicType = 2
-			next.casecadeParams.parentId = val
+			next.cascadeParams.systematicType = 2
+			next.cascadeParams.parentId = val
 		},
 		options: [
 			{
@@ -86,10 +86,10 @@ const options2 = ref([
 		placeholder: '请选择上一级',
 		method: 'GET',
 		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
-		casecadeParams: {},
+		cascadeParams: {},
 		beforeInitOptions: (val, next, item) => {
-			next.casecadeParams.systematicType = 2
-			next.casecadeParams.parentId = val
+			next.cascadeParams.systematicType = 2
+			next.cascadeParams.parentId = val
 		},
 	},
 	{
@@ -99,10 +99,10 @@ const options2 = ref([
 		placeholder: '请选择上一级',
 		method: 'GET',
 		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
-		casecadeParams: {},
+		cascadeParams: {},
 		beforeInitOptions: (val, next, item) => {
-			next.casecadeParams.systematicType = 2
-			next.casecadeParams.parentId = val
+			next.cascadeParams.systematicType = 2
+			next.cascadeParams.parentId = val
 		},
 	},
 ])
@@ -114,7 +114,7 @@ const options3 = ref([
 		type: 'select',
 		filterable: true,
 		beforeInitOptions: (val, next, item) => {
-			next.casecadeParams = {a: 123}
+			next.cascadeParams = {a: 123}
 		},
 		options: [
 			{

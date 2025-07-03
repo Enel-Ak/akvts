@@ -526,7 +526,17 @@ defineExpose({
 				<!-- 无type时(插槽) -->
 				<div class="form-item" v-if="!item.type">
 					<slot :name="`form-${item.prop}`" :item="item">
-						<template v-if="grid">{{ _form[item.prop] || '-' }}</template>
+						<template v-if="grid">
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
+						</template>
 						<template v-else>
 							-
 							<slot :name="`form-${item.prop}-right`"></slot>
@@ -538,7 +548,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'text'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-input
@@ -595,7 +613,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'password'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-input
@@ -627,7 +653,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'select'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-select
@@ -672,10 +706,19 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'selectRemote'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{
-								item?.options?.find((f) => f.value === _form[item.prop])?.label ||
-								'-'
-							}}
+							<el-tooltip
+								:content="
+									item?.options?.find((f) => f.value === _form[item.prop])
+										?.label || '-'
+								"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									item?.options?.find((f) => f.value === _form[item.prop])
+										?.label || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template class="form-item" v-else>
 							<el-select
@@ -731,7 +774,15 @@ defineExpose({
 				>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-date-picker
@@ -772,7 +823,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'checkbox'" @click.stop>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-checkbox-group
@@ -803,7 +862,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'radio'" @click.stop>
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-radio-group
@@ -833,7 +900,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'textarea'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-input
@@ -909,7 +984,15 @@ defineExpose({
 				<div class="form-item" v-if="item.type === 'treeSelect'">
 					<slot :name="`form-${item.prop}`" :item="item">
 						<template v-if="grid">
-							{{ _form[item.prop] || '-' }}
+							<el-tooltip
+								:content="_form[item.prop] || '-'"
+								placement="top"
+								popper-class="custom-tooltip"
+							>
+								<span class="ellipsis w-full db">{{
+									_form[item.prop] || '-'
+								}}</span>
+							</el-tooltip>
 						</template>
 						<template v-else>
 							<el-tree-select
@@ -1084,5 +1167,12 @@ defineExpose({
 		height: 100%;
 		margin-bottom: 0 !important;
 	}
+}
+</style>
+<style>
+.custom-tooltip {
+	max-width: 300px; /* 限制最大宽度 */
+	white-space: normal; /* 允许换行 */
+	word-break: break-word; /* 避免单词撑开 */
 }
 </style>

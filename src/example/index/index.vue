@@ -110,6 +110,9 @@ const abc = [
 		},
 	},
 ]
+const abcForm = ref({
+	uui: '1111111111111111111111111111111111111111111111111111111111111111',
+})
 const formItemRef = ref()
 const handValidate = () => {
 	const valid = formItemRef.value.validate()
@@ -333,6 +336,7 @@ const showForm = ref(false)
 				</Form>
 			</div>
 		</template>
+		<Form v-model="abcForm" :props="abc" :grid="true" :column-count="4"></Form>
 		<LoadingTransition />
 		<LoadingTransition color="#f00" />
 		<Dialog v-model="showDialog" title="加载状态" :loading="true">
