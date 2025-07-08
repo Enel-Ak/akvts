@@ -1253,7 +1253,7 @@ defineExpose({
 									:key="btn.label"
 									@click.stop="onClickButton(btn, scoped.row, scoped.$index)"
 								>
-									{{ btn.label }}
+									<span class="fs-13">{{ btn.label }}</span>
 								</el-dropdown-item>
 							</el-dropdown-menu>
 						</template>
