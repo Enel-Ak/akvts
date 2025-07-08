@@ -1237,10 +1237,15 @@ defineExpose({
 				</template>
 			</el-table-column>
 
-			<el-table-column align="center" fixed="right" :width="70">
+			<el-table-column
+				align="center"
+				fixed="right"
+				:width="70"
+				v-if="buttons.some((f) => f.more)"
+			>
 				<template #="scoped">
 					<el-dropdown placement="bottom">
-						<span class="el-dropdown-link" @click.stop>更多</span>
+						<span class="el-dropdown-link fs-13" @click.stop>更多</span>
 						<template #dropdown>
 							<el-dropdown-menu>
 								<el-dropdown-item
