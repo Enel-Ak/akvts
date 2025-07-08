@@ -77,10 +77,10 @@ const props = defineProps({
 
 	enableRequestParamsLoad: {type: Boolean, default: true}, // 参数修改时发起请求
 	enableOwnButton: {type: Boolean, default: true}, // 启用全部自带按钮, 新增, 编辑, 删除, 优先级高于enableCreate, enableEdit, enableDelete
-	enableToolbar: {type: Boolean, default: true},
-	enableDelete: {type: Boolean, default: true},
-	enableCreate: {type: Boolean, default: true},
-	enableEdit: {type: Boolean, default: true},
+	enableToolbar: {type: Boolean, default: false},
+	enableDelete: {type: Boolean, default: false},
+	enableCreate: {type: Boolean, default: false},
+	enableEdit: {type: Boolean, default: false},
 	enableSelection: {type: Boolean, default: false},
 	enableIndex: {type: Boolean, default: true},
 	enableRowEdit: {type: Boolean, default: false}, // 启用行内编辑
@@ -804,7 +804,7 @@ const setFnWidth = (again = false) => {
 		}
 
 		if (btns) {
-			width += btns.length * 12 + 20
+			width += btns.length * 12 + 23
 			for (const btn of btns) {
 				width += btn.offsetWidth
 			}
@@ -1146,7 +1146,9 @@ defineExpose({
 			>
 				<template #="scoped">
 					<template
-						v-for="btn of buttons.filter((f) => (disableTable ? f.important : f))"
+						v-for="btn of buttons.filter(
+							(f) => (disableTable ? f.important : f) && !f.hasOwnProperty('more')
+						)"
 					>
 						<template
 							v-if="
@@ -1230,7 +1232,27 @@ defineExpose({
 							</el-button>
 						</template>
 					</el-popconfirm>
+
 					<slot name="buttons" :row="scoped.row"></slot>
+				</template>
+			</el-table-column>
+
+			<el-table-column align="center" fixed="right" :width="70">
+				<template #="scoped">
+					<el-dropdown placement="bottom">
+						<span class="el-dropdown-link" @click.stop>更多</span>
+						<template #dropdown>
+							<el-dropdown-menu>
+								<el-dropdown-item
+									v-for="btn of buttons.filter((f) => f.more)"
+									:key="btn.label"
+									@click.stop="onClickButton(btn, scoped.row, scoped.$index)"
+								>
+									{{ btn.label }}
+								</el-dropdown-item>
+							</el-dropdown-menu>
+						</template>
+					</el-dropdown>
 				</template>
 			</el-table-column>
 
@@ -1421,6 +1443,10 @@ defineExpose({
 				margin-right: 10px;
 			}
 		}
+	}
+
+	:deep(.el-dropdown-link) {
+		cursor: pointer;
 	}
 }
 
