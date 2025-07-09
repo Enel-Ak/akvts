@@ -125,6 +125,11 @@ const onButtonClick = () => {
 }
 const showDialog = ref(false)
 const showForm = ref(false)
+
+const tabledata = ref([
+	{id: 'test1', uui: 0, def: 1},
+	{id: 'test2', uui: 1},
+])
 </script>
 <template>
 	<Block
@@ -405,11 +410,11 @@ const showForm = ref(false)
 			:auto-load="false"
 			ref="tableRef"
 			v-model:showForm="showForm"
+			v-model="tabledata"
 			:enableSelection="true"
 			:auto-height="false"
 			:form-column-count="2"
 			:enableLatestData="false"
-			:default-table-data="[{id: 1, uui: '123'}]"
 			status="none"
 			@before-create="onBeforeCreate"
 			@edit-change="onEditChange"

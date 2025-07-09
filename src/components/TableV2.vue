@@ -148,21 +148,6 @@ let clickTimer = null
 let isCreate = false
 
 watch(
-	() => props.modelValue,
-	(newVal) => {
-		tableData.value = newVal
-		nextTick(() => {
-			if (newVal.length === 0) {
-				setGroupWidth(true)
-			} else {
-				props.status === 'edit' && setTableStatus(props.status)
-			}
-		})
-	},
-	{deep: true, immediate: true}
-)
-
-watch(
 	() => props.showForm,
 	(newVal) => {
 		if (newVal) {
@@ -264,6 +249,23 @@ watch(
 		}
 	},
 	{deep: true}
+)
+
+watch(
+	() => props.modelValue,
+	(newVal) => {
+		if (Array.isArray(newVal)) {
+			tableData.value = newVal
+			nextTick(() => {
+				if (newVal.length === 0) {
+					setGroupWidth(true)
+				} else {
+					props.status === 'edit' && setTableStatus(props.status)
+				}
+			})
+		}
+	},
+	{deep: true, immediate: true}
 )
 
 const getList = () => {
