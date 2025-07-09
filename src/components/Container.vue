@@ -7,7 +7,7 @@ const emits = defineEmits(['collapse', 'scroll'])
 const props = defineProps({
 	model: {
 		type: String,
-		default: useContainerEnum.HABF, //AHBF, HABF
+		default: useContainerEnum.HABF, //ahbf, habf
 	},
 	expand: {
 		type: Boolean,
@@ -79,6 +79,8 @@ watch(
 
 onMounted(() => {
 	localStorage.setItem('CONTAINER_FRAME', JSON.stringify(props.frame))
+	console.log(111, containerRef.value)
+
 	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
 })
 
@@ -128,7 +130,7 @@ onUnmounted(() => {
 			</div>
 			<div class="container-header" v-if="frame.includes('header')">
 				<div class="expand" @click="onExpand">
-					<i class="i-ic-baseline-expand-less"></i>
+					<Icons name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
 				<slot name="header"></slot>
 			</div>
@@ -260,16 +262,16 @@ $szie170: 170px;
 	}
 
 	&.ahbf {
-		.header {
+		.container-header {
 			left: torem($szie170);
 			width: calc(100% - torem($szie170));
 		}
 
-		.aside {
+		.container-aside {
 			height: 100%;
 		}
 
-		.body {
+		.container-body {
 			margin-top: calc(v-bind(offset) + 30px);
 			width: calc(100% - torem($szie170));
 		}

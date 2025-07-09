@@ -39,6 +39,7 @@ onMounted(() => {
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
 	<Watermark></Watermark>
 	<Container
+		model="habf"
 		:frame="['header', 'default', 'footer', 'aside']"
 		@collapse="($event) => (containerExpand = $event)"
 	>
