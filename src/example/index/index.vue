@@ -62,7 +62,7 @@ const qqqq = (rule, value, callback) => {
 const abc = [
 	{
 		prop: 'uui',
-		label: '测试',
+		label: '测试测试测试测试测试测试',
 		type: 'text',
 		// sortable: true,
 		attrs: {align: 'left', tooltip: true},
@@ -343,7 +343,7 @@ const tabledata = ref([
 				</Form>
 			</div>
 		</template>
-		<Form v-model="abcForm" :props="abc" :grid="true" :column-count="4"></Form>
+		<Form v-model="abcForm" :props="abc" :grid="false" :column-count="4"></Form>
 		<LoadingTransition />
 		<LoadingTransition color="#f00" />
 		<Dialog v-model="showDialog" title="加载状态" :loading="true">

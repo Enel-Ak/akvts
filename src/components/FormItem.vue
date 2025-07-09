@@ -523,6 +523,10 @@ defineExpose({
 					'mg-bottom-0': _buttonVertical === 'flowing',
 				}"
 			>
+				<template #label="scoped">
+					<span class="ellipsis" :title="scoped.label">{{ scoped.label }}</span>
+				</template>
+
 				<!-- 无type时(插槽) -->
 				<div class="form-item" v-if="!item.type">
 					<slot :name="`form-${item.prop}`" :item="item">
