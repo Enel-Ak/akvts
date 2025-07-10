@@ -22,7 +22,6 @@ const useValidate = async (input) => {
 	const memoryView = new Uint8Array(memory.buffer)
 	memoryView.set(inputBytes, inputPtr)
 	activated.value = validate(inputPtr, BigInt(Math.floor(Date.now() / 1000)))
-	console.log(activated.value ? '激活成功' : '激活失败')
 }
 
 export {activated, useValidate}

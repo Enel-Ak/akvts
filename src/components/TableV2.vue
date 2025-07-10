@@ -159,11 +159,9 @@ watch(
 watch(
 	() => [props.url, props.reqParams, props.reqData],
 	(newVal) => {
-		console.log('TableV2 Component Request Params Changed', newVal)
-
 		if (!props.enableRequestParamsLoad) return
 		// if (__requestTimer) {
-		// 	console.log('TableV2 Component Request Params Changed Clear Timer')
+
 		// 	clearTimeout(__requestTimer)
 		// }
 		getList()
@@ -178,11 +176,9 @@ watch(
 			newVal.length === oldVal?.length &&
 			newVal.every((item, index) => item.prop === oldVal[index].prop)
 		) {
-			console.log('TableV2 Component columns not changed')
 			return
 		}
 
-		console.log('TableV2 Component columns changed')
 		const arr = []
 		const loops = (cols) => {
 			for (const col of cols) {
@@ -269,11 +265,9 @@ watch(
 )
 
 const getList = () => {
-	console.log('TableV2 Component getList')
 	clearTimeout(__requestTimer)
 	__requestTimer = setTimeout(() => {
 		if (!props.url) {
-			console.log('Error: BasicTabel Component url is required')
 			setTimeout(() => setFnWidth(true), 16.7) // 没接口或者不自动加载时也需要默认重新计算操作列宽度
 			return
 		}
@@ -311,7 +305,6 @@ const getList = () => {
 						props.status === 'edit' && setTableStatus(props.status)
 						setFnWidth(true)
 					})
-					console.log('TableV2 Component Next Finish', tableData.value, total.value)
 				}
 
 				emits('beforeComplete', {
@@ -326,18 +319,15 @@ const getList = () => {
 
 				timer = setTimeout(() => {
 					if (!isEvent) {
-						console.log('TableV2 beforeComplete', items)
 						_next()
 					}
 				}, 256)
 			})
 			.catch((err) => {
-				console.log('TableV2 Component getList Error', err)
 				_loading.value = false
 				emits('error', err)
 			})
 			.finally(() => {
-				console.log('TableV2 Component getList Finally')
 				if (!isEvent) {
 					clearTimeout(__requestTimer)
 					__requestTimer = null
@@ -348,7 +338,6 @@ const getList = () => {
 
 const onCreate = (data) => {
 	if (!props.url && props.autoLoad) {
-		console.log('Error: BasicTabel Component url is required')
 		return
 	}
 	emits('beforeCreate', data)
@@ -375,7 +364,6 @@ const onCreate = (data) => {
 
 const onUpdate = (data, isBatch = false) => {
 	if (!props.url && props.autoLoad && !isBatch) {
-		console.log('Error: BasicTabel Component url is required')
 		return
 	}
 	emits('beforeUpdate', data)
@@ -428,7 +416,6 @@ const onDelete = ({row}) => {
 	}
 
 	if (!props.url && props.autoLoad) {
-		console.log('Error: BasicTabel Component url is required')
 		return
 	}
 
@@ -467,8 +454,6 @@ const onFormSubmit = (form) => {
 }
 
 const onDialog = async (type, scoped = null) => {
-	console.log('Basic Table Component onDialog', type, scoped)
-
 	isCreate = type === 'create'
 	const str = !scoped ? props.createText : props.editText
 
@@ -525,7 +510,6 @@ const onClickRow = (row, column) => {
 	clickTimer && clearTimeout(clickTimer)
 	clickTimer = setTimeout(
 		() => {
-			console.log('TableV2 Component Click Row', row, column)
 			if (disableTable.value) {
 				return
 			}
@@ -557,7 +541,6 @@ const onDoubleClickRow = (row, column, event) => {
 
 		currentEditRow.value = row
 		setGroupWidth(false, column)
-		console.log('TableV2 Component Double Click Row', row, column, event)
 	}
 }
 
@@ -566,13 +549,10 @@ const onSelectionChange = (val) => {
 }
 
 const onSortChange = (val) => {
-	console.log('TableV2 Component Sort Change', val)
 	emits('sortChange', val)
 }
 
 const onFormChanged = (val, item) => {
-	console.log('TableV2 Component Form Changed', val, item)
-
 	emits('formChanged', {
 		value: val,
 		item,
@@ -586,7 +566,6 @@ const onTableFormItemFocus = (row) => {
 		row.__enableEdit = true
 		currentEditRow.value = row
 		setTimeout(() => {
-			console.log('TableV2 Component Table Form Item Focus', row)
 			clickTimer && clearTimeout(clickTimer)
 		}, 0) // 256ms 为单击事件的延迟
 	}
@@ -595,7 +574,6 @@ const onTableFormItemFocus = (row) => {
 const onTableFormItemBlur = (valid, row) => {
 	if (props.enableRowEdit) {
 		setTimeout(() => {
-			console.log('TableV2 Component Table Form Item Blur', valid, row)
 			clickTimer && clearTimeout(clickTimer)
 		}, 0) // 256ms 为单击事件的延迟
 	}
@@ -635,15 +613,6 @@ const onTableFormRowEditChange = (val, item) => {
 		currentEditColumns.value.push({rid: currentEditRow.value.id, prop: item.prop, value: val})
 	}
 
-	console.log(
-		'Table Component Edit Rows:',
-		val,
-		currentEditColumns.value,
-		currentEditRow.value,
-		currentEditRows.value,
-		item
-	)
-
 	emits(
 		'editChange',
 		val,
@@ -669,8 +638,6 @@ const onTableRowEditSaveAll = () => {
 	if (currentEditRows.value.length === 0) {
 		return
 	}
-
-	console.log('TableV2 Component onTableRowEditSaveAll', currentEditRows.value)
 
 	const temp = []
 	currentEditRows.value.forEach((item) => temp.push(onUpdate(item, true)))
@@ -790,7 +757,6 @@ const setFnWidth = (again = false) => {
 		let btns = el.querySelector('.table-component-btns')?.children
 
 		if (again) {
-			console.log('TableV2 Component setFnWidth', 'Again')
 			el.querySelectorAll('.el-table__body tbody tr').forEach((tr) => {
 				const buttons = tr.querySelector('td:last-child .cell')?.children
 				if (buttons?.length > btns?.length) {
@@ -813,7 +779,6 @@ const setFnWidth = (again = false) => {
 		}
 
 		if (btns?.length === 0) {
-			console.log('TableV2 Component setFnWidth No Buttons')
 			width = 142
 			if (setFnWidthCount > 10) {
 				setFnWidthCount = 0
@@ -880,7 +845,6 @@ const init = () => {
 	if (initializing.value) {
 		return
 	}
-	console.log('TableV2 Component mounted')
 
 	initializing.value = true
 
@@ -889,7 +853,6 @@ const init = () => {
 	}
 
 	if (props.autoLoad) {
-		console.log('TableV2 Component Auto Load')
 		getList()
 	}
 
@@ -910,14 +873,11 @@ onDeactivated(() => {
 })
 
 onBeforeUnmount(() => {
-	console.log('TableV2 Component beforeUnmount')
 	clearTimeout(__requestTimer)
 	window.removeEventListener('resize', setTableHeight)
 })
 
-onUnmounted(() => {
-	console.log('TableV2 Component unmounted')
-})
+onUnmounted(() => {})
 
 defineExpose({
 	clear: () => onClear(),

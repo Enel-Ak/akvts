@@ -90,9 +90,7 @@ const charts = [
 	},
 ]
 
-const onClickItem = (chart, option) => {
-	console.log(11, chart, option)
-}
+const onClickItem = (chart, option) => {}
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">

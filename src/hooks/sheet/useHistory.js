@@ -58,7 +58,6 @@ export function useHistory(config) {
 		if (history.length > max) {
 			history.shift()
 		}
-		console.log('历史记录:', history)
 	}
 
 	// 撤销

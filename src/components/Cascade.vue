@@ -71,14 +71,12 @@ const onFormItemChange = (val, item, index, init = true, isDefault = false) => {
 	}
 
 	if (index >= props.maxLevel - 1) {
-		console.log('Cascade Component Value: ', toRaw(form.value))
 		emits('change', form.value)
 		emits('update:modelValue', form.value)
 	}
 }
 
 const onElCascaderChange = (val) => {
-	console.log('Cascade Component ElCascader Change: ', val, cascadeRef.value.getCheckedNodes())
 	emits('elChange', val, cascadeRef.value.getCheckedNodes())
 	emits('update:modelValue', val || [])
 }
@@ -118,7 +116,6 @@ const setDefaultData = async (val) => {
 
 const oneSelectLazyLoad = (node, resolve) => {
 	const {level, children} = node
-	console.log('Cascade Component OneSelectLazyLoad: ', node)
 
 	let {url, method, data, query, beforeCompleted} = props.oneSelectProps
 
@@ -134,7 +131,6 @@ const oneSelectLazyLoad = (node, resolve) => {
 	}
 
 	if (!url) {
-		console.log('Cascade Component oneSelectLazyLoad: 请配置 Url !')
 		return
 	}
 
@@ -163,13 +159,10 @@ const oneSelectLazyLoad = (node, resolve) => {
 					raw: JSON.parse(JSON.stringify(dataitem)),
 				}))
 
-				console.log('Cascade Component OneSelectLazyLoad Nodes: ', nodes)
-
 				resolve(nodes)
 			}, 0)
 		})
 		.catch((err) => {
-			console.log('Cascade Component 3 Error: ', err)
 			resolve([])
 		})
 		.finally(() => resolve([]))
@@ -218,12 +211,10 @@ const initOptions = (item, level = 0) => {
 								: dataitem.isLeaf || dataitem.leaf || false,
 						raw: JSON.parse(JSON.stringify(dataitem)),
 					}))
-					console.log('Cascade Component Options: ', item.options, props.keys)
 				}
 				resolve()
 			})
 			.catch((err) => {
-				console.log('Cascade Component InitOptions Error: ', err)
 				reject(err)
 			})
 			.finally(() => {
@@ -244,7 +235,6 @@ const onClear = () => {
 		cascade.value = []
 	}
 	emits('update:modelValue', props.oneSelect ? cascade.value : form.value)
-	console.log('Cascade Component Clear: ', props.oneSelect ? cascade.value : form.value)
 }
 
 onMounted(() => {
@@ -256,7 +246,6 @@ onMounted(() => {
 watch(
 	() => props.modelValue,
 	(val) => {
-		console.log('Cascade Component Module Value Watch: ', val)
 		if (!props.oneSelect) {
 			form.value = val
 			if (Object.keys(val).length === 0) {
@@ -275,7 +264,6 @@ watch(
 	() => props.options,
 	(val) => {
 		if (!props.oneSelect) {
-			console.log('Cascade Component Options Watch: ', val)
 			_options.value = val
 			setDefaultData(val)
 		}

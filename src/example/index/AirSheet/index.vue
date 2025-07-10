@@ -33,7 +33,6 @@ const config = ref({
 	// 	{
 	// 		label: '测试',
 	// 		click: (row, rowData) => {
-	// 			console.log(row, rowData)
 	// 		},
 	// 	},
 	// ],
@@ -50,7 +49,6 @@ const config2 = {
 		// 	label: '测试',
 		// 	type: 'primary',
 		// 	click: (row, rowData) => {
-		// 		console.log(row, rowData)
 		// 	},
 		// },
 	],
@@ -60,7 +58,6 @@ const fns = [
 	// {
 	// 	label: '操作',
 	// 	click: (row, rowData) => {
-	// 		console.log(row, rowData)
 	// 	},
 	// },
 ]
@@ -1145,9 +1142,7 @@ onActivated(() => {
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
 		// config.value.celldata[0][0] = '123'
-		sheetRef.value.airToLucky().then((res) => {
-			console.log(99, res)
-		})
+		sheetRef.value.airToLucky().then((res) => {})
 		// sheetRef.value
 		// 	.luckyToAir(
 		// 		{
@@ -1161,7 +1156,6 @@ onActivated(() => {
 		// 		]
 		// 	)
 		// 	.then((res) => {
-		// 		console.log(99, res)
 		// 		config.value.config = res.config
 		// 		config.value.celldata = res.celldata
 		// 	})
@@ -1170,9 +1164,7 @@ onActivated(() => {
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
 
-const onClick = () => {
-	console.log(sheetRef.value.getSheet())
-}
+const onClick = () => {}
 </script>
 <template>
 	<div style="height: 100%" class="df">

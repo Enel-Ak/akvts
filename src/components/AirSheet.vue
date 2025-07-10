@@ -128,7 +128,6 @@ watch(
 	(newVal) => {
 		sheet.config = Object.assign(sheet.config, newVal)
 		const mc = newVal.mergedCells
-		console.log(1111, mc)
 
 		if (Object.keys(mc).length > 0) {
 			Object.entries(mc).forEach(([key, value]) => {
@@ -910,7 +909,6 @@ const onClickCell = (e, cell) => {
 
 	// 使用定时器延迟触发点击事件
 	clickTimer = setTimeout(() => {
-		console.log('单元格点击', cell)
 		emits('cellClick', cell)
 		// 确保在事件触发后重置状态
 		if (now === lastClickTime) {
@@ -927,7 +925,6 @@ const onCellBlur = (event, cell) => {
 		if (val !== oldVal) {
 			useHistoryHook.saveHistory(cell)
 		}
-		console.log('单元格编辑', val, cell)
 	}, 0)
 }
 
@@ -1063,16 +1060,12 @@ const onInputBlur = () => {
 // 拖拽到单元格时
 let dropCell = null
 const onCellcellDragOver = (event) => {
-	console.log('onCellcellDragOver', event)
-
 	event.preventDefault()
 	dropCell = useSelectionRangeHook.getRangeByMouse(event)
 	emits('cellDragOver', dropCell)
 }
 
 const onCellDrop = (event) => {
-	console.log('onCellDrop', event)
-
 	event.preventDefault()
 	emits('cellDrop', dropCell)
 	dropCell = null

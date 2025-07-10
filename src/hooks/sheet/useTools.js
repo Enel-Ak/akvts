@@ -689,7 +689,6 @@ export const useTools = (config) => {
 		sheet.celldata.clear()
 		const result = await useExcelHook.readExcelFile(file)
 		if (result.success) {
-			console.log('Excel导入成功', sheet.celldata)
 			event.target.value = null
 			renderRange()
 		}
@@ -704,7 +703,6 @@ export const useTools = (config) => {
 		const name = Date.now()
 		const result = await useExcelHook.exportExcel(`${name}.xlsx`)
 		if (result.success) {
-			console.log('Excel导出成功')
 		}
 	}
 
@@ -991,9 +989,7 @@ export const useTools = (config) => {
 									}
 								}
 							})
-						} catch (e) {
-							console.log(e)
-						}
+						} catch (e) {}
 					}
 				}
 

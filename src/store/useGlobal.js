@@ -26,7 +26,7 @@ export const useGlobal = defineStore('useGlobal', {
 		getLoadingStatus: (state) => state.loader,
 		getLoadEnd: (state) => {
 			const isEnd = state.loader.res + state.loader.err === state.loader.req
-			console.log('loader:', JSON.parse(JSON.stringify(state.loader)), isEnd)
+
 			if (isEnd) {
 				state.loader.req = 0
 				state.loader.res = 0

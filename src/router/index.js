@@ -9,8 +9,6 @@ export const router = createRouter({
 	routes: routes,
 })
 
-console.log('routes', routes)
-
 router.beforeEach((to, from, next) => {
 	next()
 })

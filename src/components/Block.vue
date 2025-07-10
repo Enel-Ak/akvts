@@ -148,7 +148,6 @@ const onExpendContent = (isToggle = true) => {
 
 const onBack = () => {
 	isFullScreen.value && onFullScreen()
-	console.log('Block back button is clicked')
 
 	emits('clickBack')
 
@@ -170,7 +169,6 @@ const onClose = () => {
 const initObserver = () => {
 	if (blockRef.value) {
 		if (!observer) {
-			console.log('Block resize observer is created')
 			observer = new ResizeObserver((entries) => {
 				clearTimeout(observerTimer)
 				observerTimer = setTimeout(() => {
@@ -203,8 +201,6 @@ const initObserver = () => {
 						if (now !== contextHeight.value) {
 							contextHeight.value = now
 						}
-
-						console.log('Block resize observer is running', contextHeight.value)
 					})
 
 					!isExpand &&
@@ -233,7 +229,6 @@ const init = () => {
 
 const cleanUp = () => {
 	if (observer) {
-		console.log('Block resize observer is disconnected')
 		observer.disconnect()
 		observer = null
 	}
@@ -274,24 +269,20 @@ const onFullScreen = () => {
 }
 
 onMounted(() => {
-	console.log('Block Component is mounted')
 	isMounted = true
 	init()
 })
 
 onActivated(() => {
-	console.log('Block Component is activated')
 	!isMounted && init()
 	isMounted = false
 })
 
 onDeactivated(() => {
-	console.log('Block Component is deactivated')
 	!isMounted && cleanUp()
 })
 
 onUnmounted(() => {
-	console.log('Block Component is unmounted')
 	cleanUp()
 })
 

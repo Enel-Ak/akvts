@@ -7,8 +7,6 @@ const route = useRoute()
 const router = useRouter()
 onMounted(() => {})
 onActivated(() => {
-	console.log(123, route.query.id ? '编辑' : '新增', router.currentRoute.value.fullPath)
-
 	updateLabelTitle({
 		path: router.currentRoute.value.fullPath,
 		title: route.query.id ? '编辑-代办通知' : '新增-代办通知',

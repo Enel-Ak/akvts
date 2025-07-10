@@ -623,7 +623,6 @@ export const useSelectionRange = (containerId, config = {}) => {
 			}
 		}
 
-		console.log('设置选区范围', ranged.value)
 		setTimeout(() => {
 			if (typeof callback === 'function') {
 				callback(ranged.value)

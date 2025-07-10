@@ -420,7 +420,6 @@ const onEdgeCreated = (info) => {
 		animated: true,
 	}
 	addEdges([edge])
-	console.log('Flow edge created: ', info, edge)
 }
 
 const onNodeClick = (info) => {
@@ -437,7 +436,6 @@ const onNodeClick = (info) => {
 		}
 	} else {
 		clickTimer = setTimeout(() => {
-			console.log('Flow node click: ', info)
 			clickTimer = null
 			emits('nodeClick', info)
 		}, clickDelay)
@@ -445,7 +443,6 @@ const onNodeClick = (info) => {
 }
 
 const onDblClickNode = (info) => {
-	console.log('Flow node dbl click: ', info)
 	if (props.disabled) return
 	// setCaretAt(info.node, info.event.target)
 	emits('nodeDblClick', info)
@@ -460,7 +457,6 @@ const onNodeMouseEnter = (event) => {
 		return
 	clearTimeout(nodeInfoLeaveTimer)
 	nodeInfoEnterTimer = setTimeout(() => {
-		console.log('Flow node mouse enter: ', event)
 		isMouseEnter.value = true
 		getNodeConfigById(nodeConfig.value, event.node.id).then((currentNode) => {
 			emits('nodeMouseEnter', event, currentNode)
@@ -473,7 +469,6 @@ const onNodeMouseLeave = (event) => {
 
 	clearTimeout(nodeInfoEnterTimer)
 	nodeInfoLeaveTimer = setTimeout(() => {
-		console.log('Flow node mouse leave: ', event)
 		isMouseEnter.value = false
 		getNodeConfigById(nodeConfig.value, event.node.id).then((currentNode) => {
 			emits('nodeMouseLeave', event, currentNode)
@@ -484,8 +479,6 @@ const onNodeMouseLeave = (event) => {
 const onRemoveNode = (id, node) => {
 	getNodeConfigById(nodeConfig.value, id).then((curNode, curParentNode) => {
 		if (!curNode.childNode || curNode.childNode?.length === 0) {
-			console.log('Remove Node:', id, node, curNode, curParentNode)
-
 			if (curNode.type === FlowNodeTypes.Condition) {
 				// 当前 curParentNode 是网关节点
 				if (curParentNode.conditionNodes.length > 2) {
@@ -574,7 +567,6 @@ const onPaneReady = (vueFLowInstance) => {
 
 const output = () => {
 	nextTick(() => {
-		console.log('Flow output: ', nodeConfig.value)
 		emits('update:modelValue', nodeConfig.value)
 	})
 }
@@ -582,10 +574,7 @@ const output = () => {
 watch(
 	() => props.modelValue,
 	(val) => {
-		console.log('Flow modelValue changed: ', val)
-
 		if (JSON.stringify(val) !== JSON.stringify(nodeConfig.value) && !props.templateCode) {
-			console.log('Flow modelValue changed: ', val)
 			nodes.value = [JSON.parse(JSON.stringify(nodeEnd))]
 			edges.value = []
 			nodeConfig.value = val
@@ -605,7 +594,6 @@ watch(
 watch(
 	() => props.templateCode,
 	(val) => {
-		console.log('Flow template Code changed: ', val)
 		if (val && props.getWorkflowByCode && typeof props.getWorkflowByCode === 'function') {
 			props.getWorkflowByCode(val).then((res) => {
 				const {extend} = res.data.scheme

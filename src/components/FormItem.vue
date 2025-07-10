@@ -81,7 +81,6 @@ const remoteCompleted = (query, item, res, callback) => {
 const initRemoteValueById = (query, item) => {
 	if (!item.remoteUrl || props.doNotInitRemote.indexOf(item.prop) > -1) return
 
-	console.log('Form Item Init Remote: ', query, item)
 	const [baseUrl, params] = item.remoteUrl.split('?')
 	const remoteParams = {
 		...item.remoteParams,
@@ -158,8 +157,6 @@ const onFocus = () => {
 }
 
 const onBlur = (item) => {
-	console.log('Form Item Blur: ', item)
-
 	if (
 		(item.formItemProps && item.formItemProps.rules) ||
 		(props.items.length === 1 && !props._fromForm)
@@ -281,9 +278,7 @@ const onFileChange = (e, item) => {
 	emits('changeFile', file, item)
 }
 
-const onCollapseChange = (val, index) => {
-	console.log('Collapse Change: ', val)
-}
+const onCollapseChange = (val, index) => {}
 
 const onCheckIsLastItem = (item, index) => {
 	// 过滤掉有children的项
@@ -384,14 +379,13 @@ watch(
 	() => props.modelValue,
 	(val) => {
 		// 针对单独使用FormItem组件时, 传入的modelValue, 并且items只有一个时
-		// console.log('Form Item modelValue Change: ', props.items, val, _form.value)
+
 		let newVal = val
 		// 表单内部不启用双向绑定 _fromForm: true
 		if (props.items.length === 1 && !props._fromForm) {
 			if (props.items[0].remoteInit && props.items[0].remoteUrl && newVal) {
 				remoteMethod(newVal, props.items[0], () => {
 					Object.assign(_form.value, {[props.items[0].prop]: newVal})
-					// console.log('Form Item modelValue Remote Init Complete: ', _form.value, newVal)
 				})
 			} else {
 				if (

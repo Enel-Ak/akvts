@@ -47,7 +47,6 @@ export const useMergedCells = (config) => {
 			mergedCells.set(currentKey, {rowspan, colspan})
 		}
 
-		console.log('添加合并单元格:', mergedCells)
 		sheet.config.mergedCells = getMergedCells()
 		renderRange()
 	}

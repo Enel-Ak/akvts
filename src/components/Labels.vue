@@ -50,7 +50,6 @@ const query = (item) => {
 	const split = item.path.split('?')
 	const query = {}
 	if (split[1]) {
-		console.log('Labels Query:', split[1])
 		split[1].split('&').forEach((i) => {
 			if (i.includes('=')) {
 				const [key, value] = i.split('=')
@@ -81,7 +80,7 @@ const onClickLabel = (item, isDropdown = false, isPush = false) => {
 	emits('clickItem', item)
 
 	// 检查路径是否有效且不同于当前路径
-	console.log('Labels Click:', item, route.fullPath, decodeURI(route.fullPath).trim())
+
 	if ((item.path && item.path !== decodeURI(route.fullPath).trim()) || isPush) {
 		router
 			.push({
@@ -136,8 +135,6 @@ const setBar = () => {
 }
 
 const getMetaTitle = (item) => {
-	console.log('Labels GetMetaTitle', item)
-
 	// 如果是路由对象，直接从 meta 中获取标题
 	if (item?.meta) {
 		return item.meta.title || item.meta.childTitle || '-未命名'
@@ -163,7 +160,7 @@ const updateLabelTitle = (e) => {
 const deleteLabel = (e) => {
 	const {path} = e.detail
 	const item = items.value.find((f) => f.path === decodeURI(path).trim())
-	console.log('Labels DeleteLabel', item, e)
+
 	onCancelItem(item)
 }
 
@@ -183,7 +180,6 @@ const getNavItem = (to) => {
 		}
 	}
 	const nav = loops(_navigator.value)
-	console.log('Labels GetNavItem', nav, to.fullPath, _navigator.value)
 
 	return nav || null
 }
@@ -237,7 +233,6 @@ const handleRouter = (to) => {
 		const name = current.value.path.split('/').pop().split('?')[0] || 'index'
 		keepAlive.addInclude(name)
 	}
-	console.log('Labels Current', current.value)
 
 	emits('update:modelValue', current.value.pid || current.value.id)
 }
@@ -249,7 +244,6 @@ watch(
 		if (!modifiedTitle || !label) {
 			return
 		}
-		console.log('Labels Current Title Changed', modifiedTitle, label)
 		if (modifiedTitle || label.includes('-')) {
 			// 获取根据导航名称获取导航
 			const navItem = getNavItemByName((modifiedTitle || label).split('-')[1])
@@ -274,8 +268,6 @@ watch(
 watch(
 	() => route.fullPath,
 	(to, from) => {
-		console.log('Labels FullPath Changed', to, from)
-
 		_toPath.value = to
 		_fromPath.value = from
 	}
@@ -284,7 +276,6 @@ watch(
 watch(
 	() => route,
 	(to, from) => {
-		console.log('Labels Route Changed', to, from)
 		if (!to || to.meta.ignoreLabel) {
 			return
 		}
@@ -305,7 +296,6 @@ onBeforeMount(() => {
 	// 从 localStorage 读取历史记录
 	const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
 	const historyCurrent = JSON.parse(localStorage.getItem('CURRENT_LABEL') || '{"path":null}')
-	console.log('Labels History', history, historyCurrent)
 
 	if (history.length > 0) {
 		items.value = history
@@ -344,7 +334,6 @@ defineExpose({
 	first: (item) => {
 		const history = JSON.parse(localStorage.getItem('LABELS') || '[]')
 		if (history.length === 0) {
-			console.log('Labels first', item)
 			items.value.unshift(item)
 			current.value = item
 			router.push({

@@ -37,13 +37,11 @@ const filterMethod = (query, item) => {
 
 const onQueryInput = () => {
 	// 搜索内容
-	console.log('Query input', queryValue.value)
 	emits('query', queryValue.value)
 }
 
 const onCollectChange = () => {
 	// 收藏组切换
-	console.log('Collect change', collectValue.value)
 	emits('collectChange', collectValue.value)
 }
 
@@ -62,7 +60,7 @@ const onDeleteCollectGroup = (val, index) => {
 
 const onTransferChange = (val, direction, movedKeys) => {
 	// 向右添加
-	console.log('Transfer change', val, direction, movedKeys, props.data)
+
 	const raws = props.data
 		.filter((item) => val.join().includes(item.key))
 		.map((item) => toRaw(item))

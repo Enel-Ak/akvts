@@ -49,7 +49,6 @@ const onClickConfirm = () => {
 const initObserver = () => {
 	if (scrollRef.value) {
 		if (!observer) {
-			console.log('Dialog resize observer is created')
 			observer = new ResizeObserver((entries) => {
 				if (observerTimer) {
 					clearTimeout(observerTimer)
@@ -58,7 +57,7 @@ const initObserver = () => {
 					entries.forEach((entry) => {
 						const h = document.body.offsetHeight / 2
 						const now = entry.borderBoxSize[0].blockSize
-						// console.log('Dialog resize observer', now, h)
+
 						if (now < h) {
 							height.value = now
 						} else {
@@ -103,7 +102,6 @@ const onAutoHeight = () => {
 }
 
 const onClosed = () => {
-	console.log('Dialog observer is disconnected')
 	if (observer) {
 		observer.disconnect()
 		observer = null

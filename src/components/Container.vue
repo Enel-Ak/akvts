@@ -57,7 +57,6 @@ const unLock = ref(0)
 
 const onExpand = () => {
 	isExpand.value = !isExpand.value
-	console.log('container isExpand', isExpand.value)
 	emits('collapse', isExpand.value)
 }
 
@@ -79,8 +78,6 @@ watch(
 
 onMounted(() => {
 	localStorage.setItem('CONTAINER_FRAME', JSON.stringify(props.frame))
-	console.log(111, containerRef.value)
-
 	containerRef.value?.querySelector('.container-body').addEventListener('scroll', onScroll)
 })
 

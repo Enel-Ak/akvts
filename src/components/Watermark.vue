@@ -129,7 +129,6 @@ const init = () => {
 	requestAnimationFrame(init)
 }
 onMounted(() => {
-	console.log('Watermark mounted', canvas, background, watermarkText.value)
 	isAnimating = true
 	init()
 })
@@ -142,7 +141,6 @@ onUnmounted(() => {
 
 	canvas = null
 	background = null
-	console.log('Watermark unmounted', watermarkText.value)
 })
 </script>
 <template>

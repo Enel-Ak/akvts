@@ -104,7 +104,6 @@ const onSubmit = () => {
 	emits('beforeSubmit', form.value)
 	formRef.value.validate((valid) => {
 		if (valid) {
-			console.log('submit validate!', valid, toRaw(form.value))
 			const formValue = JSON.parse(JSON.stringify(form.value))
 			emits('submit', timeRangeToString(formValue))
 		}
@@ -137,12 +136,9 @@ const updateColunms = () => {
 	formItems.value = temp_arr
 	// form.value = {...stringToTimeRange(form.value)}
 	Object.assign(form.value, {...stringToTimeRange(form.value)})
-	console.log('Form Update Columns', form.value)
 }
 
 const setDefault = async () => {
-	console.log('Form Set Default', props.props)
-
 	// 兼容处理
 	if (props.data.length > 0) {
 		formProps.value = props.data
@@ -232,19 +228,15 @@ const onClear = (needEmit = true, clearAll = false) => {
 
 	Object.assign(form.value, {...notClearColumns})
 
-	console.log('Form Not Clear', notClearColumns)
-	console.log('Form Cleared', form.value)
 	emits('update:modelValue', form.value)
 	nextTick(() => (isClear.value = false))
 }
 
 const onInitRemoteComplete = (query, item) => {
-	console.log('Form Init Remote Complete', query, item)
 	emits('initRemoteComplete', query, item)
 }
 
 const onFormChange = (val, item) => {
-	console.log('Form Item Change', val, item)
 	if (item.type === 'selectRemote' && item.setRemoteValueToColumn) {
 		form.value[item.setRemoteValueToColumn] = val
 	}
@@ -273,13 +265,11 @@ const getIconSize = () => {
 
 const onFocus = () => {
 	isFocus.value = true
-	console.log('Form Focus', isFocus.value)
 	emits('focus')
 }
 
 const onBlur = () => {
 	isFocus.value = false
-	console.log('Form Blur', isFocus.value)
 	emits('blur')
 }
 
@@ -292,7 +282,6 @@ const onEnter = (e) => {
 watch(
 	() => props.modelValue,
 	(to, from) => {
-		console.log('Form Model Value Change', to, from)
 		if (!to) return
 		if (Object.keys(to).length === 0) {
 			form.value = {}
@@ -303,7 +292,6 @@ watch(
 		if (isFirst.value && Object.values(to).filter(Boolean).length > 0) {
 			formReset.value = JSON.parse(JSON.stringify(form.value))
 		}
-		console.log('Form Emit Update Model Value', form.value)
 	},
 	{deep: true, immediate: true}
 )
@@ -312,7 +300,6 @@ watch(
 	() => props.defaultData,
 	(to) => {
 		if (to) {
-			console.log('Form Default Data Change', stringToTimeRange(to))
 			Object.assign(form.value, {...stringToTimeRange(to)})
 		}
 	},
@@ -361,7 +348,6 @@ watch(
 )
 
 onMounted(() => {
-	console.log('Form Mounted')
 	nextTick(() => setDefault())
 	setTimeout(() => (isFirst.value = false), 16.7)
 })
@@ -372,7 +358,6 @@ defineExpose({
 	resetFields: () => onResetFields(),
 	validate: (callback) => formRef.value.validate((valid) => callback(valid)),
 	disabled: (bool = true) => {
-		console.log('Form Disabled', bool)
 		// important 无论是否有disabled属性都设置
 		nextTick(() => {
 			formItems.value.forEach((item) => {
@@ -384,7 +369,6 @@ defineExpose({
 		})
 	},
 	getData: () => {
-		console.log('Form Get Data', form.value)
 		return form.value
 	},
 	getValue: (key) => form.value[key],
@@ -396,7 +380,6 @@ defineExpose({
 		} else {
 			form.value[key] = value
 		}
-		console.log('Form Set Value', key, value, form.value)
 		emits('update:modelValue', form.value)
 	},
 	setAttr: (key, attr, val) => {

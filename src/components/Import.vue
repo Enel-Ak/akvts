@@ -36,7 +36,6 @@ const baseUrl = import.meta.env.VITE_GLOBAL_API_URL
 const visible = ref(props.modelValue)
 
 const onDownloadTemplate = () => {
-	console.log('ImportDialogDownloadTemplate')
 	axios
 		.request({
 			url: props.templateDownloadUrl,
@@ -65,7 +64,6 @@ const onDownloadTemplate = () => {
 }
 
 const onUploadFile = () => {
-	console.log('ImportDialogUploadFile')
 	uploadRef.value.submit()
 	if (props.finishedClose) {
 		emits('update:modelValue', false)
@@ -73,7 +71,6 @@ const onUploadFile = () => {
 }
 
 const onClose = () => {
-	console.log('ImportDialogClose')
 	emits('update:modelValue', false)
 }
 </script>

@@ -16,7 +16,6 @@ export const directives = (app) => {
 
 			const handler = (event) => {
 				if (event.key === arg && el.contains(event.target)) {
-					console.log('Directive action', arg)
 					binding.value(event)
 				}
 			}
@@ -42,7 +41,7 @@ export const directives = (app) => {
 					for (const item of items || []) {
 						files.push(item.getAsFile())
 					}
-					console.log('Directive Paste:', files)
+
 					binding.value(files, el)
 				}
 			}
@@ -80,7 +79,6 @@ export const directives = (app) => {
 					const isBottom =
 						mainScroll.scrollTop + mainScroll.clientHeight === mainScroll.scrollHeight
 					if (!isBottom) {
-						console.log('Directive Scroll:', mainScroll.scrollHeight)
 						mainScroll.scrollTop = mainScroll.scrollHeight
 					}
 				}

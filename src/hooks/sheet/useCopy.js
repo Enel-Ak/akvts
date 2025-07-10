@@ -126,7 +126,6 @@ export function useCopy(config) {
 		if (isHtml && html) {
 			const div = document.createElement('div')
 			div.innerHTML = html
-			console.log('解析的HTML:', html)
 
 			const table = div.querySelector('table')
 			if (table) {
@@ -223,8 +222,6 @@ export function useCopy(config) {
 				pasteData.data = dataMatrix
 			}
 		}
-
-		console.log('解析后的数据:', pasteData)
 
 		// 处理纯文本情况
 		if (!pasteData.data.length && text) {
@@ -404,7 +401,6 @@ export function useCopy(config) {
                 </tbody>
             </table>
         `
-		console.log(111, tableHtml)
 
 		// 生成纯文本版本（用于兼容性）
 		let plainText = ''

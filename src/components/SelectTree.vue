@@ -119,7 +119,6 @@ const onClickOption = (e) => {
 }
 
 const onClickNode = (data, node) => {
-	console.log('Select Tree Click Node: ', data, node)
 	if (!props.multiple) {
 		inputValue.value = data
 	}
@@ -133,7 +132,6 @@ const onClickCheck = (
 	data,
 	info = {checkedKeys, checkedNodes, halfCheckedKeys, halfCheckedNodes}
 ) => {
-	console.log('Select Tree Click Check: ', data, info)
 	if (!props.multiple) {
 		treeRef.value?.setCheckedKeys([data[props.keys[0]]])
 	} else {

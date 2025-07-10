@@ -15,7 +15,6 @@ export const useKeepAlive = defineStore('useKeepAlive', {
 			const componentName = name.toLowerCase()
 			if (!this.include.includes(componentName)) {
 				this.include.push(componentName)
-				console.log('Added to cache:', componentName, this.include)
 			}
 		},
 		removeInclude(name) {
@@ -24,12 +23,10 @@ export const useKeepAlive = defineStore('useKeepAlive', {
 			const index = this.include.indexOf(componentName)
 			if (index > -1) {
 				this.include.splice(index, 1)
-				console.log('Removed from cache:', componentName, this.include)
 			}
 		},
 		clearIncludes() {
 			this.include = []
-			console.log('Cleared all cache')
 		},
 	},
 })

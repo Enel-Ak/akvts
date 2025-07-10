@@ -40,8 +40,6 @@ let currClickNode = null
 let currExpandNodeIds = []
 
 const GetList = (isLeaf = false, fn) => {
-	console.log('TreeV2 GetList Start')
-
 	if (_loading.value) return
 	_loading.value = true
 
@@ -82,7 +80,6 @@ const GetList = (isLeaf = false, fn) => {
 				const checkIds = treeRef.value.getCheckedNodes().map((x) => x.id)
 				emits('update:modelValue', checkIds)
 				fn && fn()
-				console.log('TreeV2 GetList End')
 			})
 		})
 }
@@ -93,8 +90,6 @@ const onFilter = (query, node) => node[props.props.label].includes(query)
 
 const onClickTreeNode = (data, node, e) => {
 	if (!props.checkOnClickNode) {
-		console.log('TreeV2 onClickTreeNode', data, node, e)
-
 		currClickNode = data
 		if (!props.multiple) {
 			emits('nodeClick', data, node, e)
@@ -103,8 +98,6 @@ const onClickTreeNode = (data, node, e) => {
 }
 
 const onCheck = (data, info) => {
-	console.log('TreeV2 onCheck', data, info)
-
 	const check = info.checkedKeys.some((x) => x === data.id)
 	if (check) {
 		currClickNode = data
@@ -140,20 +133,17 @@ const onNodeExpand = (node) => {
 	if (!currExpandNodeIds.includes(node.id)) {
 		currExpandNodeIds.push(node.id)
 	}
-	console.log('TreeV2 onNodeExpand', node, currExpandNodeIds)
 	// treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
 const onNodeCollapse = (node) => {
 	currExpandNodeIds = Array.from(new Set(currExpandNodeIds.filter((x) => x !== node.id)))
-	console.log('TreeV2 onNodeCollapse', node, currExpandNodeIds)
 	// treeRef.value.setExpandedKeys(currExpandNodeIds)
 }
 
 watch(
 	() => props.data,
 	(val) => {
-		console.log('TreeV2 data change')
 		if (props.enableRequest) return
 		treeData.value = val
 	},

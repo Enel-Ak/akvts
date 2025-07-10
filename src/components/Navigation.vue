@@ -57,7 +57,6 @@ let animationFrameId = null
 let isfirst = true
 
 const onClickItem = (item) => {
-	console.log('Navigation Click:', item)
 	const isContinue = props.beforeRouter(item)
 
 	if (isContinue) {

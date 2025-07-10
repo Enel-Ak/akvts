@@ -4,8 +4,6 @@ import {onMounted, ref} from 'vue'
 const tableRef = ref()
 const loaidng = ref(false)
 const onSubmit = (data) => {
-	console.log('onSubmit', data)
-
 	// formTest.value = {}
 	loaidng.value = true
 	setTimeout(() => (loaidng.value = false), 3000)
@@ -18,7 +16,6 @@ const onFormChange = (val, item) => {}
 const collapsed = ref(false)
 const tableDefalutData = ref([])
 const onEditChange = (val, record, row, rows, column) => {
-	console.log('onEditChange', val, record, rows, column)
 	// 行编辑
 	if (column.prop === 'uui' || column.prop === 'def') {
 		tableRef.value.setRowValue(row.id, 'defc', Number(row.uui) + Number(row.def))
@@ -38,7 +35,6 @@ const onBeforeRowEdit = (row, column, event) => {
 }
 
 const onBeforeCreate = (data) => {
-	console.log('onBeforeCreate', data)
 	data.uui = 10
 }
 onMounted(() => {
@@ -49,8 +45,6 @@ onMounted(() => {
 })
 
 const qqqq = (rule, value, callback) => {
-	console.log('自定义校验', rule, value, callback)
-
 	if (value <= 0 || !value) {
 		callback(new Error('自定义校验'))
 		return
@@ -116,11 +110,8 @@ const abcForm = ref({
 const formItemRef = ref()
 const handValidate = () => {
 	const valid = formItemRef.value.validate()
-	console.log('手动校验结果: ', valid)
 }
 const onButtonClick = () => {
-	console.log(1111)
-
 	// tableRef.value.cancelEdit(['test1'])
 }
 const showDialog = ref(false)
