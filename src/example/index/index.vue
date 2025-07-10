@@ -127,7 +127,11 @@ const showDialog = ref(false)
 const showForm = ref(false)
 
 const tabledata = ref([
-	{id: 'test1', uui: 0, def: 1},
+	{
+		id: 'test1',
+		uui: 0,
+		def: 'dslkfjdslkfjlskdfjlkdsjflksdjflksdjfkljdslkfjdslkjfldksjflkdsjflksdjfkldsl',
+	},
 	{id: 'test2', uui: 1},
 ])
 </script>
@@ -437,6 +441,7 @@ const tabledata = ref([
 				uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
 			}"
 		>
+			<template #def> 123 </template>
 			<template #defbb="scoped">
 				{{ scoped.row.defbb ? '男' : '女' }}
 			</template>
