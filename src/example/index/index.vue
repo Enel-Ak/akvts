@@ -125,11 +125,12 @@ const onButtonClick = () => {
 }
 const showDialog = ref(false)
 const showForm = ref(false)
+const show = ref(true)
 
 const tabledata = ref([
 	{
 		id: 'test1',
-		uui: 0,
+		uui: 'dslkfjdslkfjlskdfjlkdsjflksdjflksdjfkljdslkfjdslkjfldksjflkdsjflksdjfkldsl',
 		def: 'dslkfjdslkfjlskdfjlkdsjflksdjflksdjfkljdslkfjdslkjfldksjflkdsjflksdjfkldsl',
 	},
 	{id: 'test2', uui: 1},
@@ -410,48 +411,52 @@ const tabledata = ref([
 		</div>
 
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
-		<TableV2
-			:auto-load="false"
-			ref="tableRef"
-			v-model:showForm="showForm"
-			v-model="tabledata"
-			:enableSelection="true"
-			:auto-height="false"
-			:form-column-count="2"
-			:enableLatestData="false"
-			status="none"
-			@before-create="onBeforeCreate"
-			@edit-change="onEditChange"
-			@form-changed="onFormChanged"
-			@beforeRowEdit="onBeforeRowEdit"
-			@click-button="onButtonClick"
-			:buttons="[
-				{
-					label: '测试1',
-					type: 'primary',
-				},
-				{
-					label: '测试2',
-					type: 'primary',
-					more: true,
-				},
-			]"
-			:columns="abc"
-			:form-rules="{
-				uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
-			}"
-		>
-			<template #def> 123 </template>
-			<template #defbb="scoped">
-				{{ scoped.row.defbb ? '男' : '女' }}
-			</template>
-			<template #defbaf="scoped">
-				{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
-			</template>
-			<template #edit-defbcfb="scoped">
-				<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
-			</template>
-		</TableV2>
+		<Dialog v-model="show" :loading="true">
+			<TableV2
+				:auto-load="false"
+				ref="tableRef"
+				v-model:showForm="showForm"
+				v-model="tabledata"
+				:enableSelection="true"
+				:auto-height="false"
+				:form-column-count="2"
+				:enableLatestData="false"
+				status="none"
+				@before-create="onBeforeCreate"
+				@edit-change="onEditChange"
+				@form-changed="onFormChanged"
+				@beforeRowEdit="onBeforeRowEdit"
+				@click-button="onButtonClick"
+				:buttons="[
+					{
+						label: '测试1',
+						type: 'primary',
+					},
+					{
+						label: '测试2',
+						type: 'primary',
+						more: true,
+					},
+				]"
+				:columns="abc"
+				:form-rules="{
+					uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
+				}"
+			>
+				<template #def>
+					<el-switch />
+				</template>
+				<template #defbb="scoped">
+					{{ scoped.row.defbb ? '男' : '女' }}
+				</template>
+				<template #defbaf="scoped">
+					{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
+				</template>
+				<template #edit-defbcfb="scoped">
+					<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
+				</template>
+			</TableV2>
+		</Dialog>
 	</Block>
 </template>
 <style scoped lang="scss"></style>
