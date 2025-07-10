@@ -332,7 +332,7 @@ onMounted(() => {
 
 .loader {
 	width: fit-content;
-	font-size: 50px;
+	font-size: 42px;
 	line-height: 1.5;
 	font-family: system-ui, sans-serif;
 	font-weight: bold;
@@ -346,7 +346,7 @@ onMounted(() => {
 	animation: l9 2s linear infinite;
 }
 .loader:before {
-	content: '......';
+	content: '.....';
 }
 @keyframes l9 {
 	to {
