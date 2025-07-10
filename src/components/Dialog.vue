@@ -154,7 +154,7 @@ onMounted(() => {
 			<Lock v-model="unLock"></Lock>
 		</el-scrollbar>
 
-		<div class="loading" v-if="loading">
+		<div class="loading" :class="{show: loading}">
 			<!-- <LoadingTransition :text="loadingText" /> -->
 			<div class="loader"></div>
 		</div>
@@ -199,12 +199,19 @@ onMounted(() => {
 		align-items: center;
 		background-color: rgba(var(--z-theme-rgb), 0.7);
 		display: flex;
-		height: calc(100% - 45px - 53px);
+		height: 0%;
 		justify-content: center;
+		opacity: 0;
 		position: absolute;
 		top: 45px;
 		width: 100%;
-		z-index: 9;
+		z-index: -1;
+		transition: all 0.15s linear;
+		&.show {
+			height: calc(100% - 45px - 53px);
+			opacity: 1;
+			z-index: 9;
+		}
 	}
 
 	.dialog-scrollbar {

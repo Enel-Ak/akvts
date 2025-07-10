@@ -126,6 +126,13 @@ const onButtonClick = () => {
 const showDialog = ref(false)
 const showForm = ref(false)
 const show = ref(true)
+const showLoading = ref(false)
+setTimeout(() => {
+	showLoading.value = true
+}, 2000)
+setTimeout(() => {
+	showLoading.value = false
+}, 4000)
 
 const tabledata = ref([
 	{
@@ -411,7 +418,7 @@ const tabledata = ref([
 		</div>
 
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
-		<Dialog v-model="show" :loading="true">
+		<Dialog v-model="show" :loading="showLoading">
 			<TableV2
 				:auto-load="false"
 				ref="tableRef"
