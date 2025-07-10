@@ -28,6 +28,7 @@ import Icons from './components/Icons.vue'
 import LoadingTransition from './components/LoadingTransition.vue'
 import Navigation from './components/Navigation.vue'
 import GridLayout from './components/GridLayout.vue'
+import FilePreview from './components/FilePreview.vue'
 
 const components = {
 	Akvts,
@@ -60,6 +61,7 @@ const components = {
 	LoadingTransition,
 	Navigation,
 	GridLayout,
+	FilePreview,
 }
 
 export default {
@@ -100,4 +102,5 @@ export {
 	LoadingTransition,
 	Navigation,
 	GridLayout,
+	FilePreview,
 }
