@@ -199,16 +199,15 @@ onMounted(() => {
 		align-items: center;
 		background-color: rgba(var(--z-theme-rgb), 0.7);
 		display: flex;
-		height: 0%;
+		height: calc(100% - 45px - 53px);
 		justify-content: center;
 		opacity: 0;
 		position: absolute;
 		top: 45px;
 		width: 100%;
 		z-index: -1;
-		transition: all 0.15s linear;
+		transition: all 0.1s linear;
 		&.show {
-			height: calc(100% - 45px - 53px);
 			opacity: 1;
 			z-index: 9;
 		}
