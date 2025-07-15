@@ -983,6 +983,7 @@ defineExpose({
 							:vertical="item.cascadeVertical"
 							:oneSelect="item.cascadeOneSelect"
 							:oneSelectProps="item.cascadeOneSelectProps"
+							:labelWidth="0"
 							@change="onChange($event, item)"
 						></Cascade>
 						<slot :name="`form-${item.prop}-right`"></slot>

@@ -139,7 +139,6 @@ const tabledata = ref([
 		@collapsed="collapsed = $event"
 	>
 		<template #expand>
-			{{ showForm }}
 			<div class="search">
 				<Form
 					ref="formRef"

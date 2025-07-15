@@ -38,6 +38,10 @@ const props = defineProps({
 		type: Object,
 		default: () => ({}),
 	},
+	labelWidth: {
+		type: [String, Number],
+		default: '100px',
+	},
 })
 
 const form = ref(props.modelValue)
@@ -317,7 +321,7 @@ defineExpose({
 			v-else
 			v-for="(item, index) of options"
 			v-model="form[item.prop]"
-			:items="[item]"
+			:items="[{...item, labelWidth: labelWidth}]"
 			@change="(val, item) => onFormItemChange(val, item, index)"
 			@focus="onFocus"
 			@blur="onBlur"
