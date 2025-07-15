@@ -65,7 +65,11 @@ watch(
 		class="loader-bar"
 		:style="{width: barWidth + '%'}"
 	></div>
-	<div v-if="enableGlobal" class="loader-mask" :class="{active: !loading || enable || width !== 0}">
+	<div
+		v-if="enableGlobal"
+		class="loader-mask"
+		:class="{active: !loading || enable || width !== 0}"
+	>
 		<div class="loader" v-if="global.getLoadingStatus.req >= 1 || enable || width !== 0">
 			<div class="tip">{{ text }} {{ barWidth | 0 }}%</div>
 		</div>

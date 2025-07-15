@@ -340,6 +340,7 @@ const tabledata = ref([
 				</Form>
 			</div>
 		</template>
+		<!-- <Loader :enable="true" /> -->
 		<Form v-model="abcForm" :props="abc" :grid="false" :column-count="4"></Form>
 		<LoadingTransition />
 		<LoadingTransition color="#f00" />
@@ -403,6 +404,7 @@ const tabledata = ref([
 		</div>
 
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
+
 		<!-- <Dialog v-model="show" :loading="showLoading"> -->
 		<TableV2
 			:auto-load="false"
