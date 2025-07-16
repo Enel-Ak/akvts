@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, onUnmounted} from 'vue'
+import {onMounted, onUnmounted, watch} from 'vue'
 import {GridStack} from 'gridstack'
 import 'gridstack/dist/gridstack.min.css'
 
@@ -22,6 +22,14 @@ const props = defineProps({
 		default: () => ['hidden', 'hidden'], // x, y
 	},
 })
+
+watch(
+	() => props.props,
+	() => {
+		GridStack.init()
+	},
+	{deep: true}
+)
 
 onMounted(() => {
 	GridStack.init()
