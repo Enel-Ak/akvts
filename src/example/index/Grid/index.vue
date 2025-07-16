@@ -1,4 +1,5 @@
 <script setup name="grid">
+import {ref} from 'vue'
 const achart = {
 	grid: {
 		top: 10,
@@ -57,7 +58,7 @@ const bchart = {
 	],
 }
 
-const charts = [
+const charts = ref([
 	{
 		prop: 'default',
 		x: 0,
@@ -88,7 +89,7 @@ const charts = [
 		option: achart,
 		content: 'Item 1',
 	},
-]
+])
 
 const onClickItem = (chart, option) => {}
 </script>

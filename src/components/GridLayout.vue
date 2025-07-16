@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, onUnmounted, watch} from 'vue'
+import {onMounted, ref} from 'vue'
 import {GridStack} from 'gridstack'
 import 'gridstack/dist/gridstack.min.css'
 
@@ -23,16 +23,14 @@ const props = defineProps({
 	},
 })
 
-watch(
-	() => props.props,
-	() => {
-		GridStack.init()
-	},
-	{deep: true}
-)
+const grid = ref()
 
 onMounted(() => {
-	GridStack.init()
+	grid.value = GridStack.init()
+})
+
+defineExpose({
+	getGrid: () => grid.value,
 })
 </script>
 <template>
