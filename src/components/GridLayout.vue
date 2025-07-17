@@ -13,6 +13,8 @@ const props = defineProps({
 				y: 0,
 				w: 4,
 				h: 4,
+				option: {},
+				config: {},
 				content: 'Item 1',
 			},
 		],
@@ -25,25 +27,96 @@ const props = defineProps({
 
 const grid = ref()
 const gridProps = computed(() => props.props)
+const previousProps = ref([])
+
+// 比较两个数组，找出新增、删除和更新的项目
+const diffProps = (newProps, oldProps) => {
+	const oldMap = new Map(oldProps.map((item) => [item.prop, item]))
+	const newMap = new Map(newProps.map((item) => [item.prop, item]))
+
+	const added = newProps.filter((item) => !oldMap.has(item.prop))
+	const removed = oldProps.filter((item) => !newMap.has(item.prop))
+	const updated = newProps.filter((item) => {
+		const oldItem = oldMap.get(item.prop)
+		return (
+			oldItem &&
+			(oldItem.x !== item.x ||
+				oldItem.y !== item.y ||
+				oldItem.w !== item.w ||
+				oldItem.h !== item.h ||
+				JSON.stringify(oldItem.option) !== JSON.stringify(item.option) ||
+				JSON.stringify(oldItem.config) !== JSON.stringify(item.config) ||
+				oldItem.content !== item.content)
+		)
+	})
+
+	return {added, removed, updated}
+}
+
+// 更新 GridStack 而不重新初始化
+const updateGridStack = (newProps, oldProps) => {
+	if (!grid.value) return
+
+	const {added, removed, updated} = diffProps(newProps, oldProps)
+
+	// 移除不存在的项目
+	removed.forEach((item) => {
+		const element = document.querySelector(`[gs-id="${item.prop}"]`)
+		if (element) {
+			grid.value.removeWidget(element, false)
+		}
+	})
+
+	// 更新现有项目的位置和大小
+	updated.forEach((item) => {
+		const element = document.querySelector(`[gs-id="${item.prop}"]`)
+		if (element) {
+			grid.value.update(element, {
+				x: item.x,
+				y: item.y,
+				w: item.w,
+				h: item.h,
+			})
+		}
+	})
+
+	// 等待 DOM 更新后添加新项目
+	nextTick(() => {
+		added.forEach((item) => {
+			const element = document.querySelector(`[gs-id="${item.prop}"]`)
+			if (element) {
+				grid.value.makeWidget(element)
+			}
+		})
+
+		// 重新整理布局
+		grid.value.compact()
+	})
+}
 
 watch(
 	gridProps,
-	() => {
-		if (grid.value) {
-			grid.value.destroy(false)
-			nextTick(() => {
-				grid.value = GridStack.init()
-			})
+	(newProps, oldProps) => {
+		if (grid.value && oldProps) {
+			updateGridStack(newProps, previousProps.value)
 		}
+		previousProps.value = [...newProps]
 	},
 	{deep: true}
 )
+
 onMounted(() => {
 	grid.value = GridStack.init()
+	previousProps.value = [...gridProps.value]
 })
 
 defineExpose({
 	getGrid: () => grid.value,
+	updateLayout: () => {
+		if (grid.value) {
+			grid.value.compact()
+		}
+	},
 })
 </script>
 <template>

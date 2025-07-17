@@ -63,8 +63,8 @@ const charts = ref([
 		prop: 'default',
 		x: 0,
 		y: 0,
-		w: 4,
-		h: 4,
+		w: 3,
+		h: 3,
 		title: '柱状图',
 		option: achart,
 		content: 'Item 1',
@@ -73,7 +73,7 @@ const charts = ref([
 		prop: 'chart2',
 		x: 4,
 		y: 0,
-		w: 5,
+		w: 3,
 		h: 5,
 		title: '饼图',
 		option: bchart,
@@ -90,6 +90,7 @@ const charts = ref([
 		content: 'Item 1',
 	},
 ])
+const gridLayoutRef = ref()
 setTimeout(() => {
 	charts.value.push({
 		prop: 'chart4',
@@ -101,6 +102,7 @@ setTimeout(() => {
 		option: achart,
 		content: 'Item 1',
 	})
+	console.log(111, gridLayoutRef.value.getConfig())
 }, 2000)
 const onClickItem = (chart, option) => {
 	console.log(chart, option)
@@ -108,7 +110,7 @@ const onClickItem = (chart, option) => {
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">
-		<GridLayout :props="charts">
+		<GridLayout ref="gridLayoutRef" :props="charts">
 			<template #[`grid-${chart.prop}`] v-for="chart of charts">
 				<Block
 					:title="chart.title"
