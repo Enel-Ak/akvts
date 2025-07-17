@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {computed, nextTick, onMounted, ref, watch} from 'vue'
 import {GridStack} from 'gridstack'
 import 'gridstack/dist/gridstack.min.css'
 
@@ -24,7 +24,20 @@ const props = defineProps({
 })
 
 const grid = ref()
+const gridProps = computed(() => props.props)
 
+watch(
+	gridProps,
+	() => {
+		if (grid.value) {
+			grid.value.destroy(false)
+			nextTick(() => {
+				grid.value = GridStack.init()
+			})
+		}
+	},
+	{deep: true}
+)
 onMounted(() => {
 	grid.value = GridStack.init()
 })
@@ -37,7 +50,9 @@ defineExpose({
 	<div class="grid-component">
 		<div class="grid-stack">
 			<div
-				v-for="prop in props.props"
+				v-for="prop in gridProps"
+				:key="prop.prop"
+				:gs-id="prop.prop"
 				:gs-x="prop.x"
 				:gs-y="prop.y"
 				:gs-w="prop.w"

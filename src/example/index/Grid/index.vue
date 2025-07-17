@@ -90,8 +90,21 @@ const charts = ref([
 		content: 'Item 1',
 	},
 ])
-
-const onClickItem = (chart, option) => {}
+setTimeout(() => {
+	charts.value.push({
+		prop: 'chart4',
+		x: 12,
+		y: 0,
+		w: 3,
+		h: 3,
+		title: '柱状图',
+		option: achart,
+		content: 'Item 1',
+	})
+}, 2000)
+const onClickItem = (chart, option) => {
+	console.log(chart, option)
+}
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">

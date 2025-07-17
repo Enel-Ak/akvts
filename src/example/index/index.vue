@@ -127,6 +127,23 @@ const tabledata = ref([
 	},
 	{id: 'test2', uui: 1},
 ])
+
+const addfChange = () => {
+	const input = document.querySelector('.addf')
+	console.log(input.value)
+	const file = input.files[0]
+	const reader = new FileReader()
+	reader.readAsText(file)
+	reader.onload = (e) => {
+		const blob = new Blob([e.target.result], {type: 'text/plain'})
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url
+		a.download = file.name
+		a.click()
+		URL.revokeObjectURL(url)
+	}
+}
 </script>
 <template>
 	<Block
@@ -339,7 +356,7 @@ const tabledata = ref([
 				</Form>
 			</div>
 		</template>
-
+		<input class="addf" type="file" @change="addfChange" />
 		<!-- <Loader :enable="true" /> -->
 		<Form v-model="abcForm" :props="abc" :grid="false" :column-count="4"></Form>
 		<LoadingTransition />
