@@ -28,6 +28,7 @@ const props = defineProps({
 const grid = ref()
 const gridProps = computed(() => props.props)
 const previousProps = ref([])
+const activeItem = ref(null)
 
 // 比较两个数组，找出新增、删除和更新的项目
 const diffProps = (newProps, oldProps) => {
@@ -105,6 +106,14 @@ watch(
 	{deep: true}
 )
 
+const onClickItem = (item) => {
+	if (activeItem.value?.prop === item.prop) {
+		activeItem.value = null
+		return
+	}
+	activeItem.value = item
+}
+
 onMounted(() => {
 	grid.value = GridStack.init()
 	previousProps.value = [...gridProps.value]
@@ -134,10 +143,12 @@ defineExpose({
 			>
 				<div
 					class="grid-stack-item-content"
+					:class="{active: activeItem?.prop === prop.prop}"
 					:style="{
 						overflowX: props.overflow[0],
 						overflowY: props.overflow[1],
 					}"
+					@click="onClickItem(prop)"
 				>
 					<slot :name="`grid-${prop.prop}`" :item="prop">
 						{{ prop.content }}
@@ -157,5 +168,10 @@ defineExpose({
 	border-radius: 5px;
 	background-color: var(--z-theme);
 	padding: 0 10px;
+	transition: all 0.3s ease;
+
+	&.active {
+		box-shadow: 0 0 0px 3px rgba(var(--z-main-rgb), 0.7);
+	}
 }
 </style>
