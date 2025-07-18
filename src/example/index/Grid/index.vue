@@ -1,6 +1,6 @@
 <script setup name="grid">
 import {ref} from 'vue'
-const achart = {
+const achart = ref({
 	grid: {
 		top: 10,
 		bottom: 20,
@@ -20,7 +20,7 @@ const achart = {
 			type: 'bar',
 		},
 	],
-}
+})
 
 const bchart = {
 	title: {
@@ -66,7 +66,7 @@ const charts = ref([
 		w: 3,
 		h: 3,
 		title: '柱状图',
-		option: achart,
+		option: achart.value,
 		content: 'Item 1',
 	},
 	{
@@ -86,7 +86,7 @@ const charts = ref([
 		w: 3,
 		h: 3,
 		title: '柱状图',
-		option: achart,
+		option: achart.value,
 		content: 'Item 1',
 	},
 ])
@@ -99,10 +99,11 @@ setTimeout(() => {
 		w: 3,
 		h: 3,
 		title: '柱状图',
-		option: achart,
+		option: achart.value,
 		content: 'Item 1',
 	})
-	console.log(111, gridLayoutRef.value.getConfig())
+	// console.log(111, gridLayoutRef.value.getConfig())
+	achart.value.series[0].itemStyle = {color: '#ff0000'}
 }, 2000)
 const onClickItem = (chart, option) => {
 	console.log(chart, option)
