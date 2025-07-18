@@ -105,13 +105,22 @@ setTimeout(() => {
 	// console.log(111, gridLayoutRef.value.getConfig())
 	achart.value.series[0].itemStyle = {color: '#ff0000'}
 }, 2000)
+
 const onClickItem = (chart, option) => {
 	console.log(chart, option)
 }
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">
-		<GridLayout ref="gridLayoutRef" :props="charts">
+		<GridLayout
+			ref="gridLayoutRef"
+			:props="charts"
+			@click-item="
+				(gridItem) => {
+					console.log(111, charts[0].obj.dispose())
+				}
+			"
+		>
 			<template #[`grid-${chart.prop}`] v-for="chart of charts">
 				<Block
 					:title="chart.title"
@@ -120,7 +129,11 @@ const onClickItem = (chart, option) => {
 					:enableExpandContent="false"
 					:enable-close-button="false"
 				>
-					<Charts :option="chart.option" @click-item="onClickItem" />
+					<Charts
+						:option="chart.option"
+						@click-item="onClickItem"
+						@completed="(abc) => (chart.obj = abc)"
+					/>
 				</Block>
 			</template>
 		</GridLayout>

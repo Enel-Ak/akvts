@@ -2,7 +2,7 @@
 import {nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch} from 'vue'
 import {init} from 'echarts'
 
-const emits = defineEmits(['clickItem'])
+const emits = defineEmits(['clickItem', 'completed'])
 const props = defineProps({
 	option: {
 		type: Object,
@@ -53,6 +53,7 @@ const initChart = async () => {
 		if (props.option && Object.keys(props.option).length > 0) {
 			chart.setOption(props.option)
 		}
+		emits('completed', chart)
 	} catch (err) {
 		console.error('初始化图表失败:', err)
 	}
