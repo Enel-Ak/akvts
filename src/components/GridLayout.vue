@@ -3,6 +3,7 @@ import {computed, nextTick, onMounted, ref, watch} from 'vue'
 import {GridStack} from 'gridstack'
 import 'gridstack/dist/gridstack.min.css'
 
+const emits = defineEmits(['clickItem'])
 const props = defineProps({
 	props: {
 		type: Array,
@@ -109,9 +110,11 @@ watch(
 const onClickItem = (item) => {
 	if (activeItem.value?.prop === item.prop) {
 		activeItem.value = null
-		return
+		emits('clickItem', null)
+	} else {
+		activeItem.value = item
+		emits('clickItem', item)
 	}
-	activeItem.value = item
 }
 
 onMounted(() => {
