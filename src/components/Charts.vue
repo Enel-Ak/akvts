@@ -20,6 +20,10 @@ const props = defineProps({
 		type: Number,
 		default: 16.7,
 	},
+	loading: {
+		type: Boolean,
+		default: true,
+	},
 })
 
 const id = `chart-${Math.random().toString(36).slice(2)}`
@@ -121,19 +125,65 @@ onUnmounted(() => {
 })
 </script>
 <template>
-	<div
-		ref="chartRef"
-		:id="id"
-		:key="id"
-		:style="{
-			width: chartWidth,
-			height: chartHeight,
-		}"
-		class="charts"
-		@click="setConfig"
-	></div>
+	<div class="charts-container">
+		<div
+			ref="chartRef"
+			:id="id"
+			:key="id"
+			:style="{
+				width: chartWidth,
+				height: chartHeight,
+			}"
+			class="charts"
+			@click="setConfig"
+		></div>
+		<div v-show="loading" class="loader-container">
+			<div class="loader"></div>
+		</div>
+	</div>
 </template>
 <style scoped lang="scss">
+.charts-container {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	.loader-container {
+		align-items: center;
+		justify-content: center;
+		display: flex;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(var(--z-theme-rgb), 0.7);
+	}
+
+	.loader {
+		width: fit-content;
+		font-size: 42px;
+		line-height: 1.5;
+		font-family: system-ui, sans-serif;
+		font-weight: bold;
+		text-transform: uppercase;
+		color: #0000;
+		-webkit-text-stroke: 1px var(--z-primary);
+		background: radial-gradient(1.13em at 50% 1.6em, var(--z-primary) 99%, #0000 101%)
+				calc(50% - 1.6em) 0/3.2em 100% text,
+			radial-gradient(1.13em at 50% -0.8em, #0000 99%, var(--z-primary) 101%) 50% 0.8em/3.2em
+				100% repeat-x text;
+		animation: l9 2s linear infinite;
+		transform: translateY(-30%);
+	}
+	.loader:before {
+		content: '.....';
+	}
+	@keyframes l9 {
+		to {
+			background-position: calc(50% + 1.6em) 0, calc(50% + 3.2em) 0.8em;
+		}
+	}
+}
 .charts {
 	width: 100%;
 	height: 100%;

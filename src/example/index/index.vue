@@ -361,7 +361,7 @@ const addfChange = () => {
 		<Form v-model="abcForm" :props="abc" :grid="false" :column-count="4"></Form>
 		<LoadingTransition />
 		<LoadingTransition color="#f00" />
-		<Dialog v-model="showDialog" title="加载状态" :loading="true">
+		<Dialog v-model="showDialog" title="加载状态" :loading="true" :enable-confirm="false">
 			<p style="width: 100%; height: 400px">123</p>
 		</Dialog>
 		<el-button @click="formRef.clear(true)">手动清空</el-button>
