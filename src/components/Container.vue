@@ -92,26 +92,26 @@ onUnmounted(() => {
 		:class="[model, isExpand ? '' : 'unexpand', enableFooter ? '' : 'no-footer']"
 	>
 		<template v-if="model === 'habf'">
-			<div class="container-header" v-if="frame.includes('header')">
+			<div class="container-header" v-show="frame.includes('header')">
 				<div v-if="enableExpand" class="expand" @click="onExpand">
 					<Icons name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
 				<slot name="header"></slot>
 			</div>
-			<div class="container-aside" v-if="frame.includes('aside')">
+			<div class="container-aside" v-show="frame.includes('aside')">
 				<slot name="aside"></slot>
 			</div>
 			<div
 				class="container-body"
-				v-if="frame.includes('default')"
+				v-show="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
 			>
-				<div class="container-body-sub" v-if="frame.includes('header')">
+				<div class="container-body-sub" v-show="frame.includes('header')">
 					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
 				<div
-					v-if="enableFooter && frame.includes('footer')"
+					v-show="enableFooter && frame.includes('footer')"
 					class="container-footer"
 					:class="{'no-aside': !frame.includes('aside')}"
 				>
@@ -122,10 +122,10 @@ onUnmounted(() => {
 			</div>
 		</template>
 		<template v-else-if="model === 'ahbf'">
-			<div class="container-aside" v-if="frame.includes('aside')">
+			<div class="container-aside" v-show="frame.includes('aside')">
 				<slot name="aside"></slot>
 			</div>
-			<div class="container-header" v-if="frame.includes('header')">
+			<div class="container-header" v-show="frame.includes('header')">
 				<div class="expand" @click="onExpand">
 					<Icons name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
@@ -134,15 +134,15 @@ onUnmounted(() => {
 			<div
 				class="container-body"
 				@scroll="onScroll"
-				v-if="frame.includes('default')"
+				v-show="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
 			>
-				<div class="container-body-sub" v-if="frame.includes('header')">
+				<div class="container-body-sub" v-show="frame.includes('header')">
 					<slot name="top"></slot>
 				</div>
 				<slot name="default"></slot>
 				<div
-					v-if="enableFooter && frame.includes('footer')"
+					v-show="enableFooter && frame.includes('footer')"
 					class="container-footer"
 					:class="{'no-aside': !frame.includes('aside')}"
 				>
