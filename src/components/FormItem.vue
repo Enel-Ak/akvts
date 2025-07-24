@@ -1049,6 +1049,32 @@ defineExpose({
 					</slot>
 				</div>
 
+				<!-- 滑块 -->
+				<div class="form-item" v-if="item.type === 'slider'">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<el-slider
+							v-model="_form[item.prop]"
+							v-bind="item.attrs"
+							@change="onChange($event, item)"
+							class="mg-left-15 mg-right-15 form-slider"
+						/>
+						<slot :name="`form-${item.prop}-right`"></slot>
+					</slot>
+				</div>
+
+				<!-- 颜色 -->
+				<div class="form-item" v-if="item.type === 'color'">
+					<slot :name="`form-${item.prop}`" :item="item">
+						<el-color-picker
+							v-model="_form[item.prop]"
+							v-bind="item.attrs"
+							@change="onChange($event, item)"
+							class="color-picker"
+						/>
+						<slot :name="`form-${item.prop}-right`"></slot>
+					</slot>
+				</div>
+
 				<template #error="scoped">
 					<slot :name="`form-${item.prop}-error`" :item="item"></slot>
 				</template>
@@ -1068,6 +1094,17 @@ defineExpose({
 :deep(.el-form-item__content),
 :deep(.el-form-item__label) {
 	color: var(--z-font-color);
+}
+
+:deep(.color-picker),
+:deep(.el-color-picker__trigger) {
+	width: 100%;
+}
+
+:deep(.form-slider) {
+	.el-tooltip__trigger {
+		border-color: var(--z-main);
+	}
 }
 
 .group {

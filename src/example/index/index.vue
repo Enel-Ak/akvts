@@ -55,6 +55,21 @@ const qqqq = (rule, value, callback) => {
 
 const abc = [
 	{
+		prop: 'color',
+		label: '测试',
+		type: 'color',
+	},
+	{
+		prop: 'slider',
+		label: '测试',
+		type: 'slider',
+		attrs: {
+			min: 0,
+			max: 100,
+			step: 1,
+		},
+	},
+	{
 		prop: 'uui',
 		label: '测试测试测试测试测试测试',
 		type: 'text',
