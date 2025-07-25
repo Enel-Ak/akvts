@@ -7,7 +7,7 @@ const emits = defineEmits(['collapse', 'scroll'])
 const props = defineProps({
 	model: {
 		type: String,
-		default: useContainerEnum.HABF, //ahbf, habf
+		default: useContainerEnum.HABF, //ahbf, habf, hbf, header body footer aside
 	},
 	expand: {
 		type: Boolean,
@@ -121,6 +121,7 @@ onUnmounted(() => {
 				</div>
 			</div>
 		</template>
+
 		<template v-else-if="model === 'ahbf'">
 			<div class="container-aside" v-show="frame.includes('aside')">
 				<slot name="aside"></slot>
@@ -129,6 +130,32 @@ onUnmounted(() => {
 				<div class="expand" @click="onExpand">
 					<Icons name="Back" size="12" color="var(--z-font-color)"></Icons>
 				</div>
+				<slot name="header"></slot>
+			</div>
+			<div
+				class="container-body"
+				@scroll="onScroll"
+				v-show="frame.includes('default')"
+				:class="{'no-aside': !frame.includes('aside')}"
+			>
+				<div class="container-body-sub" v-show="frame.includes('header')">
+					<slot name="top"></slot>
+				</div>
+				<slot name="default"></slot>
+				<div
+					v-show="enableFooter && frame.includes('footer')"
+					class="container-footer"
+					:class="{'no-aside': !frame.includes('aside')}"
+				>
+					<slot name="footer">
+						<div class="tac w-full">@CopyRight 2024 by Akvts.net</div>
+					</slot>
+				</div>
+			</div>
+		</template>
+
+		<template v-else-if="model === 'hbf'">
+			<div class="container-header" v-show="frame.includes('header')">
 				<slot name="header"></slot>
 			</div>
 			<div
@@ -271,6 +298,17 @@ $szie170: 170px;
 		.container-body {
 			margin-top: calc(v-bind(offset) + 30px);
 			width: calc(100% - torem($szie170));
+		}
+	}
+
+	&.hbf {
+		.container-header {
+			width: 100%;
+		}
+
+		.container-body {
+			margin-top: calc(v-bind(offset) + 30px);
+			width: 100%;
 		}
 	}
 

@@ -42,6 +42,14 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
+	direction: {
+		type: String,
+		default: 'vertical', // horizontal 水平 vertical 垂直
+	},
+	count: {
+		type: Number,
+		default: 10,
+	},
 })
 
 const route = useRoute()
@@ -49,6 +57,7 @@ const router = useRouter()
 const navRef = ref()
 const navItems = ref(props.items)
 const active = ref(props.defaultActive)
+const activeIndex = ref(0)
 const badges = ref(props.badges)
 const isCollapse = computed(() => props.collapse)
 
@@ -56,14 +65,16 @@ let currentScrollTop = 0
 let animationFrameId = null
 let isfirst = true
 
-const onClickItem = (item) => {
+const onClickItem = (item, idx = 0) => {
 	const isContinue = props.beforeRouter(item)
+	activeIndex.value = idx
 
 	if (isContinue) {
 		emits('update:modelValue', item[props.keys[0]])
 		emits('clickItem', item)
 		if (item.path) {
 			active.value = item[props.keys[0]]
+
 			router.push({
 				path: item.path,
 			})
@@ -138,6 +149,12 @@ const delayAnimation = () => {
 	)
 }
 
+const getItemChild = (item) => {
+	if (item.id === active.value.id) {
+		console.log(111, item, active.value)
+	}
+}
+
 watch(
 	() => props.items,
 	(newVal) => {
@@ -173,8 +190,13 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
-	<el-aside width="170px" class="aside" :class="{collapse: isCollapse}">
+	<el-aside
+		width="170px"
+		class="aside"
+		:class="{collapse: isCollapse, horizontal: direction === 'horizontal'}"
+	>
 		<el-menu
+			v-if="direction === 'vertical'"
 			ref="navRef"
 			v-bind="$attrs"
 			text-color="var(--z-bg)"
@@ -295,6 +317,26 @@ onBeforeUnmount(() => {
 				</el-sub-menu>
 			</template>
 		</el-menu>
+
+		<div v-if="direction === 'horizontal'" class="horizontal-menu">
+			<div
+				v-for="(item, index) of navItems"
+				class="item"
+				:style="{width: `${100 / props.count}%`}"
+				:class="{active: item[props.keys[0]] === active}"
+				@click="onClickItem(item, index)"
+			>
+				{{ item[props.keys[1]] }}
+				{{ getItemChild(item) }}
+			</div>
+			<span
+				class="bar"
+				:style="{
+					width: `${100 / props.count / 2}%`,
+					left: `${activeIndex * (100 / props.count) + 100 / props.count / 4}%`,
+				}"
+			></span>
+		</div>
 	</el-aside>
 </template>
 <style scoped lang="scss">
@@ -306,6 +348,7 @@ onBeforeUnmount(() => {
 		opacity: 1;
 	}
 }
+
 @keyframes opacityB {
 	from {
 		opacity: 0;
@@ -314,10 +357,59 @@ onBeforeUnmount(() => {
 		opacity: 1;
 	}
 }
+
 .aside {
 	animation: opacityA 0.15s 0.3s ease-in-out forwards;
 	background-color: var(--z-main);
 	opacity: 0;
+
+	&.horizontal {
+		align-items: center;
+		background-color: var(--z-theme);
+		display: flex;
+		flex: 1;
+		height: 100%;
+		overflow: hidden;
+	}
+
+	.horizontal-menu {
+		align-items: center;
+		display: flex;
+		flex: 1;
+		justify-content: flex-start;
+		height: 100%;
+		position: relative;
+
+		.bar {
+			top: 0px;
+			border-radius: 5px;
+			background-color: var(--z-primary);
+			height: 5px;
+			position: absolute;
+			transition: all 0.15s ease-in-out;
+		}
+
+		.item {
+			align-items: center;
+			border-left: 1px solid var(--z-line);
+			border-right: 1px solid var(--z-line);
+			cursor: pointer;
+			display: flex;
+			font-size: 14px;
+			justify-content: center;
+			height: 50%;
+			position: relative;
+			z-index: 2;
+
+			&.active {
+				font-weight: bold;
+			}
+
+			&:not(:first-child) {
+				margin-left: -1px;
+			}
+		}
+	}
 
 	&.collapse {
 		animation: opacityB 0.15s 0.3s ease-in-out forwards;

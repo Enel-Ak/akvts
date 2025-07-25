@@ -1103,7 +1103,7 @@ defineExpose({
 
 :deep(.form-slider) {
 	.el-tooltip__trigger {
-		border-color: var(--z-main);
+		border: 2px solid var(--z-main);
 	}
 }
 

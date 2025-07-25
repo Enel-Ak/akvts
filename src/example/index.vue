@@ -38,7 +38,7 @@ onMounted(() => {
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
 	<Watermark></Watermark>
-	<Container
+	<!-- <Container
 		model="habf"
 		:frame="['header', 'default', 'footer', 'aside']"
 		@collapse="($event) => (containerExpand = $event)"
@@ -52,6 +52,35 @@ onMounted(() => {
 				:badges="{首页: 99}"
 			/>
 		</template>
+		<template #top>
+			<Labels v-model="currentItemId" ref="labelsRef" :height="30" :navigator="nav"></Labels>
+		</template>
+
+		<router-view v-slot="{Component}">
+			<Transition name="fade" mode="out-in" appear>
+				<keep-alive :include="includeKeepAlive">
+					<component :is="Component" :key="$route.fullPath" />
+				</keep-alive>
+			</Transition>
+		</router-view>
+	</Container> -->
+
+	<Container
+		model="hbf"
+		:frame="['header', 'default', 'footer']"
+		@collapse="($event) => (containerExpand = $event)"
+	>
+		<template #header>
+			<h3 class="pd-30">AKVTS CMS LOGO</h3>
+			<Navigation
+				v-model="currentItemId"
+				:collapse="!containerExpand"
+				:items="nav"
+				:badges="{首页: 99}"
+				direction="horizontal"
+			/>
+		</template>
+
 		<template #top>
 			<Labels v-model="currentItemId" ref="labelsRef" :height="30" :navigator="nav"></Labels>
 		</template>
