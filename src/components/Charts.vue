@@ -1,5 +1,14 @@
 <script setup>
-import {nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch} from 'vue'
+import {
+	computed,
+	nextTick,
+	onActivated,
+	onDeactivated,
+	onMounted,
+	onUnmounted,
+	ref,
+	watch,
+} from 'vue'
 import {init} from 'echarts'
 
 const emits = defineEmits(['clickItem', 'completed'])
@@ -30,6 +39,7 @@ const id = `chart-${Math.random().toString(36).slice(2)}`
 const chartRef = ref()
 const chartHeight = ref(typeof props.height === 'number' ? `${props.height}px` : props.height)
 const chartWidth = ref(typeof props.width === 'number' ? `${props.width}px` : props.width)
+const showLoading = computed(() => props.loading)
 let chart = null
 let observer = null
 let observerTimer = null
@@ -137,7 +147,7 @@ onUnmounted(() => {
 			class="charts"
 			@click="setConfig"
 		></div>
-		<div v-show="loading" class="loader-container">
+		<div v-show="showLoading" class="loader-container">
 			<div class="loader"></div>
 		</div>
 	</div>
