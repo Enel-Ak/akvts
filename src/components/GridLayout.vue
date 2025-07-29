@@ -1,9 +1,9 @@
 <script setup>
-import {computed, nextTick, onMounted, ref, watch} from 'vue'
+import {computed, nextTick, onMounted, onUnmounted, ref, watch, toRaw} from 'vue'
 import {GridStack} from 'gridstack'
 import 'gridstack/dist/gridstack.min.css'
 
-const emits = defineEmits(['clickItem'])
+const emits = defineEmits(['clickItem', 'change'])
 const props = defineProps({
 	props: {
 		type: Array,
@@ -117,9 +117,22 @@ const onClickItem = (item) => {
 	}
 }
 
+const changeGridStack = (event, items) => {
+	emits(
+		'change',
+		event,
+		items.map((item) => toRaw(item))
+	)
+}
+
 onMounted(() => {
 	grid.value = GridStack.init()
+	grid.value.on('change', changeGridStack)
 	previousProps.value = [...gridProps.value]
+})
+
+onUnmounted(() => {
+	grid.value.off('change', changeGridStack)
 })
 
 defineExpose({
