@@ -1,6 +1,12 @@
 <script setup name="grid">
-import {ref} from 'vue'
-const achart = ref({
+import {ref, toRaw} from 'vue'
+const achart = {
+	tooltip: {
+		trigger: 'axis',
+		axisPointer: {
+			type: 'shadow',
+		},
+	},
 	grid: {
 		top: 10,
 		bottom: 20,
@@ -20,7 +26,7 @@ const achart = ref({
 			type: 'bar',
 		},
 	],
-})
+}
 
 const bchart = {
 	title: {
@@ -66,7 +72,7 @@ const charts = ref([
 		w: 3,
 		h: 3,
 		title: '柱状图',
-		option: achart.value,
+		option: achart,
 		content: 'Item 1',
 	},
 	{
@@ -91,6 +97,7 @@ const charts = ref([
 	},
 ])
 const gridLayoutRef = ref()
+const chartRefMap = new Map()
 setTimeout(() => {
 	charts.value.push({
 		prop: 'chart4',
@@ -99,11 +106,68 @@ setTimeout(() => {
 		w: 3,
 		h: 3,
 		title: '柱状图',
-		option: achart.value,
+		option: achart,
 		content: 'Item 1',
 	})
+	console.log(111, chartRefMap)
+
+	chartRefMap.get('chart2').setOption({
+		tooltip: {
+			trigger: 'axis',
+			axisPointer: {
+				type: 'shadow',
+			},
+		},
+		grid: {
+			top: 10,
+			bottom: 20,
+			left: 35,
+			right: 10,
+		},
+		xAxis: {
+			type: 'category',
+			data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
+		},
+		yAxis: {
+			type: 'value',
+		},
+		series: [
+			{
+				data: [120, 5, 1504, 80, 54, 110, 130],
+				type: 'bar',
+			},
+		],
+	})
+
 	// console.log(111, gridLayoutRef.value.getConfig())
-	achart.value.series[0].itemStyle = {color: '#ff0000'}
+	// achart.value.series[0].itemStyle = {color: '#ff0000'}
+	// charts.value[0].obj.setOption({
+	// 	tooltip: {
+	// 		trigger: 'axis',
+	// 		axisPointer: {
+	// 			type: 'shadow',
+	// 		},
+	// 	},
+	// 	grid: {
+	// 		top: 10,
+	// 		bottom: 20,
+	// 		left: 35,
+	// 		right: 10,
+	// 	},
+	// 	xAxis: {
+	// 		type: 'category',
+	// 		data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
+	// 	},
+	// 	yAxis: {
+	// 		type: 'value',
+	// 	},
+	// 	series: [
+	// 		{
+	// 			data: [120, 5, 1504, 80, 54, 110, 130],
+	// 			type: 'bar',
+	// 		},
+	// 	],
+	// })
 }, 2000)
 
 const onClickItem = (chart, option) => {
@@ -117,11 +181,39 @@ const onClickItem = (chart, option) => {
 			:props="charts"
 			@click-item="
 				(gridItem) => {
-					console.log(111, charts[0].obj.dispose())
+					charts[0].obj.setOption({
+						tooltip: {
+							trigger: 'axis',
+							axisPointer: {
+								type: 'shadow',
+							},
+						},
+						grid: {
+							top: 10,
+							bottom: 20,
+							left: 35,
+							right: 10,
+						},
+						xAxis: {
+							type: 'category',
+							data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
+						},
+						yAxis: {
+							type: 'value',
+						},
+						series: [
+							{
+								data: [120, 5, 1504, 80, 54, 110, 130],
+								type: 'bar',
+							},
+						],
+					})
+
+					// console.log(111, charts[0].obj.dispose())
 				}
 			"
 		>
-			<template #[`grid-${chart.prop}`] v-for="chart of charts">
+			<template #[`grid-${chart.prop}`] v-for="(chart, index) of charts">
 				<Block
 					:title="chart.title"
 					:border="false"
@@ -130,9 +222,10 @@ const onClickItem = (chart, option) => {
 					:enable-close-button="false"
 				>
 					<Charts
+						:ref="(el) => chartRefMap.set(chart.prop, toRaw(el))"
+						:loading="false"
 						:option="chart.option"
 						@click-item="onClickItem"
-						@completed="(abc) => (chart.obj = abc)"
 					/>
 				</Block>
 			</template>

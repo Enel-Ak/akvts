@@ -38,18 +38,23 @@ const diffProps = (newProps, oldProps) => {
 
 	const added = newProps.filter((item) => !oldMap.has(item.prop))
 	const removed = oldProps.filter((item) => !newMap.has(item.prop))
+
+	// 优化：只比较布局相关的属性，避免深度比较复杂对象
 	const updated = newProps.filter((item) => {
 		const oldItem = oldMap.get(item.prop)
+		if (!oldItem) return false
+
+		// 只比较影响布局的关键属性
 		return (
-			oldItem &&
-			(oldItem.x !== item.x ||
-				oldItem.y !== item.y ||
-				oldItem.w !== item.w ||
-				oldItem.h !== item.h ||
-				JSON.stringify(oldItem.option) !== JSON.stringify(item.option) ||
-				JSON.stringify(oldItem.config) !== JSON.stringify(item.config) ||
-				oldItem.content !== item.content)
+			oldItem.x !== item.x ||
+			oldItem.y !== item.y ||
+			oldItem.w !== item.w ||
+			oldItem.h !== item.h ||
+			oldItem.content !== item.content
 		)
+
+		// 移除对 option 和 config 的深度比较，因为这些不影响 GridStack 布局
+		// 如果需要检测这些变化，应该在组件内部处理，而不是在这里
 	})
 
 	return {added, removed, updated}
@@ -96,13 +101,24 @@ const updateGridStack = (newProps, oldProps) => {
 	})
 }
 
+let updateTimer = null
+
 watch(
 	gridProps,
 	(newProps, oldProps) => {
-		if (grid.value && oldProps) {
-			updateGridStack(newProps, previousProps.value)
+		// 清除之前的定时器
+		if (updateTimer) {
+			clearTimeout(updateTimer)
 		}
-		previousProps.value = [...newProps]
+
+		// 设置防抖，避免频繁更新
+		updateTimer = setTimeout(() => {
+			if (grid.value && oldProps) {
+				updateGridStack(newProps, previousProps.value)
+			}
+			previousProps.value = [...newProps]
+			updateTimer = null
+		}, 16) // 16ms 防抖，约等于一帧的时间
 	},
 	{deep: true}
 )
@@ -132,6 +148,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+	if (updateTimer) {
+		clearTimeout(updateTimer)
+	}
 	grid.value.off('change', changeGridStack)
 })
 

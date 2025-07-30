@@ -31,7 +31,7 @@ const props = defineProps({
 	},
 	loading: {
 		type: Boolean,
-		default: true,
+		default: false,
 	},
 })
 
@@ -65,7 +65,7 @@ const initChart = async () => {
 	try {
 		chart = init(chartDom)
 		if (props.option && Object.keys(props.option).length > 0) {
-			chart.setOption(props.option)
+			chart.setOption(props.option, true)
 		}
 		emits('completed', chart)
 	} catch (err) {
@@ -111,7 +111,7 @@ watch(
 			nextTick(() => {
 				if (chart) {
 					chart.clear()
-					chart.setOption(newVal)
+					chart.setOption(newVal, true)
 				} else {
 					initChart()
 				}
@@ -132,6 +132,15 @@ onDeactivated(() => {})
 
 onUnmounted(() => {
 	cleanUp()
+})
+
+defineExpose({
+	getEchart: () => chart,
+	setOption: (option, bool = true) => {
+		if (chart) {
+			chart.setOption(option, bool)
+		}
+	},
 })
 </script>
 <template>
