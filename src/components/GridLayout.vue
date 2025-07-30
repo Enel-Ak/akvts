@@ -101,24 +101,13 @@ const updateGridStack = (newProps, oldProps) => {
 	})
 }
 
-let updateTimer = null
-
 watch(
 	gridProps,
 	(newProps, oldProps) => {
-		// 清除之前的定时器
-		if (updateTimer) {
-			clearTimeout(updateTimer)
+		if (grid.value && oldProps) {
+			updateGridStack(newProps, previousProps.value)
 		}
-
-		// 设置防抖，避免频繁更新
-		updateTimer = setTimeout(() => {
-			if (grid.value && oldProps) {
-				updateGridStack(newProps, previousProps.value)
-			}
-			previousProps.value = [...newProps]
-			updateTimer = null
-		}, 16) // 16ms 防抖，约等于一帧的时间
+		previousProps.value = [...newProps]
 	},
 	{deep: true}
 )
@@ -148,9 +137,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-	if (updateTimer) {
-		clearTimeout(updateTimer)
-	}
 	grid.value.off('change', changeGridStack)
 })
 
