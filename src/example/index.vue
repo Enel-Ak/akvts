@@ -34,17 +34,30 @@ onMounted(() => {
 	// labelsRef.value.clear()
 	// }, 5000)
 })
+
+const containerModel = ref('habf') // habf, ahbf, hbf
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
 	<Watermark></Watermark>
-	<!-- <Container
-		model="habf"
+
+	<Container
+		:model="containerModel"
 		:frame="['header', 'default', 'footer', 'aside']"
 		@collapse="($event) => (containerExpand = $event)"
 	>
-		<template #header> {{ currentItemId }}</template>
-		<template #aside>
+		<template #header>
+			{{ currentItemId }}
+			<Navigation
+				v-if="containerModel === 'hbf'"
+				v-model="currentItemId"
+				:collapse="!containerExpand"
+				:items="nav"
+				:badges="{首页: 99}"
+				direction="horizontal"
+			/>
+		</template>
+		<template #aside v-if="containerModel !== 'hbf'">
 			<Navigation
 				v-model="currentItemId"
 				:collapse="!containerExpand"
@@ -53,7 +66,13 @@ onMounted(() => {
 			/>
 		</template>
 		<template #top>
-			<Labels v-model="currentItemId" ref="labelsRef" :height="30" :navigator="nav"></Labels>
+			<Labels
+				v-model="currentItemId"
+				ref="labelsRef"
+				:height="30"
+				:navigator="nav"
+				:simple="containerModel === 'hbf'"
+			></Labels>
 		</template>
 
 		<router-view v-slot="{Component}">
@@ -63,9 +82,10 @@ onMounted(() => {
 				</keep-alive>
 			</Transition>
 		</router-view>
-	</Container> -->
+	</Container>
 
-	<Container
+	<!-- hbf -->
+	<!-- <Container
 		model="hbf"
 		:frame="['header', 'default', 'footer']"
 		@collapse="($event) => (containerExpand = $event)"
@@ -98,6 +118,6 @@ onMounted(() => {
 				</keep-alive>
 			</Transition>
 		</router-view>
-	</Container>
+	</Container> -->
 </template>
 <style scoped lang="scss"></style>
