@@ -408,14 +408,15 @@
 		}
 
 		&.lock {
-			// background-color: var(--z-sheet-virtual);
-			background: repeating-linear-gradient(
-				125deg,
-				rgba(var(--z-font-color-rgb), 0.1),
-				rgba(var(--z-font-color-rgb), 0.2) 1px,
-				rgba(var(--z-font-color-rgb), 0) 1px,
-				rgba(var(--z-font-color-rgb), 0) 5px
-			);
+			background: rgba(var(--z-bg-gray-rgb), 1)
+				repeating-linear-gradient(
+					125deg,
+					rgba(var(--z-line-rgb), 1),
+					rgba(var(--z-line-rgb), 1) 1px,
+					rgba(var(--z-line-rgb), 0) 1px,
+					rgba(var(--z-line-rgb), 0) 5px
+				) !important;
+			color: var(--z-font-color) !important;
 		}
 
 		&:focus {

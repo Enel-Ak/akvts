@@ -594,6 +594,7 @@ onBeforeUnmount(() => {
 </style>
 <style>
 .navigation-component-child {
+	background-color: rgba(var(--z-main-rgb), 0.05);
 	border: 1px solid var(--z-line);
 	border-top: none;
 	position: fixed;
@@ -608,7 +609,7 @@ onBeforeUnmount(() => {
 
 	.item-child-item {
 		box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
-		background: #fff;
+		background: var(--z-theme);
 		cursor: pointer;
 		text-align: center;
 
