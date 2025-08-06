@@ -82,7 +82,13 @@ onMounted(() => {
 		</template>
 
 		<template #top>
-			<Labels v-model="currentItemId" ref="labelsRef" :height="30" :navigator="nav"></Labels>
+			<Labels
+				v-model="currentItemId"
+				ref="labelsRef"
+				:height="30"
+				:navigator="nav"
+				:simple="true"
+			></Labels>
 		</template>
 
 		<router-view v-slot="{Component}">

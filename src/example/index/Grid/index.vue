@@ -176,43 +176,7 @@ const onClickItem = (chart, option) => {
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">
-		<GridLayout
-			ref="gridLayoutRef"
-			:props="charts"
-			@click-item="
-				(gridItem) => {
-					charts[0].obj.setOption({
-						tooltip: {
-							trigger: 'axis',
-							axisPointer: {
-								type: 'shadow',
-							},
-						},
-						grid: {
-							top: 10,
-							bottom: 20,
-							left: 35,
-							right: 10,
-						},
-						xAxis: {
-							type: 'category',
-							data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
-						},
-						yAxis: {
-							type: 'value',
-						},
-						series: [
-							{
-								data: [120, 5, 1504, 80, 54, 110, 130],
-								type: 'bar',
-							},
-						],
-					})
-
-					// console.log(111, charts[0].obj.dispose())
-				}
-			"
-		>
+		<GridLayout ref="gridLayoutRef" :props="charts" @click-item="(gridItem) => {}">
 			<template #[`grid-${chart.prop}`] v-for="(chart, index) of charts">
 				<Block
 					:title="chart.title"

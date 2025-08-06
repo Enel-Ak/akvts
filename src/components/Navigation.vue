@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onBeforeUnmount, onMounted, watch, ref, nextTick} from 'vue'
+import {computed, onBeforeUnmount, onMounted, watch, ref, nextTick, h, Teleport} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 
 const emits = defineEmits(['clickItem', 'update:modelValue'])
@@ -56,10 +56,22 @@ const route = useRoute()
 const router = useRouter()
 const navRef = ref()
 const navItems = ref(props.items)
+const flat = computed(() => {
+	return navItems.value.reduce((pre, cur) => {
+		if (cur.children && cur.children.length > 0) {
+			pre.push(cur)
+			pre.push(...cur.children)
+		}
+		return pre
+	}, [])
+})
 const active = ref(props.defaultActive)
 const activeIndex = ref(0)
+const activeChild = ref(null)
 const badges = ref(props.badges)
+const isChildMenuAnimating = ref(false)
 const isCollapse = computed(() => props.collapse)
+const isOpen = ref(false)
 
 let currentScrollTop = 0
 let animationFrameId = null
@@ -72,18 +84,65 @@ const onClickItem = (item, idx = 0) => {
 	if (isContinue) {
 		emits('update:modelValue', item[props.keys[0]])
 		emits('clickItem', item)
-		if (item.path) {
-			active.value = item[props.keys[0]]
 
-			router.push({
-				path: item.path,
-			})
+		// 处理子菜单显示/隐藏逻辑
+		if (item.children && item.children.length > 0) {
+			// 如果点击的是同一个菜单项，则切换显示状态
+			if (activeChild.value === item[props.keys[0]]) {
+				// 隐藏子菜单动画
+				hideChildMenu()
+			} else {
+				// 显示子菜单动画
+				showChildMenu(item[props.keys[0]])
+			}
+		} else {
+			// 如果没有子菜单，隐藏当前显示的子菜单
+			if (activeChild.value) {
+				hideChildMenu()
+			}
+
+			// 如果有路径，进行路由跳转
+			if (item.path) {
+				router.push({
+					path: item.path,
+				})
+			}
 		}
 	}
 }
 
+// 显示子菜单动画
+const showChildMenu = (itemId) => {
+	if (isChildMenuAnimating.value) return
+
+	// 设置活动菜单和动画状态
+	activeChild.value = itemId
+	isChildMenuAnimating.value = true
+
+	// 等待下一帧再结束动画
+	nextTick(() => {
+		setTimeout(() => {
+			isChildMenuAnimating.value = false
+		}, 50)
+	})
+}
+
+// 隐藏子菜单动画
+const hideChildMenu = () => {
+	if (isChildMenuAnimating.value) return
+
+	// 开始隐藏动画
+	isChildMenuAnimating.value = true
+
+	// 等待动画结束后隐藏菜单
+	setTimeout(() => {
+		activeChild.value = null
+		isChildMenuAnimating.value = false
+	}, 300)
+}
+
 const animation = () => {
-	const target = document.querySelector(`[data-nav-id="${active.value}"]`)
+	const target = document.querySelector(`[data-nav-id="${activeChild.value}"]`)
 	const container = target?.closest('.' + props.containerClass)
 
 	if (target && container) {
@@ -149,9 +208,67 @@ const delayAnimation = () => {
 	)
 }
 
-const getItemChild = (item) => {
-	if (item.id === active.value.id) {
-		console.log(111, item, active.value)
+const getItemChild = (item, index, level = 1) => {
+	if (item.id === activeChild.value && item.children && !isOpen.value) {
+		const getCurrentMenuPosition = () => {
+			const menuElement = document.querySelector(`.item[data-item-id="${item.id}"]`)
+			if (menuElement) {
+				const rect = menuElement.getBoundingClientRect()
+				return {
+					left: rect.left,
+					top: rect.bottom,
+					width: rect.width,
+				}
+			}
+			return {left: 0, top: 0, width: 0}
+		}
+
+		const position = getCurrentMenuPosition()
+		return h(
+			Teleport,
+			{
+				to: 'body',
+			},
+			h(
+				'ul',
+				{
+					class: ['navigation-component-child', 'item-child', `level-${level}`],
+					style: {
+						// 动态位置样式
+						left: `${position.left}px`,
+						// top: `${position.top + 12.5}px`,
+						top: 0,
+						minWidth: `${position.width - 0.5}px`,
+						// 动画状态样式
+						transform: isChildMenuAnimating.value
+							? 'scaleY(0) translateY(-10px)'
+							: 'scaleY(1) translateY(0)',
+						opacity: isChildMenuAnimating.value ? 0 : 1,
+					},
+					onMouseleave: () => hideChildMenu(),
+				},
+				item.children.map((child) =>
+					h(
+						'li',
+						{
+							class: 'item-child-item',
+							key: child.id,
+						},
+						[
+							h(
+								'div',
+								{
+									class: ['child-content'],
+									onClick: () => onClickItem(child, index),
+								},
+								child.label
+							),
+							child.children ? getItemChild(child, index, level + 1) : null,
+						]
+					)
+				)
+			)
+		)
 	}
 }
 
@@ -174,7 +291,17 @@ watch(
 watch(
 	() => props.modelValue,
 	(newVal) => {
-		active.value = newVal
+		const find = flat.value.find((item) => item[props.keys[0]] === newVal)
+		let findIndex = 0
+		if (find && find.pid) {
+			findIndex = navItems.value.findIndex((item) => item[props.keys[0]] === find.pid)
+			active.value = find.pid
+		} else {
+			findIndex = navItems.value.findIndex((item) => item[props.keys[0]] === newVal)
+			active.value = newVal
+		}
+		activeIndex.value = findIndex
+
 		nextTick(() => delayAnimation())
 	},
 	{immediate: true}
@@ -191,7 +318,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
 	<el-aside
-		width="170px"
+		:width="direction === 'horizontal' ? '100%' : '170px'"
 		class="aside"
 		:class="{collapse: isCollapse, horizontal: direction === 'horizontal'}"
 	>
@@ -322,12 +449,14 @@ onBeforeUnmount(() => {
 			<div
 				v-for="(item, index) of navItems"
 				class="item"
+				:data-item-id="item[props.keys[0]]"
 				:style="{width: `${100 / props.count}%`}"
 				:class="{active: item[props.keys[0]] === active}"
 				@click="onClickItem(item, index)"
+				@mouseenter="item.children ? showChildMenu(item.id) : false"
 			>
-				{{ item[props.keys[1]] }}
-				{{ getItemChild(item) }}
+				<span>{{ item[props.keys[1]] }}</span>
+				<component :is="() => getItemChild(item, index)" />
 			</div>
 			<span
 				class="bar"
@@ -379,27 +508,37 @@ onBeforeUnmount(() => {
 		justify-content: flex-start;
 		height: 100%;
 		position: relative;
+		user-select: none;
 
 		.bar {
-			top: 0px;
+			bottom: 0px;
 			border-radius: 5px;
 			background-color: var(--z-primary);
 			height: 5px;
 			position: absolute;
-			transition: all 0.15s ease-in-out;
+			transition: all 0.15s linear;
 		}
 
 		.item {
 			align-items: center;
-			border-left: 1px solid var(--z-line);
-			border-right: 1px solid var(--z-line);
 			cursor: pointer;
 			display: flex;
 			font-size: 14px;
 			justify-content: center;
-			height: 50%;
+			height: 100%;
 			position: relative;
 			z-index: 2;
+
+			> span {
+				align-items: center;
+				display: flex;
+				border-left: 1px solid var(--z-line);
+				border-right: 1px solid var(--z-line);
+				height: 50%;
+				justify-content: center;
+				transition: all 0.3s ease-in-out;
+				width: 100%;
+			}
 
 			&.active {
 				font-weight: bold;
@@ -450,6 +589,47 @@ onBeforeUnmount(() => {
 	}
 	:deep(.el-sub-menu__icon-arrow) {
 		margin-top: -7px;
+	}
+}
+</style>
+<style>
+.navigation-component-child {
+	border: 1px solid var(--z-line);
+	border-top: none;
+	position: fixed;
+	z-index: 9999;
+	padding: 55px 0 0 0;
+	margin: 0;
+	list-style: none;
+	transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+	transform-origin: top center;
+	user-select: none;
+	cursor: pointer;
+
+	.item-child-item {
+		box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+		background: #fff;
+		cursor: pointer;
+		text-align: center;
+
+		.child-content {
+			font-size: 14px;
+			padding: 15px 10px;
+			opacity: 0.8;
+			&:hover,
+			&.active {
+				font-weight: 500;
+				opacity: 1;
+			}
+		}
+
+		&:not(:last-child) {
+			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
+		}
+
+		&:last-child {
+			border-radius: 0 0 4px 4px;
+		}
 	}
 }
 </style>

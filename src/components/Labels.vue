@@ -24,6 +24,10 @@ const props = defineProps({
 		type: Number,
 		default: 5,
 	},
+	simple: {
+		type: Boolean,
+		default: true,
+	},
 })
 
 const route = useRoute()
@@ -350,8 +354,8 @@ defineExpose({
 })
 </script>
 <template>
-	<div class="labels-component">
-		<template v-for="(item, index) of items">
+	<div class="labels-component" :class="{simple}">
+		<template v-if="!simple" v-for="(item, index) of items">
 			<button
 				v-if="index < $props.max"
 				type="button"
@@ -380,6 +384,20 @@ defineExpose({
 					@click.stop="onCancelItem(item)"
 				></Icons>
 			</button>
+		</template>
+		<template v-else>
+			<div class="simple-labels">
+				<template v-for="(item, idx) of items">
+					<span
+						v-if="idx < $props.max"
+						@click="onClickLabel(item)"
+						:class="{active: current?.path === item.path}"
+					>
+						{{ item.modifiedTitle || item[keys[1]] }}
+						<Icons name="Clear2" size="12px" @click.stop="onCancelItem(item)"></Icons>
+					</span>
+				</template>
+			</div>
 		</template>
 		<!-- <span class="bar"></span> -->
 
@@ -513,6 +531,40 @@ defineExpose({
 
 		.el-icon--right {
 			position: relative;
+		}
+	}
+
+	&.simple {
+		height: 100%;
+	}
+	.simple-labels {
+		align-items: center;
+		display: flex;
+		padding: 0 20px;
+		justify-content: center;
+		user-select: none;
+		width: 100%;
+		span {
+			align-items: center;
+			cursor: pointer;
+			display: flex;
+			font-size: 13px;
+			text-align: center;
+			opacity: 0.7;
+			padding: 0 15px;
+
+			&.active {
+				font-weight: 500;
+				opacity: 1;
+				i {
+					opacity: 1;
+				}
+			}
+
+			i {
+				margin: 2px 0 0 10px;
+				opacity: 0.2;
+			}
 		}
 	}
 }

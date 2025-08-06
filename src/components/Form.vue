@@ -20,7 +20,7 @@ const props = defineProps({
 	loading: {type: Boolean, default: false},
 	disable: {type: Boolean, default: false},
 	data: {type: Array, default: () => []}, // 默认值可以从配置的value设置, 但是不支持重置 , 弃用
-	props: {type: Object, default: () => []}, // 表单配置, 同data, 后续会废弃data
+	props: {type: Object, default: () => []}, // 表单配置, 同data, 后续会废弃data, {prop, label, type}
 	defaultData: {type: Object, default: () => ({})}, // 用于表格的新增/编辑表单, 弃用
 	rules: {type: Object, default: () => ({})},
 	labelWidth: {type: [String, Number], default: '100px'},

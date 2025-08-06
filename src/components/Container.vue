@@ -204,7 +204,7 @@ $szie170: 170px;
 		overflow: hidden;
 		position: fixed;
 		top: 0;
-		z-index: 1;
+		z-index: 3;
 
 		.expand {
 			align-items: center;
@@ -234,6 +234,7 @@ $szie170: 170px;
 		position: relative;
 		overflow: auto;
 		overflow-x: hidden;
+		z-index: 2;
 
 		.container-body-sub {
 			background-color: var(--z-theme);
