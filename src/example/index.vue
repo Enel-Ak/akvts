@@ -21,6 +21,65 @@ const nav = [
 			{id: 'bbbbb', label: 'AirSheet', path: '/AirSheet', sort: 3, pid: 'b'},
 		],
 	},
+	{
+		id: 'c',
+		icon: 'Notifications',
+		label: '测试',
+		path: '',
+		sort: 3,
+		children: [
+			{
+				id: 'cc',
+				label: '测试1',
+				path: '/Grid',
+				sort: 1,
+				pid: 'c',
+				children: [
+					{
+						id: 'ccc1',
+						label: '测试1-1测试1-1测试1-1测试1-1测试1-1测试1-1测试1-1测试1-1',
+						path: '/Grid',
+						sort: 1,
+						pid: 'cc',
+						children: [],
+					},
+					{
+						id: 'ccc2',
+						label: '测试1-2',
+						path: '/Grid',
+						sort: 1,
+						pid: 'cc',
+						children: [],
+					},
+				],
+			},
+			{
+				id: 'ccc',
+				label: '测试2',
+				path: '/Block',
+				sort: 2,
+				pid: 'c',
+				children: [
+					{
+						id: 'ccc2',
+						label: '测试2-1',
+						path: '/Grid',
+						sort: 1,
+						pid: 'cc',
+						children: [],
+					},
+					{
+						id: 'ccc3',
+						label: '测试2-2',
+						path: '/Grid',
+						sort: 1,
+						pid: 'cc',
+						children: [],
+					},
+				],
+			},
+		],
+	},
 ]
 
 const labelsRef = ref()
@@ -35,7 +94,7 @@ onMounted(() => {
 	// }, 5000)
 })
 
-const containerModel = ref('habf') // habf, ahbf, hbf
+const containerModel = ref('hbf') // habf, ahbf, hbf
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -57,7 +116,7 @@ const containerModel = ref('habf') // habf, ahbf, hbf
 				direction="horizontal"
 			/>
 		</template>
-		<template #aside v-if="containerModel !== 'hbf'">
+		<template #aside>
 			<Navigation
 				v-model="currentItemId"
 				:collapse="!containerExpand"
