@@ -394,7 +394,12 @@ defineExpose({
 						:class="{active: current?.path === item.path}"
 					>
 						{{ item.modifiedTitle || item[keys[1]] }}
-						<Icons name="Clear2" size="12px" @click.stop="onCancelItem(item)"></Icons>
+						<Icons
+							v-if="idx > 0"
+							name="Clear2"
+							size="12px"
+							@click.stop="onCancelItem(item)"
+						></Icons>
 					</span>
 				</template>
 			</div>
