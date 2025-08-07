@@ -25,13 +25,11 @@ const nav = [
 		id: 'c',
 		icon: 'Notifications',
 		label: '测试',
-		path: '',
 		sort: 3,
 		children: [
 			{
 				id: 'cc',
 				label: '测试1',
-				path: '/Grid',
 				sort: 1,
 				pid: 'c',
 				children: [
@@ -56,7 +54,6 @@ const nav = [
 			{
 				id: 'ccc',
 				label: '测试2',
-				path: '/Block',
 				sort: 2,
 				pid: 'c',
 				children: [

@@ -87,9 +87,8 @@ const onClickItem = (item, idx = 0) => {
 		emits('update:modelValue', item[props.keys[0]])
 		emits('clickItem', item)
 
-		hideChildMenu()
-
-		if (item.path) {
+		if (item.path && (!item.hasOwnProperty('children') || item.children.length === 0)) {
+			hideChildMenu()
 			router.push({
 				path: item.path,
 			})
@@ -242,7 +241,7 @@ const getItemChild = (item, index, level = 1, parentId = '') => {
 
 			if (menuElement) {
 				const rect = menuElement.getBoundingClientRect()
-				const menuWidth = 200 // 预估菜单宽度
+				const menuWidth = rect.width // 预估菜单宽度
 
 				if (level === 1) {
 					// 一级菜单在下方显示
@@ -257,9 +256,7 @@ const getItemChild = (item, index, level = 1, parentId = '') => {
 					const isOverflow = checkMenuOverflow(rect, menuWidth)
 
 					return {
-						left: isOverflow
-							? rect.left - rect.width - menuWidth * 2 + 35
-							: rect.left - menuWidth + 12,
+						left: isOverflow ? rect.left - rect.width - menuWidth * 2 - 10 : rect.width,
 						top: rect.top,
 						width: menuWidth,
 						isOverflow,
@@ -530,25 +527,37 @@ onBeforeUnmount(() => {
 		</el-menu>
 
 		<div v-if="direction === 'horizontal'" class="horizontal-menu">
-			<div
-				v-for="(item, index) of navItems"
-				class="item"
-				:data-item-id="item[props.keys[0]]"
-				:style="{width: `${100 / props.count}%`}"
-				:class="{active: item[props.keys[0]] === active}"
-				@click="onClickItem(item, index)"
-				@mouseenter="item.children ? showChildMenu(item.id) : false"
-			>
-				<span>{{ item[props.keys[1]] }}</span>
-				<component :is="() => getItemChild(item, index)" />
-			</div>
-			<span
-				class="bar"
-				:style="{
-					width: `${100 / props.count / 2}%`,
-					left: `${activeIndex * (100 / props.count) + 100 / props.count / 4}%`,
-				}"
-			></span>
+			<template v-for="(item, index) of navItems">
+				<div
+					v-if="item.hasOwnProperty('enable') ? item.enable : true"
+					class="item"
+					:data-item-id="item[props.keys[0]]"
+					:style="{width: `${100 / props.count}%`}"
+					:class="{active: item[props.keys[0]] === active}"
+					@click="onClickItem(item, index)"
+					@mouseenter="item.children ? showChildMenu(item.id) : false"
+				>
+					<span>
+						{{ item[props.keys[1]] }}
+						<Icons
+							v-if="item.children && item.children.length > 0"
+							name="Expand"
+							class="pd-left-10"
+						/>
+					</span>
+					<component
+						v-if="item.children && item.children.length > 0"
+						:is="() => getItemChild(item, index)"
+					/>
+				</div>
+				<span
+					class="bar"
+					:style="{
+						width: `${100 / props.count / 2}%`,
+						left: `${activeIndex * (100 / props.count) + 100 / props.count / 4}%`,
+					}"
+				></span>
+			</template>
 		</div>
 	</el-aside>
 </template>
@@ -715,25 +724,18 @@ onBeforeUnmount(() => {
 			}
 		}
 
-		&:not(:last-child) {
-			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
+		&:first-child {
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 		}
 
-		&:last-child {
-			border-radius: 0 0 4px 4px;
+		&:not(:last-child) {
+			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
 		}
 	}
 
 	.navigation-component-child {
 		border: 1px solid var(--z-line);
-		border-radius: 4px;
 		padding-top: 0;
-
-		.item-child-item {
-			&:first-child {
-				border-radius: 4px 4px 0 0;
-			}
-		}
 	}
 }
 </style>
