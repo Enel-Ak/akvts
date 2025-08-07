@@ -74,7 +74,6 @@ const isCollapse = computed(() => props.collapse)
 const isOpen = ref(false)
 // 多级菜单状态管理
 const activeMultiLevelMenus = ref(new Map()) // 存储多级菜单的显示状态
-const isClickHiding = ref(false)
 
 let currentScrollTop = 0
 let animationFrameId = null
@@ -88,47 +87,18 @@ const onClickItem = (item, idx = 0) => {
 		emits('update:modelValue', item[props.keys[0]])
 		emits('clickItem', item)
 
-		nextTick(() => {
-			// 处理子菜单显示/隐藏逻辑
-			if (item.children && item.children.length > 0) {
-				// 如果点击的是同一个菜单项，则切换显示状态
-				if (activeChild.value === item[props.keys[0]]) {
-					// 隐藏子菜单动画
-					hideChildMenu()
-				} else {
-					// 如果当前有其他菜单显示，先隐藏再显示新菜单
-					if (activeChild.value && activeChild.value !== item[props.keys[0]]) {
-						// 立即切换到新菜单，不需要等待隐藏动画
-						activeChild.value = item[props.keys[0]]
-					} else {
-						// 显示子菜单动画
-						showChildMenu(item[props.keys[0]])
-					}
-				}
-			} else {
-				// 如果没有子菜单，隐藏当前显示的子菜单
-				if (activeChild.value) {
-					hideChildMenu()
-				}
+		hideChildMenu()
 
-				// 如果有路径，进行路由跳转
-				if (item.path) {
-					router.push({
-						path: item.path,
-					})
-				}
-			}
-		})
+		if (item.path) {
+			router.push({
+				path: item.path,
+			})
+		}
 	}
 }
 
 // 显示子菜单动画
 const showChildMenu = (itemId) => {
-	// 如果正在因点击而隐藏菜单，不执行显示操作
-	if (isClickHiding.value) {
-		return
-	}
-
 	// 如果要显示的菜单已经是当前活动菜单，直接返回
 	if (activeChild.value === itemId && !isChildMenuAnimating.value) {
 		return
@@ -151,16 +121,12 @@ const hideChildMenu = () => {
 
 	// 立即清除活动菜单，避免状态冲突
 	activeChild.value = null
+
 	isChildMenuAnimating.value = true
-
-	// 缩短动画时间，避免切换时的延迟问题
-	isChildMenuAnimating.value = false
-	isClickHiding.value = true
-
-	// 延迟重置点击隐藏标志，防止立即重新显示
-	setTimeout(() => {
-		isClickHiding.value = false
-	}, 200)
+	// 结束动画
+	nextTick(() => {
+		isChildMenuAnimating.value = false
+	})
 }
 
 // 显示多级菜单
