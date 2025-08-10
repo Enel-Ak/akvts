@@ -13,8 +13,8 @@ const config = ref({
 		},
 		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
 		cellStyle: {},
-		cellMultiple: [
-			// {id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
+		onlineCells: [
+			{id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
 			// {id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
 			// {id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
 			// {id: 4, name: '测试4', r: 3, c: 3, rr: 3, cc: 3, value: '测试内容4', state: 1},
@@ -22,13 +22,13 @@ const config = ref({
 			// {id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
 		],
 	},
-	// celldata: Array.from({length: 400000}, (_, r) => {
-	// 	return Array.from({length: 20}, (_, c) => {
-	// 		return `R${r + 1}-C${c + 1}`
-	// 		// return undefined
-	// 	})
-	// }),
-	celldata: [],
+	celldata: Array.from({length: 400000}, (_, r) => {
+		return Array.from({length: 20}, (_, c) => {
+			return `R${r + 1}-C${c + 1}`
+			// return undefined
+		})
+	}),
+	// celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',
@@ -1075,19 +1075,19 @@ const bba = {
 }
 
 onActivated(() => {
-	sheetRef.value
-		.luckyToAir(aab.globalStyle, [
-			...aab.header,
-			...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
-		])
-		.then((res) => {
-			Object.assign(config.value, {
-				config: {
-					...res.config,
-				},
-				celldata: res.celldata,
-			})
-		})
+	// sheetRef.value
+	// 	.luckyToAir(aab.globalStyle, [
+	// 		...aab.header,
+	// 		...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
+	// 	])
+	// 	.then((res) => {
+	// 		Object.assign(config.value, {
+	// 			config: {
+	// 				...res.config,
+	// 			},
+	// 			celldata: res.celldata,
+	// 		})
+	// 	})
 
 	// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
 	// sheetRef.value.setMergeCell(5, 4, 4, 4)
@@ -1142,7 +1142,7 @@ onActivated(() => {
 		// sheetRef.value.setRange(0, 0, 2, 4)
 		// config.value.celldata[0][0] = '123'
 		// config.value.celldata[0][0] = '123'
-		sheetRef.value.airToLucky().then((res) => {})
+		// sheetRef.value.airToLucky().then((res) => {})
 		// sheetRef.value
 		// 	.luckyToAir(
 		// 		{

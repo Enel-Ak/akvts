@@ -9,20 +9,13 @@ import {
 	onActivated,
 	reactive,
 	onDeactivated,
+	onBeforeMount,
+	markRaw,
 } from 'vue'
-import {useMergedCells} from '@/hooks/sheet/useMergedCells'
-import {useSelectionRange} from '@/hooks/sheet/useSelectionRange'
-import {useResize} from '@/hooks/sheet/useResize'
-import {useSheetRender} from '@/hooks/sheet/useSheetRender.js'
-import {useEdit} from '@/hooks/sheet/useEdit.js'
-import {useHistory} from '@/hooks/sheet/useHistory'
-import {useCopy} from '@/hooks/sheet/useCopy'
-import {useExcel} from '@/hooks/sheet/useExcel'
-import {useTools} from '@/hooks/sheet/useTools'
-import {useMouseRight} from '@/hooks/sheet/useMouseRight'
-import {useTouch} from '@/hooks/sheet/useTouch'
+
 import {ElMessage} from 'element-plus'
 import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
+import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 
 const stateType = {
 	normal: 0,
@@ -69,87 +62,16 @@ const props = defineProps({
 	// 设置状态遮罩完全就由父组件控制
 	state: {type: Number, default: 0}, // 0: normal, 1: loading, 2: error
 	stateText: {type: String, default: '数据加载中...'},
+
+	limit: {type: Number, default: 30000},
 })
 
-// 保存数据
-const sheet = reactive({
-	config: {
-		showHorizontalScreen: true, // 移动端不是横向提醒
-		showToolBar: true, // 工具栏
-		showstateBar: true, // 状态栏
-		font: true, // 字体
-		format: true, // 单元格格式
-		color: true, // 颜色
-		fill: true, // 填充
-		bold: true, // 加粗
-		strikethrough: true, // 删除线
-		italic: true, // 斜体
-		underline: true, // 下划线
-		merge: true, // 合并单元格
-		align: true, // 对齐方式
-		border: true, // 边框
-		addRow: true, // 添加行
-		removeRow: true, // 删除行
-		addColumn: true, // 添加列
-		removeColumn: true, // 删除列
-		export: true, // 导出
-		import: true, // 导入
-		edit: true, // 编辑
-		lock: true, // 锁定
-		unlock: true, // 解锁
-		formula: true, // 公式
-		zoom: 1, //缩放
-		freeze: false, // 冻结
-		full: true,
-
-		freezeCount: {
-			row: 0,
-			col: 0,
-		},
-
-		mergedCells: {},
-		lockCells: {},
-		cellStyle: {},
-		cellKeys: [],
-		cellFormula: {},
-		cellMultiple: [],
-
-		...props.modelValue?.config,
-
-		rowCount: 0,
-		colCount: 0,
-	},
-	celldata: new Map(),
-})
-
-// 配置变化处理
-watch(
-	() => props.modelValue?.config,
-	(newVal) => {
-		sheet.config = Object.assign(sheet.config, newVal)
-		const mc = newVal.mergedCells
-
-		if (Object.keys(mc).length > 0) {
-			Object.entries(mc).forEach(([key, value]) => {
-				const [r, c] = key.split('-').map(Number)
-				const {rowspan: rs, colspan: cs} = value
-				useMergedCellsHook.setMergeCell(r, c, rs, cs, false)
-			})
-		}
-	}
-)
-
-// 数据变化处理
-watch(
-	() => props.modelValue?.celldata,
-	(newVal) => {
-		sheet.celldata = new Map(newVal)
-		initialData()
-	}
-)
+// 容器
+const id = `air-sheet-${Math.random().toString(16).slice(2)}`
+const sheetStore = useAirSheetStore()
+const sheet = reactive({})
 
 const fns = ref(props.modelValue?.fns || [])
-const limit = 30000
 
 // 移动端设置宽高/框选范围
 const selectionSize = ref({w: 0, h: 0})
@@ -160,71 +82,6 @@ const selectionRange = ref({
 	cc: 0,
 })
 
-// 初始数据处理
-const initialData = () => {
-	if (!props.modelValue?.celldata) return
-
-	if (props.modelValue?.celldata) {
-		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)
-		sheet.config.colCount = props.modelValue.celldata
-			.map((d) => d.length)
-			.reduce((a, b) => Math.max(a, b), props.colCount)
-	} else {
-		sheet.config.rowCount = Math.min(props.rowCount, 671087)
-		sheet.config.colCount = Math.min(props.colCount, 240)
-	}
-
-	const celldata = props.modelValue.celldata
-	const total = celldata.length
-
-	let processed = 0
-	const batchSize = 3000
-
-	if (total < batchSize) {
-		celldata.forEach((row, index) => {
-			sheet.celldata.set(index, row)
-		})
-		return
-	}
-
-	if (total >= limit) {
-		loading.value = true
-		loadingProgress.value = 0
-		loadingText.value = '数据量较大, 请稍后...'
-	}
-
-	function processBatch() {
-		const start = performance.now()
-		let count = 0
-
-		while (processed < total && count < batchSize && performance.now() - start < 16) {
-			const row = celldata[processed]
-			if (row) {
-				sheet.celldata.set(processed, row)
-			}
-			processed++
-			count++
-		}
-
-		loadingText.value = `正在加载数据...`
-		loadingProgress.value = Math.floor((processed / total) * 100)
-
-		if (processed < total) {
-			requestAnimationFrame(processBatch)
-		} else {
-			loadingText.value = '加载完成'
-			loadingProgress.value = 100
-			setTimeout(() => {
-				loading.value = false
-				useHistoryHook.saveHistory()
-			}, 250)
-		}
-	}
-	requestAnimationFrame(processBatch)
-}
-
-// 容器
-const id = `air-sheet-${Math.random().toString(16).slice(2)}`
 const containerHeight = computed(() => {
 	if (typeof props.height === 'number') {
 		if (props.height === 0) {
@@ -260,119 +117,76 @@ const viewportWidth = ref(0)
 // 保存滚动位置
 const savedScrollPosition = ref({top: 0, left: 0})
 
-// hooks 模块
-const useSheetRenderHook = useSheetRender({
-	sheet,
-	loading,
-	loadingText,
-	loadingProgress,
-})
-const useResizeHook = useResize({
-	sheet,
-	rowHeight: props.rowHeight,
-	colWidth: props.colWidth,
-	renderRange: async () => await updateVisibleRange(),
-	useMergedCellsHook: () => useMergedCellsHook,
-	useSelectionRangeHook: () => useSelectionRangeHook,
-})
-const useMergedCellsHook = useMergedCells({
-	sheet,
-	rowHeight: props.rowHeight,
-	colWidth: props.colWidth,
-	useResizeHook,
-	renderRange: async () => await updateVisibleRange(),
-})
-const useSelectionRangeHook = reactive(
-	useSelectionRange(id, {
-		sheet,
-		rowHeight: props.rowHeight,
-		colWidth: props.colWidth,
-		useResizeHook,
-		useMergedCellsHook,
-		render: {
-			update: async () => await updateVisibleRange(),
-			range: () => visibleRangeRef.value,
-		},
-	})
-)
+// 初始数据处理
+const initialData = () => {
+	if (!props.modelValue?.celldata) return
 
-const useHistoryHook = useHistory({
-	loading,
-	loadingText,
-	loadingProgress,
-	sheet,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-	renderRange: async () => await updateVisibleRange(),
-	processMapInBatches: (map, callback, batchSize = 5000) =>
-		processMapInBatches(map, callback, batchSize),
-})
-const useEditHook = useEdit(id, {
-	sheet,
-	useResizeHook,
-	useHistoryHook,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-	renderRange: async () => await updateVisibleRange(),
-	containerId: id,
-})
-const useExcelHook = useExcel({
-	sheet,
-	loading,
-	loadingText,
-	loadingProgress,
-	useEditHook,
-	useResizeHook,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-})
-const useToolsHook = useTools({
-	sheet,
-	limit,
-	loading,
-	loadingText,
-	loadingProgress,
-	containerRef,
-	useEditHook,
-	useExcelHook,
-	useResizeHook,
-	useHistoryHook,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-	isLocked: () => isLockedCell(),
-	renderRange: async () => await updateVisibleRange(),
-	processMapInBatches: (map, callback, batchSize) =>
-		processMapInBatches(map, callback, batchSize),
-})
-const useCopyHook = useCopy({
-	sheet,
-	useResizeHook,
-	useMergedCellsHook,
-	useSelectionRangeHook,
-	useHistoryHook,
-	useToolsHook,
-	renderRange: async () => await updateVisibleRange(),
-})
-const useMouseRightHook = useMouseRight(id)
+	if (props.modelValue?.celldata) {
+		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)
+		sheet.config.colCount = props.modelValue.celldata
+			.map((d) => d.length)
+			.reduce((a, b) => Math.max(a, b), props.colCount)
+	} else {
+		sheet.config.rowCount = Math.min(props.rowCount, 671087)
+		sheet.config.colCount = Math.min(props.colCount, 240)
+	}
 
-const useTouchHook = useTouch({
-	id,
-	sheet,
-	renderRange: async () => {
-		// 确保在缩放后正确更新可见范围
-		await updateVisibleRange()
-		onScroll()
-	},
-	onZoom: (zoom) => {
-		// 设置缩放比例
-		sheet.config.zoom = zoom
-	},
-})
+	const celldata = props.modelValue.celldata
+	const total = celldata.length
+
+	let processed = 0
+	const batchSize = 3000
+
+	if (total < batchSize) {
+		celldata.forEach((row, index) => {
+			sheet.celldata.set(index, row)
+		})
+		return
+	}
+
+	loading.value = true
+	loadingProgress.value = 0
+	loadingText.value = '正在加载数据'
+
+	const cellMap = new Map()
+	function processBatch() {
+		const start = performance.now()
+		let count = 0
+
+		while (processed < total && count < batchSize && performance.now() - start < 16) {
+			const row = celldata[processed]
+			if (row) {
+				cellMap.set(processed, markRaw(row))
+			}
+			processed++
+			count++
+		}
+
+		loadingText.value = `正在加载数据`
+		loadingProgress.value = Math.floor((processed / total) * 100)
+
+		if (processed < total) {
+			requestAnimationFrame(processBatch)
+		} else {
+			loadingText.value = '加载完成'
+			loadingProgress.value = 100
+			sheetStore.$patch((state) => {
+				state.sheets.get(id).celldata = markRaw(cellMap)
+			})
+			setTimeout(() => {
+				loading.value = false
+				// useHistoryHook.saveHistory()
+			}, 250)
+		}
+	}
+
+	requestAnimationFrame(processBatch)
+}
 
 // 单元格选中后激活该单元格已有样式
 const setActiveTool = computed(() => {
 	return (style) => {
-		const ranged = useSelectionRangeHook.ranged
+		const ranged = sheet.value?.hooks?.selectionRangeHook?.ranged
 
 		const data = {
 			value: null,
@@ -390,9 +204,9 @@ const setActiveTool = computed(() => {
 		const startCol = Math.min(ranged.start.col, ranged.end.col)
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
-		const cellStyle = sheet.config.cellStyle[`${startRow}-${startCol}`]
-		const isLock = sheet.config.lockCells[`${startRow}-${startCol}`]
-		const isFx = sheet.config.cellFormula[`${startRow}-${startCol}`]
+		const cellStyle = sheet.value?.config?.cellStyle[`${startRow}-${startCol}`]
+		const isLock = sheet.value?.config?.lockCells[`${startRow}-${startCol}`]
+		const isFx = sheet.value?.config?.cellFormula[`${startRow}-${startCol}`]
 
 		data.lock = isLock
 		data.fx = !!isFx
@@ -456,16 +270,16 @@ let updateVisibleRangeTimeout = null
 let updateTimer = null
 const updateVisibleRange = async () => {
 	try {
-		const currentZoom = sheet.config.zoom || 1
+		const currentZoom = sheet.props.zoom || 1
 
 		const rowHeights = {}
 		const colWidths = {}
 
-		for (const [index, height] of Object.entries(useResizeHook.rowHeights)) {
+		for (const [index, height] of Object.entries(sheet.hooks.resizeHook.rowHeights)) {
 			rowHeights[index] = height * currentZoom
 		}
 
-		for (const [index, width] of Object.entries(useResizeHook.colWidths)) {
+		for (const [index, width] of Object.entries(sheet.hooks.resizeHook.colWidths)) {
 			colWidths[index] = width * currentZoom
 		}
 
@@ -486,10 +300,10 @@ const updateVisibleRange = async () => {
 			zoom: currentZoom,
 		}
 
-		const result = await useSheetRenderHook.getRenderResult(renderData)
+		const result = await sheet.hooks.renderHook.getRenderResult(renderData)
+
 		if (result) {
 			visibleRangeRef.value = result
-			clearTimeout(updateVisibleRangeTimeout)
 			updateVisibleRangeTimeout = setTimeout(() => {
 				updateTimer = Date.now()
 			}, 100)
@@ -502,17 +316,16 @@ const updateVisibleRange = async () => {
 // 生成可视行数据
 const visibleRows = computed(() => {
 	const rows = []
-
-	// 使用worker计算的结果
 	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return rows
 	const {startRow, endRow} = visibleRangeRef.value.visible
+
 	const start = Math.max(0, startRow)
 	const end = Math.min(sheet.config.rowCount, endRow)
 
 	for (let i = start; i < end; i++) {
 		const row = {
 			rowIndex: i,
-			rowHeight: useResizeHook.getRowHeight(i),
+			rowHeight: sheet.hooks.resizeHook.getRowHeight(i),
 			config: {},
 		}
 		rows.push(row)
@@ -531,7 +344,8 @@ const visibleCells = (row) => {
 
 	for (let i = start; i < end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
-		const mergedCell = useMergedCellsHook.findMergedCell(row.rowIndex, i)
+		const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.rowIndex, i)
+
 		let value = null
 
 		if (mergedCell) {
@@ -553,12 +367,12 @@ const visibleCells = (row) => {
 
 		cells.push({
 			rowIndex: row.rowIndex,
-			rowHeight: useResizeHook.getRowHeight(row.rowIndex),
+			rowHeight: sheet.hooks.resizeHook.getRowHeight(row.rowIndex),
 			colIndex: i,
-			colWidth: useResizeHook.getColWidth(i),
+			colWidth: sheet.hooks.resizeHook.getColWidth(i),
 			value,
 			config: {
-				key: sheet.config.cellKeys[i],
+				key: sheet.config.cellKeys?.[i],
 			},
 		})
 	}
@@ -600,14 +414,14 @@ const updateOffset = async (type, value) => {
 		let height = 0
 		const startRow = Math.min(visibleRangeRef.value.visible.startRow, sheet.config.rowCount)
 		for (let i = 0; i < startRow; i++) {
-			height += useResizeHook.getRowHeight(i)
+			height += sheet.hooks.resizeHook.getRowHeight(i)
 		}
 		offsetTop.value = height
 	} else {
 		let width = 0
 		const startCol = Math.min(visibleRangeRef.value.visible.startCol, sheet.config.colCount)
 		for (let i = 0; i < startCol; i++) {
-			width += useResizeHook.getColWidth(i)
+			width += sheet.hooks.resizeHook.getColWidth(i)
 		}
 		offsetLeft.value = width
 	}
@@ -653,7 +467,7 @@ const visibleTitles = computed(() => {
 	for (let i = start; i < end; i++) {
 		titles.push({
 			colIndex: i,
-			colWidth: useResizeHook.getColWidth(i),
+			colWidth: sheet.hooks.resizeHook.getColWidth(i),
 			title: getTitle(i),
 		})
 	}
@@ -662,7 +476,7 @@ const visibleTitles = computed(() => {
 
 // 计算自定义列偏移量（与内容完全对齐）
 const getOffsetStyle = (cell) => {
-	const style = useMergedCellsHook.getCellStyle(cell, {
+	const style = sheetStore.sheets.get(id)?.hooks?.mergeHook?.getCellStyle(cell, {
 		offsetLeft: offsetLeft.value,
 		offsetTop: offsetTop.value,
 	})
@@ -746,18 +560,13 @@ let scrollTimer = null
 let rafId = null
 const lastScroll = ref(false)
 const onScroll = async (e) => {
-	// if (lastScroll.value) {
-	// 	lastScroll.value = false
-	// 	return
-	// }
-
 	// 清除之前的定时器和动画帧
 	clearTimeout(scrollTimer)
 	if (rafId) {
 		cancelAnimationFrame(rafId)
 	}
 
-	if (sheet.config.rowCount >= limit) {
+	if (sheet.config.rowCount >= props.limit) {
 		loading.value = true
 		loadingProgress.value = -1
 		loadingText.value = '数据量较大, 请稍后...'
@@ -773,6 +582,8 @@ const onScroll = async (e) => {
 	const alphabet = alphabetRef.value
 	const number = numberRef.value
 	const fn = fnRef.value
+
+	lastScroll.value = false
 
 	// 使用 requestAnimationFrame 进行滚动同步
 	rafId = requestAnimationFrame(() => {
@@ -819,7 +630,7 @@ const onScroll = async (e) => {
 
 			savedScrollPosition.value = {top: nt, left: nl}
 
-			if (sheet.config.rowCount >= limit) {
+			if (sheet.config.rowCount >= props.limit) {
 				loading.value = false
 			}
 
@@ -828,8 +639,6 @@ const onScroll = async (e) => {
 		})
 	}, 150)
 }
-
-// 恢复滚动位置
 
 // 恢复滚动位置
 const restoreScrollPosition = () => {
@@ -878,14 +687,20 @@ const updateViewportSize = () => {
 
 // 点击序号
 const onClickNumber = (e, row) => {
-	useSelectionRangeHook.setRange(row.rowIndex, 0, row.rowIndex, sheet.config.colCount - 1, true)
+	sheet.hooks.selectionRangeHook.setRange(
+		row.rowIndex,
+		0,
+		row.rowIndex,
+		sheet.config.colCount - 1,
+		true
+	)
 }
 
 // 点击字母
 const onClickAlphabet = async (e, col) => {
 	const target = e.target.closest('.alphabet-cell')
 	const colIndex = Number(target.getAttribute('data-col'))
-	useSelectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
+	sheet.hooks.selectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
 }
 
 // 单元格点击
@@ -970,7 +785,7 @@ const onZoomInput = async () => {
 			lastZoom = currentZoom
 			onScroll()
 			// if (lastZoom < 1) {
-			updateVisibleRange()
+			// updateVisibleRange()
 			// }
 		})
 	}, 16)
@@ -979,7 +794,7 @@ const onZoomInput = async () => {
 const onZoomChange = () => {
 	originalScrollTop = -1
 	if (lastZoom < 1) {
-		updateVisibleRange()
+		// updateVisibleRange()
 	}
 }
 
@@ -1073,23 +888,10 @@ const onCellDrop = (event) => {
 
 const init = async () => {
 	initialData()
-
-	useResizeHook.init()
-	useMergedCellsHook.init()
-	useSheetRenderHook.init()
-	useSelectionRangeHook.init()
-	useEditHook.init()
-	useCopyHook.init()
-	useHistoryHook.init()
-	useMouseRightHook.init()
-	useTouchHook.init()
-
 	nextTick(async () => {
 		updateViewportSize()
 		await nextTick()
-
 		await updateVisibleRange()
-
 		await updateOffset('offsetTop', 'startRow')
 		await updateOffset('offsetLeft', 'startCol')
 
@@ -1117,31 +919,7 @@ const init = async () => {
 }
 
 const destroy = () => {
-	if (useSheetRenderHook) {
-		useSheetRenderHook.destroy()
-	}
-
-	if (useSelectionRangeHook) {
-		useSelectionRangeHook.destroy()
-	}
-
-	if (useEditHook) {
-		useEditHook.destroy()
-	}
-
-	if (useResizeHook) {
-		useResizeHook.destroy()
-	}
-
-	if (useMouseRightHook) {
-		useMouseRightHook.destroy()
-	}
-
 	window.removeEventListener('resize', updateViewportSize)
-}
-
-const clearData = () => {
-	sheet.celldata.clear()
 }
 
 // 判断是否为移动设备
@@ -1211,40 +989,20 @@ const setSelectionRange = () => {
 		return
 	}
 
-	useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
+	// useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
 }
 
 const mobileSetRowHeight = (e) => {
 	const {r, c} = selectionRange.value
 	useResizeHook.setRowHeight(r - 1, e.target.value)
-	useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
+	// useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
 }
 
 const mobileSetColWidth = () => {
 	const {r, c} = selectionRange.value
 	useResizeHook.setColWidth(c - 1, selectionSize.value.w)
-	useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
+	// useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
 }
-
-watch(
-	() => useSelectionRangeHook?.ranged,
-	(newVal) => {
-		if (newVal) {
-			const {start, end} = newVal
-			selectionSize.value = {
-				w: useResizeHook.getColWidth(start.col),
-				h: useResizeHook.getRowHeight(start.row),
-			}
-			selectionRange.value = {
-				r: start.row + 1,
-				rr: end.row + 1,
-				c: start.col + 1,
-				cc: end.col + 1,
-			}
-		}
-	},
-	{deep: true}
-)
 
 // 判断移动端是否横向
 const isLandscape = () => {
@@ -1254,26 +1012,68 @@ const isLandscape = () => {
 	return false
 }
 
-// 初始化
-onMounted(() => {})
+watch(
+	() => sheetStore.getSheet(id),
+	(newVal) => {
+		console.log('updated AirSheet')
+		Object.assign(sheet, newVal)
+	},
+	{deep: true}
+)
 
-onActivated(() => {
-	init()
-	setTimeout(() => {
-		useSelectionRangeHook.setRange(0, 0, 0, 0)
-		const {start, end} = useSelectionRangeHook.ranged
-		selectionRange.value = {
-			r: start.row + 1,
-			c: start.col + 1,
-			rr: end.row + 1,
-			cc: end.col + 1,
-		}
-		selectionSize.value = {
-			w: useResizeHook.getColWidth(0),
-			h: useResizeHook.getRowHeight(0),
-		}
-	}, 250)
+// 配置变化处理
+watch(
+	() => props.modelValue?.config,
+	(newVal) => {
+		// sheet.config = Object.assign(sheet.config, newVal)
+		// const mc = newVal.mergedCells
+		// if (Object.keys(mc).length > 0) {
+		// 	Object.entries(mc).forEach(([key, value]) => {
+		// 		const [r, c] = key.split('-').map(Number)
+		// 		const {rowspan: rs, colspan: cs} = value
+		// 		sheetStore.sheets.get(id)?.hooks?.mergeHook?.setMergeCell(r, c, rs, cs, false)
+		// 	})
+		// }
+	}
+)
+
+// 数据变化处理
+watch(
+	() => props.modelValue?.celldata,
+	(newVal) => {
+		// sheet.celldata = new Map(newVal)
+		// initialData()
+	}
+)
+
+// watch(
+// 	() => sheet.hooks.selectionRangeHook?.ranged,
+// 	(newVal) => {
+// 		if (newVal) {
+// 			const {start, end} = newVal
+// 			selectionSize.value = {
+// 				w: sheet.hooks.resizeHook.getColWidth(start.col),
+// 				h: sheet.hooks.resizeHook.getRowHeight(start.row),
+// 			}
+// 			selectionRange.value = {
+// 				r: start.row + 1,
+// 				rr: end.row + 1,
+// 				c: start.col + 1,
+// 				cc: end.col + 1,
+// 			}
+// 		}
+// 	},
+// 	{deep: true}
+// )
+
+onBeforeMount(() => {})
+
+// 初始化
+onMounted(() => {
+	sheetStore.init(id, props, () => init())
 })
+
+onActivated(() => {})
 
 onDeactivated(() => {
 	if (containerRef.value) {
@@ -1283,274 +1083,313 @@ onDeactivated(() => {
 		}
 	}
 	destroy()
-	clearData()
 })
 
 onUnmounted(() => {
 	destroy()
-	clearData()
 })
 
 defineExpose({
 	destroy,
-	clearData,
-	setRange: useSelectionRangeHook.setRange,
-	setMergeCell: useMergedCellsHook.setMergeCell,
-	setCellValue: useEditHook.setCellValue,
-	setLocked: useToolsHook.setLocked,
-	setUnlocked: useToolsHook.setUnlocked,
-	importExcel: useToolsHook.importExcel,
-	exportExcel: useToolsHook.exportExcel,
+	// setRange: useSelectionRangeHook.setRange,
+	// setMergeCell: sheetStore.sheets?.get(id)?.hooks?.mergeHook?.setMergeCell,
+	// setCellValue: useEditHook.setCellValue,
+	// setLocked: useToolsHook.setLocked,
+	// setUnlocked: useToolsHook.setUnlocked,
+	// importExcel: useToolsHook.importExcel,
+	// exportExcel: useToolsHook.exportExcel,
 
-	setCellBackground: (row, col, rowspan, colspan, color) => {
-		useToolsHook.setCellStyle({
-			type: 'bg',
-			value: color,
-			row,
-			col,
-			rowspan,
-			colspan,
-		})
-	},
+	// setCellBackground: (row, col, rowspan, colspan, color) => {
+	// 	useToolsHook.setCellStyle({
+	// 		type: 'bg',
+	// 		value: color,
+	// 		row,
+	// 		col,
+	// 		rowspan,
+	// 		colspan,
+	// 	})
+	// },
 
-	getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
-	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+	// getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
+	// getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
 
-	luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
-	airToLucky: async () => await useToolsHook.airToLucky(sheet),
+	// luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
+	// airToLucky: async () => await useToolsHook.airToLucky(sheet),
 })
 </script>
 <template>
 	<div
 		class="air-sheet-component"
 		:style="{height: containerHeight}"
-		:class="{mobile: isMobile(), full: full, btn: !sheet.config.showToolBar}"
+		:class="{mobile: isMobile(), full: full, btn: !sheetStore.getSheet(id)?.config.showToolBar}"
 	>
-		<!-- 工具栏 -->
-		<div
-			v-if="
-				sheet.config.showToolBar &&
-				((isMobile() && isLandscape()) || !isMobile() || !sheet.config.showHorizontalScreen)
-			"
-			class="toolbar"
-			:class="{mobile: isMobile()}"
-			:style="{}"
-		>
-			<div v-if="sheet.config.font" class="group font-layout h-full">
-				<div class="item font">
-					<div>
-						<!-- 字体 -->
+		<template v-if="sheet?.state?.completed">
+			<!-- 工具栏 -->
+			<div
+				v-if="
+					sheet.config.showToolBar &&
+					((isMobile() && isLandscape()) ||
+						!isMobile() ||
+						!sheet.config.showHorizontalScreen)
+				"
+				class="toolbar"
+				:class="{mobile: isMobile()}"
+				:style="{}"
+			>
+				<div v-if="sheet.config.font" class="group font-layout h-full">
+					<div class="item font">
+						<div>
+							<!-- 字体 -->
+							<select
+								:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
+								@change="useToolsHook.setFont($event)"
+							>
+								<option
+									v-for="[key, value] of Object.entries(fonts)"
+									:key="value"
+									:value="value"
+								>
+									{{ key }}
+								</option>
+							</select>
+							<!-- 字号 -->
+							<select
+								:value="setActiveTool('fs').value || 13"
+								@change="useToolsHook.setFontSize($event)"
+							>
+								<option v-for="size in fontSize" :key="size" :value="size">
+									{{ size }}
+								</option>
+							</select>
+						</div>
+						<!-- 格式 -->
 						<select
-							:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
-							@change="useToolsHook.setFont($event)"
+							:value="setActiveTool('fmt').value || formatMap.Normal"
+							@change.stop="
+								($event) => {
+									useToolsHook.setFormat($event)
+								}
+							"
 						>
 							<option
-								v-for="[key, value] of Object.entries(fonts)"
-								:key="value"
+								v-for="[key, value] of Object.entries(formatMap)"
+								:key="key"
 								:value="value"
 							>
-								{{ key }}
-							</option>
-						</select>
-						<!-- 字号 -->
-						<select
-							:value="setActiveTool('fs').value || 13"
-							@change="useToolsHook.setFontSize($event)"
-						>
-							<option v-for="size in fontSize" :key="size" :value="size">
-								{{ size }}
+								{{ value }}
 							</option>
 						</select>
 					</div>
-					<!-- 格式 -->
-					<select
-						:value="setActiveTool('fmt').value || formatMap.Normal"
-						@change.stop="
-							($event) => {
-								useToolsHook.setFormat($event)
-							}
-						"
+				</div>
+
+				<div v-if="sheet.config.color || sheet.config.fill" class="group">
+					<div
+						v-if="sheet.config.color"
+						class="item color"
+						:class="{active: setActiveTool('fc').active}"
 					>
-						<option
-							v-for="[key, value] of Object.entries(formatMap)"
-							:key="key"
-							:value="value"
-						>
-							{{ value }}
-						</option>
-					</select>
+						<Icons name="Font"></Icons>
+						<span>颜色</span>
+						<input
+							type="color"
+							@input="useToolsHook.setFontColor($event)"
+							@change="useToolsHook.fontColorChanged($event)"
+						/>
+					</div>
+					<div
+						v-if="sheet.config.fill"
+						class="item color"
+						:class="{active: setActiveTool('bg').active}"
+					>
+						<Icons name="FillColor"></Icons>
+						<span class="fill-color">填充</span>
+						<input
+							type="color"
+							@input="useToolsHook.setFillColor($event)"
+							@change="useToolsHook.fillColorChanged($event)"
+						/>
+					</div>
 				</div>
-			</div>
 
-			<div v-if="sheet.config.color || sheet.config.fill" class="group">
 				<div
-					v-if="sheet.config.color"
-					class="item color"
-					:class="{active: setActiveTool('fc').active}"
+					class="group"
+					v-if="
+						sheet.config.bold ||
+						sheet.config.italic ||
+						sheet.config.underline ||
+						sheet.config.strikethrough
+					"
 				>
-					<Icons name="Font"></Icons>
-					<span>颜色</span>
-					<input
-						type="color"
-						@input="useToolsHook.setFontColor($event)"
-						@change="useToolsHook.fontColorChanged($event)"
-					/>
+					<div
+						v-if="sheet.config.bold"
+						class="item"
+						:class="{active: setActiveTool('bold').active}"
+						@click="useToolsHook.setBold"
+					>
+						<Icons name="Bold"></Icons>
+						<span>加粗</span>
+					</div>
+					<div
+						v-if="sheet.config.italic"
+						class="item"
+						:class="{active: setActiveTool('it').active}"
+						@click="useToolsHook.setItalic"
+					>
+						<Icons name="Italic"></Icons>
+						<span>倾斜</span>
+					</div>
+					<div
+						v-if="sheet.config.underline"
+						class="item"
+						:class="{active: setActiveTool('un').active}"
+						@click="useToolsHook.setUnderline"
+					>
+						<Icons name="Underline"></Icons>
+						<span>下划线</span>
+					</div>
+					<div
+						v-if="sheet.config.strikethrough"
+						class="item"
+						:class="{active: setActiveTool('st').active}"
+						@click="useToolsHook.setStrikethrough"
+					>
+						<Icons name="Strikethrough"></Icons>
+						<span>删除线</span>
+					</div>
 				</div>
-				<div
-					v-if="sheet.config.fill"
-					class="item color"
-					:class="{active: setActiveTool('bg').active}"
-				>
-					<Icons name="FillColor"></Icons>
-					<span class="fill-color">填充</span>
-					<input
-						type="color"
-						@input="useToolsHook.setFillColor($event)"
-						@change="useToolsHook.fillColorChanged($event)"
-					/>
-				</div>
-			</div>
 
-			<div
-				class="group"
-				v-if="
-					sheet.config.bold ||
-					sheet.config.italic ||
-					sheet.config.underline ||
-					sheet.config.strikethrough
-				"
-			>
-				<div
-					v-if="sheet.config.bold"
-					class="item"
-					:class="{active: setActiveTool('bold').active}"
-					@click="useToolsHook.setBold"
-				>
-					<Icons name="Bold"></Icons>
-					<span>加粗</span>
-				</div>
-				<div
-					v-if="sheet.config.italic"
-					class="item"
-					:class="{active: setActiveTool('it').active}"
-					@click="useToolsHook.setItalic"
-				>
-					<Icons name="Italic"></Icons>
-					<span>倾斜</span>
-				</div>
-				<div
-					v-if="sheet.config.underline"
-					class="item"
-					:class="{active: setActiveTool('un').active}"
-					@click="useToolsHook.setUnderline"
-				>
-					<Icons name="Underline"></Icons>
-					<span>下划线</span>
-				</div>
-				<div
-					v-if="sheet.config.strikethrough"
-					class="item"
-					:class="{active: setActiveTool('st').active}"
-					@click="useToolsHook.setStrikethrough"
-				>
-					<Icons name="Strikethrough"></Icons>
-					<span>删除线</span>
-				</div>
-			</div>
-
-			<div class="group" v-if="sheet.config.align">
-				<div
-					class="item"
-					:class="{active: setActiveTool('align').value === 'left'}"
-					@click="useToolsHook.setAlign('left')"
-				>
-					<Icons name="AlignLeft"></Icons>
-					<span>左对齐</span>
-				</div>
-				<div
-					class="item"
-					:class="{active: setActiveTool('align').value === 'center'}"
-					@click="useToolsHook.setAlign('center')"
-				>
-					<Icons name="AlignCenter"></Icons>
-					<span>居中</span>
-				</div>
-				<div
-					class="item"
-					:class="{active: setActiveTool('align').value === 'right'}"
-					@click="useToolsHook.setAlign('right')"
-				>
-					<Icons name="AlignRight"></Icons>
-					<span>右对齐</span>
-				</div>
-			</div>
-
-			<div class="group" v-if="sheet.config.merge">
-				<div class="item" @click="useToolsHook.setMerge()">
-					<Icons name="Merge"></Icons>
-					<span>合并</span>
-				</div>
-			</div>
-
-			<!-- 边框 -->
-			<template v-if="!isMobile()">
-				<div class="group group-merge" v-if="sheet.config.border">
+				<div class="group" v-if="sheet.config.align">
 					<div
 						class="item"
-						:class="{
-							active:
-								setActiveTool('bl').active ||
-								setActiveTool('bt').active ||
-								setActiveTool('br').active ||
-								setActiveTool('bb').active,
-						}"
-						@click="useToolsHook.setBorder()"
+						:class="{active: setActiveTool('align').value === 'left'}"
+						@click="useToolsHook.setAlign('left')"
 					>
-						<Icons name="Border"></Icons>
-						<span>边框</span>
+						<Icons name="AlignLeft"></Icons>
+						<span>左对齐</span>
 					</div>
-					<div class="merge border-merge shadow-12">
+					<div
+						class="item"
+						:class="{active: setActiveTool('align').value === 'center'}"
+						@click="useToolsHook.setAlign('center')"
+					>
+						<Icons name="AlignCenter"></Icons>
+						<span>居中</span>
+					</div>
+					<div
+						class="item"
+						:class="{active: setActiveTool('align').value === 'right'}"
+						@click="useToolsHook.setAlign('right')"
+					>
+						<Icons name="AlignRight"></Icons>
+						<span>右对齐</span>
+					</div>
+				</div>
+
+				<div class="group" v-if="sheet.config.merge">
+					<div class="item" @click="useToolsHook.setMerge()">
+						<Icons name="Merge"></Icons>
+						<span>合并</span>
+					</div>
+				</div>
+
+				<!-- 边框 -->
+				<template v-if="!isMobile()">
+					<div class="group group-merge" v-if="sheet.config.border">
+						<div
+							class="item"
+							:class="{
+								active:
+									setActiveTool('bl').active ||
+									setActiveTool('bt').active ||
+									setActiveTool('br').active ||
+									setActiveTool('bb').active,
+							}"
+							@click="useToolsHook.setBorder()"
+						>
+							<Icons name="Border"></Icons>
+							<span>边框</span>
+						</div>
+						<div class="merge border-merge shadow-12">
+							<div class="item" @click="useToolsHook.setBorder(false)">
+								<Icons name="UnBorder"></Icons>
+								<span>无边框</span>
+							</div>
+							<div
+								class="item"
+								:class="{
+									active: setActiveTool('bt').active,
+								}"
+								@click="useToolsHook.setBorder(null, 'top')"
+							>
+								<Icons name="BorderTop"></Icons>
+								<span>上边框</span>
+							</div>
+							<div
+								class="item"
+								:class="{
+									active: setActiveTool('bb').active,
+								}"
+								@click="useToolsHook.setBorder(null, 'bottom')"
+							>
+								<Icons name="BorderBottom"></Icons>
+								<span>下边框</span>
+							</div>
+							<div
+								class="item"
+								:class="{
+									active: setActiveTool('bl').active,
+								}"
+								@click="useToolsHook.setBorder(null, 'left')"
+							>
+								<Icons name="BorderLeft"></Icons>
+								<span>左边框</span>
+							</div>
+							<div
+								class="item"
+								:class="{
+									active: setActiveTool('br').active,
+								}"
+								@click="useToolsHook.setBorder(null, 'right')"
+							>
+								<Icons name="BorderRight"></Icons>
+								<span>右边框</span>
+							</div>
+							<div class="item border-color" @click="useToolsHook.setBorderColor">
+								<Icons name="BorderColor"></Icons>
+								<span>颜色</span>
+								<input
+									type="color"
+									@input="useToolsHook.setBorderColor($event)"
+									@change="useToolsHook.borderColorChanged"
+								/>
+							</div>
+						</div>
+					</div>
+				</template>
+				<template v-else>
+					<div class="group" v-if="sheet.config.border">
+						<div class="item" @click="useToolsHook.setBorder()">
+							<Icons name="Border"></Icons>
+							<span>边框</span>
+						</div>
+
 						<div class="item" @click="useToolsHook.setBorder(false)">
 							<Icons name="UnBorder"></Icons>
 							<span>无边框</span>
 						</div>
-						<div
-							class="item"
-							:class="{
-								active: setActiveTool('bt').active,
-							}"
-							@click="useToolsHook.setBorder(null, 'top')"
-						>
+						<div class="item" @click="useToolsHook.setBorder(null, 'top')">
 							<Icons name="BorderTop"></Icons>
 							<span>上边框</span>
 						</div>
-						<div
-							class="item"
-							:class="{
-								active: setActiveTool('bb').active,
-							}"
-							@click="useToolsHook.setBorder(null, 'bottom')"
-						>
+						<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
 							<Icons name="BorderBottom"></Icons>
 							<span>下边框</span>
 						</div>
-						<div
-							class="item"
-							:class="{
-								active: setActiveTool('bl').active,
-							}"
-							@click="useToolsHook.setBorder(null, 'left')"
-						>
+						<div class="item" @click="useToolsHook.setBorder(null, 'left')">
 							<Icons name="BorderLeft"></Icons>
 							<span>左边框</span>
 						</div>
-						<div
-							class="item"
-							:class="{
-								active: setActiveTool('br').active,
-							}"
-							@click="useToolsHook.setBorder(null, 'right')"
-						>
+						<div class="item" @click="useToolsHook.setBorder(null, 'right')">
 							<Icons name="BorderRight"></Icons>
 							<span>右边框</span>
 						</div>
@@ -1564,706 +1403,734 @@ defineExpose({
 							/>
 						</div>
 					</div>
-				</div>
-			</template>
-			<template v-else>
-				<div class="group" v-if="sheet.config.border">
-					<div class="item" @click="useToolsHook.setBorder()">
-						<Icons name="Border"></Icons>
-						<span>边框</span>
-					</div>
+				</template>
 
-					<div class="item" @click="useToolsHook.setBorder(false)">
-						<Icons name="UnBorder"></Icons>
-						<span>无边框</span>
-					</div>
-					<div class="item" @click="useToolsHook.setBorder(null, 'top')">
-						<Icons name="BorderTop"></Icons>
-						<span>上边框</span>
-					</div>
-					<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
-						<Icons name="BorderBottom"></Icons>
-						<span>下边框</span>
-					</div>
-					<div class="item" @click="useToolsHook.setBorder(null, 'left')">
-						<Icons name="BorderLeft"></Icons>
-						<span>左边框</span>
-					</div>
-					<div class="item" @click="useToolsHook.setBorder(null, 'right')">
-						<Icons name="BorderRight"></Icons>
-						<span>右边框</span>
-					</div>
-					<div class="item border-color" @click="useToolsHook.setBorderColor">
-						<Icons name="BorderColor"></Icons>
-						<span>颜色</span>
-						<input
-							type="color"
-							@input="useToolsHook.setBorderColor($event)"
-							@change="useToolsHook.borderColorChanged"
-						/>
-					</div>
-				</div>
-			</template>
-
-			<div v-if="sheet.config.addRow" class="group" :class="{'group-merge': !isMobile()}">
-				<div class="item" @click="useToolsHook.addRow($event, false)">
-					<Icons name="AddRow"></Icons>
-					<span>添加行</span>
-				</div>
-
-				<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
-					<input
-						v-model.number="useToolsHook.addRowCount.value"
-						type="number"
-						min="1"
-						value="1"
-					/>
-				</div>
-			</div>
-
-			<div v-if="sheet.config.addColumn" class="group" :class="{'group-merge': !isMobile()}">
-				<div
-					v-if="sheet.config.addColumn"
-					class="item"
-					@click="useToolsHook.addColumn($event, false)"
-				>
-					<Icons name="AddColumn"></Icons>
-					<span>添加列</span>
-				</div>
-				<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
-					<input
-						v-model.number="useToolsHook.addColumnCount.value"
-						type="number"
-						min="1"
-						value="1"
-					/>
-				</div>
-			</div>
-
-			<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
-				<div v-if="sheet.config.removeRow" class="item" @click="useToolsHook.removeRow">
-					<Icons name="RemoveRow"></Icons>
-					<span>删除行</span>
-				</div>
-				<div
-					v-if="sheet.config.removeColumn"
-					class="item"
-					@click="useToolsHook.removeColumn"
-				>
-					<Icons name="RemoveColumn"></Icons>
-					<span>删除列</span>
-				</div>
-			</div>
-
-			<div class="group" v-if="sheet.config.import || sheet.config.export">
-				<div v-if="sheet.config.import" class="item import">
-					<Icons name="Import"></Icons>
-					<span>导入</span>
-					<input type="file" @change="useToolsHook.importExcel" />
-				</div>
-				<div v-if="sheet.config.export" class="item" @click="useToolsHook.exportExcel">
-					<Icons name="Export"></Icons>
-					<span>导出</span>
-				</div>
-			</div>
-
-			<!-- 锁定解锁 -->
-			<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
-				<div
-					v-if="sheet.config.lock"
-					class="item"
-					:class="{active: setActiveTool('lock').lock}"
-					@click="useToolsHook.setLocked"
-				>
-					<Icons name="CellLock"></Icons>
-					<span>锁定</span>
-				</div>
-				<div v-if="sheet.config.unlock" class="item" @click="useToolsHook.setUnlocked">
-					<Icons name="CellUnlock"></Icons>
-					<span>解锁</span>
-				</div>
-			</div>
-
-			<!-- 公式 -->
-			<div class="group" v-if="sheet.config.formula" :class="{'group-merge': !isMobile()}">
-				<div class="item" :class="{active: setActiveTool('cellFormula').fx}">
-					<Icons name="Sum"></Icons>
-					<span>公式</span>
-				</div>
-				<div v-if="!isMobile()" class="merge formula-merge shadow-12">
-					<div
-						class="item"
-						:class="{active: setActiveTool('cellFormula').fxVal?.includes('SUM')}"
-						@click="useEditHook.setCellFormula('SUM')"
-					>
-						<Icons name="Fx"></Icons>
-						<span>求和</span>
-					</div>
-					<div
-						class="item"
-						:class="{active: setActiveTool('cellFormula').fxVal?.includes('AVERAGE')}"
-						@click="useEditHook.setCellFormula('AVERAGE')"
-					>
-						<Icons name="Fx"></Icons>
-						<span>平均值</span>
-					</div>
-					<div
-						class="item"
-						:class="{active: setActiveTool('cellFormula').fxVal?.includes('MAX')}"
-						@click="useEditHook.setCellFormula('MAX')"
-					>
-						<Icons name="Fx"></Icons>
-						<span>最大值</span>
-					</div>
-					<div
-						class="item"
-						:class="{active: setActiveTool('cellFormula').fxVal?.includes('MIN')}"
-						@click="useEditHook.setCellFormula('MIN')"
-					>
-						<Icons name="Fx"></Icons>
-						<span>最小值</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- 全屏 -->
-			<div v-if="sheet.config.full" class="group" :class="{'group-merge': !isMobile()}">
-				<div class="item" @click="full = !full">
-					<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
-					<span>{{ full ? '退出' : '全屏' }}</span>
-				</div>
-			</div>
-
-			<!-- 冻结 -->
-			<div v-if="sheet.config.freeze" class="group" :class="{'group-merge': !isMobile()}">
-				<div class="item" @click="useToolsHook.setFreeze">
-					<Icons name="Freeze"></Icons>
-					<span>冻结</span>
-				</div>
-				<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
-					<span>行</span>
-					<input type="number" v-model.number="useToolsHook.freezeRow.value" />
-					&nbsp;
-					<span>列</span>
-					<input type="number" v-model.number="useToolsHook.freezeCol.value" />
-				</div>
-			</div>
-
-			<div class="group">
-				<div class="item" @click="useToolsHook.clearAll">
-					<Icons name="Clear3"></Icons>
-					<span>清除</span>
-				</div>
-			</div>
-
-			<div class="group">
-				<div
-					class="item"
-					@click="
-						() => {
-							useHistoryHook.undo(() => {
-								useEditHook.setFormulaValue()
-							})
-						}
-					"
-					:style="{
-						opacity: !useHistoryHook.canUndo() ? 0.3 : 1,
-						cursor: !useHistoryHook.canUndo() ? 'not-allowed' : 'pointer',
-					}"
-				>
-					<Icons name="Undo"></Icons>
-					<span>撤销</span>
-				</div>
-			</div>
-
-			<div class="group flx brn"></div>
-		</div>
-
-		<div v-if="sheet.config.edit" class="inputbar">
-			<textarea
-				v-model="useEditHook.inputValue.value"
-				:disabled="setActiveTool('lock').lock"
-				@input="onInput"
-				@blur="onInputBlur"
-				@keydown.stop
-				@keyup.stop
-				@paste.stop
-			/>
-		</div>
-
-		<!-- Sheet -->
-		<div class="sheet" :style="{height: containerHeight}">
-			<!-- 字母 -->
-			<div
-				v-if="enableNumber"
-				class="alphabet-placeholder brn bbn"
-				:style="{
-					width: numberWidth + 'px',
-				}"
-			></div>
-			<div
-				ref="alphabetRef"
-				class="virtual-sheet custom alphabet brn"
-				:style="{
-					width: `calc(100% - ${enableFn && fns?.length ? fnWidth : 0}px - ${
-						enableNumber ? numberWidth : 0
-					}px - ${scrollbarWidth}px)`,
-				}"
-			>
-				<div
-					class="virtual-phantom"
-					:style="{width: visibleRangeRef?.metrics?.totalWidth + 'px'}"
-				></div>
-
-				<!-- 主体字母 -->
-				<div
-					class="virtual-content alphabet-cells"
-					:style="{
-						transform: `translate(${offsetLeft}px, 0)`,
-					}"
-				>
-					<div class="row alphabet-row" @click="onClickAlphabet($event)">
-						<template v-for="alphabet of visibleTitles">
-							<div
-								class="cell alphabet-cell"
-								:data-col="alphabet.colIndex"
-								:style="{width: alphabet.colWidth + 'px'}"
-								:class="{
-									selection: useSelectionRangeHook.setSelectionClass(
-										null,
-										alphabet
-									),
-								}"
-							>
-								<span>{{ alphabet.title }}</span>
-								<div
-									v-if="!isMobile()"
-									class="resize-handle"
-									:class="{
-										resizing:
-											useResizeHook.isResizing &&
-											useResizeHook.resizingCol.value?.colIndex ===
-												alphabet.colIndex,
-									}"
-									@mousedown.stop="
-										useResizeHook.startResize(alphabet, $event, 'horizontal')
-									"
-									@click.stop
-								></div>
-							</div>
-						</template>
-					</div>
-				</div>
-			</div>
-			<div
-				class="alphabet-placeholder bln bbn"
-				:style="{
-					width:
-						enableFn && fns?.length
-							? fnWidth + scrollbarWidth + 'px'
-							: scrollbarWidth + 'px',
-				}"
-			></div>
-
-			<!-- 序号 -->
-			<div
-				ref="numberRef"
-				class="virtual-sheet custom brn bln"
-				v-if="enableNumber"
-				:style="{
-					width: numberWidth + 'px',
-				}"
-			>
-				<div
-					class="virtual-phantom"
-					:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
-				></div>
-
-				<!-- 主体序号 -->
-				<div
-					class="virtual-content number-cells"
-					:style="{
-						fontSize: `${sheet.config.zoom < 1 ? 13 * sheet.config.zoom : 13}px`,
-						transform: `translate(0, ${offsetTop}px)`,
-						width: `${numberWidth}px`,
-					}"
-				>
-					<template v-for="row of visibleRows" :key="row.rowIndex">
-						<div
-							class="number-cell"
-							:style="{height: `${row.rowHeight}px`, width: `${numberWidth}px`}"
-							:class="{
-								selection: useSelectionRangeHook.setSelectionClass(row),
-							}"
-							@click="onClickNumber($event, row)"
-						>
-							<span>{{ row.rowIndex + 1 }}</span>
-
-							<div
-								v-if="!isMobile()"
-								class="resize-handle"
-								:class="{
-									resizing:
-										useResizeHook.isResizing &&
-										useResizeHook.resizingRow.value?.rowIndex === row.rowIndex,
-								}"
-								@mousedown.stop="useResizeHook.startResize(row, $event, 'vertical')"
-								@click.stop
-							></div>
-						</div>
-					</template>
-					<div :style="{height: scrollbarWidth + 'px'}"></div>
-				</div>
-			</div>
-
-			<!-- 主体 -->
-			<div
-				ref="containerRef"
-				:id="id"
-				data-air-sheet-cell
-				class="virtual-sheet sheet-main brn"
-				@scroll="onScroll"
-				:style="{
-					fontSize: `${13 * sheet.config.zoom}px`,
-				}"
-			>
-				<!-- 虚拟滚动占位 -->
-				<div
-					class="virtual-phantom"
-					:style="{
-						height: visibleRangeRef?.metrics?.totalHeight + 'px',
-						width: visibleRangeRef?.metrics?.totalWidth + 'px',
-					}"
-				></div>
-
-				<!-- 单元格 -->
-				<div
-					class="virtual-content"
-					:style="{
-						transform: `translate(${offsetLeft}px, ${offsetTop}px)`,
-					}"
-				>
-					<!-- 只渲染可视区域的单元格 -->
-					<template v-for="row of visibleRows" :key="row.rowIndex">
-						<div
-							class="row"
-							:data-row="row.rowIndex"
-							:style="{height: `${row.rowHeight}px`}"
-						>
-							<template v-for="cell of visibleCells(row)" :key="cell.colIndex">
-								<div
-									v-if="isMergedCellStart(cell)"
-									class="cell merged-cell-placeholder"
-									:style="{
-										height: `${cell.rowHeight}px`,
-										width: `${cell.colWidth}px`,
-									}"
-								>
-									<div
-										v-html="useEditHook.formattedValue(cell.value, cell)"
-										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
-										:class="getCellClass(cell)"
-										:style="getOffsetStyle(cell)"
-										class="cell"
-										@dblclick.stop="useEditHook.startEdit($event, cell)"
-										@blur="onCellBlur($event, cell)"
-									></div>
-								</div>
-								<div
-									v-else
-									v-html="useEditHook.formattedValue(cell.value, cell)"
-									:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
-									:class="getCellClass(cell)"
-									:style="getOffsetStyle(cell)"
-									@click="onClickCell($event, cell)"
-									@dblclick.stop="useEditHook.startEdit($event, cell)"
-									@blur="onCellBlur($event, cell)"
-									class="cell"
-								></div>
-							</template>
-						</div>
-					</template>
-				</div>
-
-				<!-- 选区框、选区背景 -->
-				<div
-					v-if="useSelectionRangeHook.selecting || useSelectionRangeHook.ranged"
-					class="selection-box"
-					:class="useSelectionRangeHook.rangeClass"
-					:style="useSelectionRangeHook.rangeStyle"
-				>
-					<div
-						v-if="useSelectionRangeHook.ranged"
-						class="selection-handle"
-						@mousedown.stop="useSelectionRangeHook.drag"
-					></div>
-				</div>
-				<div
-					v-if="useSelectionRangeHook.selecting || useSelectionRangeHook.ranged"
-					class="selection-bg-box"
-					:class="useSelectionRangeHook.rangeClass"
-					:style="useSelectionRangeHook.rangeStyle"
-				></div>
-
-				<!-- 高亮在线 -->
-				<div
-					:key="`${updateTimer + index}`"
-					v-for="(item, index) of sheet.config?.cellMultiple"
-					class="highlight"
-					:style="useSelectionRangeHook.setHighlightRange(item)"
-				>
-					<div class="label">{{ item.name }}</div>
-				</div>
-
-				<!-- 右键菜单 -->
-				<div
-					v-show="useMouseRightHook.contextMenuVisible.value"
-					class="context-menu shadow-12"
-					:style="useMouseRightHook.contextMenuStyle.value"
-				>
-					<div
-						v-if="sheet.config.addRow"
-						class="menu-item"
-						@click="useToolsHook.addRow($event, false)"
-					>
+				<div v-if="sheet.config.addRow" class="group" :class="{'group-merge': !isMobile()}">
+					<div class="item" @click="sheet.hooks.toolsHook.addRow($event, false)">
 						<Icons name="AddRow"></Icons>
 						<span>添加行</span>
 					</div>
+
+					<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
+						<input
+							v-model.number="sheet.hooks.toolsHook.addRowCount.value"
+							type="number"
+							min="1"
+							value="1"
+						/>
+					</div>
+				</div>
+
+				<div
+					v-if="sheet.config.addColumn"
+					class="group"
+					:class="{'group-merge': !isMobile()}"
+				>
 					<div
 						v-if="sheet.config.addColumn"
-						class="menu-item"
-						@click="useToolsHook.addColumn($event, false)"
+						class="item"
+						@click="sheet.hooks.toolsHook.addColumn($event, false)"
 					>
 						<Icons name="AddColumn"></Icons>
 						<span>添加列</span>
 					</div>
+					<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
+						<input
+							v-model.number="sheet.hooks.toolsHook.addColumnCount.value"
+							type="number"
+							min="1"
+							value="1"
+						/>
+					</div>
+				</div>
+
+				<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
 					<div
 						v-if="sheet.config.removeRow"
-						class="menu-item"
-						@click="useToolsHook.removeRow"
+						class="item"
+						@click="sheet.hooks.toolsHook.removeRow"
 					>
 						<Icons name="RemoveRow"></Icons>
 						<span>删除行</span>
 					</div>
 					<div
 						v-if="sheet.config.removeColumn"
-						class="menu-item"
-						@click="useToolsHook.removeColumn"
+						class="item"
+						@click="sheet.hooks.toolsHook.removeColumn"
 					>
 						<Icons name="RemoveColumn"></Icons>
 						<span>删除列</span>
 					</div>
 				</div>
 
-				<!-- 公式菜单 -->
-				<div
-					v-if="useEditHook.isFormula.value && sheet.config.edit"
-					class="context-menu shadow-12"
-					:style="{...useEditHook.formulaStyle.value, width: '145px'}"
-				>
+				<div class="group" v-if="sheet.config.import || sheet.config.export">
+					<div v-if="sheet.config.import" class="item import">
+						<Icons name="Import"></Icons>
+						<span>导入</span>
+						<input type="file" @change="sheet.hooks.toolsHook.importExcel" />
+					</div>
 					<div
-						class="menu-item"
-						v-for="(value, key) of formulaMap"
-						:key="key"
-						@click="useEditHook.setCellFormula(key, value)"
+						v-if="sheet.config.export"
+						class="item"
+						@click="sheet.hooks.toolsHook.exportExcel"
 					>
-						<Icons name="Fx" />
-						<span>{{ value }}</span>
+						<Icons name="Export"></Icons>
+						<span>导出</span>
 					</div>
 				</div>
+
+				<!-- 锁定解锁 -->
+				<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
+					<div
+						v-if="sheet.config.lock"
+						class="item"
+						:class="{active: setActiveTool('lock').lock}"
+						@click="sheet.hooks.toolsHook.setLocked"
+					>
+						<Icons name="CellLock"></Icons>
+						<span>锁定</span>
+					</div>
+					<div
+						v-if="sheet.config.unlock"
+						class="item"
+						@click="sheet.hooks.toolsHook.setUnlocked"
+					>
+						<Icons name="CellUnlock"></Icons>
+						<span>解锁</span>
+					</div>
+				</div>
+
+				<!-- 公式 -->
+				<div
+					class="group"
+					v-if="sheet.config.formula"
+					:class="{'group-merge': !isMobile()}"
+				>
+					<div class="item" :class="{active: setActiveTool('cellFormula').fx}">
+						<Icons name="Sum"></Icons>
+						<span>公式</span>
+					</div>
+					<div v-if="!isMobile()" class="merge formula-merge shadow-12">
+						<div
+							class="item"
+							:class="{active: setActiveTool('cellFormula').fxVal?.includes('SUM')}"
+							@click="useEditHook.setCellFormula('SUM')"
+						>
+							<Icons name="Fx"></Icons>
+							<span>求和</span>
+						</div>
+						<div
+							class="item"
+							:class="{
+								active: setActiveTool('cellFormula').fxVal?.includes('AVERAGE'),
+							}"
+							@click="useEditHook.setCellFormula('AVERAGE')"
+						>
+							<Icons name="Fx"></Icons>
+							<span>平均值</span>
+						</div>
+						<div
+							class="item"
+							:class="{active: setActiveTool('cellFormula').fxVal?.includes('MAX')}"
+							@click="useEditHook.setCellFormula('MAX')"
+						>
+							<Icons name="Fx"></Icons>
+							<span>最大值</span>
+						</div>
+						<div
+							class="item"
+							:class="{active: setActiveTool('cellFormula').fxVal?.includes('MIN')}"
+							@click="useEditHook.setCellFormula('MIN')"
+						>
+							<Icons name="Fx"></Icons>
+							<span>最小值</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- 全屏 -->
+				<div v-if="sheet.config.full" class="group" :class="{'group-merge': !isMobile()}">
+					<div class="item" @click="full = !full">
+						<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
+						<span>{{ full ? '退出' : '全屏' }}</span>
+					</div>
+				</div>
+
+				<!-- 冻结 -->
+				<div v-if="sheet.config.freeze" class="group" :class="{'group-merge': !isMobile()}">
+					<div class="item" @click="sheet.hooks.toolsHook.setFreeze">
+						<Icons name="Freeze"></Icons>
+						<span>冻结</span>
+					</div>
+					<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
+						<span>行</span>
+						<input
+							type="number"
+							v-model.number="sheet.hooks.toolsHook.freezeRow.value"
+						/>
+						&nbsp;
+						<span>列</span>
+						<input
+							type="number"
+							v-model.number="sheet.hooks.toolsHook.freezeCol.value"
+						/>
+					</div>
+				</div>
+
+				<div class="group">
+					<div class="item" @click="sheet.hooks.toolsHook.clearAll">
+						<Icons name="Clear3"></Icons>
+						<span>清除</span>
+					</div>
+				</div>
+
+				<div class="group">
+					<div
+						class="item"
+						@click="
+							() => {
+								sheet.hooks.historyHook.undo(() => {
+									useEditHook.setFormulaValue()
+								})
+							}
+						"
+						:style="{
+							opacity: !sheet.hooks.historyHook.canUndo() ? 0.3 : 1,
+							cursor: !sheet.hooks.historyHook.canUndo() ? 'not-allowed' : 'pointer',
+						}"
+					>
+						<Icons name="Undo"></Icons>
+						<span>撤销</span>
+					</div>
+				</div>
+
+				<div class="group flx brn"></div>
 			</div>
 
-			<!-- 操作 -->
-			<div
-				ref="fnRef"
-				class="virtual-sheet custom bln"
-				v-if="enableFn && fns?.length"
-				:style="{
-					width: fnWidth + 'px',
-				}"
-			>
+			<div v-if="sheet.config.edit" class="inputbar">
+				<textarea
+					v-model="sheet.hooks.editHook.inputValue.value"
+					:disabled="setActiveTool('lock').lock"
+					@input="onInput"
+					@blur="onInputBlur"
+					@keydown.stop
+					@keyup.stop
+					@paste.stop
+				/>
+			</div>
+
+			<!-- Sheet -->
+			<div class="sheet" :style="{height: containerHeight}">
+				<!-- 字母 -->
 				<div
-					class="virtual-phantom"
-					:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
+					v-if="enableNumber"
+					class="alphabet-placeholder brn bbn"
+					:style="{
+						width: numberWidth + 'px',
+					}"
 				></div>
 				<div
-					class="virtual-content"
+					ref="alphabetRef"
+					class="virtual-sheet custom alphabet brn"
 					:style="{
-						transform: `translate(0, ${offsetTop}px)`,
-						width: `${fnWidth}px`,
+						width: `calc(100% - ${enableFn && fns?.length ? fnWidth : 0}px - ${
+							enableNumber ? numberWidth : 0
+						}px - ${scrollbarWidth}px)`,
 					}"
 				>
-					<template v-for="row of visibleRows" :key="row.rowIndex">
-						<slot name="fn" :row="row">
+					<div
+						class="virtual-phantom"
+						:style="{width: visibleRangeRef?.metrics?.totalWidth + 'px'}"
+					></div>
+
+					<!-- 主体字母 -->
+					<div
+						class="virtual-content alphabet-cells"
+						:style="{
+							transform: `translate(${offsetLeft}px, 0)`,
+						}"
+					>
+						<div class="row alphabet-row" @click="onClickAlphabet($event)">
+							<template v-for="alphabet of visibleTitles">
+								<div
+									class="cell alphabet-cell"
+									:data-col="alphabet.colIndex"
+									:style="{width: alphabet.colWidth + 'px'}"
+									:class="{
+										selection: sheet.hooks.selectionRangeHook.setSelectionClass(
+											null,
+											alphabet
+										),
+									}"
+								>
+									<span>{{ alphabet.title }}</span>
+
+									<div
+										v-if="!isMobile()"
+										class="resize-handle"
+										:class="{
+											resizing:
+												sheet.hooks.resizeHook.isResizing &&
+												sheet.hooks.resizeHook.resizingCol?.colIndex ===
+													alphabet.colIndex,
+										}"
+										@mousedown.stop="
+											sheet.hooks.resizeHook.startResize(
+												alphabet,
+												$event,
+												'horizontal'
+											)
+										"
+										@click.stop
+									></div>
+								</div>
+							</template>
+						</div>
+					</div>
+				</div>
+				<div
+					class="alphabet-placeholder bln bbn"
+					:style="{
+						width:
+							enableFn && fns?.length
+								? fnWidth + scrollbarWidth + 'px'
+								: scrollbarWidth + 'px',
+					}"
+				></div>
+
+				<!-- 序号 -->
+				<div
+					ref="numberRef"
+					class="virtual-sheet custom brn bln"
+					v-if="enableNumber"
+					:style="{
+						width: numberWidth + 'px',
+					}"
+				>
+					<div
+						class="virtual-phantom"
+						:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
+					></div>
+
+					<!-- 主体序号 -->
+					<div
+						class="virtual-content number-cells"
+						:style="{
+							fontSize: `${sheet.config.zoom < 1 ? 13 * sheet.config.zoom : 13}px`,
+							transform: `translate(0, ${offsetTop}px)`,
+							width: `${numberWidth}px`,
+						}"
+					>
+						<template v-for="row of visibleRows" :key="row.rowIndex">
 							<div
-								class="fns"
+								class="number-cell"
+								:style="{height: `${row.rowHeight}px`, width: `${numberWidth}px`}"
 								:class="{
-									selection: useSelectionRangeHook.setSelectionClass(row),
+									selection:
+										sheet.hooks.selectionRangeHook.setSelectionClass(row),
 								}"
+								@click="onClickNumber($event, row)"
+							>
+								<span>{{ row.rowIndex + 1 }}</span>
+
+								<div
+									v-if="!isMobile()"
+									class="resize-handle"
+									:class="{
+										resizing:
+											sheet.hooks.resizeHook.isResizing &&
+											sheet.hooks.resizeHook.resizingRow?.rowIndex ===
+												row.rowIndex,
+									}"
+									@mousedown.stop="
+										sheet.hooks.resizeHook.startResize(row, $event, 'vertical')
+									"
+									@click.stop
+								></div>
+							</div>
+						</template>
+						<div :style="{height: scrollbarWidth + 'px'}"></div>
+					</div>
+				</div>
+
+				<!-- 主体 -->
+				<div
+					ref="containerRef"
+					:id="id"
+					data-air-sheet-cell
+					class="virtual-sheet sheet-main brn"
+					@scroll="onScroll"
+					:style="{
+						fontSize: `${13 * sheet.config.zoom}px`,
+					}"
+				>
+					<!-- 虚拟滚动占位 -->
+					<div
+						class="virtual-phantom"
+						:style="{
+							height: visibleRangeRef?.metrics?.totalHeight + 'px',
+							width: visibleRangeRef?.metrics?.totalWidth + 'px',
+						}"
+					></div>
+
+					<!-- 单元格 -->
+					<div
+						class="virtual-content"
+						:style="{
+							transform: `translate(${offsetLeft}px, ${offsetTop}px)`,
+						}"
+					>
+						<!-- 只渲染可视区域的单元格 -->
+						<template v-for="row of visibleRows" :key="row.rowIndex">
+							<div
+								class="row"
+								:data-row="row.rowIndex"
 								:style="{height: `${row.rowHeight}px`}"
 							>
-								<span
-									v-for="fn in fns"
-									@click="() => fn.click(row, sheet.celldata.get(row.rowIndex))"
-								>
-									{{ fn.label }}
-								</span>
+								<template v-for="cell of visibleCells(row)" :key="cell.colIndex">
+									<div
+										v-if="isMergedCellStart(cell)"
+										class="cell merged-cell-placeholder"
+										:style="{
+											height: `${cell.rowHeight}px`,
+											width: `${cell.colWidth}px`,
+										}"
+									>
+										<div
+											v-html="
+												sheet.hooks.editHook.formattedValue(
+													cell.value,
+													cell
+												)
+											"
+											:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
+											:class="getCellClass(cell)"
+											:style="getOffsetStyle(cell)"
+											class="cell"
+											@dblclick.stop="
+												sheet.hooks.editHook.startEdit($event, cell)
+											"
+											@blur="onCellBlur($event, cell)"
+										></div>
+									</div>
+									<div
+										v-else
+										v-html="
+											sheet.hooks.editHook.formattedValue(cell.value, cell)
+										"
+										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
+										:class="getCellClass(cell)"
+										:style="getOffsetStyle(cell)"
+										@click="onClickCell($event, cell)"
+										@dblclick.stop="
+											sheet.hooks.editHook.startEdit($event, cell)
+										"
+										@blur="onCellBlur($event, cell)"
+										class="cell"
+									></div>
+								</template>
 							</div>
-						</slot>
-					</template>
+						</template>
+					</div>
+
+					<!-- 选区框、选区背景 -->
+					<div
+						v-if="
+							sheet.hooks?.selectionRangeHook?.selecting ||
+							sheet.hooks?.selectionRangeHook?.ranged
+						"
+						class="selection-box"
+						:class="sheet.hooks?.selectionRangeHook?.rangeClass"
+						:style="sheet.hooks?.selectionRangeHook?.rangeStyle"
+					>
+						<div
+							v-if="sheet.hooks?.selectionRangeHook?.ranged"
+							class="selection-handle"
+							@mousedown.stop="sheet.hooks?.selectionRangeHook?.drag"
+						></div>
+					</div>
+					<div
+						v-if="
+							sheet.hooks?.selectionRangeHook?.selecting ||
+							sheet.hooks?.selectionRangeHook?.ranged
+						"
+						class="selection-bg-box"
+						:class="sheet.hooks?.selectionRangeHook?.rangeClass"
+						:style="sheet.hooks?.selectionRangeHook?.rangeStyle"
+					></div>
+
+					<!-- 高亮在线 -->
+					<div
+						:key="`${updateTimer + index}`"
+						v-for="(item, index) of sheet.config?.onlineCell"
+						class="highlight"
+						:style="sheet.hooks?.selectionRangeHook?.setHighlightRange(item)"
+					>
+						<div class="label">{{ item.name }}</div>
+					</div>
+
+					<!-- 右键菜单 -->
+					<div
+						v-show="sheet.hooks.contextMenuHook.contextMenuVisible.value"
+						class="context-menu shadow-12"
+						:style="sheet.hooks.contextMenuHook.contextMenuStyle.value"
+					>
+						<div
+							v-if="sheet.config.addRow"
+							class="menu-item"
+							@click="sheet.hooks.toolsHook.addRow($event, false)"
+						>
+							<Icons name="AddRow"></Icons>
+							<span>添加行</span>
+						</div>
+						<div
+							v-if="sheet.config.addColumn"
+							class="menu-item"
+							@click="sheet.hooks.toolsHook.addColumn($event, false)"
+						>
+							<Icons name="AddColumn"></Icons>
+							<span>添加列</span>
+						</div>
+						<div
+							v-if="sheet.config.removeRow"
+							class="menu-item"
+							@click="sheet.hooks.toolsHook.removeRow"
+						>
+							<Icons name="RemoveRow"></Icons>
+							<span>删除行</span>
+						</div>
+						<div
+							v-if="sheet.config.removeColumn"
+							class="menu-item"
+							@click="sheet.hooks.toolsHook.removeColumn"
+						>
+							<Icons name="RemoveColumn"></Icons>
+							<span>删除列</span>
+						</div>
+					</div>
+
+					<!-- 公式菜单 -->
+					<div
+						v-if="sheet.hooks.editHook.isFormula.value && sheet.config.edit"
+						class="context-menu shadow-12"
+						:style="{...sheet.hooks.editHook.formulaStyle.value, width: '145px'}"
+					>
+						<div
+							class="menu-item"
+							v-for="(value, key) of formulaMap"
+							:key="key"
+							@click="sheet.hooks.editHook.setCellFormula(key, value)"
+						>
+							<Icons name="Fx" />
+							<span>{{ value }}</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- 操作 -->
+				<div
+					ref="fnRef"
+					class="virtual-sheet custom bln"
+					v-if="enableFn && fns?.length"
+					:style="{
+						width: fnWidth + 'px',
+					}"
+				>
+					<div
+						class="virtual-phantom"
+						:style="{height: visibleRangeRef?.metrics?.totalHeight + 'px'}"
+					></div>
+					<div
+						class="virtual-content"
+						:style="{
+							transform: `translate(0, ${offsetTop}px)`,
+							width: `${fnWidth}px`,
+						}"
+					>
+						<template v-for="row of visibleRows" :key="row.rowIndex">
+							<slot name="fn" :row="row">
+								<div
+									class="fns"
+									:class="{
+										selection:
+											sheet.hooks.selectionRangeHook.setSelectionClass(row),
+									}"
+									:style="{height: `${row.rowHeight}px`}"
+								>
+									<span
+										v-for="fn in fns"
+										@click="
+											() => fn.click(row, sheet.celldata.get(row.rowIndex))
+										"
+									>
+										{{ fn.label }}
+									</span>
+								</div>
+							</slot>
+						</template>
+					</div>
+				</div>
+
+				<!-- 行辅助线 -->
+				<div
+					v-if="sheet.hooks.resizeHook.isResizing && sheet.hooks.resizeHook.resizingRow"
+					class="grid-lines-row"
+					:style="{
+						width: visibleRangeRef?.metrics?.totalWidth + 'px',
+					}"
+				></div>
+
+				<!-- 列辅助线 -->
+				<div
+					v-if="sheet.hooks.resizeHook.isResizing && sheet.hooks.resizeHook.resizingCol"
+					class="grid-lines-col"
+					:style="{
+						height: visibleRangeRef?.metrics?.totalHeight + 'px',
+					}"
+				></div>
+				<!-- 滚动渲染提示, 数据小于限制时显示 -->
+				<div class="scroll-tip" v-if="!lastScroll && sheet.config.rowCount < limit">
+					<Icons name="Loading" class="loading-animation" />
 				</div>
 			</div>
 
-			<!-- 行辅助线 -->
+			<!-- 移动端设置框选 -->
 			<div
-				v-if="useResizeHook.isResizing.value && useResizeHook.resizingRow.value"
-				class="grid-lines-row"
-				:style="{
-					width: visibleRangeRef?.metrics?.totalWidth + 'px',
-				}"
-			></div>
+				v-if="isMobile() && sheet.config.edit"
+				class="mobile-selection"
+				@keydown.stop
+				@click.stop
+			>
+				<div>
+					行高
+					<input
+						:disabled="mobileRCReadOnly"
+						type="number"
+						v-model="selectionSize.h"
+						@change="mobileSetRowHeight"
+					/>
+				</div>
+				<div style="border-right: 1px solid var(--z-line)">
+					列宽
+					<input
+						:disabled="mobileRCReadOnly"
+						type="number"
+						v-model="selectionSize.w"
+						@change="mobileSetColWidth"
+					/>
+				</div>
 
-			<!-- 列辅助线 -->
+				<div>
+					开始行<input
+						type="number"
+						v-model="selectionRange.r"
+						@change="setSelectionRange"
+					/>
+				</div>
+				<div>
+					结束行<input
+						type="number"
+						v-model="selectionRange.rr"
+						@change="setSelectionRange"
+					/>
+				</div>
+				<div>
+					开始列<input
+						type="number"
+						v-model="selectionRange.c"
+						@change="setSelectionRange"
+					/>
+				</div>
+				<div>
+					结束列<input
+						type="number"
+						v-model="selectionRange.cc"
+						@change="setSelectionRange"
+					/>
+				</div>
+			</div>
+
+			<!-- 状态栏 -->
 			<div
-				v-if="useResizeHook.isResizing.value && useResizeHook.resizingCol.value"
-				class="grid-lines-col"
-				:style="{
-					height: visibleRangeRef?.metrics?.totalHeight + 'px',
-				}"
-			></div>
+				v-if="
+					sheet.config.showstateBar &&
+					((isMobile() && isLandscape()) ||
+						!isMobile() ||
+						!sheet.config.showHorizontalScreen)
+				"
+				class="statebar"
+				:class="{mobile: isMobile()}"
+				:style="{}"
+			>
+				<div class="zoom">
+					<span>
+						<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
+					</span>
+					<Icons name="Remove" @click="onZoomSize(-0.1)"></Icons>
+					<input
+						v-model.number="sheet.config.zoom"
+						type="range"
+						min="0.5"
+						max="3"
+						step="0.01"
+						@input="onZoomInput"
+						@change="onZoomChange"
+					/>
+					<Icons name="Add" @click="onZoomSize(0.1)"></Icons>
+					<Icons name="Restore" @click="onZoomReset"></Icons>
+				</div>
+				<div class="flx"></div>
+				<div class="statistics">
+					<span>行 = </span>
+					{{ sheet.config.rowCount }}
+				</div>
+				<div class="statistics">
+					<span>列 = </span>
+					{{ sheet.config.colCount }}
+				</div>
+				<div class="statistics">
+					<span>最小值 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.min }}
+				</div>
+				<div class="statistics">
+					<span>最大值 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.max }}
+				</div>
+				<div class="statistics">
+					<span>求和 = </span>{{ sheet.hooks.selectionRangeHook.statistics.sum }}
+				</div>
+				<div class="statistics">
+					<span>平均值 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.average }}
+				</div>
+				<div class="statistics">
+					<span>计数 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.count }}
+				</div>
+			</div>
 
-			<!-- 滚动渲染提示, 数据小于限制时显示 -->
-			<div class="scroll-tip" v-if="!lastScroll && sheet.config.rowCount < limit">
-				<Icons name="Loading" class="loading-animation"></Icons>
-			</div>
-		</div>
-
-		<!-- 移动端设置框选 -->
-		<div
-			v-if="isMobile() && sheet.config.edit"
-			class="mobile-selection"
-			@keydown.stop
-			@click.stop
-		>
-			<div>
-				行高
-				<input
-					:disabled="mobileRCReadOnly"
-					type="number"
-					v-model="selectionSize.h"
-					@change="mobileSetRowHeight"
-				/>
-			</div>
-			<div style="border-right: 1px solid var(--z-line)">
-				列宽
-				<input
-					:disabled="mobileRCReadOnly"
-					type="number"
-					v-model="selectionSize.w"
-					@change="mobileSetColWidth"
-				/>
+			<!-- 遮罩 -->
+			<div class="mask" :class="{active: loading || state === stateType.loading}">
+				<div>
+					<Icons name="Loading" class="loading-animation"></Icons>
+					<span>
+						{{ state === stateType.loading ? stateText : loadingText }}
+					</span>
+					<span v-if="loadingProgress !== -1 && state === stateType.normal">
+						{{ loadingProgress }}%
+					</span>
+				</div>
 			</div>
 
-			<div>
-				开始行<input type="number" v-model="selectionRange.r" @change="setSelectionRange" />
+			<!-- 移动端不是横向提醒 -->
+			<div
+				class="mobile-landscape-notice"
+				v-if="sheet.config.showHorizontalScreen && isMobile() && !isLandscape()"
+			>
+				<Icons name="Rotate" size="58px" color="#fff"></Icons>
+				<span>此操作需要横向屏幕</span>
 			</div>
-			<div>
-				结束行<input
-					type="number"
-					v-model="selectionRange.rr"
-					@change="setSelectionRange"
-				/>
-			</div>
-			<div>
-				开始列<input type="number" v-model="selectionRange.c" @change="setSelectionRange" />
-			</div>
-			<div>
-				结束列<input
-					type="number"
-					v-model="selectionRange.cc"
-					@change="setSelectionRange"
-				/>
-			</div>
-		</div>
-
-		<!-- 状态栏 -->
-		<div
-			v-if="
-				sheet.config.showstateBar &&
-				((isMobile() && isLandscape()) || !isMobile() || !sheet.config.showHorizontalScreen)
-			"
-			class="statebar"
-			:class="{mobile: isMobile()}"
-			:style="{}"
-		>
-			<div class="zoom">
-				<span>
-					<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
-				</span>
-				<Icons name="Remove" @click="onZoomSize(-0.1)"></Icons>
-				<input
-					v-model.number="sheet.config.zoom"
-					type="range"
-					min="0.5"
-					max="3"
-					step="0.01"
-					@input="onZoomInput"
-					@change="onZoomChange"
-				/>
-				<Icons name="Add" @click="onZoomSize(0.1)"></Icons>
-				<Icons name="Restore" @click="onZoomReset"></Icons>
-			</div>
-			<div class="flx"></div>
-			<div class="statistics">
-				<span>行 = </span>
-				{{ sheet.config.rowCount }}
-			</div>
-			<div class="statistics">
-				<span>列 = </span>
-				{{ sheet.config.colCount }}
-			</div>
-			<div class="statistics">
-				<span>最小值 = </span>
-				{{ useSelectionRangeHook.statistics.min }}
-			</div>
-			<div class="statistics">
-				<span>最大值 = </span>
-				{{ useSelectionRangeHook.statistics.max }}
-			</div>
-			<div class="statistics">
-				<span>求和 = </span>{{ useSelectionRangeHook.statistics.sum }}
-			</div>
-			<div class="statistics">
-				<span>平均值 = </span>
-				{{ useSelectionRangeHook.statistics.average }}
-			</div>
-			<div class="statistics">
-				<span>计数 = </span>
-				{{ useSelectionRangeHook.statistics.count }}
-			</div>
-		</div>
-
-		<!-- 遮罩 -->
-		<div class="mask" :class="{active: loading || state === stateType.loading}">
-			<div>
-				<Icons name="Loading" class="loading-animation"></Icons>
-				<span>
-					{{ state === stateType.loading ? stateText : loadingText }}
-				</span>
-				<span v-if="loadingProgress !== -1 && state === stateType.normal">
-					{{ loadingProgress }}%
-				</span>
-			</div>
-		</div>
-
-		<!-- 移动端不是横向提醒 -->
-		<div
-			class="mobile-landscape-notice"
-			v-if="sheet.config.showHorizontalScreen && isMobile() && !isLandscape()"
-		>
-			<Icons name="Rotate" size="58px" color="#fff"></Icons>
-			<span>此操作需要横向屏幕</span>
-		</div>
+		</template>
 	</div>
 </template>
 <style scoped lang="scss">

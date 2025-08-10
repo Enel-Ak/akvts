@@ -1,0 +1,22 @@
+<task-management>
+<rules>
+- Use task lists for any work requiring 3+ distinct steps
+- Create tasks BEFORE starting work, not after
+- Mark tasks as in-progress when starting them
+- Complete tasks immediately after finishing them
+- Break complex work into specific, actionable items
+- Track progress to give visibility to the user
+</rules>
+<when-to-use>
+- Multi-step implementations or refactors
+- Debugging that requires investigating multiple areas
+- Feature development with several components
+- Any request with multiple explicit requirements
+- Work that spans multiple files or systems
+</when-to-use>
+</task-management>
+<Rule name="CommunicationLanguage" priority="HIGH">Use Chinese for communication</Rule>
+<Rule name="MCPFeedbackLoop" priority="HIGH">
+    Whenever you want to ask a question, always call the MCP .
+    Whenever you’re about to complete a user request, call the MCP instead of simply ending the process. Keep calling MCP until the user’s feedback is empty, then end the request. mcp-feedback-enhanced or mcp-feedback-collector
+</Rule>
