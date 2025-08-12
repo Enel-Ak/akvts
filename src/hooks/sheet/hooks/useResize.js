@@ -1,4 +1,4 @@
-import {ref} from 'vue'
+import {nextTick, ref} from 'vue'
 import {workerCode} from '../worker/resize.worker.js'
 
 export const useResize = () => {
@@ -6,10 +6,6 @@ export const useResize = () => {
 
 	// 创建渲染worker
 	let worker = null
-
-	// 行高调整相关
-	const rowHeights = {} // 存储自定义行高
-	const colWidths = {} // 存储自定义列宽
 
 	// 响应参数
 	const isResizing = ref(false) // 是否正在调整大小
@@ -31,20 +27,22 @@ export const useResize = () => {
 
 	// 获取行的实际高度
 	const getRowHeight = (index) => {
-		return (rowHeights[index] || sheet.props.rowHeight) * sheet.config.zoom
+		return (sheet.config.cellRowResize[index] || sheet.props.rowHeight) * sheet.config.zoom
 	}
 
 	// 获取列的实际宽度
 	const getColWidth = (index) => {
-		return (colWidths[index] || sheet.props.colWidth) * sheet.config.zoom
+		return (sheet.config.cellColResize[index] || sheet.props.colWidth) * sheet.config.zoom
 	}
 
 	const setRowHeight = (index, height) => {
-		rowHeights[index] = height < sheet.props.rowHeight ? sheet.props.rowHeight : height
+		sheet.config.cellRowResize[index] =
+			height < sheet.props.rowHeight ? sheet.props.rowHeight : height
 	}
 
 	const setColWidth = (index, width) => {
-		colWidths[index] = width < sheet.props.colWidth ? sheet.props.colWidth : width
+		sheet.config.cellColResize[index] =
+			width < sheet.props.colWidth ? sheet.props.colWidth : width
 	}
 
 	// 开始调整行高
@@ -147,16 +145,11 @@ export const useResize = () => {
 	const stopResize = () => {
 		if (isResizing.value) {
 			if (resizingRow.value) {
-				rowHeights[resizingRow.value.rowIndex] = resizingRow.value._newHeight
-				delete resizingRow.value._newHeight
-			}
-
-			if (resizingCol.value) {
-				colWidths[resizingCol.value.colIndex] = resizingCol.value._newWidth
-				delete resizingCol.value._newWidth
+				setRowHeight(resizingRow.value.rowIndex, resizingRow.value._newHeight)
+			} else if (resizingCol.value) {
+				setColWidth(resizingCol.value.colIndex, resizingCol.value._newWidth)
 			}
 			sheet.hooks.selectionRangeHook.selecting = true
-			sheet.fn.render()
 		}
 
 		isResizing.value = false
@@ -177,37 +170,37 @@ export const useResize = () => {
 	let renderRequestId = 0
 	const renderRequests = new Map()
 
-	const getRenderResult = (data, type = 'render_request') => {
-		if (!worker) return
-		return new Promise((resolve, reject) => {
-			const requestId = ++renderRequestId
+	// const getRenderResult = (data, type = 'render_request') => {
+	// 	if (!worker) return
+	// 	return new Promise((resolve, reject) => {
+	// 		const requestId = ++renderRequestId
 
-			// 存储请求
-			renderRequests.set(requestId, {resolve, reject})
+	// 		// 存储请求
+	// 		renderRequests.set(requestId, {resolve, reject})
 
-			if (type === 'render_request') {
-				worker.postMessage({
-					type: 'render_request',
-					requestId,
-					data: {
-						...data,
-						rowHeight,
-						rowHeights: JSON.parse(JSON.stringify(rowHeights)),
-						colWidth,
-						colWidths: JSON.parse(JSON.stringify(colWidths)),
-					},
-				})
-			}
+	// 		if (type === 'render_request') {
+	// 			worker.postMessage({
+	// 				type: 'render_request',
+	// 				requestId,
+	// 				data: {
+	// 					...data,
+	// 					rowHeight: sheet.props.rowHeight,
+	// 					rowHeights: JSON.parse(JSON.stringify(sheet.config.cellRowResize)),
+	// 					colWidth: sheet.props.colWidth,
+	// 					colWidths: JSON.parse(JSON.stringify(sheet.config.cellColResize)),
+	// 				},
+	// 			})
+	// 		}
 
-			// 设置超时处理
-			setTimeout(() => {
-				if (renderRequests.has(requestId)) {
-					renderRequests.delete(requestId)
-					reject(new Error('渲染请求超时'))
-				}
-			}, 5000) // 5秒超时
-		})
-	}
+	// 		// 设置超时处理
+	// 		setTimeout(() => {
+	// 			if (renderRequests.has(requestId)) {
+	// 				renderRequests.delete(requestId)
+	// 				reject(new Error('渲染请求超时'))
+	// 			}
+	// 		}, 5000) // 5秒超时
+	// 	})
+	// }
 
 	const clear = () => {
 		renderRequests.clear()
@@ -252,10 +245,7 @@ export const useResize = () => {
 			isResizing,
 			resizingRow,
 			resizingCol,
-			rowHeights,
-			colWidths,
-
-			getRenderResult,
+			// getRenderResult,
 			startResize,
 			getRowHeight,
 			getColWidth,

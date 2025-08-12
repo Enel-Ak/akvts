@@ -22,6 +22,13 @@ export const useTools = () => {
 	// 	processMapInBatches,
 	// } = config
 
+	const isLocked = () => {
+		const {r, c} = sheet.hooks.selectionRangeHook.ranged
+		console.log(111, sheet.hooks.selectionRangeHook.ranged)
+
+		return !!sheet.config.cellLock[`${r}-${c}`]
+	}
+
 	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
 	const setCellStyles = (type, val, fn, save = true) => {
 		if (isLocked()) {
@@ -134,7 +141,7 @@ export const useTools = () => {
 	let fontSaved = false
 	const setFontColor = (e) => {
 		if (!fontSaved) {
-			useHistoryHook.saveHistory()
+			// useHistoryHook.saveHistory()
 			fontSaved = true
 		}
 		const color = e.target.value
@@ -148,7 +155,7 @@ export const useTools = () => {
 	let fillSaved = false
 	const setFillColor = (e) => {
 		if (!fillSaved) {
-			useHistoryHook.saveHistory()
+			// useHistoryHook.saveHistory()
 			fillSaved = true
 		}
 		const color = e.target.value
@@ -209,7 +216,7 @@ export const useTools = () => {
 		if (isLocked()) {
 			return
 		}
-		useHistoryHook.saveHistory()
+		// useHistoryHook.saveHistory()
 		const ranged = useSelectionRangeHook.ranged
 		if (!ranged) return
 
@@ -218,7 +225,7 @@ export const useTools = () => {
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
 
-		useMergedCellsHook.setMergeCell(
+		sheet.hooks.mergeHook.setMergeCell(
 			startRow,
 			startCol,
 			endRow - startRow + 1,

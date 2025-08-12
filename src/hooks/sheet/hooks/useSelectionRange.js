@@ -121,7 +121,7 @@ export const useSelectionRange = () => {
 	const modifiedRowsCache = () => {
 		const before = new Map()
 		let beforeSum = 0
-		Object.entries(sheet.hooks.resizeHook.rowHeights).forEach(([row, height]) => {
+		Object.entries(sheet.config.cellRowResize).forEach(([row, height]) => {
 			const rowNum = Number(row)
 			const diff = height - sheet.props.rowHeight
 			before.set(rowNum, diff)
@@ -133,7 +133,7 @@ export const useSelectionRange = () => {
 	const modifiedColsCache = () => {
 		const before = new Map()
 		let beforeSum = 0
-		Object.entries(sheet.hooks.resizeHook.colWidths).forEach(([col, width]) => {
+		Object.entries(sheet.config.cellColResize).forEach(([col, width]) => {
 			const colNum = Number(col)
 			const diff = width - sheet.props.colWidth
 			before.set(colNum, diff)
@@ -460,6 +460,11 @@ export const useSelectionRange = () => {
 		if (!selecting.value || dragging.value) return
 
 		const currentPos = limitRange(getCellPosition(e))
+		// 获取当前选区范围
+		const sr = Math.min(selection.r, currentPos.r)
+		const er = Math.max(selection.rr, currentPos.r)
+		const sc = Math.min(selection.c, currentPos.c)
+		const ec = Math.max(selection.cc, currentPos.c)
 
 		if (
 			!currentPos ||
@@ -468,17 +473,22 @@ export const useSelectionRange = () => {
 		)
 			return
 
-		// 获取当前选区范围
-		const sr = Math.min(selection.r, currentPos.r)
-		const er = Math.max(selection.rr, currentPos.r)
-		const sc = Math.min(selection.c, currentPos.c)
-		const ec = Math.max(selection.cc, currentPos.c)
+		if (
+			sr === ranged.value.r &&
+			sc === ranged.value.c &&
+			er === ranged.value.rr &&
+			ec === ranged.value.cc
+		) {
+			// 没有变化，直接返回, 不触发computed
+			return
+		}
 
 		if (sr < 0 || sc < 0) {
 			return
 		}
 
 		const expanded = getExpandedRange(sr, sc, er, ec)
+
 		// 没有变化，直接返回, 不触发computed
 		const {r, c, rr, cc} = ranged.value
 		if (r === expanded.r && c === expanded.c && rr === expanded.rr && cc === expanded.cc) {

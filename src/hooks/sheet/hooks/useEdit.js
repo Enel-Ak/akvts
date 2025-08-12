@@ -120,7 +120,7 @@ export const useEdit = () => {
 		const colIndex = cell.col ?? cell.colIndex
 
 		// 不允许编辑锁定的单元格
-		if (sheet.config.lockCells[`${rowIndex}-${colIndex}`]) {
+		if (sheet.config.cellLock[`${rowIndex}-${colIndex}`]) {
 			ElMessage.warning(`单元格已锁定`)
 			return
 		}

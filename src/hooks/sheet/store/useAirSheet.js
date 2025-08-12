@@ -42,12 +42,14 @@ const defaultSheet = {
 		freeze: false, // 冻结
 		full: true, // 全屏
 
-		onlineCell: [], // 协同高亮在线的
-		mergedCells: {}, // 已合并单元格
-		lockCells: {}, // 锁定单元格
+		cellOnline: [], // 协同高亮在线的
+		cellMerge: {}, // 已合并单元格
+		cellLock: {}, // 锁定单元格
 		cellStyle: {}, // 有样式的单元格
-		cellKeys: [], //  配置单元格的 Key
 		cellFormula: {}, // 有公式的单元格
+		cellRowResize: {}, // 有调整大小的行
+		cellColResize: {}, // 有调整大小的列
+		cellKeys: [], //  配置单元格的 Key
 
 		freezeCount: {
 			row: 0,

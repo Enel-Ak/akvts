@@ -205,7 +205,7 @@ const setActiveTool = computed(() => {
 		const endRow = Math.max(ranged.start.row, ranged.end.row)
 		const endCol = Math.max(ranged.start.col, ranged.end.col)
 		const cellStyle = sheet.value?.config?.cellStyle[`${startRow}-${startCol}`]
-		const isLock = sheet.value?.config?.lockCells[`${startRow}-${startCol}`]
+		const isLock = sheet.value?.config?.cellLock[`${startRow}-${startCol}`]
 		const isFx = sheet.value?.config?.cellFormula[`${startRow}-${startCol}`]
 
 		data.lock = isLock
@@ -275,11 +275,11 @@ const updateVisibleRange = async () => {
 		const rowHeights = {}
 		const colWidths = {}
 
-		for (const [index, height] of Object.entries(sheet.hooks.resizeHook.rowHeights)) {
+		for (const [index, height] of Object.entries(sheet.config.cellRowResize)) {
 			rowHeights[index] = height * currentZoom
 		}
 
-		for (const [index, width] of Object.entries(sheet.hooks.resizeHook.colWidths)) {
+		for (const [index, width] of Object.entries(sheet.config.cellColResize)) {
 			colWidths[index] = width * currentZoom
 		}
 
@@ -296,7 +296,7 @@ const updateVisibleRange = async () => {
 			defaultColWidth: props.colWidth * currentZoom,
 			rowHeights,
 			colWidths,
-			mergedCells: JSON.parse(JSON.stringify(sheet.config.mergedCells)),
+			mergedCells: JSON.parse(JSON.stringify(sheet.config.cellMerge)),
 			zoom: currentZoom,
 		}
 
@@ -316,6 +316,7 @@ const updateVisibleRange = async () => {
 // 生成可视行数据
 const visibleRows = computed(() => {
 	const rows = []
+
 	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return rows
 	const {startRow, endRow} = visibleRangeRef.value.visible
 
@@ -369,7 +370,7 @@ const visibleCells = (row) => {
 			rowIndex: row.rowIndex,
 			rowHeight: sheet.hooks.resizeHook.getRowHeight(row.rowIndex),
 			colIndex: i,
-			colWidth: sheet.hooks.resizeHook.getColWidth(i),
+			colWidth: sheet.config.cellColResize[i],
 			value,
 			config: {
 				key: sheet.config.cellKeys?.[i],
@@ -484,7 +485,7 @@ const getOffsetStyle = (cell) => {
 }
 
 const getCellClass = (cell) => {
-	const isLocked = sheet.config.lockCells[`${cell.rowIndex}-${cell.colIndex}`]
+	const isLocked = sheet.config.cellLock[`${cell.rowIndex}-${cell.colIndex}`]
 	const style = sheet.config.cellStyle[`${cell.rowIndex}-${cell.colIndex}`]
 	const formula = sheet.config.cellFormula[`${cell.rowIndex}-${cell.colIndex}`]
 
@@ -516,7 +517,7 @@ const getCellClass = (cell) => {
 }
 
 const isMergedCellStart = (cell) => {
-	const mergedCells = sheet.config.mergedCells
+	const mergedCells = sheet.config.cellMerge
 	if (Object.keys(mergedCells).length === 0) {
 		return false
 	}
@@ -545,7 +546,7 @@ const isLockedCell = () => {
 
 	for (let row = startRow; row <= endRow; row++) {
 		for (let col = startCol; col <= endCol; col++) {
-			if (sheet.config.lockCells[`${row}-${col}`]) {
+			if (sheet.config.cellLock[`${row}-${col}`]) {
 				lockedTimer = setTimeout(() => ElMessage.warning(`单元格已锁定`), 300)
 				return true
 			}
@@ -738,7 +739,7 @@ const onCellBlur = (event, cell) => {
 	setTimeout(() => {
 		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
 		if (val !== oldVal) {
-			useHistoryHook.saveHistory(cell)
+			sheet.hooks.historyHook.saveHistory(cell)
 		}
 	}, 0)
 }
@@ -1142,7 +1143,7 @@ defineExpose({
 							<!-- 字体 -->
 							<select
 								:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
-								@change="useToolsHook.setFont($event)"
+								@change="sheet.hooks.toolsHook.setFont($event)"
 							>
 								<option
 									v-for="[key, value] of Object.entries(fonts)"
@@ -1155,7 +1156,7 @@ defineExpose({
 							<!-- 字号 -->
 							<select
 								:value="setActiveTool('fs').value || 13"
-								@change="useToolsHook.setFontSize($event)"
+								@change="sheet.hooks.toolsHook.setFontSize($event)"
 							>
 								<option v-for="size in fontSize" :key="size" :value="size">
 									{{ size }}
@@ -1167,7 +1168,7 @@ defineExpose({
 							:value="setActiveTool('fmt').value || formatMap.Normal"
 							@change.stop="
 								($event) => {
-									useToolsHook.setFormat($event)
+									sheet.hooks.toolsHook.setFormat($event)
 								}
 							"
 						>
@@ -1192,8 +1193,8 @@ defineExpose({
 						<span>颜色</span>
 						<input
 							type="color"
-							@input="useToolsHook.setFontColor($event)"
-							@change="useToolsHook.fontColorChanged($event)"
+							@input="sheet.hooks.toolsHook.setFontColor($event)"
+							@change="sheet.hooks.toolsHook.fontColorChanged($event)"
 						/>
 					</div>
 					<div
@@ -1205,8 +1206,8 @@ defineExpose({
 						<span class="fill-color">填充</span>
 						<input
 							type="color"
-							@input="useToolsHook.setFillColor($event)"
-							@change="useToolsHook.fillColorChanged($event)"
+							@input="sheet.hooks.toolsHook.setFillColor($event)"
+							@change="sheet.hooks.toolsHook.fillColorChanged($event)"
 						/>
 					</div>
 				</div>
