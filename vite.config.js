@@ -87,6 +87,7 @@ export default ({mode, command}) => {
 						},
 					}
 				},
+				importMode: 'async',
 			}),
 			visualizer({
 				filename: './dist/stats.html',
@@ -151,6 +152,37 @@ export default ({mode, command}) => {
 				},
 				maxParallelFileOps: 5,
 				logLevel: 'silent',
+
+				// output: {
+				// 	chunkFileNames: `assets/[name].[hash]${timestamp}.js`,
+				// 	entryFileNames: `assets/[name].[hash]${timestamp}.js`,
+				// 	assetFileNames: `assets/[name].[hash]${timestamp}.[extname]`,
+				// 	manualChunks(id) {
+				// 		if (id.includes('node_modules')) {
+				// 			// return id.toString().split('node_modules/')[1].split('/')[0].toString()
+				// 			// if (id.includes('element-plus')) return 'vendor-element'
+				// 			// if (id.includes('vue')) return 'vendor-vue'
+				// 			// return 'vendor-others'
+
+				// 			if (id.includes('element-plus')) return 'vendor-element'
+				// 			if (id.includes('vue')) return 'vendor-vue'
+				// 			if (id.includes('node_modules')) {
+				// 				const dirs = id.toString().split('node_modules/')[1].split('/')
+				// 				const pkgName = dirs[0].startsWith('@')
+				// 					? dirs.slice(0, 2).join('/')
+				// 					: dirs[0]
+				// 				return `vendor-${pkgName}`
+				// 			}
+
+				// 			if (id.includes('/src/views/')) {
+				// 				const name = id.split('/src/views/')[1].split('/')[0]
+				// 				return `page-${name}`
+				// 			}
+				// 		}
+				// 	},
+				// },
+				// maxParallelFileOps: 2,
+				// logLevel: 'silent',
 			},
 			terserOptions: {
 				format: {

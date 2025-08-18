@@ -216,7 +216,7 @@ export const useEdit = (id, config) => {
 		// 检查是否是公式
 		if (e.key === '=') {
 			cellEl.innerText = ''
-			delete sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+			delete sheet.config.formulaed[`${rowIndex}-${colIndex}`]
 			setFormula()
 		}
 
@@ -225,8 +225,8 @@ export const useEdit = (id, config) => {
 	}
 
 	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
-		const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
-		const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+		const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt
+		const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`]
 
 		let output = text
 		try {
@@ -374,7 +374,7 @@ export const useEdit = (id, config) => {
 
 			if (formula) {
 				if (format) {
-					sheet.config.cellFormula[`${rowIndex}-${colIndex}`] = output
+					sheet.config.formulaed[`${rowIndex}-${colIndex}`] = output
 				} else {
 					output = formula
 				}
@@ -408,17 +408,17 @@ export const useEdit = (id, config) => {
 					continue
 				}
 
-				const oldFormula = sheet.config.cellFormula[`${row}-${col}`]
+				const oldFormula = sheet.config.formulaed[`${row}-${col}`]
 				if (oldFormula) {
 					// 取出公式中的参数
 					const params = oldFormula.match(/\(([^)]*)\)/)
 					if (params) {
-						sheet.config.cellFormula[`${row}-${col}`] = `=${key}(${params[1]})`
+						sheet.config.formulaed[`${row}-${col}`] = `=${key}(${params[1]})`
 					}
 				} else {
-					sheet.config.cellFormula[`${row}-${col}`] = `=${key}()`
+					sheet.config.formulaed[`${row}-${col}`] = `=${key}()`
 				}
-				inputValue.value = sheet.config.cellFormula[`${row}-${col}`]
+				inputValue.value = sheet.config.formulaed[`${row}-${col}`]
 			}
 		}
 		setFormulaValue()
@@ -426,7 +426,7 @@ export const useEdit = (id, config) => {
 
 	const setFormulaValue = () => {
 		try {
-			const formulas = sheet.config.cellFormula
+			const formulas = sheet.config.formulaed
 
 			// 预编译正则表达式，避免重复创建
 			const formulaRegex = /=([A-Z]+)\(([^)]*)\)/
@@ -674,14 +674,14 @@ export const useEdit = (id, config) => {
 		}
 
 		// 计算公式处理
-		const formula = sheet.config.cellFormula[`${r}-${c}`]
+		const formula = sheet.config.formulaed[`${r}-${c}`]
 		if (formula) {
-			sheet.config.cellFormula[`${r}-${c}`] = value
+			sheet.config.formulaed[`${r}-${c}`] = value
 			setFormulaValue()
 		}
 
 		// 处理格式
-		const fmt = sheet.config.cellStyle[`${r}-${c}`]?.fmt
+		const fmt = sheet.config.styled[`${r}-${c}`]?.fmt
 		if (fmt) {
 			sheet.celldata.get(r)[c] = setCellFormat(sheet.celldata.get(r)[c], r, c, true)
 		}
@@ -689,12 +689,12 @@ export const useEdit = (id, config) => {
 
 	const getCellValue = (rowIndex, colIndex) => {
 		if (sheet.celldata.get(rowIndex)) {
-			const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
+			const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt
 			if (fmt) {
 				return sheet.celldata.get(rowIndex)?.[colIndex]?.replace(/\/|年|月|日|:|,|元/g, '')
 			}
 
-			const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+			const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`]
 			if (formula) {
 				return formula
 			}

@@ -42,14 +42,14 @@ const defaultSheet = {
 		freeze: false, // 冻结
 		full: true, // 全屏
 
-		cellOnline: [], // 协同高亮在线的
-		cellMerge: {}, // 已合并单元格
-		cellLock: {}, // 锁定单元格
-		cellStyle: {}, // 有样式的单元格
-		cellFormula: {}, // 有公式的单元格
-		cellRowResize: {}, // 有调整大小的行
-		cellColResize: {}, // 有调整大小的列
-		cellKeys: [], //  配置单元格的 Key
+		online: [], // 协同高亮在线的
+		merged: {}, // 已合并单元格
+		locked: {}, // 锁定单元格
+		styled: {}, // 有样式的单元格
+		formulaed: {}, // 有公式的单元格
+		rResize: {}, // 有调整大小的行
+		cResize: {}, // 有调整大小的列
+		keys: [], //  配置单元格的 Key
 
 		freezeCount: {
 			row: 0,
@@ -66,10 +66,12 @@ const defaultSheet = {
 	history: null, // 历史记录
 	hooks: {}, // 扩展对象
 	state: {
-		render: false,
-		loading: false,
-		scrolling: false,
-		completed: false,
+		render: false, // 是否正在渲染
+		loading: false, // 是否正在加载
+		scrolling: false, // 是否正在滚动
+		completed: false, // 是否初始化完成
+		msg: '正在加载数据...',
+		progress: -1,
 	},
 }
 
@@ -92,6 +94,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			}
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
+				clone.history = shallowReactive(new Map()) // 同一个引用
 				clone.celldata = shallowReactive(new Map()) // 同一个引用
 				clone.config = {
 					...clone.config,
@@ -107,12 +110,12 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				const re = this.sheets.get(key)
 				re.hooks = {
 					renderHook: useRender().init(re),
-					styleHook: useStyle().init(re),
+					styleHook: useStyle().init(key),
 					resizeHook: useResize().init(re),
 					mergeHook: useMerge().init(re),
 					copyHook: useCopy().init(re),
-					toolsHook: useTools().init(re),
-					historyHook: useHistory().init(re),
+					toolsHook: useTools().init(key),
+					historyHook: useHistory().init(key),
 					editHook: useEdit().init(key, re),
 					selectionRangeHook: useSelectionRange().init(key, re),
 					contextMenuHook: useContextMenu().init(key, re),
@@ -124,13 +127,6 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			}
 			setTimeout(() => callback && callback(), 0)
 			console.log('inited AirSheet', this.sheets.get(key))
-		},
-		render: function (key) {
-			this.sheets.get(key).state.render = true
-			// setTimeout(() => (this.sheets.get(key).state.render = false), 16)
-		},
-		setCellMap: function (key, newMap) {
-			this.sheets.get(key).celldata = newMap
 		},
 	},
 })

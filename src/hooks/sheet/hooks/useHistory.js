@@ -1,21 +1,25 @@
-import {cloneDeep} from 'lodash-es'
 import {reactive} from 'vue'
+import {useProcessMapInBatches} from './useProcessMapInBatches'
+import {useAirSheetStore} from '../store/useAirSheet'
 
-export function useHistory() {
+export const useHistory = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = null
 	let sheet = null
-	const history = []
-	const max = 200
+	let count = 0
+	const max = 50
 
 	// 准备修改前保存当前状态
-	const saveHistory = (data = null, type = 'edit') => {
+	const save = (data = null, type = 'edit') => {
 		// 保存完整的 sheet 状态
 		const state = {
-			config: cloneDeep(sheet.config),
+			config: JSON.parse(JSON.stringify(sheet.config)),
 			celldata: new Map(),
 			addRow: null,
 			addCol: null,
 			removeRow: new Map(),
 			removeCol: new Map(),
+			creationTime: Date.now(),
 		}
 
 		if (data) {
@@ -23,10 +27,10 @@ export function useHistory() {
 				case 'edit':
 					if (Array.isArray(data)) {
 						data.forEach((item) => {
-							state.celldata.set(`${item.rowIndex}-${item.colIndex}`, item.value)
+							state.celldata.set(`${item.r}-${item.c}`, item.v)
 						})
 					} else {
-						state.celldata.set(`${data.rowIndex}-${data.colIndex}`, data.value)
+						state.celldata.set(`${data.r}-${data.c}`, data.v)
 					}
 					break
 				case 'addRow':
@@ -44,39 +48,41 @@ export function useHistory() {
 			}
 		}
 
-		history.push(state)
-
+		sheet.history.set(count, state)
+		count++
 		// 清除超出最大限制的历史记录
-		if (history.length > max) {
-			history.shift()
+		if (sheet.history.size > max) {
+			sheet.history.delete(sheet.history.keys().next().value)
 		}
+		console.log('历史记录', sheet.history)
 	}
 
 	// 撤销
 	const undo = async (callback) => {
 		if (!canUndo()) return
 
-		if (history.length > 0) {
+		if (sheet.history.size > 0) {
 			try {
-				loading.value = true
-				loadingText.value = '撤销数据处理中...'
-				loadingProgress.value = -1
+				sheet.state.loading = true
+				sheet.state.msg = '撤销数据处理中...'
 
-				const state = history.pop()
+				count--
+				const state = sheet.history.get(count)
+				if (!state) return
 
 				// 撤销修改配置
-				sheet.config = state.config
+				Object.assign(sheet.config, state.config)
 
 				// 撤销单元格修改
 				if (state.celldata.size > 0) {
 					try {
-						await processMapInBatches(state.celldata, (rowIndex, rowData) => {
+						await useProcessMapInBatches(state.celldata, (rowIndex, rowData) => {
+							if (!rowData) return
 							const [r, c] = rowIndex.split('-').map(Number)
 							sheet.celldata.get(r)[c] = rowData
-							const merged = useMergedCellsHook.findMergedCell(r, c)
-
+							const merged = sheet.hooks.mergeHook.findMergedCell(r, c)
 							if (merged) {
-								useSelectionRangeHook.setRange(
+								sheet.hooks.selectionRangeHook.setRange(
 									merged.row,
 									merged.col,
 									merged.rowspan + merged.row - 1,
@@ -84,16 +90,13 @@ export function useHistory() {
 									true
 								)
 							} else {
-								useSelectionRangeHook.setRange(r, c, r, c, true)
+								sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
 							}
 						})
 						state.celldata.clear()
 					} catch (error) {
 						console.error('撤销单元格修改失败:', error)
-						loading.value = false
 					}
-				} else {
-					sheet.celldata = new Map()
 				}
 
 				// 撤销添加行
@@ -250,38 +253,38 @@ export function useHistory() {
 				}
 
 				// 更新合并单元格
-				if (state.config.mergedCells) {
-					const mergedCells = new Map()
-					Object.entries(state.config.mergedCells).forEach(([key, value]) =>
-						mergedCells.set(key, value)
-					)
-					useMergedCellsHook.setMergeCells(mergedCells)
+				if (state.config.merged) {
+					Object.keys(state.config.merged).forEach((rc) => {
+						const [r, c] = rc.split('-')
+						sheet.hooks.removeMergedCell(r, c)
+					})
+					sheet.config.merged = state.config.merged
 				}
 
-				await renderRange()
+				sheet.history.delete(count)
 				callback?.()
 			} catch (error) {
 				console.error('处理数据时出错:', error)
 			} finally {
-				loading.value = false
-				loadingText.value = '处理完成'
+				sheet.state.loading = false
 			}
 		}
 	}
 
 	// 判断是否可以撤销/重做
-	const canUndo = () => history.length > 0
+	const canUndo = () => sheet.history.size > 0
 
 	const destroy = () => {
-		history.length = 0
+		sheet.history.clear()
 	}
 
-	const init = (reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheet = sheetStore.getSheet(key)
+		sheetKey = key
 		setTimeout(() => console.log('installed useHistory'), 16)
 		return {
 			destroy,
-			saveHistory,
+			save,
 			undo,
 			canUndo,
 		}

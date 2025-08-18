@@ -11,11 +11,13 @@ import {
 	onDeactivated,
 	onBeforeMount,
 	markRaw,
+	toRaw,
 } from 'vue'
 
 import {ElMessage} from 'element-plus'
 import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
+import {useSleep} from '@/hooks/useSleep'
 
 const stateType = {
 	normal: 0,
@@ -137,18 +139,11 @@ const initialData = () => {
 	let processed = 0
 	const batchSize = 3000
 
-	if (total < batchSize) {
-		celldata.forEach((row, index) => {
-			sheet.celldata.set(index, row)
-		})
-		return
-	}
-
-	loading.value = true
-	loadingProgress.value = 0
-	loadingText.value = '正在加载数据'
+	sheet.state.loading = true
+	sheet.state.msg = '正在加载数据'
 
 	const cellMap = new Map()
+
 	function processBatch() {
 		const start = performance.now()
 		let count = 0
@@ -156,37 +151,33 @@ const initialData = () => {
 		while (processed < total && count < batchSize && performance.now() - start < 16) {
 			const row = celldata[processed]
 			if (row) {
-				cellMap.set(processed, markRaw(row))
+				cellMap.set(processed, toRaw(row))
 			}
 			processed++
 			count++
 		}
-
-		loadingText.value = `正在加载数据`
-		loadingProgress.value = Math.floor((processed / total) * 100)
+		sheet.state.progress = Math.floor((processed / total) * 100)
 
 		if (processed < total) {
 			requestAnimationFrame(processBatch)
 		} else {
-			loadingText.value = '加载完成'
-			loadingProgress.value = 100
+			sheet.state.progress = 100
 			sheetStore.$patch((state) => {
 				state.sheets.get(id).celldata = markRaw(cellMap)
+				sheet.hooks.historyHook.save(markRaw([...cellMap.values()]))
 			})
-			setTimeout(() => {
-				loading.value = false
-				// useHistoryHook.saveHistory()
-			}, 250)
+			useSleep(250).then(() => {
+				sheet.state.loading = false
+			})
 		}
 	}
-
 	requestAnimationFrame(processBatch)
 }
 
 // 单元格选中后激活该单元格已有样式
 const setActiveTool = computed(() => {
-	return (style) => {
-		const ranged = sheet.value?.hooks?.selectionRangeHook?.ranged
+	return (styleKey) => {
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 
 		const data = {
 			value: null,
@@ -196,28 +187,24 @@ const setActiveTool = computed(() => {
 			fxVal: '',
 		}
 
-		if (!ranged) {
+		if (!r) {
 			return data
 		}
 
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
-		const cellStyle = sheet.value?.config?.cellStyle[`${startRow}-${startCol}`]
-		const isLock = sheet.value?.config?.cellLock[`${startRow}-${startCol}`]
-		const isFx = sheet.value?.config?.cellFormula[`${startRow}-${startCol}`]
+		const cellstyle = sheet.config.styled[`${r}-${c}`]
+		const isLock = sheet.config.locked[`${r}-${c}`]
+		const isFx = sheet.config.formulaed[`${r}-${c}`]
 
 		data.lock = isLock
 		data.fx = !!isFx
 		data.fxVal = isFx
 
-		if ((startRow !== endRow && startCol !== endCol) || !style || !cellStyle) {
+		if ((r !== rr && c !== cc) || !styleKey || !cellstyle) {
 			return data
 		}
 
-		data.value = cellStyle[style]
-		data.active = Object.keys(cellStyle).includes(style)
+		data.value = cellstyle[styleKey]
+		data.active = Object.keys(cellstyle).includes(styleKey)
 
 		return data
 	}
@@ -237,34 +224,6 @@ const visibleRangeRef = ref({
 	},
 })
 
-const processMapInBatches = (map, callback, batchSize = 5000) => {
-	const entries = Array.from(map.entries())
-	const total = entries.length
-	let processed = 0
-
-	return new Promise((resolve) => {
-		function processBatch() {
-			const start = performance.now()
-
-			while (processed < total && performance.now() - start < 16) {
-				callback(entries[processed][0], entries[processed][1])
-				processed++
-			}
-
-			if (processed < total) {
-				if (processed % batchSize !== 0) {
-					loadingProgress.value = Math.floor((processed / total) * 100)
-				}
-				requestAnimationFrame(processBatch)
-			} else {
-				resolve()
-			}
-		}
-
-		requestAnimationFrame(processBatch)
-	})
-}
-
 // 更新可见范围
 let updateVisibleRangeTimeout = null
 let updateTimer = null
@@ -275,11 +234,11 @@ const updateVisibleRange = async () => {
 		const rowHeights = {}
 		const colWidths = {}
 
-		for (const [index, height] of Object.entries(sheet.config.cellRowResize)) {
+		for (const [index, height] of Object.entries(sheet.config.rResize)) {
 			rowHeights[index] = height * currentZoom
 		}
 
-		for (const [index, width] of Object.entries(sheet.config.cellColResize)) {
+		for (const [index, width] of Object.entries(sheet.config.cResize)) {
 			colWidths[index] = width * currentZoom
 		}
 
@@ -296,7 +255,7 @@ const updateVisibleRange = async () => {
 			defaultColWidth: props.colWidth * currentZoom,
 			rowHeights,
 			colWidths,
-			mergedCells: JSON.parse(JSON.stringify(sheet.config.cellMerge)),
+			mergedCells: JSON.parse(JSON.stringify(sheet.config.merged)),
 			zoom: currentZoom,
 		}
 
@@ -325,8 +284,8 @@ const visibleRows = computed(() => {
 
 	for (let i = start; i < end; i++) {
 		const row = {
-			rowIndex: i,
-			rowHeight: sheet.hooks.resizeHook.getRowHeight(i),
+			r: i,
+			h: sheet.hooks.resizeHook.getRowHeight(i),
 			config: {},
 		}
 		rows.push(row)
@@ -345,38 +304,42 @@ const visibleCells = (row) => {
 
 	for (let i = start; i < end; i++) {
 		// 检查当前单元格是否是合并单元格的从属单元格
-		const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.rowIndex, i)
+		const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.r, i)
 
 		let value = null
+		let inMerged = false
 
 		if (mergedCell) {
-			if (mergedCell.row === row.rowIndex && mergedCell.col === i) {
+			if (mergedCell.r === row.r && mergedCell.c === i) {
 				// 如果是合并单元格的起始位置，设置值
-				value = sheet.celldata.get(row.rowIndex)?.[i] || ''
+				value = sheet.celldata.get(row.r)?.[i] || ''
 			} else {
 				// 如果在合并单元格内部，不设置值
 				value = ''
+				inMerged = true
 			}
 		} else {
 			// 普通单元格，正常取值
-			value = sheet.celldata.get(row.rowIndex)?.[i] || ''
+			value = sheet.celldata.get(row.r)?.[i] || ''
 		}
 
-		if (!sheet.celldata.get(row.rowIndex)) {
-			sheet.celldata.set(row.rowIndex, [])
+		if (!sheet.celldata.get(row.r)) {
+			sheet.celldata.set(row.r, [])
 		}
 
 		cells.push({
-			rowIndex: row.rowIndex,
-			rowHeight: sheet.hooks.resizeHook.getRowHeight(row.rowIndex),
-			colIndex: i,
-			colWidth: sheet.config.cellColResize[i],
-			value,
+			r: row.r,
+			h: row.h,
+			c: i,
+			w: sheet.hooks.resizeHook.getColWidth(i),
+			v: value,
 			config: {
-				key: sheet.config.cellKeys?.[i],
+				key: sheet.config.keys?.[i],
 			},
+			inMerged,
 		})
 	}
+
 	return cells
 }
 
@@ -467,12 +430,29 @@ const visibleTitles = computed(() => {
 
 	for (let i = start; i < end; i++) {
 		titles.push({
-			colIndex: i,
-			colWidth: sheet.hooks.resizeHook.getColWidth(i),
-			title: getTitle(i),
+			c: i,
+			w: sheet.hooks.resizeHook.getColWidth(i),
+			t: getTitle(i),
 		})
 	}
 	return titles
+})
+
+const getCellStyle = computed(() => {
+	return (cell) => {
+		const cellstyle = sheet.config.styled[`${cell.r}-${cell.c}`]
+		if (cellstyle) {
+			const visibleDom = containerRef.value?.querySelector(
+				`[data-cell="${cell.r}-${cell.c}"]`
+			)
+			if (visibleDom) {
+				const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+				const style = sheet.hooks.styleHook.getStyle(cellstyle)
+				return style
+			}
+		}
+		return {}
+	}
 })
 
 // 计算自定义列偏移量（与内容完全对齐）
@@ -481,13 +461,14 @@ const getOffsetStyle = (cell) => {
 		offsetLeft: offsetLeft.value,
 		offsetTop: offsetTop.value,
 	})
+
 	return style
 }
 
 const getCellClass = (cell) => {
-	const isLocked = sheet.config.cellLock[`${cell.rowIndex}-${cell.colIndex}`]
-	const style = sheet.config.cellStyle[`${cell.rowIndex}-${cell.colIndex}`]
-	const formula = sheet.config.cellFormula[`${cell.rowIndex}-${cell.colIndex}`]
+	const isLocked = sheet.config.locked[`${cell.r}-${cell.c}`]
+	const style = sheet.config.styled[`${cell.r}-${cell.c}`]
+	const formula = sheet.config.formulaed[`${cell.r}-${cell.c}`]
 
 	let fmtClass = ''
 	switch (style?.fmt) {
@@ -517,11 +498,11 @@ const getCellClass = (cell) => {
 }
 
 const isMergedCellStart = (cell) => {
-	const mergedCells = sheet.config.cellMerge
+	const mergedCells = sheet.config.merged
 	if (Object.keys(mergedCells).length === 0) {
 		return false
 	}
-	const key = `${cell.rowIndex}-${cell.colIndex}`
+	const key = `${cell.r}-${cell.c}`
 
 	return mergedCells.hasOwnProperty(key)
 }
@@ -546,7 +527,7 @@ const isLockedCell = () => {
 
 	for (let row = startRow; row <= endRow; row++) {
 		for (let col = startCol; col <= endCol; col++) {
-			if (sheet.config.cellLock[`${row}-${col}`]) {
+			if (sheet.config.locked[`${row}-${col}`]) {
 				lockedTimer = setTimeout(() => ElMessage.warning(`单元格已锁定`), 300)
 				return true
 			}
@@ -688,13 +669,7 @@ const updateViewportSize = () => {
 
 // 点击序号
 const onClickNumber = (e, row) => {
-	sheet.hooks.selectionRangeHook.setRange(
-		row.rowIndex,
-		0,
-		row.rowIndex,
-		sheet.config.colCount - 1,
-		true
-	)
+	sheet.hooks.selectionRangeHook.setRange(row.r, 0, row.r, sheet.config.colCount - 1, true)
 }
 
 // 点击字母
@@ -735,13 +710,14 @@ const onClickCell = (e, cell) => {
 
 // 单元格编辑失去焦点后
 const onCellBlur = (event, cell) => {
-	const oldVal = cell.value
-	setTimeout(() => {
-		const val = sheet.celldata.get(cell.rowIndex)?.[cell.colIndex]
+	const oldVal = cell.v
+
+	useSleep(16).then(() => {
+		const val = sheet.celldata.get(cell.r)?.[cell.c]
 		if (val !== oldVal) {
-			sheet.hooks.historyHook.saveHistory(cell)
+			sheet.hooks.historyHook.save(cell)
 		}
-	}, 0)
+	})
 }
 
 // 改变缩放比例时
@@ -887,7 +863,7 @@ const onCellDrop = (event) => {
 	dropCell = null
 }
 
-const init = async () => {
+const init = () => {
 	initialData()
 	nextTick(async () => {
 		updateViewportSize()
@@ -1016,7 +992,7 @@ const isLandscape = () => {
 watch(
 	() => sheetStore.getSheet(id),
 	(newVal) => {
-		console.log('updated AirSheet')
+		console.log('updated AirSheet', newVal)
 		Object.assign(sheet, newVal)
 	},
 	{deep: true}
@@ -1156,7 +1132,7 @@ defineExpose({
 							<!-- 字号 -->
 							<select
 								:value="setActiveTool('fs').value || 13"
-								@change="sheet.hooks.toolsHook.setFontSize($event)"
+								@change="sheet.hooks.toolsHook.setFontSize($event, containerRef)"
 							>
 								<option v-for="size in fontSize" :key="size" :value="size">
 									{{ size }}
@@ -1168,7 +1144,7 @@ defineExpose({
 							:value="setActiveTool('fmt').value || formatMap.Normal"
 							@change.stop="
 								($event) => {
-									sheet.hooks.toolsHook.setFormat($event)
+									sheet.hooks.toolsHook.setFormat($event, containerRef)
 								}
 							"
 						>
@@ -1225,7 +1201,7 @@ defineExpose({
 						v-if="sheet.config.bold"
 						class="item"
 						:class="{active: setActiveTool('bold').active}"
-						@click="useToolsHook.setBold"
+						@click="sheet.hooks.toolsHook.setBold"
 					>
 						<Icons name="Bold"></Icons>
 						<span>加粗</span>
@@ -1234,7 +1210,7 @@ defineExpose({
 						v-if="sheet.config.italic"
 						class="item"
 						:class="{active: setActiveTool('it').active}"
-						@click="useToolsHook.setItalic"
+						@click="sheet.hooks.toolsHook.setItalic"
 					>
 						<Icons name="Italic"></Icons>
 						<span>倾斜</span>
@@ -1243,7 +1219,7 @@ defineExpose({
 						v-if="sheet.config.underline"
 						class="item"
 						:class="{active: setActiveTool('un').active}"
-						@click="useToolsHook.setUnderline"
+						@click="sheet.hooks.toolsHook.setUnderline"
 					>
 						<Icons name="Underline"></Icons>
 						<span>下划线</span>
@@ -1252,7 +1228,7 @@ defineExpose({
 						v-if="sheet.config.strikethrough"
 						class="item"
 						:class="{active: setActiveTool('st').active}"
-						@click="useToolsHook.setStrikethrough"
+						@click="sheet.hooks.toolsHook.setStrikethrough"
 					>
 						<Icons name="Strikethrough"></Icons>
 						<span>删除线</span>
@@ -1263,7 +1239,7 @@ defineExpose({
 					<div
 						class="item"
 						:class="{active: setActiveTool('align').value === 'left'}"
-						@click="useToolsHook.setAlign('left')"
+						@click="sheet.hooks.toolsHook.setAlign('left')"
 					>
 						<Icons name="AlignLeft"></Icons>
 						<span>左对齐</span>
@@ -1271,7 +1247,7 @@ defineExpose({
 					<div
 						class="item"
 						:class="{active: setActiveTool('align').value === 'center'}"
-						@click="useToolsHook.setAlign('center')"
+						@click="sheet.hooks.toolsHook.setAlign('center')"
 					>
 						<Icons name="AlignCenter"></Icons>
 						<span>居中</span>
@@ -1279,15 +1255,15 @@ defineExpose({
 					<div
 						class="item"
 						:class="{active: setActiveTool('align').value === 'right'}"
-						@click="useToolsHook.setAlign('right')"
+						@click="sheet.hooks.toolsHook.setAlign('right')"
 					>
 						<Icons name="AlignRight"></Icons>
 						<span>右对齐</span>
 					</div>
 				</div>
 
-				<div class="group" v-if="sheet.config.merge">
-					<div class="item" @click="useToolsHook.setMerge()">
+				<div class="group" v-if="sheet.config.merged">
+					<div class="item" @click="sheet.hooks.toolsHook.setMerge()">
 						<Icons name="Merge"></Icons>
 						<span>合并</span>
 					</div>
@@ -1305,13 +1281,13 @@ defineExpose({
 									setActiveTool('br').active ||
 									setActiveTool('bb').active,
 							}"
-							@click="useToolsHook.setBorder()"
+							@click="sheet.hooks.toolsHook.setBorder()"
 						>
 							<Icons name="Border"></Icons>
 							<span>边框</span>
 						</div>
 						<div class="merge border-merge shadow-12">
-							<div class="item" @click="useToolsHook.setBorder(false)">
+							<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
 								<Icons name="UnBorder"></Icons>
 								<span>无边框</span>
 							</div>
@@ -1320,7 +1296,7 @@ defineExpose({
 								:class="{
 									active: setActiveTool('bt').active,
 								}"
-								@click="useToolsHook.setBorder(null, 'top')"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'top')"
 							>
 								<Icons name="BorderTop"></Icons>
 								<span>上边框</span>
@@ -1330,7 +1306,7 @@ defineExpose({
 								:class="{
 									active: setActiveTool('bb').active,
 								}"
-								@click="useToolsHook.setBorder(null, 'bottom')"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'bottom')"
 							>
 								<Icons name="BorderBottom"></Icons>
 								<span>下边框</span>
@@ -1340,7 +1316,7 @@ defineExpose({
 								:class="{
 									active: setActiveTool('bl').active,
 								}"
-								@click="useToolsHook.setBorder(null, 'left')"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'left')"
 							>
 								<Icons name="BorderLeft"></Icons>
 								<span>左边框</span>
@@ -1350,18 +1326,21 @@ defineExpose({
 								:class="{
 									active: setActiveTool('br').active,
 								}"
-								@click="useToolsHook.setBorder(null, 'right')"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'right')"
 							>
 								<Icons name="BorderRight"></Icons>
 								<span>右边框</span>
 							</div>
-							<div class="item border-color" @click="useToolsHook.setBorderColor">
+							<div
+								class="item border-color"
+								@click="sheet.hooks.toolsHook.setBorderColor"
+							>
 								<Icons name="BorderColor"></Icons>
 								<span>颜色</span>
 								<input
 									type="color"
-									@input="useToolsHook.setBorderColor($event)"
-									@change="useToolsHook.borderColorChanged"
+									@input="sheet.hooks.toolsHook.setBorderColor($event)"
+									@change="sheet.hooks.toolsHook.borderColorChanged"
 								/>
 							</div>
 						</div>
@@ -1369,38 +1348,41 @@ defineExpose({
 				</template>
 				<template v-else>
 					<div class="group" v-if="sheet.config.border">
-						<div class="item" @click="useToolsHook.setBorder()">
+						<div class="item" @click="sheet.hooks.toolsHook.setBorder()">
 							<Icons name="Border"></Icons>
 							<span>边框</span>
 						</div>
 
-						<div class="item" @click="useToolsHook.setBorder(false)">
+						<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
 							<Icons name="UnBorder"></Icons>
 							<span>无边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'top')">
+						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'top')">
 							<Icons name="BorderTop"></Icons>
 							<span>上边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'bottom')">
+						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'bottom')">
 							<Icons name="BorderBottom"></Icons>
 							<span>下边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'left')">
+						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'left')">
 							<Icons name="BorderLeft"></Icons>
 							<span>左边框</span>
 						</div>
-						<div class="item" @click="useToolsHook.setBorder(null, 'right')">
+						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'right')">
 							<Icons name="BorderRight"></Icons>
 							<span>右边框</span>
 						</div>
-						<div class="item border-color" @click="useToolsHook.setBorderColor">
+						<div
+							class="item border-color"
+							@click="sheet.hooks.toolsHook.setBorderColor"
+						>
 							<Icons name="BorderColor"></Icons>
 							<span>颜色</span>
 							<input
 								type="color"
-								@input="useToolsHook.setBorderColor($event)"
-								@change="useToolsHook.borderColorChanged"
+								@input="sheet.hooks.toolsHook.setBorderColor($event)"
+								@change="sheet.hooks.toolsHook.borderColorChanged"
 							/>
 						</div>
 					</div>
@@ -1481,14 +1463,14 @@ defineExpose({
 				</div>
 
 				<!-- 锁定解锁 -->
-				<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
+				<div class="group" v-if="sheet.config.locked || sheet.config.unlock">
 					<div
-						v-if="sheet.config.lock"
+						v-if="sheet.config.locked"
 						class="item"
 						:class="{active: setActiveTool('lock').lock}"
 						@click="sheet.hooks.toolsHook.setLocked"
 					>
-						<Icons name="CellLock"></Icons>
+						<Icons name="lock"></Icons>
 						<span>锁定</span>
 					</div>
 					<div
@@ -1504,17 +1486,17 @@ defineExpose({
 				<!-- 公式 -->
 				<div
 					class="group"
-					v-if="sheet.config.formula"
+					v-if="sheet.config.formulaed"
 					:class="{'group-merge': !isMobile()}"
 				>
-					<div class="item" :class="{active: setActiveTool('cellFormula').fx}">
+					<div class="item" :class="{active: setActiveTool('formula').fx}">
 						<Icons name="Sum"></Icons>
 						<span>公式</span>
 					</div>
 					<div v-if="!isMobile()" class="merge formula-merge shadow-12">
 						<div
 							class="item"
-							:class="{active: setActiveTool('cellFormula').fxVal?.includes('SUM')}"
+							:class="{active: setActiveTool('formula').fxVal?.includes('SUM')}"
 							@click="useEditHook.setCellFormula('SUM')"
 						>
 							<Icons name="Fx"></Icons>
@@ -1523,7 +1505,7 @@ defineExpose({
 						<div
 							class="item"
 							:class="{
-								active: setActiveTool('cellFormula').fxVal?.includes('AVERAGE'),
+								active: setActiveTool('formula').fxVal?.includes('AVERAGE'),
 							}"
 							@click="useEditHook.setCellFormula('AVERAGE')"
 						>
@@ -1532,7 +1514,7 @@ defineExpose({
 						</div>
 						<div
 							class="item"
-							:class="{active: setActiveTool('cellFormula').fxVal?.includes('MAX')}"
+							:class="{active: setActiveTool('formula').fxVal?.includes('MAX')}"
 							@click="useEditHook.setCellFormula('MAX')"
 						>
 							<Icons name="Fx"></Icons>
@@ -1540,7 +1522,7 @@ defineExpose({
 						</div>
 						<div
 							class="item"
-							:class="{active: setActiveTool('cellFormula').fxVal?.includes('MIN')}"
+							:class="{active: setActiveTool('formula').fxVal?.includes('MIN')}"
 							@click="useEditHook.setCellFormula('MIN')"
 						>
 							<Icons name="Fx"></Icons>
@@ -1591,7 +1573,7 @@ defineExpose({
 						@click="
 							() => {
 								sheet.hooks.historyHook.undo(() => {
-									useEditHook.setFormulaValue()
+									sheet.hooks.editHook.setFormulaValue()
 								})
 							}
 						"
@@ -1655,8 +1637,8 @@ defineExpose({
 							<template v-for="alphabet of visibleTitles">
 								<div
 									class="cell alphabet-cell"
-									:data-col="alphabet.colIndex"
-									:style="{width: alphabet.colWidth + 'px'}"
+									:data-col="alphabet.c"
+									:style="{width: alphabet.w + 'px'}"
 									:class="{
 										selection: sheet.hooks.selectionRangeHook.setSelectionClass(
 											null,
@@ -1664,7 +1646,7 @@ defineExpose({
 										),
 									}"
 								>
-									<span>{{ alphabet.title }}</span>
+									<span>{{ alphabet.t }}</span>
 
 									<div
 										v-if="!isMobile()"
@@ -1672,8 +1654,8 @@ defineExpose({
 										:class="{
 											resizing:
 												sheet.hooks.resizeHook.isResizing &&
-												sheet.hooks.resizeHook.resizingCol?.colIndex ===
-													alphabet.colIndex,
+												sheet.hooks.resizeHook.resizingCol?.c ===
+													alphabet.c,
 										}"
 										@mousedown.stop="
 											sheet.hooks.resizeHook.startResize(
@@ -1722,17 +1704,17 @@ defineExpose({
 							width: `${numberWidth}px`,
 						}"
 					>
-						<template v-for="row of visibleRows" :key="row.rowIndex">
+						<template v-for="row of visibleRows" :key="row.r">
 							<div
 								class="number-cell"
-								:style="{height: `${row.rowHeight}px`, width: `${numberWidth}px`}"
+								:style="{height: `${row.h}px`, width: `${numberWidth}px`}"
 								:class="{
 									selection:
 										sheet.hooks.selectionRangeHook.setSelectionClass(row),
 								}"
 								@click="onClickNumber($event, row)"
 							>
-								<span>{{ row.rowIndex + 1 }}</span>
+								<span>{{ row.r + 1 }}</span>
 
 								<div
 									v-if="!isMobile()"
@@ -1740,8 +1722,7 @@ defineExpose({
 									:class="{
 										resizing:
 											sheet.hooks.resizeHook.isResizing &&
-											sheet.hooks.resizeHook.resizingRow?.rowIndex ===
-												row.rowIndex,
+											sheet.hooks.resizeHook.resizingRow?.r === row.r,
 									}"
 									@mousedown.stop="
 										sheet.hooks.resizeHook.startResize(row, $event, 'vertical')
@@ -1782,31 +1763,27 @@ defineExpose({
 						}"
 					>
 						<!-- 只渲染可视区域的单元格 -->
-						<template v-for="row of visibleRows" :key="row.rowIndex">
-							<div
-								class="row"
-								:data-row="row.rowIndex"
-								:style="{height: `${row.rowHeight}px`}"
-							>
-								<template v-for="cell of visibleCells(row)" :key="cell.colIndex">
+						<template v-for="row of visibleRows" :key="row.r">
+							<div class="row" :data-row="row.r" :style="{height: `${row.h}px`}">
+								<template v-for="cell of visibleCells(row)" :key="cell.c">
 									<div
 										v-if="isMergedCellStart(cell)"
 										class="cell merged-cell-placeholder"
 										:style="{
-											height: `${cell.rowHeight}px`,
-											width: `${cell.colWidth}px`,
+											height: `${cell.h}px`,
+											width: `${cell.w}px`,
 										}"
 									>
 										<div
 											v-html="
-												sheet.hooks.editHook.formattedValue(
-													cell.value,
-													cell
-												)
+												sheet.hooks.editHook.formattedValue(cell.v, cell)
 											"
-											:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
+											:data-cell="`${cell.r}-${cell.c}`"
 											:class="getCellClass(cell)"
-											:style="getOffsetStyle(cell)"
+											:style="{
+												...getOffsetStyle(cell),
+												...getCellStyle(cell),
+											}"
 											class="cell"
 											@dblclick.stop="
 												sheet.hooks.editHook.startEdit($event, cell)
@@ -1816,12 +1793,16 @@ defineExpose({
 									</div>
 									<div
 										v-else
-										v-html="
-											sheet.hooks.editHook.formattedValue(cell.value, cell)
-										"
-										:data-cell="`${cell.rowIndex}-${cell.colIndex}`"
-										:class="getCellClass(cell)"
-										:style="getOffsetStyle(cell)"
+										v-html="sheet.hooks.editHook.formattedValue(cell.v, cell)"
+										:data-cell="`${cell.r}-${cell.c}`"
+										:class="[
+											getCellClass(cell),
+											cell.inMerged ? 'in-merged' : '',
+										]"
+										:style="{
+											...getOffsetStyle(cell),
+											...getCellStyle(cell),
+										}"
 										@click="onClickCell($event, cell)"
 										@dblclick.stop="
 											sheet.hooks.editHook.startEdit($event, cell)
@@ -2111,14 +2092,23 @@ defineExpose({
 			</div>
 
 			<!-- 遮罩 -->
-			<div class="mask" :class="{active: loading || state === stateType.loading}">
+			<div class="mask" :class="{active: sheet.state.loading || state === stateType.loading}">
 				<div>
 					<Icons name="Loading" class="loading-animation"></Icons>
 					<span>
-						{{ state === stateType.loading ? stateText : loadingText }}
+						{{
+							sheet.state.loading || state === stateType.loading
+								? sheet.state.msg
+								: stateText
+						}}
 					</span>
-					<span v-if="loadingProgress !== -1 && state === stateType.normal">
-						{{ loadingProgress }}%
+					<span
+						v-if="
+							sheet.state.progress !== -1 &&
+							(sheet.state.loading || state === stateType.loading)
+						"
+					>
+						{{ sheet.state.progress }}%
 					</span>
 				</div>
 			</div>

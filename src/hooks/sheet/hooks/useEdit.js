@@ -89,7 +89,6 @@ export const useEdit = () => {
 	}
 
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
-		console.log('startEdit', e, cell)
 		if (!enter || !cell) return
 
 		// 不允许编辑
@@ -116,16 +115,13 @@ export const useEdit = () => {
 			return
 		}
 
-		const rowIndex = cell.row ?? cell.rowIndex
-		const colIndex = cell.col ?? cell.colIndex
-
 		// 不允许编辑锁定的单元格
-		if (sheet.config.cellLock[`${rowIndex}-${colIndex}`]) {
+		if (sheet.config.locked[`${cell.r}-${cell.c}`]) {
 			ElMessage.warning(`单元格已锁定`)
 			return
 		}
 
-		const cellEl = document.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
+		const cellEl = document.querySelector(`[data-cell="${cell.r}-${cell.c}"]`)
 
 		if (!cellEl || cellEl.getAttribute('contenteditable')) {
 			return
@@ -135,15 +131,15 @@ export const useEdit = () => {
 
 		// 优化体验而已
 		if (cellEl.innerText === '') {
-			cellEl.style.lineHeight = useResizeHook.getRowHeight(rowIndex) - 1 + 'px'
+			cellEl.style.lineHeight = sheet.hooks.resizeHook.getRowHeight(cell.r) - 1 + 'px'
 		}
 
 		// 未双击, 直接输入清空所有内容
-		if (cell.rowIndex === undefined) {
+		if (cell.r === undefined) {
 			cellEl.innerText = ''
 		}
 
-		cellEl.innerText = setCellFormat(cellEl.innerText, rowIndex, colIndex)
+		cellEl.innerText = setCellFormat(cellEl.innerText, cell.r, cell.c)
 
 		cellEl.focus()
 		editing.value = true
@@ -173,11 +169,10 @@ export const useEdit = () => {
 		}
 
 		const blur = () => {
-			console.log('blur', rowIndex, colIndex)
-			sheet.celldata.get(rowIndex)[colIndex] = setCellFormat(
+			sheet.celldata.get(cell.r)[cell.c] = setCellFormat(
 				cellEl.innerText,
-				rowIndex,
-				colIndex,
+				cell.r,
+				cell.c,
 				true
 			)
 
@@ -191,8 +186,8 @@ export const useEdit = () => {
 			setTimeout(() => {
 				formulaStyle.value = {}
 				isFormula.value = false
-				setRowHeight(rowIndex, colIndex)
-			}, 250)
+				setRowHeight(cell.r, cell.c)
+			}, 150)
 		}
 
 		const input = () => {
@@ -210,7 +205,7 @@ export const useEdit = () => {
 		// 检查是否是公式
 		if (e.key === '=') {
 			cellEl.innerText = ''
-			delete sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+			delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
 			setFormula()
 		}
 
@@ -219,8 +214,8 @@ export const useEdit = () => {
 	}
 
 	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
-		const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
-		const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+		const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt
+		const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`]
 
 		let output = text
 		try {
@@ -368,15 +363,27 @@ export const useEdit = () => {
 
 			if (formula) {
 				if (format) {
-					sheet.config.cellFormula[`${rowIndex}-${colIndex}`] = output
+					sheet.config.formulaed[`${rowIndex}-${colIndex}`] = output
 				} else {
 					output = formula
 				}
 			}
 		} catch (error) {
-			// ElMes	sage.error(`${fmt}格式错误, 请检查内容`)
+			let correctFormat = ''
+			switch (fmt) {
+				case formatMap.ShortDate:
+				case formatMap.LongDate:
+					correctFormat = '20250101'
+					break
+				case formatMap.Time:
+					correctFormat = '235959'
+					break
+				case formatMap.RMB:
+					correctFormat = '10000'
+					break
+			}
+			ElMessage.error(`${fmt}格式错误, 请检查内容, 例如: ${correctFormat}`)
 			console.error(`${fmt}格式错误, 请检查内容`)
-			// useSelectionRangeHook.setRange(rowIndex, colIndex, rowIndex, colIndex)
 		}
 		return output
 	}
@@ -402,17 +409,17 @@ export const useEdit = () => {
 					continue
 				}
 
-				const oldFormula = sheet.config.cellFormula[`${row}-${col}`]
+				const oldFormula = sheet.config.formulaed[`${row}-${col}`]
 				if (oldFormula) {
 					// 取出公式中的参数
 					const params = oldFormula.match(/\(([^)]*)\)/)
 					if (params) {
-						sheet.config.cellFormula[`${row}-${col}`] = `=${key}(${params[1]})`
+						sheet.config.formulaed[`${row}-${col}`] = `=${key}(${params[1]})`
 					}
 				} else {
-					sheet.config.cellFormula[`${row}-${col}`] = `=${key}()`
+					sheet.config.formulaed[`${row}-${col}`] = `=${key}()`
 				}
-				inputValue.value = sheet.config.cellFormula[`${row}-${col}`]
+				inputValue.value = sheet.config.formulaed[`${row}-${col}`]
 			}
 		}
 		setFormulaValue()
@@ -420,7 +427,7 @@ export const useEdit = () => {
 
 	const setFormulaValue = () => {
 		try {
-			const formulas = sheet.config.cellFormula
+			const formulas = sheet.config.formulaed
 
 			// 预编译正则表达式，避免重复创建
 			const formulaRegex = /=([A-Z]+)\(([^)]*)\)/
@@ -629,12 +636,12 @@ export const useEdit = () => {
 		if (
 			(arr.length > 1 || arr[0].length > 10) &&
 			cell &&
-			!settingsCache.has(`${cell.rowIndex}-${cell.colIndex}`)
+			!settingsCache.has(`${cell.r}-${cell.c}`)
 		) {
-			settingsCache.set(`${cell.rowIndex}-${cell.colIndex}`, cell)
+			settingsCache.set(`${cell.r}-${cell.c}`, cell)
 			// 检查并清理缓存
 			cleanSettingsCache()
-			setTimeout(() => setRowHeight(cell.rowIndex, cell.colIndex, false, false), 0)
+			setTimeout(() => setRowHeight(cell.r, cell.c, false, false), 0)
 		}
 
 		return html
@@ -666,14 +673,14 @@ export const useEdit = () => {
 		}
 
 		// 计算公式处理
-		const formula = sheet.config.cellFormula[`${r}-${c}`]
+		const formula = sheet.config.formulaed[`${r}-${c}`]
 		if (formula) {
-			sheet.config.cellFormula[`${r}-${c}`] = value
+			sheet.config.formulaed[`${r}-${c}`] = value
 			setFormulaValue()
 		}
 
 		// 处理格式
-		const fmt = sheet.config.cellStyle[`${r}-${c}`]?.fmt
+		const fmt = sheet.config.styled[`${r}-${c}`]?.fmt
 		if (fmt) {
 			sheet.celldata.get(r)[c] = setCellFormat(sheet.celldata.get(r)[c], r, c, true)
 		}
@@ -681,12 +688,12 @@ export const useEdit = () => {
 
 	const getCellValue = (rowIndex, colIndex) => {
 		if (sheet.celldata.get(rowIndex)) {
-			const fmt = sheet.config.cellStyle[`${rowIndex}-${colIndex}`]?.fmt
+			const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt
 			if (fmt) {
 				return sheet.celldata.get(rowIndex)?.[colIndex]?.replace(/\/|年|月|日|:|,|元/g, '')
 			}
 
-			const formula = sheet.config.cellFormula[`${rowIndex}-${colIndex}`]
+			const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`]
 			if (formula) {
 				return formula
 			}

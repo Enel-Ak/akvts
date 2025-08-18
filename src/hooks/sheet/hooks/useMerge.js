@@ -5,54 +5,7 @@ export const useMerge = () => {
 	let sheet = null
 
 	// 存储合并单元格信息
-	let mergedCells = new Map()
-
-	// 添加合并单元格
-	const setMergeCell = (rowIndex, colIndex, rowspan, colspan, force = true) => {
-		const currentKey = `${rowIndex}-${colIndex}`
-		const existingMerge = mergedCells.get(currentKey)
-
-		// 检查是否是相同位置的框选
-		if (existingMerge) {
-			// 如果是相同位置，检查大小是否相同
-			if (existingMerge.rowspan === rowspan && existingMerge.colspan === colspan && force) {
-				// 相同位置且相同大小，则取消合并
-				mergedCells.delete(currentKey)
-			} else {
-				// 相同位置但大小不同，删除旧合并并创建新合并
-				mergedCells.delete(currentKey)
-				// 检查新区域是否有其他合并单元格
-				for (let r = rowIndex; r < rowIndex + rowspan; r++) {
-					for (let c = colIndex; c < colIndex + colspan; c++) {
-						if (r === rowIndex && c === colIndex) continue
-						const otherMerge = findMergedCell(r, c)
-						if (otherMerge) {
-							mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
-						}
-					}
-				}
-				// 创建新合并
-				mergedCells.set(currentKey, {rowspan, colspan})
-			}
-		} else {
-			// 如果是新位置，检查新区域内是否有已存在的合并单元格
-			for (let r = rowIndex; r < rowIndex + rowspan; r++) {
-				for (let c = colIndex; c < colIndex + colspan; c++) {
-					const otherMerge = findMergedCell(r, c)
-					if (otherMerge) {
-						mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
-					}
-				}
-			}
-			// 创建新合并
-			mergedCells.set(currentKey, {rowspan, colspan})
-		}
-
-		Object.assign(sheet.config, {
-			mergedCells: getMergedCells(),
-		})
-		// renderRange()
-	}
+	const mergedCells = new Map()
 
 	// 获取所有合并单元格
 	const getMergedCells = () => {
@@ -63,7 +16,51 @@ export const useMerge = () => {
 		return result
 	}
 
-	// 设置合并单元格
+	// 添加合并单元格
+	const setMerge = (r, c, rs, cs, force = true) => {
+		const currentKey = `${r}-${c}`
+		const existingMerge = mergedCells.get(currentKey)
+
+		// 检查是否是相同位置的框选
+		if (existingMerge) {
+			// 如果是相同位置，检查大小是否相同
+			if (existingMerge.rs === rs && existingMerge.cs === cs && force) {
+				// 相同位置且相同大小，则取消合并
+				mergedCells.delete(currentKey)
+			} else {
+				// 相同位置但大小不同，删除旧合并并创建新合并
+				mergedCells.delete(currentKey)
+				// 检查新区域是否有其他合并单元格
+				for (let i = r; i < r + rs; i++) {
+					for (let j = c; j < c + cs; j++) {
+						if (i === r && j === c) continue
+						const otherMerge = findMergedCell(i, j)
+						if (otherMerge) {
+							mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
+						}
+					}
+				}
+				// 创建新合并
+				mergedCells.set(currentKey, {rs, cs})
+			}
+		} else {
+			// 如果是新位置，检查新区域内是否有已存在的合并单元格
+			for (let i = r; i < r + rs; i++) {
+				for (let j = c; j < c + cs; j++) {
+					const otherMerge = findMergedCell(i, j)
+					if (otherMerge) {
+						mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
+					}
+				}
+			}
+			// 创建新合并
+			mergedCells.set(currentKey, {rs, cs})
+		}
+
+		sheet.config.merged = getMergedCells()
+	}
+
+	// 批量设置合并单元格
 	const setMergeCells = (cellMap, isReplace = true) => {
 		if (isReplace) {
 			mergedCells = cellMap
@@ -76,26 +73,24 @@ export const useMerge = () => {
 
 	// 获取单元格样式
 	const getCellStyle = (cell) => {
-		const key = `${cell.rowIndex}-${cell.colIndex}`
+		const key = `${cell.r}-${cell.c}`
 		const merged = mergedCells.get(key)
-
-		// cellStyle
-		// useStyle(sheet.config.cellStyle[key], sheet.config.zoom, cell, sheet)
-		const style = sheet.hooks.styleHook.getStyle()
 
 		// 1. 检查是否是合并单元格的起始位置
 		if (merged) {
 			let rh = 0
 			let cw = 0
-			const {rowspan, colspan} = merged
 
-			for (let i = cell.rowIndex; i < cell.rowIndex + rowspan; i++) {
+			const {rs, cs} = merged
+
+			for (let i = cell.r; i <= cell.r + rs; i++) {
 				rh += sheet.hooks.resizeHook.getRowHeight(i)
 			}
 
-			for (let i = cell.colIndex; i < cell.colIndex + colspan; i++) {
+			for (let i = cell.c; i <= cell.c + cs; i++) {
 				cw += sheet.hooks.resizeHook.getColWidth(i)
 			}
+
 			// 合并单元格
 			return {
 				height: `${rh || sheet.rowHeight}px`,
@@ -103,7 +98,6 @@ export const useMerge = () => {
 				position: 'absolute',
 				top: 0,
 				left: 0,
-				...style,
 			}
 		}
 
@@ -112,15 +106,15 @@ export const useMerge = () => {
 			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
 
 			if (
-				cell.rowIndex >= mergedRow &&
-				cell.rowIndex < mergedRow + value.rowspan &&
-				cell.colIndex >= mergedCol &&
-				cell.colIndex < mergedCol + value.colspan
+				cell.r >= mergedRow &&
+				cell.r < mergedRow + value.rowspan &&
+				cell.c >= mergedCol &&
+				cell.c < mergedCol + value.colspan
 			) {
 				// 在合并单元格内
 				return {
-					height: `${sheet.hooks.resizeHook.getRowHeight(cell.rowIndex)}px`,
-					width: `${sheet.hooks.resizeHook.getColWidth(cell.colIndex)}px`,
+					height: `${sheet.hooks.resizeHook.getRowHeight(cell.r)}px`,
+					width: `${sheet.hooks.resizeHook.getColWidth(cell.c)}px`,
 					opacity: 0,
 					visibility: 'hidden',
 					pointerEvents: 'none',
@@ -130,9 +124,8 @@ export const useMerge = () => {
 
 		// 3. 普通单元格样式
 		return {
-			height: `${sheet.hooks.resizeHook.getRowHeight(cell.rowIndex)}px`,
-			width: `${sheet.hooks.resizeHook.getColWidth(cell.colIndex)}px`,
-			...style,
+			height: `${sheet.hooks.resizeHook.getRowHeight(cell.r)}px`,
+			width: `${sheet.hooks.resizeHook.getColWidth(cell.c)}px`,
 		}
 	}
 
@@ -143,8 +136,8 @@ export const useMerge = () => {
 	}
 
 	// 删除指定的合并单元格
-	const removeMergedCell = (rowIndex, colIndex) => {
-		mergedCells.delete(`${rowIndex}-${colIndex}`)
+	const removeMergedCell = (r, c) => {
+		mergedCells.delete(`${r}-${c}`)
 	}
 
 	const findMergedCell = (r, c) => {
@@ -161,11 +154,12 @@ export const useMerge = () => {
 		// 2. 检查是否在其他合并单元格范围内
 		for (const [mergedKey, value] of mergedCells.entries()) {
 			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
+
 			if (
 				r >= mergedRow &&
-				r < mergedRow + value.rowspan &&
+				r <= mergedRow + value.rs &&
 				c >= mergedCol &&
-				c < mergedCol + value.colspan
+				c <= mergedCol + value.cs
 			) {
 				return {
 					r: mergedRow,
@@ -184,8 +178,8 @@ export const useMerge = () => {
 		return {
 			getCellStyle,
 			getMergedCells,
+			setMerge,
 			setMergeCells,
-			setMergeCell,
 			findMergedCell,
 			clearMergedCells,
 			removeMergedCell,

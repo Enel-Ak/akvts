@@ -1,8 +1,8 @@
-export const useStyle = (cellStyle, zoom, cell, sheet) => {
+export const useStyle = (style, zoom, cell, sheet) => {
 	let style = {}
 	let line = `1pt solid #000`
 
-	if (!cellStyle) return style
+	if (!style) return style
 
 	// 对齐
 	const alignItems = (align) => {
@@ -46,7 +46,7 @@ export const useStyle = (cellStyle, zoom, cell, sheet) => {
 		return value === true || value === 1 ? 'line-through' : 'normal'
 	}
 
-	Object.entries(cellStyle).forEach(([key, value]) => {
+	Object.entries(style).forEach(([key, value]) => {
 		switch (key) {
 			case 'ff':
 				style['font-family'] = value
@@ -58,7 +58,7 @@ export const useStyle = (cellStyle, zoom, cell, sheet) => {
 				style['color'] = value
 				break
 			case 'bg':
-				const cs = sheet.config.cellStyle[`${cell.rowIndex}-${cell.colIndex}`]
+				const cs = sheet.config.styled[`${cell.rowIndex}-${cell.colIndex}`]
 				if (
 					value !== '#ffffff' &&
 					value !== '#181818' &&

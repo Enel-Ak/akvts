@@ -70,50 +70,68 @@ export const useSelectionRange = () => {
 	}
 
 	// 获取包含合并单元格的矩形区域
-	const getExpandedRange = (r, c, rr, cc) => {
-		let finalStartRow = r
-		let finalEndRow = rr
-		let finalStartCol = c
-		let finalEndCol = cc
-
-		// 检查选区边界上的合并单元格
-		const checkBoundary = (row, col) => {
-			const mergedCell = sheet.hooks.mergeHook.findMergedCell(row, col)
-			if (mergedCell) {
-				finalStartRow = Math.min(finalStartRow, mergedCell.r)
-				finalEndRow = Math.max(finalEndRow, mergedCell.r + mergedCell.rowspan - 1)
-				finalStartCol = Math.min(finalStartCol, mergedCell.c)
-				finalEndCol = Math.max(finalEndCol, mergedCell.c + mergedCell.colspan - 1)
-				return true
+	const getExpandedRange = (r, c, rr, cc, depth = 0) => {
+		try {
+			if (depth > 10) {
+				console.warn('Maximum recursion depth reached', {r, c, rr, cc, depth})
+				return {r, c, rr, cc}
 			}
-			return false
-		}
 
-		// 检查选区的四个边界
-		for (let row = r; row <= rr; row++) {
-			checkBoundary(row, c)
-			checkBoundary(row, cc)
-		}
-		for (let col = c; col <= cc; col++) {
-			checkBoundary(r, col)
-			checkBoundary(rr, col)
-		}
+			depth++
 
-		// 如果边界发生变化，递归检查新的边界
-		if (
-			finalStartRow !== r ||
-			finalEndRow !== rr ||
-			finalStartCol !== c ||
-			finalEndCol !== cc
-		) {
-			return getExpandedRange(finalStartRow, finalStartCol, finalEndRow, finalEndCol)
-		}
+			let finalStartRow = r
+			let finalEndRow = rr
+			let finalStartCol = c
+			let finalEndCol = cc
 
-		return {
-			r: finalStartRow,
-			rr: finalEndRow,
-			c: finalStartCol,
-			cc: finalEndCol,
+			// 检查选区边界上的合并单元格
+			const checkBoundary = (row, col) => {
+				const mergedCell = sheet.hooks.mergeHook.findMergedCell(row, col)
+				if (mergedCell) {
+					finalStartRow = Math.min(finalStartRow, mergedCell.r)
+					finalEndRow = Math.max(finalEndRow, mergedCell.r + mergedCell.rs)
+					finalStartCol = Math.min(finalStartCol, mergedCell.c)
+					finalEndCol = Math.max(finalEndCol, mergedCell.c + mergedCell.cs)
+					return true
+				}
+				return false
+			}
+
+			// 检查选区的四个边界
+			for (let row = r; row <= rr; row++) {
+				checkBoundary(row, c)
+				checkBoundary(row, cc)
+			}
+			for (let col = c; col <= cc; col++) {
+				checkBoundary(r, col)
+				checkBoundary(rr, col)
+			}
+
+			// 如果边界发生变化，递归检查新的边界
+			if (
+				finalStartRow !== r ||
+				finalEndRow !== rr ||
+				finalStartCol !== c ||
+				finalEndCol !== cc
+			) {
+				return getExpandedRange(
+					finalStartRow,
+					finalStartCol,
+					finalEndRow,
+					finalEndCol,
+					depth
+				)
+			}
+
+			return {
+				r: finalStartRow,
+				rr: finalEndRow,
+				c: finalStartCol,
+				cc: finalEndCol,
+				depth,
+			}
+		} catch (err) {
+			console.log(err)
 		}
 	}
 
@@ -121,7 +139,7 @@ export const useSelectionRange = () => {
 	const modifiedRowsCache = () => {
 		const before = new Map()
 		let beforeSum = 0
-		Object.entries(sheet.config.cellRowResize).forEach(([row, height]) => {
+		Object.entries(sheet.config.rResize).forEach(([row, height]) => {
 			const rowNum = Number(row)
 			const diff = height - sheet.props.rowHeight
 			before.set(rowNum, diff)
@@ -133,7 +151,7 @@ export const useSelectionRange = () => {
 	const modifiedColsCache = () => {
 		const before = new Map()
 		let beforeSum = 0
-		Object.entries(sheet.config.cellColResize).forEach(([col, width]) => {
+		Object.entries(sheet.config.cResize).forEach(([col, width]) => {
 			const colNum = Number(col)
 			const diff = width - sheet.props.colWidth
 			before.set(colNum, diff)
@@ -294,47 +312,40 @@ export const useSelectionRange = () => {
 	const rangeStyle = computed(() => {
 		if (!selecting.value && !ranged.value) return {}
 
-		const {r, c, rr, cc} = ranged.value
-		let sr = Math.min(r, rr)
-		let er = Math.max(r, rr)
-		let sc = Math.min(c, cc)
-		let ec = Math.max(c, cc)
+		const {r, c, rr, cc} = getRanged()
+		let expand = {r, c, rr, cc}
 
 		if (selecting.value || dragging.value) {
 			// 扩展选区以包含合并单元格
-			const expand = getExpandedRange(sr, sc, er, ec)
-			sr = expand.r
-			er = expand.rr
-			sc = expand.c
-			ec = expand.cc
+			expand = getExpandedRange(r, c, rr, cc)
 		}
 
 		// 计算行高
-		let totalOffsetTop = sr * sheet.props.rowHeight
-		let totleHeight = (er - sr + 1) * sheet.props.rowHeight
+		let totalOffsetTop = expand.r * sheet.props.rowHeight
+		let totleHeight = (expand.rr - expand.r + 1) * sheet.props.rowHeight
 
 		// 使用缓存计算修改的行的差值
 		let modifiedBefore = 0
 		let modifiedInRange = 0
 		modifiedRowsCache().map.forEach((diff, row) => {
-			if (row < sr) {
+			if (row < expand.r) {
 				modifiedBefore += diff
-			} else if (row >= sr && row <= er) {
+			} else if (row >= expand.r && row <= expand.rr) {
 				modifiedInRange += diff
 			}
 		})
 
 		// 计算列宽
-		let totaloffsetLeft = sc * sheet.props.colWidth
-		let totleWidth = (ec - sc + 1) * sheet.props.colWidth
+		let totaloffsetLeft = expand.c * sheet.props.colWidth
+		let totleWidth = (expand.cc - expand.c + 1) * sheet.props.colWidth
 
 		// 使用缓存计算修改的列的差值
 		let modifiedColBefore = 0
 		let modifiedColInRange = 0
 		modifiedColsCache().map.forEach((diff, col) => {
-			if (col < sc) {
+			if (col < expand.c) {
 				modifiedColBefore += diff
-			} else if (col >= sc && col <= ec) {
+			} else if (col >= expand.c && col <= expand.cc) {
 				modifiedColInRange += diff
 			}
 		})
@@ -649,7 +660,7 @@ export const useSelectionRange = () => {
 	}
 
 	// 快速获取选区数据
-	const getRangeData = () => {
+	const getRanged = () => {
 		return {
 			r: Math.min(ranged.value.r, ranged.value.rr),
 			c: Math.min(ranged.value.c, ranged.value.cc),
@@ -661,7 +672,7 @@ export const useSelectionRange = () => {
 	// 状态栏显示的统计信息
 	const getStatistics = () => {
 		if (!ranged.value) return 0
-		const {startRow, endRow, startCol, endCol} = getRangeData()
+		const {r, c, rr, cc} = getRanged()
 
 		let count = 0
 		let sum = 0
@@ -875,7 +886,7 @@ export const useSelectionRange = () => {
 			getStartCell,
 			getEndCell,
 			getRangeByMouse,
-			getRangeData,
+			getRanged,
 			setRange,
 			setSelectionClass,
 			setHighlightRange,

@@ -27,22 +27,21 @@ export const useResize = () => {
 
 	// 获取行的实际高度
 	const getRowHeight = (index) => {
-		return (sheet.config.cellRowResize[index] || sheet.props.rowHeight) * sheet.config.zoom
+		return (sheet.config.rResize[index] || sheet.props.rowHeight) * sheet.config.zoom
 	}
 
 	// 获取列的实际宽度
 	const getColWidth = (index) => {
-		return (sheet.config.cellColResize[index] || sheet.props.colWidth) * sheet.config.zoom
+		return (sheet.config.cResize[index] || sheet.props.colWidth) * sheet.config.zoom
 	}
 
 	const setRowHeight = (index, height) => {
-		sheet.config.cellRowResize[index] =
+		sheet.config.rResize[index] =
 			height < sheet.props.rowHeight ? sheet.props.rowHeight : height
 	}
 
 	const setColWidth = (index, width) => {
-		sheet.config.cellColResize[index] =
-			width < sheet.props.colWidth ? sheet.props.colWidth : width
+		sheet.config.cResize[index] = width < sheet.props.colWidth ? sheet.props.colWidth : width
 	}
 
 	// 开始调整行高
@@ -60,11 +59,11 @@ export const useResize = () => {
 		if (direction === 'vertical') {
 			resizingRow.value = item
 			startY = e.clientY
-			startHeight = getRowHeight(item.rowIndex)
+			startHeight = getRowHeight(item.r)
 		} else if (direction === 'horizontal') {
 			resizingCol.value = item
 			startX = e.clientX
-			startWidth = getColWidth(item.colIndex)
+			startWidth = getColWidth(item.c)
 		}
 
 		document.addEventListener('mousemove', onResize)
@@ -84,24 +83,26 @@ export const useResize = () => {
 
 			// 使用 requestAnimationFrame 优化性能
 			requestAnimationFrame(() => {
-				resizingEl.style.height = `${newHeight}px`
-				if (guideLineRow) {
-					guideLineRow.style.zIndex = 3
-					if (deltaY > 0) {
-						guideLineRow.style.top = `${
-							resizingElRect.top - sheetRect.top + newHeight - 1.75
-						}px`
-					} else {
-						// 修正位置
-						setTimeout(() => {
+				try {
+					resizingEl.style.height = `${newHeight}px`
+					if (guideLineRow) {
+						guideLineRow.style.zIndex = 3
+						if (deltaY > 0) {
 							guideLineRow.style.top = `${
 								resizingElRect.top - sheetRect.top + newHeight - 1.75
 							}px`
-						}, 16)
+						} else {
+							// 修正位置
+							setTimeout(() => {
+								guideLineRow.style.top = `${
+									resizingElRect.top - sheetRect.top + newHeight - 1.75
+								}px`
+							}, 16)
+						}
+					} else {
+						guideLineRow = sheetContainer.querySelector('.grid-lines-row')
 					}
-				} else {
-					guideLineRow = sheetContainer.querySelector('.grid-lines-row')
-				}
+				} catch (err) {}
 			})
 
 			// 更新行高
@@ -145,9 +146,9 @@ export const useResize = () => {
 	const stopResize = () => {
 		if (isResizing.value) {
 			if (resizingRow.value) {
-				setRowHeight(resizingRow.value.rowIndex, resizingRow.value._newHeight)
+				setRowHeight(resizingRow.value.r, resizingRow.value._newHeight)
 			} else if (resizingCol.value) {
-				setColWidth(resizingCol.value.colIndex, resizingCol.value._newWidth)
+				setColWidth(resizingCol.value.c, resizingCol.value._newWidth)
 			}
 			sheet.hooks.selectionRangeHook.selecting = true
 		}
@@ -185,9 +186,9 @@ export const useResize = () => {
 	// 				data: {
 	// 					...data,
 	// 					rowHeight: sheet.props.rowHeight,
-	// 					rowHeights: JSON.parse(JSON.stringify(sheet.config.cellRowResize)),
+	// 					rowHeights: JSON.parse(JSON.stringify(sheet.config.rResize)),
 	// 					colWidth: sheet.props.colWidth,
-	// 					colWidths: JSON.parse(JSON.stringify(sheet.config.cellColResize)),
+	// 					colWidths: JSON.parse(JSON.stringify(sheet.config.resize)),
 	// 				},
 	// 			})
 	// 		}

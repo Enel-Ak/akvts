@@ -11,9 +11,9 @@ const config = ref({
 			row: 1,
 			col: 1,
 		},
-		cellKeys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
-		cellStyle: {},
-		onlineCells: [
+		keys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
+		style: {},
+		online: [
 			{id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
 			// {id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
 			// {id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
@@ -1094,7 +1094,7 @@ onActivated(() => {
 	// sheetRef.value.setMergeCell(1, 5, 4, 4)
 	// sheetRef.value.setCellValue(0, 0, 'hello')
 
-	// config.value.config.cellStyle = {
+	// config.value.config.style = {
 	// 	'1-1': {
 	// 		bg: '#f00',
 	// 	},

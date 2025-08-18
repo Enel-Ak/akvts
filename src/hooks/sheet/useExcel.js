@@ -153,7 +153,7 @@ export const useExcel = (config = {}) => {
 			}
 			sheet.config.mergedCells = {}
 			sheet.config.lockCells = {}
-			sheet.config.cellStyle = {}
+			sheet.config.styled = {}
 
 			useResizeHook.clear()
 			useSelectionRangeHook.setRange(0, 0, 0, 0)

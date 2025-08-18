@@ -454,6 +454,10 @@
 				padding-left: 35px;
 			}
 		}
+
+		&.in-merged {
+			visibility: hidden;
+		}
 	}
 
 	.highlight {

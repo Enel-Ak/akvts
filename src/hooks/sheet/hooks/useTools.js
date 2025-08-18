@@ -1,8 +1,11 @@
 import {ref, nextTick, reactive} from 'vue'
 import useGuid from '@/hooks/useGuid'
 import {ElMessage} from 'element-plus'
+import {useAirSheetStore} from '../store/useAirSheet'
 
 export const useTools = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = ''
 	let sheet = null
 	// const {
 	// 	sheet,
@@ -23,10 +26,8 @@ export const useTools = () => {
 	// } = config
 
 	const isLocked = () => {
-		const {r, c} = sheet.hooks.selectionRangeHook.ranged
-		console.log(111, sheet.hooks.selectionRangeHook.ranged)
-
-		return !!sheet.config.cellLock[`${r}-${c}`]
+		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+		return !!sheet.config.locked[`${r}-${c}`]
 	}
 
 	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
@@ -36,32 +37,29 @@ export const useTools = () => {
 		}
 
 		if (save) {
-			useHistoryHook.saveHistory()
+			sheet.hooks.historyHook.save()
 		}
 
-		const ranged = useSelectionRangeHook.ranged
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		const {r, c, rr, cc} = ranged
 
-		for (let i = startRow; i <= endRow; i++) {
-			for (let j = startCol; j <= endCol; j++) {
+		for (let i = r; i <= rr; i++) {
+			for (let j = c; j <= cc; j++) {
 				if (fn && typeof fn === 'function') {
-					fn(i, j, {startRow, startCol, endRow, endCol})
+					fn(i, j, {r, c, rr, cc})
 				} else {
-					if (!sheet.config.cellStyle[`${i}-${j}`]) {
-						sheet.config.cellStyle[`${i}-${j}`] = {}
+					if (!sheet.config.styled[`${i}-${j}`]) {
+						sheet.config.styled[`${i}-${j}`] = {}
 					}
 
 					if (
-						sheet.config.cellStyle[`${i}-${j}`][type] &&
-						sheet.config.cellStyle[`${i}-${j}`][type] === val
+						sheet.config.styled[`${i}-${j}`][type] &&
+						sheet.config.styled[`${i}-${j}`][type] === val
 					) {
-						delete sheet.config.cellStyle[`${i}-${j}`][type]
+						delete sheet.config.styled[`${i}-${j}`][type]
 						continue
 					}
-					sheet.config.cellStyle[`${i}-${j}`][type] = val
+					sheet.config.styled[`${i}-${j}`][type] = val
 				}
 			}
 		}
@@ -75,10 +73,10 @@ export const useTools = () => {
 
 		for (let i = row; i < row + rowspan; i++) {
 			for (let j = col; j < col + colspan; j++) {
-				if (!sheet.config.cellStyle[`${i}-${j}`]) {
-					sheet.config.cellStyle[`${i}-${j}`] = {}
+				if (!sheet.config.styled[`${i}-${j}`]) {
+					sheet.config.styled[`${i}-${j}`] = {}
 				}
-				sheet.config.cellStyle[`${i}-${j}`][type] = value
+				sheet.config.styled[`${i}-${j}`][type] = value
 			}
 		}
 	}
@@ -90,24 +88,20 @@ export const useTools = () => {
 	}
 
 	// 设置字体大小
-	const setFontSize = (e) => {
+	const setFontSize = (e, containerRef) => {
 		const size = e.target.value
 		setCellStyles('fs', size)
 		setTimeout(() => {
-			const ranged = useSelectionRangeHook.ranged
-			if (!ranged) return
-
-			const {start, end} = ranged
-			const [startRow, endRow] = [Math.min(start.row, end.row), Math.max(start.row, end.row)]
-			const [startCol, endCol] = [Math.min(start.col, end.col), Math.max(start.col, end.col)]
+			const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+			if (!r) return
 
 			// 更新每一行的高度
-			for (let row = startRow; row <= endRow; row++) {
+			for (let row = r; row <= rr; row++) {
 				const rowCells = Array.from(
-					containerRef.value.querySelectorAll(`[data-cell^="${row}-"]`)
+					containerRef.querySelectorAll(`[data-cell^="${row}-"]`)
 				).filter((cell) => {
 					const col = parseInt(cell.dataset.cell.split('-')[1])
-					return col >= startCol && col <= endCol
+					return col >= c && col <= cc
 				})
 
 				const maxHeight = Math.max(
@@ -115,37 +109,41 @@ export const useTools = () => {
 						Array.from(cell.childNodes).reduce((h, node) => h + node.offsetHeight, 0)
 					)
 				)
-				if (maxHeight > useResizeHook.getRowHeight(row)) {
-					useResizeHook.setRowHeight(row, maxHeight)
+				if (maxHeight > sheet.hooks.resizeHook.getRowHeight(row)) {
+					sheet.hooks.resizeHook.setRowHeight(row, maxHeight)
 				}
 			}
 
-			useSelectionRangeHook.setRange(startRow, startCol, endRow, endCol, true)
+			sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc, true)
 		}, 151)
 	}
 
 	// 设置单元格格式
-	const setFormat = (e) => {
+	const setFormat = (e, containerRef) => {
 		const format = e.target.value
 		setCellStyles('fmt', format)
 
-		const cell = useSelectionRangeHook.getStartCell()
-		const el = containerRef.value.querySelector(`[data-cell="${cell.row}-${cell.col}"]`)
+		const cell = sheet.hooks.selectionRangeHook.getStartCell()
+		const el = containerRef.querySelector(`[data-cell="${cell.r}-${cell.c}"]`)
 
 		if (el) {
-			useEditHook.setCellFormat(el.innerText, cell.row, cell.col, true, el)
+			sheet.hooks.editHook.setCellFormat(el.innerText, cell.r, cell.c, true, el)
 		}
 	}
 
 	// 设置字体颜色
 	let fontSaved = false
+	let fillColorTimer = null
 	const setFontColor = (e) => {
-		if (!fontSaved) {
-			// useHistoryHook.saveHistory()
-			fontSaved = true
-		}
-		const color = e.target.value
-		setCellStyles('fc', color, null, false)
+		clearTimeout(fillColorTimer)
+		fillColorTimer = setTimeout(() => {
+			if (!fontSaved) {
+				sheet.hooks.historyHook.save()
+				fontSaved = true
+			}
+			const color = e.target.value
+			setCellStyles('fc', color, null, false)
+		}, 128)
 	}
 	const fontColorChanged = (e) => {
 		fontSaved = false
@@ -154,12 +152,15 @@ export const useTools = () => {
 	// 设置单元格背景色
 	let fillSaved = false
 	const setFillColor = (e) => {
-		if (!fillSaved) {
-			// useHistoryHook.saveHistory()
-			fillSaved = true
-		}
-		const color = e.target.value
-		setCellStyles('bg', color, null, false)
+		clearTimeout(fillColorTimer)
+		fillColorTimer = setTimeout(() => {
+			if (!fillSaved) {
+				sheet.hooks.historyHook.save()
+				fillSaved = true
+			}
+			const color = e.target.value
+			setCellStyles('bg', color, null, false)
+		}, 128)
 	}
 	const fillColorChanged = (e) => {
 		fillSaved = false
@@ -177,29 +178,26 @@ export const useTools = () => {
 			'bc',
 			color,
 			(r, c) => {
-				const cellStyle = sheet.config.cellStyle[`${r}-${c}`]
+				const style = sheet.config.styled[`${r}-${c}`]
 
-				if (
-					cellStyle &&
-					(cellStyle.b || cellStyle.bt || cellStyle.bb || cellStyle.bl || cellStyle.br)
-				) {
-					if (cellStyle.b) {
-						sheet.config.cellStyle[`${r}-${c}`]['btc'] = color
-						sheet.config.cellStyle[`${r}-${c}`]['brc'] = color
-						sheet.config.cellStyle[`${r}-${c}`]['blc'] = color
-						sheet.config.cellStyle[`${r}-${c}`]['bbc'] = color
+				if (style && (style.b || style.bt || style.bb || style.bl || style.br)) {
+					if (style.b) {
+						sheet.config.styled[`${r}-${c}`]['btc'] = color
+						sheet.config.styled[`${r}-${c}`]['brc'] = color
+						sheet.config.styled[`${r}-${c}`]['blc'] = color
+						sheet.config.styled[`${r}-${c}`]['bbc'] = color
 					} else {
-						if (cellStyle.bt) {
-							sheet.config.cellStyle[`${r}-${c}`]['btc'] = color
+						if (style.bt) {
+							sheet.config.styled[`${r}-${c}`]['btc'] = color
 						}
-						if (cellStyle.bb) {
-							sheet.config.cellStyle[`${r}-${c}`]['bbc'] = color
+						if (style.bb) {
+							sheet.config.styled[`${r}-${c}`]['bbc'] = color
 						}
-						if (cellStyle.bl) {
-							sheet.config.cellStyle[`${r}-${c}`]['blc'] = color
+						if (style.bl) {
+							sheet.config.styled[`${r}-${c}`]['blc'] = color
 						}
-						if (cellStyle.br) {
-							sheet.config.cellStyle[`${r}-${c}`]['brc'] = color
+						if (style.br) {
+							sheet.config.styled[`${r}-${c}`]['brc'] = color
 						}
 					}
 				}
@@ -216,21 +214,13 @@ export const useTools = () => {
 		if (isLocked()) {
 			return
 		}
-		// useHistoryHook.saveHistory()
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
 
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 
-		sheet.hooks.mergeHook.setMergeCell(
-			startRow,
-			startCol,
-			endRow - startRow + 1,
-			endCol - startCol + 1
-		)
+		if (r === null || r === undefined) return
+		sheet.hooks.historyHook.save()
+
+		sheet.hooks.mergeHook.setMerge(r, c, rr - r, cc - c)
 	}
 
 	// 边框
@@ -239,20 +229,20 @@ export const useTools = () => {
 			// 删除边框样式
 			if (!border && !direction) {
 				// 无边框
-				if (sheet.config.cellStyle[`${r}-${c}`]) {
-					delete sheet.config.cellStyle[`${r}-${c}`].b
-					delete sheet.config.cellStyle[`${r}-${c}`].bt
-					delete sheet.config.cellStyle[`${r}-${c}`].bb
-					delete sheet.config.cellStyle[`${r}-${c}`].bl
-					delete sheet.config.cellStyle[`${r}-${c}`].br
-					delete sheet.config.cellStyle[`${r}-${c}`].btc
-					delete sheet.config.cellStyle[`${r}-${c}`].brc
-					delete sheet.config.cellStyle[`${r}-${c}`].blc
-					delete sheet.config.cellStyle[`${r}-${c}`].bbc
+				if (sheet.config.styled[`${r}-${c}`]) {
+					delete sheet.config.styled[`${r}-${c}`].b
+					delete sheet.config.styled[`${r}-${c}`].bt
+					delete sheet.config.styled[`${r}-${c}`].bb
+					delete sheet.config.styled[`${r}-${c}`].bl
+					delete sheet.config.styled[`${r}-${c}`].br
+					delete sheet.config.styled[`${r}-${c}`].btc
+					delete sheet.config.styled[`${r}-${c}`].brc
+					delete sheet.config.styled[`${r}-${c}`].blc
+					delete sheet.config.styled[`${r}-${c}`].bbc
 
 					// 如果没有其他样式，删除整个样式对象
-					if (Object.keys(sheet.config.cellStyle[`${r}-${c}`]).length === 0) {
-						delete sheet.config.cellStyle[`${r}-${c}`]
+					if (Object.keys(sheet.config.styled[`${r}-${c}`]).length === 0) {
+						delete sheet.config.styled[`${r}-${c}`]
 					}
 				}
 				return
@@ -261,21 +251,21 @@ export const useTools = () => {
 			// 点边框时删除其他边框
 			if (border && !direction) {
 				try {
-					delete sheet.config.cellStyle[`${r}-${c}`].bt
-					delete sheet.config.cellStyle[`${r}-${c}`].bb
-					delete sheet.config.cellStyle[`${r}-${c}`].bl
-					delete sheet.config.cellStyle[`${r}-${c}`].br
+					delete sheet.config.styled[`${r}-${c}`].bt
+					delete sheet.config.styled[`${r}-${c}`].bb
+					delete sheet.config.styled[`${r}-${c}`].bl
+					delete sheet.config.styled[`${r}-${c}`].br
 				} catch {}
 			}
 
 			// 如果没有cellStyle对象，创建一个
-			if (!sheet.config.cellStyle[`${r}-${c}`]) {
-				sheet.config.cellStyle[`${r}-${c}`] = {}
+			if (!sheet.config.styled[`${r}-${c}`]) {
+				sheet.config.styled[`${r}-${c}`] = {}
 			}
 
 			// 创建一个映射来跟踪每个单元格
 			const cellMap = {}
-			Object.entries(sheet.config.cellStyle).forEach(([key, value]) => {
+			Object.entries(sheet.config.styled).forEach(([key, value]) => {
 				const [r, c] = key.split('-').map(Number)
 				if (value.bt || value.bb || value.bl || value.br) {
 					cellMap[`${r}-${c}`] = true
@@ -291,28 +281,28 @@ export const useTools = () => {
 			// 单边框
 			if (direction) {
 				if (direction === 'top') {
-					sheet.config.cellStyle[`${r}-${c}`].bt = true
+					sheet.config.styled[`${r}-${c}`].bt = true
 				} else if (direction === 'bottom') {
-					sheet.config.cellStyle[`${r}-${c}`].bb = true
+					sheet.config.styled[`${r}-${c}`].bb = true
 				} else if (direction === 'left') {
-					sheet.config.cellStyle[`${r}-${c}`].bl = true
+					sheet.config.styled[`${r}-${c}`].bl = true
 				} else if (direction === 'right') {
-					sheet.config.cellStyle[`${r}-${c}`].br = true
+					sheet.config.styled[`${r}-${c}`].br = true
 				}
 				return
 			}
 
 			// 设置每个边的边框
 			if (borderTop) {
-				sheet.config.cellStyle[`${r}-${c}`].bt = true
+				sheet.config.styled[`${r}-${c}`].bt = true
 			}
 
 			if (borderLeft) {
-				sheet.config.cellStyle[`${r}-${c}`].bl = true
+				sheet.config.styled[`${r}-${c}`].bl = true
 			}
 
-			sheet.config.cellStyle[`${r}-${c}`].br = true
-			sheet.config.cellStyle[`${r}-${c}`].bb = true
+			sheet.config.styled[`${r}-${c}`].br = true
+			sheet.config.styled[`${r}-${c}`].bb = true
 		}
 		setCellStyles('', null, (r, c) => handleBorder(r, c), save)
 	}
@@ -484,10 +474,10 @@ export const useTools = () => {
 
 			// 删除行相关的cellstyle
 			for (let i = startRow; i <= endRow; i++) {
-				Object.keys(sheet.config.cellStyle).forEach((key) => {
+				Object.keys(sheet.config.styled).forEach((key) => {
 					const [row] = key.split('-').map(Number)
 					if (row === i) {
-						delete sheet.config.cellStyle[key]
+						delete sheet.config.styled[key]
 					}
 				})
 			}
@@ -665,10 +655,10 @@ export const useTools = () => {
 
 			// 删除列相关的cellstyle
 			for (let i = startCol; i <= endCol; i++) {
-				Object.keys(sheet.config.cellStyle).forEach((key) => {
+				Object.keys(sheet.config.styled).forEach((key) => {
 					const [_, col] = key.split('-').map(Number)
 					if (col === i) {
-						delete sheet.config.cellStyle[key]
+						delete sheet.config.styled[key]
 					}
 				})
 			}
@@ -716,7 +706,7 @@ export const useTools = () => {
 
 	// 锁定
 	const setLocked = () => {
-		if (!sheet.config.lock) {
+		if (!sheet.config.locked) {
 			ElMessage.warning('当前表格不支持锁定')
 			return
 		}
@@ -782,8 +772,8 @@ export const useTools = () => {
 					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
 					continue
 				}
-				delete sheet.config.cellStyle[`${row}-${col}`]
-				delete sheet.config.cellFormula[`${row}-${col}`]
+				delete sheet.config.styled[`${row}-${col}`]
+				delete sheet.config.formulaed[`${row}-${col}`]
 			}
 		}
 	}
@@ -894,7 +884,7 @@ export const useTools = () => {
 			try {
 				const total = data.length
 				const celldata = []
-				const cellStyle = {}
+				const style = {}
 				const mergedCells = {}
 
 				let processed = 0
@@ -946,8 +936,8 @@ export const useTools = () => {
 								const r = item.value.row_index
 								const c = item.value.col_index
 
-								if (!cellStyle[`${r}-${c}`]) {
-									cellStyle[`${r}-${c}`] = {}
+								if (!style[`${r}-${c}`]) {
+									style[`${r}-${c}`] = {}
 								}
 
 								// 使用精确的边框定义，指定每个边的边框
@@ -958,19 +948,19 @@ export const useTools = () => {
 
 								// 设置每个边的边框
 								if (borderTop) {
-									cellStyle[`${r}-${c}`].bt = true
+									style[`${r}-${c}`].bt = true
 								}
 
 								if (borderLeft) {
-									cellStyle[`${r}-${c}`].bl = true
+									style[`${r}-${c}`].bl = true
 								}
 
-								cellStyle[`${r}-${c}`].br = true
-								cellStyle[`${r}-${c}`].bb = true
+								style[`${r}-${c}`].br = true
+								style[`${r}-${c}`].bb = true
 
 								// 设置边框颜色（如果需要）
 								if (borderTop || borderRight || borderBottom || borderLeft) {
-									// cellStyle[`${r}-${c}`].bc = '#000000' // 边框颜色
+									// style[`${r}-${c}`].bc = '#000000' // 边框颜色
 								}
 							}
 						})
@@ -1017,49 +1007,49 @@ export const useTools = () => {
 						}
 						celldata[item.r][item.c] = item.v.v
 
-						if (!cellStyle[item.r + '-' + item.c]) {
-							cellStyle[item.r + '-' + item.c] = {}
+						if (!style[item.r + '-' + item.c]) {
+							style[item.r + '-' + item.c] = {}
 						}
 
 						// 背景
 						if (item?.v?.bg) {
-							cellStyle[item.r + '-' + item.c]['bg'] = item.v.bg
+							style[item.r + '-' + item.c]['bg'] = item.v.bg
 						}
 
 						// 粗体
 						if (item?.v?.bl) {
-							cellStyle[item.r + '-' + item.c]['bold'] = true
+							style[item.r + '-' + item.c]['bold'] = true
 						}
 
 						// 斜体
 						if (item?.v?.it) {
-							cellStyle[item.r + '-' + item.c]['it'] = true
+							style[item.r + '-' + item.c]['it'] = true
 						}
 
 						// 下划线
 						if (item?.v?.un) {
-							cellStyle[item.r + '-' + item.c]['un'] = true
+							style[item.r + '-' + item.c]['un'] = true
 						}
 
 						// 删除线
 						if (item?.v?.st) {
-							cellStyle[item.r + '-' + item.c]['st'] = true
+							style[item.r + '-' + item.c]['st'] = true
 						}
 
 						// 颜色
 						if (item?.v?.fc) {
-							cellStyle[item.r + '-' + item.c]['fc'] = item.v.fc
+							style[item.r + '-' + item.c]['fc'] = item.v.fc
 						}
 
 						// 字体大小
 						if (item?.v?.fs) {
 							const size = parseInt(item.v.fs)
-							cellStyle[item.r + '-' + item.c]['fs'] = parseInt(size)
+							style[item.r + '-' + item.c]['fs'] = parseInt(size)
 						}
 
 						// 字体
 						if (item?.v?.ff) {
-							cellStyle[item.r + '-' + item.c]['ff'] = item.v.ff
+							style[item.r + '-' + item.c]['ff'] = item.v.ff
 						}
 
 						// 对齐
@@ -1071,7 +1061,7 @@ export const useTools = () => {
 							} else if (ht === 2) {
 								align = 'right'
 							}
-							cellStyle[item.r + '-' + item.c]['align'] = align
+							style[item.r + '-' + item.c]['align'] = align
 						}
 
 						processed++
@@ -1089,7 +1079,7 @@ export const useTools = () => {
 						renderRange()
 						resolve({
 							config: {
-								cellStyle,
+								style,
 								mergedCells,
 							},
 							celldata,
@@ -1145,68 +1135,62 @@ export const useTools = () => {
 			if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 				rowData.forEach((cell, colIndex) => {
 					const data = {r: rowIndex, c: colIndex, v: {v: cell}}
-					const cellstyle = sheet.config.cellStyle[rowIndex + '-' + colIndex]
+					const style = sheet.config.styled[rowIndex + '-' + colIndex]
 
-					if (cellstyle) {
+					if (style) {
 						// 背景
-						if (cellstyle?.bg) {
-							data.v.bg = cellstyle?.bg
+						if (style?.bg) {
+							data.v.bg = style?.bg
 						}
 
 						// 粗体
-						if (cellstyle?.bold) {
+						if (style?.bold) {
 							data.v.bl = 1
 						}
 
 						// 斜体
-						if (cellstyle?.it) {
+						if (style?.it) {
 							data.v.it = 1
 						}
 
 						// 下划线
-						if (cellstyle?.un) {
+						if (style?.un) {
 							data.v.un = 1
 						}
 
 						// 删除线
-						if (cellstyle?.st) {
+						if (style?.st) {
 							data.v.st = 1
 						}
 
 						// 颜色
-						if (cellstyle?.fc) {
-							data.v.fc = cellstyle?.fc
+						if (style?.fc) {
+							data.v.fc = style?.fc
 						}
 
 						// 字体大小
-						if (cellstyle?.fs) {
-							data.v.fs = parseInt(cellstyle?.fs)
+						if (style?.fs) {
+							data.v.fs = parseInt(style?.fs)
 						}
 
 						// 字体
-						if (cellstyle?.ff) {
-							data.v.ff = cellstyle?.ff
+						if (style?.ff) {
+							data.v.ff = style?.ff
 						}
 
 						// 对齐
-						if (cellstyle?.align) {
+						if (style?.align) {
 							let ht = 1 // 左对齐
-							if (cellstyle?.align === 'center') {
+							if (style?.align === 'center') {
 								ht = 0 // 居中对齐
-							} else if (cellstyle?.align === 'right') {
+							} else if (style?.align === 'right') {
 								ht = 2 // 右对齐
 							}
 							data.v.ht = ht
 						}
 
 						// 边框
-						if (
-							cellstyle?.b ||
-							cellstyle?.bt ||
-							cellstyle?.bb ||
-							cellstyle?.bl ||
-							cellstyle?.br
-						) {
+						if (style?.b || style?.bt || style?.bb || style?.bl || style?.br) {
 							let border = {
 								rangeType: 'cell',
 								value: {
@@ -1215,25 +1199,25 @@ export const useTools = () => {
 								},
 							}
 
-							if (cellstyle?.bt) {
+							if (style?.bt) {
 								Object.assign(border.value, {
 									t: {style: 1, color: 'rgb(0, 0, 0)'},
 								})
 							}
 
-							if (cellstyle?.bb) {
+							if (style?.bb) {
 								Object.assign(border.value, {
 									b: {style: 1, color: 'rgb(0, 0, 0)'},
 								})
 							}
 
-							if (cellstyle?.bl) {
+							if (style?.bl) {
 								Object.assign(border.value, {
 									l: {style: 1, color: 'rgb(0, 0, 0)'},
 								})
 							}
 
-							if (cellstyle?.br) {
+							if (style?.br) {
 								Object.assign(border.value, {
 									r: {style: 1, color: 'rgb(0, 0, 0)'},
 								})
@@ -1256,8 +1240,9 @@ export const useTools = () => {
 		})
 	}
 
-	const init = (reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 		setTimeout(() => console.log('installed useTools'), 16)
 		return {
 			setCellStyle,
