@@ -1,6 +1,7 @@
 import {reactive} from 'vue'
 import {useProcessMapInBatches} from './useProcessMapInBatches'
 import {useAirSheetStore} from '../store/useAirSheet'
+import {useSleep} from '@/hooks/useSleep'
 
 export const useHistory = () => {
 	const sheetStore = useAirSheetStore()
@@ -76,23 +77,27 @@ export const useHistory = () => {
 				// 撤销单元格修改
 				if (state.celldata.size > 0) {
 					try {
-						await useProcessMapInBatches(state.celldata, (rowIndex, rowData) => {
-							if (!rowData) return
-							const [r, c] = rowIndex.split('-').map(Number)
-							sheet.celldata.get(r)[c] = rowData
-							const merged = sheet.hooks.mergeHook.findMergedCell(r, c)
-							if (merged) {
-								sheet.hooks.selectionRangeHook.setRange(
-									merged.row,
-									merged.col,
-									merged.rowspan + merged.row - 1,
-									merged.colspan + merged.col - 1,
-									true
-								)
-							} else {
-								sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
+						await useProcessMapInBatches(
+							sheet.id,
+							state.celldata,
+							(rowIndex, rowData) => {
+								if (!rowData) return
+								const [r, c] = rowIndex.split('-').map(Number)
+								sheet.celldata.get(r)[c] = rowData
+								const merged = sheet.hooks.mergeHook.findMergedCell(r, c)
+								if (merged) {
+									sheet.hooks.selectionRangeHook.setRange(
+										merged.row,
+										merged.col,
+										merged.rowspan + merged.row - 1,
+										merged.colspan + merged.col - 1,
+										true
+									)
+								} else {
+									sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
+								}
 							}
-						})
+						)
 						state.celldata.clear()
 					} catch (error) {
 						console.error('撤销单元格修改失败:', error)
@@ -101,96 +106,89 @@ export const useHistory = () => {
 
 				// 撤销添加行
 				if (state.addRow) {
-					const newMap = new Map()
 					try {
-						const startRow = state.addRow.rowIndex // insertRowIndex
-						const rowspan = state.addRow.rowspan
+						const r = state.addRow.r // insertRowIndex
+						const rs = state.addRow.rs
 
-						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-							// 保持和添加时后逻辑一样, 后续修改多行
-							if (rowIndex < startRow) {
-								// 插入行之前的数据保持不变
-								newMap.set(rowIndex, rowData)
-							} else if (rowIndex > startRow + rowspan - 1) {
-								// 插入行之后的数据向上移动
-								newMap.set(rowIndex - rowspan, rowData)
+						await useProcessMapInBatches(
+							sheet.id,
+							sheet.celldata,
+							(rowIndex, rowData) => {
+								// 保持和添加时后逻辑一样, 后续修改多行
+								if (rowIndex < r) {
+									// 插入行之前的数据保持不变
+									// newMap.set(rowIndex, rowData)
+								} else if (rowIndex > r + rs - 1) {
+									// 插入行之后的数据向上移动
+									sheet.celldata.set(rowIndex - rs, rowData)
+								}
 							}
-						})
+						)
 
 						// 处理合并单元格
-						const mergedCells = useMergedCellsHook.getMergedCells()
-						const newMergedCells = new Map()
+						const mc = sheet.hooks.mergeHook.getMergedCells()
+						const nmc = new Map()
 
-						for (const [key, value] of Object.entries(mergedCells)) {
+						for (const [key, value] of Object.entries(mc)) {
 							const [row, col] = key.split('-').map(Number)
-							if (row > startRow) {
+							if (row > r) {
 								// 如果合并单元格在删除行之后，向上移动一行
-								newMergedCells.set(`${row - rowspan}-${col}`, value)
+								nmc.set(`${row - rs}-${col}`, value)
 							} else {
-								newMergedCells.set(key, value)
+								nmc.set(key, value)
 							}
 						}
 
 						// 更新合并单元格
-						useMergedCellsHook.setMergeCells(newMergedCells)
-
-						// 更新 sheet.celldata
-						sheet.celldata = newMap
-						sheet.config.rowCount -= rowspan
+						sheet.hooks.mergeHook.setMergeCells(nmc)
+						sheet.config.rowCount -= rs
 						state.addRow = null
 					} catch (error) {
 						console.error('撤销添加行失败:', error)
-						loading.value = false
 					}
 				}
 
 				// 撤销添加列
 				if (state.addCol) {
-					const newMap = new Map()
 					try {
-						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-							// 创建新的行数据数组
-							const newRowData = []
-							// 遍历原数据，跳过要删除的列
-							rowData.forEach((cellData, index) => {
-								// 检查当前列是否在要删除的列范围内
-								const isInDeleteRange =
-									index >= state.addCol.colIndex &&
-									index < state.addCol.colIndex + state.addCol.colspan
-								if (!isInDeleteRange) {
-									newRowData.push(cellData)
-								}
-							})
-							// 更新到新Map
-							newMap.set(rowIndex, reactive(newRowData))
-						})
-
-						// 处理合并单元格
-						const mergedCells = useMergedCellsHook.getMergedCells()
-						const newMergedCells = new Map()
-
-						for (const [key, value] of Object.entries(mergedCells)) {
-							const [row, col] = key.split('-').map(Number)
-							if (col > state.addCol.colIndex) {
-								// 如果合并单元格在删除列之后，向左移动对应的列数
-								newMergedCells.set(`${row}-${col - state.addCol.colspan}`, value)
-							} else if (col < state.addCol.colIndex) {
-								// 如果合并单元格在删除列之前，保持不变
-								newMergedCells.set(key, value)
+						await useProcessMapInBatches(
+							sheet.id,
+							sheet.celldata,
+							(rowIndex, rowData) => {
+								// 更新到新Map
+								sheet.celldata.set(
+									rowIndex,
+									rowData.filter((_, index) => {
+										return (
+											index < state.addCol.c ||
+											index >= state.addCol.c + state.addCol.cs
+										)
+									})
+								)
 							}
-							// 如果合并单元格正好在删除列的位置，则不添加到新的Map中
+						)
+						console.log(111, sheet.celldata)
+						// 处理合并单元格
+						const mc = sheet.hooks.mergeHook.getMergedCells()
+						const nmc = new Map()
+
+						for (const [key, value] of Object.entries(mc)) {
+							const [r, c] = key.split('-').map(Number)
+							if (c > state.addCol.c) {
+								// 如果合并单元格在删除列之后，向左移动对应的列数
+								nmc.set(`${r}-${c - state.addCol.cs}`, value)
+							} else if (c < state.addCol.c) {
+								// 如果合并单元格在删除列之前，保持不变
+								nmc.set(key, value)
+							}
 						}
 
 						// 更新合并单元格
-						useMergedCellsHook.setMergeCells(newMergedCells)
-
-						// 更新 sheet.celldata
-						sheet.celldata = newMap
-						sheet.config.colCount -= state.addCol.colspan
+						sheet.hooks.mergeHook.setMergeCells(nmc)
+						sheet.config.colCount -= state.addCol.cs
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)
-						loading.value = false
 					}
 				}
 
@@ -254,11 +252,9 @@ export const useHistory = () => {
 
 				// 更新合并单元格
 				if (state.config.merged) {
-					Object.keys(state.config.merged).forEach((rc) => {
-						const [r, c] = rc.split('-')
-						sheet.hooks.removeMergedCell(r, c)
-					})
-					sheet.config.merged = state.config.merged
+					sheet.hooks.mergeHook.setMergeCells(
+						new Map(Object.entries(state.config.merged))
+					)
 				}
 
 				sheet.history.delete(count)

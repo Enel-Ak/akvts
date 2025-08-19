@@ -35,7 +35,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 async function initApp() {
 	app.mount('#app')
-	useSystemTheme()
+	useSystemTheme(false)
 	document.title = import.meta.env.VITE_TITLE
 }
 

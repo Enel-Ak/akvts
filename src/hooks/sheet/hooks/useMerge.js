@@ -5,7 +5,7 @@ export const useMerge = () => {
 	let sheet = null
 
 	// 存储合并单元格信息
-	const mergedCells = new Map()
+	let mergedCells = new Map()
 
 	// 获取所有合并单元格
 	const getMergedCells = () => {
@@ -68,7 +68,7 @@ export const useMerge = () => {
 			mergedCells = new Map([...mergedCells, ...cellMap])
 		}
 
-		sheet.config.mergedCells = getMergedCells()
+		sheet.config.merged = getMergedCells()
 	}
 
 	// 获取单元格样式
@@ -131,7 +131,7 @@ export const useMerge = () => {
 
 	// 清除合并单元格
 	const clearMergedCells = () => {
-		sheet.config.mergedCells = {}
+		sheet.config.merged = {}
 		mergedCells.clear()
 	}
 

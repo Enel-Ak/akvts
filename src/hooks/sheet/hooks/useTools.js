@@ -2,6 +2,8 @@ import {ref, nextTick, reactive} from 'vue'
 import useGuid from '@/hooks/useGuid'
 import {ElMessage} from 'element-plus'
 import {useAirSheetStore} from '../store/useAirSheet'
+import {useProcessMapInBatches} from './useProcessMapInBatches'
+import {useDebounce} from '@/hooks/useDebounce'
 
 export const useTools = () => {
 	const sheetStore = useAirSheetStore()
@@ -133,81 +135,86 @@ export const useTools = () => {
 
 	// 设置字体颜色
 	let fontSaved = false
-	let fillColorTimer = null
 	const setFontColor = (e) => {
-		clearTimeout(fillColorTimer)
-		fillColorTimer = setTimeout(() => {
-			if (!fontSaved) {
-				sheet.hooks.historyHook.save()
-				fontSaved = true
-			}
-			const color = e.target.value
-			setCellStyles('fc', color, null, false)
-		}, 128)
+		useDebounce(
+			(e) => {
+				if (!fontSaved) {
+					sheet.hooks.historyHook.save()
+					fontSaved = true
+				}
+				const color = e.target.value
+				setCellStyles('fc', color, null, false)
+			},
+			128,
+			'fontColor'
+		)(e)
 	}
-	const fontColorChanged = (e) => {
-		fontSaved = false
-	}
+	const fontColorChanged = () => (fontSaved = false)
 
 	// 设置单元格背景色
 	let fillSaved = false
 	const setFillColor = (e) => {
-		clearTimeout(fillColorTimer)
-		fillColorTimer = setTimeout(() => {
-			if (!fillSaved) {
-				sheet.hooks.historyHook.save()
-				fillSaved = true
-			}
-			const color = e.target.value
-			setCellStyles('bg', color, null, false)
-		}, 128)
+		useDebounce(
+			(e) => {
+				if (!fillSaved) {
+					sheet.hooks.historyHook.save()
+					fillSaved = true
+				}
+				const color = e.target.value
+				setCellStyles('bg', color, null, false)
+			},
+			128,
+			'fillColor'
+		)(e)
 	}
-	const fillColorChanged = (e) => {
-		fillSaved = false
-	}
+	const fillColorChanged = () => (fillSaved = false)
 
 	// 设置边框颜色
 	let borderSaved = false
 	const setBorderColor = (e) => {
-		if (!borderSaved) {
-			useHistoryHook.saveHistory()
-			borderSaved = true
-		}
-		const color = e.target.value
-		setCellStyles(
-			'bc',
-			color,
-			(r, c) => {
-				const style = sheet.config.styled[`${r}-${c}`]
-
-				if (style && (style.b || style.bt || style.bb || style.bl || style.br)) {
-					if (style.b) {
-						sheet.config.styled[`${r}-${c}`]['btc'] = color
-						sheet.config.styled[`${r}-${c}`]['brc'] = color
-						sheet.config.styled[`${r}-${c}`]['blc'] = color
-						sheet.config.styled[`${r}-${c}`]['bbc'] = color
-					} else {
-						if (style.bt) {
-							sheet.config.styled[`${r}-${c}`]['btc'] = color
-						}
-						if (style.bb) {
-							sheet.config.styled[`${r}-${c}`]['bbc'] = color
-						}
-						if (style.bl) {
-							sheet.config.styled[`${r}-${c}`]['blc'] = color
-						}
-						if (style.br) {
-							sheet.config.styled[`${r}-${c}`]['brc'] = color
-						}
-					}
+		useDebounce(
+			(e) => {
+				if (!borderSaved) {
+					sheet.hooks.historyHook.save()
+					borderSaved = true
 				}
+				const color = e.target.value
+				setCellStyles(
+					'bc',
+					color,
+					(r, c) => {
+						const style = sheet.config.styled[`${r}-${c}`]
+
+						if (style && (style.b || style.bt || style.bb || style.bl || style.br)) {
+							if (style.b) {
+								sheet.config.styled[`${r}-${c}`]['btc'] = color
+								sheet.config.styled[`${r}-${c}`]['brc'] = color
+								sheet.config.styled[`${r}-${c}`]['blc'] = color
+								sheet.config.styled[`${r}-${c}`]['bbc'] = color
+							} else {
+								if (style.bt) {
+									sheet.config.styled[`${r}-${c}`]['btc'] = color
+								}
+								if (style.bb) {
+									sheet.config.styled[`${r}-${c}`]['bbc'] = color
+								}
+								if (style.bl) {
+									sheet.config.styled[`${r}-${c}`]['blc'] = color
+								}
+								if (style.br) {
+									sheet.config.styled[`${r}-${c}`]['brc'] = color
+								}
+							}
+						}
+					},
+					false
+				)
 			},
-			false
-		)
+			128,
+			'borderColor'
+		)(e)
 	}
-	const borderColorChanged = () => {
-		borderSaved = false
-	}
+	const borderColorChanged = () => (borderSaved = false)
 
 	// 合并
 	const setMerge = () => {
@@ -344,32 +351,35 @@ export const useTools = () => {
 			addRowCount.value = 1
 		}
 
-		const ranged = useSelectionRangeHook.ranged
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const insertRowIndex = isEnd ? sheet.config.rowCount : endRow + 1
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 
-		if (sheet.celldata.size >= limit) {
-			loading.value = true
-			loadingText.value = '正在处理数据...'
+		const insertRowIndex = isEnd ? sheet.config.rowCount : rr + 1
+
+		if (sheet.celldata.size >= sheet.props.limit) {
+			sheet.state.loading = true
+			sheet.state.progress = 0
+			sheet.state.msg = '正在处理数据...'
 		}
 
-		// 创建新的Map
-		let newMap = new Map()
-
 		try {
-			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					if (rowIndex < insertRowIndex) {
-						newMap.set(rowIndex, rowData)
+						// sheet.celldata.set(rowIndex, rowData)
 					} else {
-						newMap.set(rowIndex + addRowCount.value, rowData)
+						sheet.celldata.set(rowIndex + addRowCount.value, rowData)
 					}
-					newMap.set(insertRowIndex, reactive([]))
 				}
 			})
 
+			for (let i = insertRowIndex; i < insertRowIndex + addRowCount.value; i++) {
+				console.log(111, i)
+
+				sheet.celldata.set(i, [])
+			}
+
 			// 处理合并单元格
-			const mergedCells = useMergedCellsHook.getMergedCells()
+			const mergedCells = sheet.hooks.mergeHook.getMergedCells()
 			const newMergedCells = new Map()
 
 			for (const [key, value] of Object.entries(mergedCells)) {
@@ -383,25 +393,23 @@ export const useTools = () => {
 			}
 
 			// 更新合并单元格
-			useMergedCellsHook.setMergeCells(newMergedCells)
+			sheet.hooks.mergeHook.setMergeCells(newMergedCells)
 
 			// 更新sheet.celldata
-			sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
 			sheet.config.rowCount += addRowCount.value
 
-			useHistoryHook.saveHistory(
+			sheet.hooks.historyHook.save(
 				{
-					rowIndex: insertRowIndex,
-					rowspan: addRowCount.value,
+					r: insertRowIndex,
+					rs: addRowCount.value,
 				},
 				'addRow'
 			)
-			renderRange()
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
-			loading.value = false
-			loadingText.value = '处理完成'
+			sheet.state.loading = false
+			sheet.state.progress = -1
 		}
 	}
 
@@ -506,20 +514,19 @@ export const useTools = () => {
 			addColumnCount.value = 1
 		}
 
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || c === undefined) return
 
-		if (sheet.celldata.size >= limit) {
-			loading.value = true
-			loadingText.value = '正在处理数据...'
+		if (sheet.celldata.size >= sheet.props.limit) {
+			sheet.state.loading = true
+			sheet.state.progress = 0
+			sheet.state.msg = '正在处理数据...'
 		}
 
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
-		const insertColIndex = isEnd ? sheet.config.colCount : endCol + 1
-		const newMap = new Map()
+		const insertColIndex = isEnd ? sheet.config.colCount : cc + 1
 
 		try {
-			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					// 创建新的行数据数组
 					const newRowData = Array.from(rowData || [])
@@ -530,49 +537,45 @@ export const useTools = () => {
 					}
 
 					// 更新到新Map
-					newMap.set(rowIndex, reactive(newRowData))
+					sheet.celldata.set(rowIndex, newRowData)
 				}
 			})
 
-			// 更新sheet.celldata
-			sheet.celldata = newMap
 			sheet.config.colCount += addColumnCount.value
 
 			// 更新合并单元格
-			const mergedCells = sheet.config.mergedCells
-			const newMergedCells = new Map()
-			Object.keys(mergedCells).forEach((key) => {
-				const [row, col] = key.split('-').map(Number)
-				const {rowspan, colspan} = mergedCells[key]
+			const mc = sheet.hooks.mergeHook.getMergedCells()
+			const nmc = new Map()
+			Object.keys(mc).forEach((key) => {
+				const [r, c] = key.split('-').map(Number)
+				const {rs, cs} = mc[key]
 
-				if (col < insertColIndex) {
+				if (c < insertColIndex) {
 					// 在插入列之前的合并单元格保持不变
-					newMergedCells.set(key, mergedCells[key])
+					nmc.set(key, mc[key])
 				} else {
 					// 在插入列之后的合并单元格需要更新列号
-					newMergedCells.set(`${row}-${col + addColumnCount.value}`, {
-						rowspan,
-						colspan,
+					nmc.set(`${r}-${c + addColumnCount.value}`, {
+						rs,
+						cs,
 					})
 				}
 			})
-			useMergedCellsHook.setMergeCells(newMergedCells)
+			sheet.hooks.mergeHook.setMergeCells(nmc)
 
 			// 保存历史记录
-			useHistoryHook.saveHistory(
+			sheet.hooks.historyHook.save(
 				{
-					colIndex: insertColIndex,
-					colspan: addColumnCount.value,
+					c: insertColIndex,
+					cs: addColumnCount.value,
 				},
 				'addCol'
 			)
-
-			renderRange()
 		} catch (error) {
 			console.error('添加列失败', error)
 		} finally {
-			loading.value = false
-			loadingText.value = '处理完成'
+			sheet.state.loading = false
+			sheet.state.progress = -1
 		}
 	}
 

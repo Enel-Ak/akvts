@@ -66,6 +66,8 @@ export const useResize = () => {
 			startWidth = getColWidth(item.c)
 		}
 
+		sheet.hooks.historyHook.save()
+
 		document.addEventListener('mousemove', onResize)
 		document.addEventListener('mouseup', stopResize)
 	}
@@ -115,25 +117,27 @@ export const useResize = () => {
 
 			// 使用 requestAnimationFrame 优化性能
 			requestAnimationFrame(() => {
-				resizingEl.style.width = `${newWidth}px`
-				if (guideLineCol) {
-					guideLineCol.style.zIndex = 3
-					if (deltaX > 0) {
-						guideLineCol.style.left = `${
-							resizingElRect.left - sheetRect.left + newWidth - 1.75
-						}px`
+				if (resizingEl) {
+					resizingEl.style.width = `${newWidth}px`
+					if (guideLineCol) {
+						guideLineCol.style.zIndex = 3
+						if (deltaX > 0) {
+							guideLineCol.style.left = `${
+								resizingElRect.left - sheetRect.left + newWidth - 1.75
+							}px`
+						} else {
+							// 修正位置
+							setTimeout(() => {
+								try {
+									guideLineCol.style.left = `${
+										resizingElRect.left - sheetRect.left + newWidth - 1.75
+									}px`
+								} catch (e) {}
+							}, 16)
+						}
 					} else {
-						// 修正位置
-						setTimeout(() => {
-							try {
-								guideLineCol.style.left = `${
-									resizingElRect.left - sheetRect.left + newWidth - 1.75
-								}px`
-							} catch (e) {}
-						}, 16)
+						guideLineCol = sheetContainer.querySelector('.grid-lines-col')
 					}
-				} else {
-					guideLineCol = sheetContainer.querySelector('.grid-lines-col')
 				}
 			})
 

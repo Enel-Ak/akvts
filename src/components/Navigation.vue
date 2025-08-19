@@ -1,6 +1,7 @@
 <script setup>
 import {computed, onBeforeUnmount, onMounted, watch, ref, nextTick, h, Teleport} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
+import {useDebounce} from '@/hooks/useDebounce'
 
 const emits = defineEmits(['clickItem', 'update:modelValue'])
 const props = defineProps({
@@ -102,15 +103,20 @@ const showChildMenu = (itemId) => {
 	if (activeChild.value === itemId && !isChildMenuAnimating.value) {
 		return
 	}
-
 	// 立即设置新的活动菜单
 	activeChild.value = itemId
 	isChildMenuAnimating.value = true
 
-	// 等待下一帧再结束动画
-	nextTick(() => {
-		isChildMenuAnimating.value = false
-	})
+	useDebounce(
+		() => {
+			// 等待下一帧再结束动画
+			nextTick(() => {
+				isChildMenuAnimating.value = false
+			})
+		},
+		128,
+		'showChildMenu'
+	)()
 }
 
 // 隐藏子菜单动画
@@ -130,7 +136,16 @@ const hideChildMenu = () => {
 
 // 显示多级菜单
 const showMultiLevelMenu = (menuId, level = 1) => {
-	activeMultiLevelMenus.value.set(menuId, {level, visible: true})
+	if (isChildMenuAnimating.value) {
+		return
+	}
+	useDebounce(
+		() => {
+			activeMultiLevelMenus.value.set(menuId, {level, visible: true})
+		},
+		64,
+		'showMultiLevelMenu'
+	)()
 }
 
 // 隐藏多级菜单

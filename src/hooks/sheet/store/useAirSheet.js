@@ -94,6 +94,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			}
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
+				clone.id = key
 				clone.history = shallowReactive(new Map()) // 同一个引用
 				clone.celldata = shallowReactive(new Map()) // 同一个引用
 				clone.config = {

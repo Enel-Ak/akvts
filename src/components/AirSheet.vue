@@ -18,6 +18,7 @@ import {ElMessage} from 'element-plus'
 import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {useSleep} from '@/hooks/useSleep'
+import {useDebounce} from '@/hooks/useDebounce'
 
 const stateType = {
 	normal: 0,
@@ -164,7 +165,7 @@ const initialData = () => {
 			sheet.state.progress = 100
 			sheetStore.$patch((state) => {
 				state.sheets.get(id).celldata = markRaw(cellMap)
-				sheet.hooks.historyHook.save(markRaw([...cellMap.values()]))
+				sheet.hooks.historyHook.save(cellMap)
 			})
 			useSleep(250).then(() => {
 				sheet.state.loading = false
@@ -992,8 +993,14 @@ const isLandscape = () => {
 watch(
 	() => sheetStore.getSheet(id),
 	(newVal) => {
-		console.log('updated AirSheet', newVal)
 		Object.assign(sheet, newVal)
+		useDebounce(
+			() => {
+				console.log('updated AirSheet', newVal)
+			},
+			300,
+			'airSheetLogs'
+		)()
 	},
 	{deep: true}
 )
@@ -1396,7 +1403,7 @@ defineExpose({
 
 					<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
 						<input
-							v-model.number="sheet.hooks.toolsHook.addRowCount.value"
+							v-model.number="sheet.hooks.toolsHook.addRowCount"
 							type="number"
 							min="1"
 							value="1"
@@ -1419,7 +1426,7 @@ defineExpose({
 					</div>
 					<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
 						<input
-							v-model.number="sheet.hooks.toolsHook.addColumnCount.value"
+							v-model.number="sheet.hooks.toolsHook.addColumnCount"
 							type="number"
 							min="1"
 							value="1"

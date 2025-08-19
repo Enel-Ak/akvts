@@ -311,6 +311,10 @@ $szie170: 170px;
 			margin-top: calc(v-bind(offset) + 30px);
 			width: 100%;
 		}
+		.container-footer {
+			left: 0;
+			width: 100%;
+		}
 	}
 
 	&.unexpand {
