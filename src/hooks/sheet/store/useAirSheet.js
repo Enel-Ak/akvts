@@ -10,6 +10,7 @@ import {useHistory} from '../hooks/useHistory'
 import {useRender} from '../hooks/useRender'
 import {useContextMenu} from '../hooks/useContextMenu'
 import {useSelectionRange} from '../hooks/useSelectionRange'
+import {useExcel} from '../hooks/useExcel'
 
 const defaultSheet = {
 	props: {},
@@ -52,8 +53,8 @@ const defaultSheet = {
 		keys: [], //  配置单元格的 Key
 
 		freezeCount: {
-			row: 0,
-			col: 0,
+			r: 0,
+			c: 0,
 		},
 
 		rowCount: 0,
@@ -68,6 +69,7 @@ const defaultSheet = {
 	state: {
 		render: false, // 是否正在渲染
 		loading: false, // 是否正在加载
+		importing: false, // 是否正在导入
 		scrolling: false, // 是否正在滚动
 		completed: false, // 是否初始化完成
 		msg: '正在加载数据...',
@@ -117,9 +119,10 @@ export const useAirSheetStore = defineStore('AirSheet', {
 					copyHook: useCopy().init(re),
 					toolsHook: useTools().init(key),
 					historyHook: useHistory().init(key),
-					editHook: useEdit().init(key, re),
+					editHook: useEdit().init(key),
 					selectionRangeHook: useSelectionRange().init(key, re),
 					contextMenuHook: useContextMenu().init(key, re),
+					excelHook: useExcel().init(key),
 				}
 				re.fn = {
 					render: () => this.render(key),

@@ -373,8 +373,6 @@ export const useTools = () => {
 			})
 
 			for (let i = insertRowIndex; i < insertRowIndex + addRowCount.value; i++) {
-				console.log(111, i)
-
 				sheet.celldata.set(i, [])
 			}
 
@@ -419,27 +417,26 @@ export const useTools = () => {
 			ElMessage.warning('请先在配置中开启删除行功能')
 			return
 		}
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined) return
 
-		if (sheet.celldata.size >= limit) {
-			loading.value = true
-			loadingText.value = '正在处理数据...'
+		if (sheet.celldata.size >= sheet.props.limit) {
+			sheet.state.loading = true
+			sheet.state.progress = 0
+			sheet.state.msg = '正在处理数据...'
 		}
 
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const deleteCount = endRow - startRow + 1
+		const deleteCount = rr - r + 1
 		const deletedRows = new Map()
 		const newMap = new Map()
 
 		try {
-			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
-					if (rowIndex < startRow) {
-						newMap.set(rowIndex, rowData)
-					} else if (rowIndex > endRow) {
-						newMap.set(rowIndex - deleteCount, rowData)
+					if (rowIndex < r) {
+						// newMap.set(rowIndex, rowData)
+					} else if (rowIndex > rr) {
+						sheet.celldata.set(rowIndex - deleteCount, rowData)
 					} else {
 						deletedRows.set(`${rowIndex}`, {rowData, deleteCount})
 					}
@@ -447,41 +444,41 @@ export const useTools = () => {
 			})
 
 			// 保存历史
-			useHistoryHook.saveHistory(deletedRows, 'removeRow')
+			sheet.hooks.historyHook.save(deletedRows, 'removeRow')
 
 			// 更新合并单元格的位置
-			const mergedCells = sheet.config.mergedCells
-			const newMergedCells = new Map()
-			Object.keys(mergedCells).forEach((key) => {
+			const mc = sheet.hooks.mergeHook.getMergedCells()
+			const nmc = new Map()
+			Object.keys(mc).forEach((key) => {
 				const [row, col] = key.split('-').map(Number)
-				const {rowspan, colspan} = mergedCells[key]
+				const {rs, cs} = mc[key]
 
-				if (row < startRow) {
+				if (row < r) {
 					// 在删除行之前的合并单元格
-					if (row + rowspan > startRow) {
+					if (row + rs > r) {
 						// 如果合并单元格跨越了删除范围，需要减少 rowspan
-						const overlap = Math.min(endRow - startRow + 1, row + rowspan - startRow)
-						newMergedCells.set(key, {
-							rowspan: rowspan - overlap,
-							colspan,
+						const overlap = Math.min(rr - r + 1, row + rs - r)
+						nmc.set(key, {
+							rs: rs - overlap,
+							cs,
 						})
 					} else {
 						// 合并单元格完全在删除范围之前，保持不变
-						newMergedCells.set(key, mergedCells[key])
+						nmc.set(key, mc[key])
 					}
-				} else if (row > endRow) {
+				} else if (row > rr) {
 					// 在删除行之后的合并单元格需要更新行号
-					newMergedCells.set(`${row - deleteCount}-${col}`, {
-						rowspan,
-						colspan,
+					nmc.set(`${row - deleteCount}-${col}`, {
+						rs,
+						cs,
 					})
 				}
 				// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
 			})
-			useMergedCellsHook.setMergeCells(newMergedCells)
+			sheet.hooks.mergeHook.setMergeCells(nmc)
 
 			// 删除行相关的cellstyle
-			for (let i = startRow; i <= endRow; i++) {
+			for (let i = r; i <= rr; i++) {
 				Object.keys(sheet.config.styled).forEach((key) => {
 					const [row] = key.split('-').map(Number)
 					if (row === i) {
@@ -491,14 +488,12 @@ export const useTools = () => {
 			}
 
 			// 更新sheet.celldata
-			sheet.celldata = new Map([...newMap].sort((a, b) => a[0] - b[0]))
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
-			renderRange()
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
-			loading.value = false
-			loadingText.value = '处理完成'
+			sheet.state.loading = false
+			sheet.state.progress = -1
 		}
 	}
 
@@ -585,79 +580,75 @@ export const useTools = () => {
 			ElMessage.warning('请先在配置中开启删除列功能')
 			return
 		}
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || c === undefined) return
 
-		if (sheet.celldata.size >= limit) {
-			loading.value = true
-			loadingText.value = '正在处理数据...'
+		if (sheet.celldata.size >= sheet.props.limit) {
+			sheet.state.loading = true
+			sheet.state.progress = 0
+			sheet.state.msg = '正在处理数据...'
 		}
 
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
-		const deleteCount = endCol - startCol + 1
+		const deleteCount = cc - c + 1
 		const deletedCols = new Map()
-		const newMap = new Map()
 
 		try {
-			await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					const newRowData = []
-					rowData.forEach((cellData, colIndex) => {
-						if (colIndex < startCol) {
-							newRowData[colIndex] = cellData
-						} else if (colIndex > endCol) {
-							newRowData[colIndex - deleteCount] = cellData
+					rowData.forEach((val, colIndex) => {
+						if (colIndex < c) {
+							newRowData[colIndex] = val
+						} else if (colIndex > cc) {
+							newRowData[colIndex - deleteCount] = val
 						} else {
 							const row = deletedCols.get(rowIndex)
 							if (row) {
-								row.push({rowIndex, colIndex, value: cellData})
+								row.push({r: rowIndex, c: colIndex, v: val})
 							} else {
-								deletedCols.set(rowIndex, [{rowIndex, colIndex, value: cellData}])
+								deletedCols.set(rowIndex, [{r: rowIndex, c: colIndex, v: val}])
 							}
 						}
 					})
-					newMap.set(rowIndex, reactive(newRowData))
+					sheet.celldata.set(rowIndex, newRowData)
 				}
 			})
 
 			// 保存历史
-			useHistoryHook.saveHistory(deletedCols, 'removeCol')
+			sheet.hooks.historyHook.save(deletedCols, 'removeCol')
 
 			// 更新合并单元格的位置
-			const mergedCells = sheet.config.mergedCells
-			const newMergedCells = new Map()
-			Object.keys(mergedCells).forEach((key) => {
+			const mc = sheet.hooks.mergeHook.getMergedCells()
+			const nmc = new Map()
+			Object.keys(mc).forEach((key) => {
 				const [row, col] = key.split('-').map(Number)
-				const {rowspan, colspan} = mergedCells[key]
+				const {rs, cs} = mc[key]
 
-				if (col < startCol) {
+				if (col < c) {
 					// 在删除列之前的合并单元格
-					if (col + colspan > startCol) {
+					if (col + cs > c) {
 						// 如果合并单元格跨越了删除范围，需要减少 rowspan
-						const overlap = Math.min(endCol - startCol + 1, col + colspan - startCol)
-						newMergedCells.set(key, {
-							rowspan,
-							colspan: colspan - overlap,
+						const overlap = Math.min(cc - c + 1, col + cs - c)
+						nmc.set(key, {
+							rs,
+							cs: cs - overlap,
 						})
 					} else {
 						// 合并单元格完全在删除范围之前，保持不变
-						newMergedCells.set(key, mergedCells[key])
+						nmc.set(key, mc[key])
 					}
-				} else if (col > endCol) {
+				} else if (col > cc) {
 					// 在删除列之后的合并单元格需要更新行号
-					newMergedCells.set(`${row}-${col - deleteCount}`, {
-						rowspan,
-						colspan,
+					nmc.set(`${row}-${col - deleteCount}`, {
+						rs,
+						cs,
 					})
 				}
 			})
-			useMergedCellsHook.setMergeCells(newMergedCells)
+			sheet.hooks.mergeHook.setMergeCells(nmc)
 
 			// 删除列相关的cellstyle
-			for (let i = startCol; i <= endCol; i++) {
+			for (let i = c; i <= cc; i++) {
 				Object.keys(sheet.config.styled).forEach((key) => {
 					const [_, col] = key.split('-').map(Number)
 					if (col === i) {
@@ -667,15 +658,13 @@ export const useTools = () => {
 			}
 
 			// 更新sheet.celldata和其他相关操作
-			sheet.celldata = newMap
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
-			useSelectionRangeHook.setRange(startRow, startCol - 1, endRow, startCol - 1)
-			renderRange()
+			sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc)
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
-			loading.value = false
-			loadingText.value = '处理完成'
+			sheet.state.loading = false
+			sheet.state.progress = -1
 		}
 	}
 
@@ -688,10 +677,10 @@ export const useTools = () => {
 		const file = event.target.files[0]
 		if (!file) return
 		sheet.celldata.clear()
-		const result = await useExcelHook.readExcelFile(file)
+		await nextTick()
+		const result = await sheet.hooks.excelHook.readExcelFile(file)
 		if (result.success) {
 			event.target.value = null
-			renderRange()
 		}
 	}
 
@@ -702,7 +691,7 @@ export const useTools = () => {
 			return
 		}
 		const name = Date.now()
-		const result = await useExcelHook.exportExcel(`${name}.xlsx`)
+		const result = await sheet.hooks.excelHook.exportExcel(`${name}.xlsx`)
 		if (result.success) {
 		}
 	}

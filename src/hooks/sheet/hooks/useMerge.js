@@ -107,9 +107,9 @@ export const useMerge = () => {
 
 			if (
 				cell.r >= mergedRow &&
-				cell.r < mergedRow + value.rowspan &&
+				cell.r < mergedRow + value.rs &&
 				cell.c >= mergedCol &&
-				cell.c < mergedCol + value.colspan
+				cell.c < mergedCol + value.cs
 			) {
 				// 在合并单元格内
 				return {

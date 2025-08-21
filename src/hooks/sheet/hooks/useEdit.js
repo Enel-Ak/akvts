@@ -1,8 +1,11 @@
 import {ref, reactive, nextTick, watch, onMounted} from 'vue'
 import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
+import {useAirSheetStore} from '../store/useAirSheet'
 
 export const useEdit = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = null
 	let sheet = null
 	let initialized = false
 	let container = null
@@ -548,7 +551,7 @@ export const useEdit = () => {
 		}
 	}
 
-	const setRowHeight = async (rowIndex, colIndex, needRender = true, needSetRange = true) => {
+	const setRowHeight = async (rowIndex, colIndex, needSetRange = true) => {
 		let r = rowIndex
 		let c = colIndex
 		const range = sheet.hooks.selectionRangeHook.ranged
@@ -563,7 +566,7 @@ export const useEdit = () => {
 		if (!cellEl) return
 
 		// 计算实际内容高度
-		let contentHeight = 0
+		let contentHeight = sheet.props.rowHeight
 		for (const node of cellEl.childNodes) {
 			contentHeight += node.offsetHeight
 		}
@@ -571,12 +574,14 @@ export const useEdit = () => {
 		if (contentHeight < sheet.hooks.resizeHook.getRowHeight(r)) return
 
 		const merge = sheet.hooks.mergeHook.findMergedCell(r, c)
+		console.log(3339, contentHeight, sheet.hooks.resizeHook.getRowHeight(r))
+
 		// 如果是合并单元格
 		if (merge) {
 			// 获取合并区域内所有行的当前高度
-			const rowHeights = Array(merge.rowspan)
+			const rowHeights = Array(merge.rs)
 				.fill(0)
-				.map((_, index) => sheet.hooks.resizeHook.getRowHeight(merge.row + index))
+				.map((_, index) => sheet.hooks.resizeHook.getRowHeight(merge.r + index))
 
 			const mergedTotalHeight = rowHeights.reduce((total, height) => total + height, 0)
 
@@ -586,25 +591,27 @@ export const useEdit = () => {
 				const additionalHeight = contentHeight - mergedTotalHeight
 				// 将额外高度添加到第一行
 				const newFirstRowHeight = rowHeights[0] + additionalHeight
-				sheet.hooks.resizeHook.setRowHeight(merge.row, newFirstRowHeight)
+				sheet.hooks.resizeHook.setRowHeight(merge.r, newFirstRowHeight)
 
 				if (needSetRange) {
 					await nextTick()
 					sheet.hooks.selectionRangeHook.setRange(
-						merge.row,
-						merge.col,
-						merge.row + merge.rowspan - 1,
-						merge.col + merge.colspan - 1,
+						merge.r,
+						merge.c,
+						merge.r + merge.rs,
+						merge.c + merge.cs,
 						true
 					)
 				}
 			}
 		} else if (contentHeight > sheet.hooks.resizeHook.getRowHeight(r)) {
-			// 非合并单元格的情况
-			sheet.hooks.resizeHook.setRowHeight(r, contentHeight)
-			if (needSetRange) {
-				await nextTick()
-				sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
+			if (!sheet.state.importing) {
+				// 非合并单元格的情况
+				sheet.hooks.resizeHook.setRowHeight(r, contentHeight)
+				if (needSetRange) {
+					await nextTick()
+					sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
+				}
 			}
 		}
 	}
@@ -641,7 +648,7 @@ export const useEdit = () => {
 			settingsCache.set(`${cell.r}-${cell.c}`, cell)
 			// 检查并清理缓存
 			cleanSettingsCache()
-			setTimeout(() => setRowHeight(cell.r, cell.c, false, false), 0)
+			setTimeout(() => setRowHeight(cell.r, cell.c, false), 0)
 		}
 
 		return html
@@ -650,11 +657,15 @@ export const useEdit = () => {
 	const setCellValue = (rowIndex, colIndex, value, create = false) => {
 		let r = rowIndex
 		let c = colIndex
-		const range = sheet.hooks.selectionRangeHook.ranged
+		const range = sheet.hooks.selectionRangeHook.getRanged()
 
-		if (range && !r && !c) {
-			r = Math.min(range.start.row, range.end.row)
-			c = Math.min(range.start.col, range.end.col)
+		if (
+			range.r &&
+			range.c &&
+			(r === undefined || c === undefined || r === null || c === null)
+		) {
+			r = Math.min(range.r, range.rr)
+			c = Math.min(range.c, range.cc)
 		}
 
 		if (sheet.celldata.get(r)) {
@@ -664,11 +675,12 @@ export const useEdit = () => {
 			sheet.celldata.get(r)[c] = value
 		} else if (create) {
 			if (!sheet.celldata.get(r)) {
-				sheet.celldata.set(r, reactive([]))
+				sheet.celldata.set(r, [])
 				if (r > sheet.config.rowCount) {
 					sheet.config.rowCount = r + 1
 				}
 			}
+
 			sheet.celldata.get(r)[c] = value
 		}
 
@@ -710,13 +722,14 @@ export const useEdit = () => {
 		container = null
 	}
 
-	const init = (containerId, reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(sheetKey)
 
 		setTimeout(() => {
 			if (initialized) return
 			initialized = true
-			container = document.querySelector(`#${containerId}`)
+			container = document.querySelector(`#${sheetKey}`)
 
 			container.addEventListener('mouseenter', enterContainer)
 			container.addEventListener('mouseleave', leaveContainer)

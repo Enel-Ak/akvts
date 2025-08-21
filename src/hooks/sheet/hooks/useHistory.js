@@ -125,22 +125,6 @@ export const useHistory = () => {
 							}
 						)
 
-						// 处理合并单元格
-						const mc = sheet.hooks.mergeHook.getMergedCells()
-						const nmc = new Map()
-
-						for (const [key, value] of Object.entries(mc)) {
-							const [row, col] = key.split('-').map(Number)
-							if (row > r) {
-								// 如果合并单元格在删除行之后，向上移动一行
-								nmc.set(`${row - rs}-${col}`, value)
-							} else {
-								nmc.set(key, value)
-							}
-						}
-
-						// 更新合并单元格
-						sheet.hooks.mergeHook.setMergeCells(nmc)
 						sheet.config.rowCount -= rs
 						state.addRow = null
 					} catch (error) {
@@ -167,24 +151,7 @@ export const useHistory = () => {
 								)
 							}
 						)
-						console.log(111, sheet.celldata)
-						// 处理合并单元格
-						const mc = sheet.hooks.mergeHook.getMergedCells()
-						const nmc = new Map()
 
-						for (const [key, value] of Object.entries(mc)) {
-							const [r, c] = key.split('-').map(Number)
-							if (c > state.addCol.c) {
-								// 如果合并单元格在删除列之后，向左移动对应的列数
-								nmc.set(`${r}-${c - state.addCol.cs}`, value)
-							} else if (c < state.addCol.c) {
-								// 如果合并单元格在删除列之前，保持不变
-								nmc.set(key, value)
-							}
-						}
-
-						// 更新合并单元格
-						sheet.hooks.mergeHook.setMergeCells(nmc)
 						sheet.config.colCount -= state.addCol.cs
 						state.addCol = null
 					} catch (error) {
@@ -195,25 +162,25 @@ export const useHistory = () => {
 				// 撤销删除行
 				if (state.removeRow.size > 0) {
 					// 创建新的数据结构
-					const newMap = new Map()
-
 					try {
 						let count = 0
-						await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
-							const recover = state.removeRow.get(`${rowIndex}`)
-							if (recover) {
-								newMap.set(rowIndex, recover.rowData)
-								count = recover.deleteCount
+						await useProcessMapInBatches(
+							sheet.id,
+							sheet.celldata,
+							(rowIndex, rowData) => {
+								const recover = state.removeRow.get(`${rowIndex}`)
+								if (recover) {
+									sheet.celldata.set(rowIndex, recover.rowData)
+									count = recover.deleteCount
+								}
+								sheet.celldata.set(rowIndex + count, rowData)
 							}
-							newMap.set(rowIndex + count, rowData)
-						})
+						)
 
 						// 更新 sheet.celldata
-						sheet.celldata = newMap
 						state.removeRow.clear()
 					} catch (error) {
 						console.error('撤销删除行失败:', error)
-						loading.value = false
 					}
 				}
 
@@ -221,32 +188,35 @@ export const useHistory = () => {
 				if (state.removeCol.size > 0) {
 					try {
 						// 恢复删除的列
-						await processMapInBatches(state.removeCol, (rowIndex, rowData) => {
-							// 获取当前行的数据并转换为数组
-							let currentRowData = Array.from(sheet.celldata.get(rowIndex) || [])
+						await useProcessMapInBatches(
+							sheet.id,
+							state.removeCol,
+							(rowIndex, rowData) => {
+								// 获取当前行的数据并转换为数组
+								let currentRowData = Array.from(sheet.celldata.get(rowIndex) || [])
 
-							// 按列索引排序，从小到大恢复
-							const sortedData = rowData.sort((a, b) => a.colIndex - b.colIndex)
+								// 按列索引排序，从小到大恢复
+								const sortedData = rowData.sort((a, b) => a.c - b.c)
 
-							// 一次性扩展数组长度
-							const maxColIndex = sortedData[sortedData.length - 1].colIndex
-							if (currentRowData.length < maxColIndex) {
-								currentRowData.length = maxColIndex + 1
-								currentRowData.fill(null, currentRowData.length)
+								// 一次性扩展数组长度
+								const maxColIndex = sortedData[sortedData.length - 1].c
+								if (currentRowData.length < maxColIndex) {
+									currentRowData.length = maxColIndex + 1
+									currentRowData.fill(null, currentRowData.length)
+								}
+
+								// 一次性插入所有值
+								sortedData.forEach(({c, v}) => {
+									currentRowData.splice(c, 0, v)
+								})
+
+								// 更新到 sheet.celldata
+								sheet.celldata.set(rowIndex, currentRowData)
 							}
-
-							// 一次性插入所有值
-							sortedData.forEach(({colIndex, value}) => {
-								currentRowData.splice(colIndex, 0, value)
-							})
-
-							// 更新到 sheet.celldata
-							sheet.celldata.set(rowIndex, reactive(currentRowData))
-						})
+						)
 						state.removeCol.clear()
 					} catch (error) {
 						console.error('撤销删除列失败:', error)
-						loading.value = false
 					}
 				}
 

@@ -3,8 +3,11 @@ import {computed} from 'vue'
 import VueOfficeDocx from '@vue-office/docx/lib/v3/vue-office-docx.mjs'
 import VueOfficePdf from '@vue-office/pdf/lib/v3/vue-office-pdf.mjs'
 import VueOfficeExcel from '@vue-office/excel/lib/v3/vue-office-excel.mjs'
+
 import '@vue-office/docx/lib/v3/index.css'
+import '@vue-office/docx/lib/v3/style.css'
 import '@vue-office/excel/lib/v3/index.css'
+import '@vue-office/excel/lib/v3/style.css'
 
 const props = defineProps({
 	src: {
@@ -35,9 +38,17 @@ const h = computed(() => {
 </script>
 <template>
 	<div class="file-preview-component" :style="{width: w, height: h}">
-		<vue-office-docx v-if="props.mode === 'docx'" :src="props.src" />
-		<vue-office-pdf v-if="props.mode === 'pdf'" :src="props.src" />
-		<vue-office-excel v-if="props.mode === 'excel'" :src="props.src" />
+		<vue-office-docx v-if="mode === 'docx'" :src="src" />
+		<vue-office-pdf v-if="mode === 'pdf'" :src="src" />
+		<vue-office-excel v-if="mode === 'excel'" :src="src" />
 	</div>
 </template>
-<style scoped lang="scss"></style>
+<style lang="scss">
+@use '@vue-office/docx/lib/v3/index.css';
+.file-preview-component {
+	line-height: 2;
+	.docx-wrapper {
+		padding-bottom: 20px;
+	}
+}
+</style>
