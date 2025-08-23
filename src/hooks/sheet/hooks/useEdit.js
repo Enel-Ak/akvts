@@ -185,7 +185,7 @@ export const useEdit = () => {
 			editing.value = false
 
 			// 使用延时处理，给公式菜单点击事件留出执行时间
-			nextTick(() => setFormulaValue())
+			nextTick(() => setFormulaValue(cellEl))
 			setTimeout(() => {
 				formulaStyle.value = {}
 				isFormula.value = false
@@ -217,8 +217,8 @@ export const useEdit = () => {
 	}
 
 	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
-		const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt
-		const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`]
+		const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt // 单元格格式
+		const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`] // 单元格公式
 
 		let output = text
 		try {
@@ -385,28 +385,25 @@ export const useEdit = () => {
 					correctFormat = '10000'
 					break
 			}
-			ElMessage.error(`${fmt}格式错误, 请检查内容, 例如: ${correctFormat}`)
+			// ElMessage.error(`${fmt}格式错误, 请检查内容, 例如: ${correctFormat}`)
 			console.error(`${fmt}格式错误, 请检查内容`)
 		}
 		return output
 	}
 
 	const setCellFormula = (key, _) => {
-		const ranged = useSelectionRangeHook.ranged
-		const r = Math.min(ranged.start.row, ranged.end.row)
-		const c = Math.min(ranged.start.col, ranged.end.col)
-		const rr = Math.max(ranged.start.row, ranged.end.row)
-		const cc = Math.max(ranged.start.col, ranged.end.col)
+		const cell = sheet.hooks.selectionRangeHook.getRanged()
+		const {r, c, rr, cc} = cell
 
 		if (!_) {
-			const value = sheet.celldata.get(r)[c] || ''
-			useHistoryHook.saveHistory({rowIndex: r, colIndex: c, value})
+			const v = sheet.celldata.get(r)[c] || ''
+			sheet.hooks.historyHook.save({r, c, v})
 		}
 
 		let lockTimer = null
 		for (let row = r; row <= rr; row++) {
 			for (let col = c; col <= cc; col++) {
-				if (sheet.config.lockCells[`${row}-${col}`]) {
+				if (sheet.config.locked[`${row}-${col}`]) {
 					clearTimeout(lockTimer)
 					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
 					continue
@@ -425,13 +422,12 @@ export const useEdit = () => {
 				inputValue.value = sheet.config.formulaed[`${row}-${col}`]
 			}
 		}
-		setFormulaValue()
+		setFormulaValue(container.querySelector(`[data-cell="${r}-${c}"]`))
 	}
 
-	const setFormulaValue = () => {
+	const setFormulaValue = (el = null) => {
 		try {
 			const formulas = sheet.config.formulaed
-
 			// 预编译正则表达式，避免重复创建
 			const formulaRegex = /=([A-Z]+)\(([^)]*)\)/
 			const colRegex = /[A-Z]+/
@@ -532,6 +528,9 @@ export const useEdit = () => {
 						}
 						// 确保 0 值也能正确显示
 						sheet.celldata.get(rowIndex)[colIndex] = result === 0 ? '0' : result
+						if (el) {
+							el.innerText = result === 0 ? '0' : result
+						}
 					}
 				}
 
@@ -554,11 +553,11 @@ export const useEdit = () => {
 	const setRowHeight = async (rowIndex, colIndex, needSetRange = true) => {
 		let r = rowIndex
 		let c = colIndex
-		const range = sheet.hooks.selectionRangeHook.ranged
+		const range = sheet.hooks.selectionRangeHook.getRanged()
 
 		if (range && !r && !c && r !== 0 && c !== 0) {
-			r = Math.min(range.start.row, range.end.row)
-			c = Math.min(range.start.col, range.end.col)
+			r = Math.min(range.r, range.rr)
+			c = Math.min(range.c, range.cc)
 		}
 
 		const cellEl = container.querySelector(`[data-cell="${r}-${c}"]`)
@@ -566,7 +565,7 @@ export const useEdit = () => {
 		if (!cellEl) return
 
 		// 计算实际内容高度
-		let contentHeight = sheet.props.rowHeight
+		let contentHeight = 0
 		for (const node of cellEl.childNodes) {
 			contentHeight += node.offsetHeight
 		}
@@ -574,7 +573,6 @@ export const useEdit = () => {
 		if (contentHeight < sheet.hooks.resizeHook.getRowHeight(r)) return
 
 		const merge = sheet.hooks.mergeHook.findMergedCell(r, c)
-		console.log(3339, contentHeight, sheet.hooks.resizeHook.getRowHeight(r))
 
 		// 如果是合并单元格
 		if (merge) {
@@ -672,7 +670,6 @@ export const useEdit = () => {
 			if (c > sheet.config.colCount) {
 				sheet.config.colCount = c + 1
 			}
-			sheet.celldata.get(r)[c] = value
 		} else if (create) {
 			if (!sheet.celldata.get(r)) {
 				sheet.celldata.set(r, [])
@@ -680,9 +677,9 @@ export const useEdit = () => {
 					sheet.config.rowCount = r + 1
 				}
 			}
-
-			sheet.celldata.get(r)[c] = value
 		}
+
+		sheet.celldata.get(r)[c] = value
 
 		// 计算公式处理
 		const formula = sheet.config.formulaed[`${r}-${c}`]
@@ -735,6 +732,20 @@ export const useEdit = () => {
 			container.addEventListener('mouseleave', leaveContainer)
 			document.addEventListener('keydown', startEdit)
 			console.log('installed useEdit')
+
+			watch(
+				() => sheet?.hooks.selectionRangeHook.ranged,
+				(newVal) => {
+					const {r, c, rr, cc} = newVal
+					if (r === undefined || c === undefined || r !== rr || c !== cc) {
+						inputValue.value = ''
+						return
+					}
+
+					inputValue.value = getCellValue(r, c)
+				},
+				{deep: true}
+			)
 		}, 16)
 
 		return {
@@ -754,18 +765,6 @@ export const useEdit = () => {
 			getCellValue,
 		}
 	}
-
-	// watch(
-	// 	() => useSelectionRangeHook.ranged,
-	// 	() => {
-	// 		const ranged = useSelectionRangeHook.ranged
-	// 		if (!ranged) return
-	// 		const startRow = Math.min(ranged.start.row, ranged.end.row)
-	// 		const startCol = Math.min(ranged.start.col, ranged.end.col)
-	// 		inputValue.value = getCellValue(startRow, startCol)
-	// 	},
-	// 	{deep: true}
-	// )
 
 	return {
 		init,

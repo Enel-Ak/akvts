@@ -73,6 +73,15 @@ const props = defineProps({
 const id = `air-sheet-${Math.random().toString(16).slice(2)}`
 const sheetStore = useAirSheetStore()
 const sheet = reactive({})
+const isLoading = computed(() => {
+	return (
+		sheet?.state.loading ||
+		sheet?.state.exporting ||
+		sheet?.state.importing ||
+		sheet?.state.scrolling ||
+		props.state === stateType.loading
+	)
+})
 
 const fns = ref(props.modelValue?.fns || [])
 
@@ -230,7 +239,8 @@ let updateVisibleRangeTimeout = null
 let updateTimer = null
 const updateVisibleRange = async () => {
 	try {
-		const currentZoom = sheet.props.zoom || 1
+		// 修复：统一使用 sheet.config.zoom
+		const currentZoom = sheet.config.zoom || 1
 
 		const rowHeights = {}
 		const colWidths = {}
@@ -538,7 +548,7 @@ const isLockedCell = () => {
 	return false
 }
 
-// 滚动处理
+// 滚动处理 - 更新记录的可见行列
 let scrollTimer = null
 let rafId = null
 const lastScroll = ref(false)
@@ -550,17 +560,17 @@ const onScroll = async (e) => {
 	}
 
 	if (sheet.config.rowCount >= props.limit) {
-		loading.value = true
-		loadingProgress.value = -1
-		loadingText.value = '数据量较大, 请稍后...'
+		sheet.state.scrolling = true
+		sheet.state.progress = -1
+		sheet.state.msg = '数据量较大, 请稍后...'
 	}
 
-	const currentZoom = sheet.config.zoom || 1
 	const newScrollTop = containerRef.value.scrollTop
 	const newScrollLeft = containerRef.value.scrollLeft
 
-	// 在滚动时更新原始滚动位置
-	originalScrollTop = newScrollTop / currentZoom
+	// 在滚动时重置记录的行列位置，这样下次缩放会基于新的位置
+	originalFirstVisibleRow = -1
+	originalFirstVisibleCol = -1
 
 	const alphabet = alphabetRef.value
 	const number = numberRef.value
@@ -614,7 +624,7 @@ const onScroll = async (e) => {
 			savedScrollPosition.value = {top: nt, left: nl}
 
 			if (sheet.config.rowCount >= props.limit) {
-				loading.value = false
+				sheet.state.scrolling = false
 			}
 
 			// 确保最后一次滚动后也更新可见范围
@@ -723,64 +733,142 @@ const onCellBlur = (event, cell) => {
 
 // 改变缩放比例时
 let zoomTimer = null
-let originalScrollTop = -1
+let originalFirstVisibleRow = -1
+let originalFirstVisibleCol = -1
 let lastZoom = 1
+
 const onZoomInput = async () => {
 	const currentZoom = sheet.config.zoom || 1
-	// 记录当前第一个可见行的位置
-	if (originalScrollTop === -1) {
-		// 如果是第一次缩放，直接记录当前位置除以当前缩放比例
-		originalScrollTop = containerRef.value.scrollTop / currentZoom
-	} else if (lastZoom !== currentZoom) {
-		// 如果缩放比例发生变化，更新原始位置
-		originalScrollTop = containerRef.value.scrollTop / lastZoom
+
+	// 如果是第一次缩放，记录当前可视区域的第一行和第一列
+	if (originalFirstVisibleRow === -1) {
+		// 获取当前可视区域的第一行
+		if (visibleRangeRef.value?.visible) {
+			originalFirstVisibleRow = visibleRangeRef.value.visible.startRow
+			originalFirstVisibleCol = visibleRangeRef.value.visible.startCol
+		} else {
+			// 如果没有可视区域信息，通过滚动位置计算
+			const currentScrollTop = containerRef.value.scrollTop
+			const currentScrollLeft = containerRef.value.scrollLeft
+			const oldZoom = lastZoom || 1
+
+			// 计算在原始缩放下的滚动位置
+			const originalScrollTop = currentScrollTop / oldZoom
+			const originalScrollLeft = currentScrollLeft / oldZoom
+
+			// 根据滚动位置计算行列号
+			let accumulatedHeight = 0
+			let accumulatedWidth = 0
+
+			// 计算第一个可见行
+			for (let i = 0; i < sheet.config.rowCount; i++) {
+				const rowHeight = sheet.hooks.resizeHook.getRowHeight(i) || props.rowHeight
+				if (accumulatedHeight + rowHeight > originalScrollTop) {
+					originalFirstVisibleRow = i
+					break
+				}
+				accumulatedHeight += rowHeight
+			}
+
+			// 计算第一个可见列
+			for (let i = 0; i < sheet.config.colCount; i++) {
+				const colWidth = sheet.hooks.resizeHook.getColWidth(i) || props.colWidth
+				if (accumulatedWidth + colWidth > originalScrollLeft) {
+					originalFirstVisibleCol = i
+					break
+				}
+				accumulatedWidth += colWidth
+			}
+		}
 	}
-	clearTimeout(zoomTimer)
-	zoomTimer = setTimeout(async () => {
-		let top = originalScrollTop * currentZoom
-		lastScroll.value = false
 
-		// 计算最大滚动位置
-		const maxScroll = containerRef.value.scrollHeight - containerRef.value.clientHeight
-		// 确保不超过最大滚动位置
-		top = Math.min(top, maxScroll)
+	// 根据目标行列号计算新的滚动位置
+	let newScrollTop = 0
+	let newScrollLeft = 0
 
-		requestAnimationFrame(async () => {
-			if (fnRef.value) {
-				fnRef.value.scrollTop = top
-			}
-			if (numberRef.value) {
-				numberRef.value.scrollTo = top
-			}
+	// 计算到目标行的累积高度
+	for (let i = 0; i < originalFirstVisibleRow && i < sheet.config.rowCount; i++) {
+		const rowHeight = (sheet.hooks.resizeHook.getRowHeight(i) || props.rowHeight) * currentZoom
+		newScrollTop += rowHeight
+	}
 
-			if (containerRef.value) {
-				containerRef.value.scrollTop = top
-			}
+	// 计算到目标列的累积宽度
+	for (let i = 0; i < originalFirstVisibleCol && i < sheet.config.colCount; i++) {
+		const colWidth = (sheet.hooks.resizeHook.getColWidth(i) || props.colWidth) * currentZoom
+		newScrollLeft += colWidth
+	}
 
-			await updateOffset('offsetTop', 'startRow')
-			await updateOffset('offsetLeft', 'startCol')
+	lastScroll.value = false
 
-			lastZoom = currentZoom
-			onScroll()
-			// if (lastZoom < 1) {
-			// updateVisibleRange()
-			// }
-		})
-	}, 16)
+	// 等待DOM更新后再设置滚动位置
+	await nextTick()
+
+	// 计算最大滚动位置，防止超出边界
+	const maxScrollTop = Math.max(
+		0,
+		containerRef.value.scrollHeight - containerRef.value.clientHeight
+	)
+	const maxScrollLeft = Math.max(
+		0,
+		containerRef.value.scrollWidth - containerRef.value.clientWidth
+	)
+
+	newScrollTop = Math.min(newScrollTop, maxScrollTop)
+	newScrollLeft = Math.min(newScrollLeft, maxScrollLeft)
+
+	requestAnimationFrame(async () => {
+		// 同步设置所有滚动容器的位置
+		if (containerRef.value) {
+			containerRef.value.scrollTop = newScrollTop
+			containerRef.value.scrollLeft = newScrollLeft
+		}
+
+		if (numberRef.value) {
+			numberRef.value.scrollTop = newScrollTop
+		}
+
+		if (alphabetRef.value) {
+			alphabetRef.value.scrollLeft = newScrollLeft
+		}
+
+		if (fnRef.value) {
+			fnRef.value.scrollTop = newScrollTop
+		}
+
+		// 更新内部滚动状态
+		scrollTop.value = newScrollTop
+		scrollLeft.value = newScrollLeft
+
+		// 更新偏移量
+		await updateOffset('offsetTop', 'startRow')
+		await updateOffset('offsetLeft', 'startCol')
+
+		// 更新可视区域
+		await updateVisibleRange()
+
+		// 更新最后的缩放比例
+		lastZoom = currentZoom
+		lastScroll.value = true
+	})
 }
 
 const onZoomChange = () => {
-	originalScrollTop = -1
-	if (lastZoom < 1) {
-		// updateVisibleRange()
-	}
+	// 缩放结束后重置记录的行列位置，为下次缩放做准备
+	setTimeout(() => {
+		originalFirstVisibleRow = -1
+		originalFirstVisibleCol = -1
+	}, 100)
 }
 
 const onZoomSize = (size) => {
-	const currentZoom = sheet.config.zoom
-	// 在改变缩放前记录当前的原始位置
-	if (originalScrollTop === -1) {
-		originalScrollTop = containerRef.value.scrollTop / currentZoom
+	const currentZoom = sheet.config.zoom || 1
+
+	// 在改变缩放前记录当前的第一个可见行列
+	if (originalFirstVisibleRow === -1) {
+		if (visibleRangeRef.value?.visible) {
+			originalFirstVisibleRow = visibleRangeRef.value.visible.startRow
+			originalFirstVisibleCol = visibleRangeRef.value.visible.startCol
+		}
 	}
 
 	let newZoom = currentZoom + size
@@ -797,57 +885,60 @@ const onZoomSize = (size) => {
 }
 
 const onZoomReset = async () => {
-	const currentZoom = sheet.config.zoom
-	// 在重置前记录当前的原始位置
-	if (originalScrollTop === -1) {
-		originalScrollTop = containerRef.value.scrollTop / currentZoom
+	const currentZoom = sheet.config.zoom || 1
+
+	// 在重置前记录当前的第一个可见行列
+	if (originalFirstVisibleRow === -1) {
+		if (visibleRangeRef.value?.visible) {
+			originalFirstVisibleRow = visibleRangeRef.value.visible.startRow
+			originalFirstVisibleCol = visibleRangeRef.value.visible.startCol
+		}
 	}
 
 	sheet.config.zoom = 1
-	onZoomInput()
+	await onZoomInput()
 
-	// 重置完成后清除原始位置
+	// 重置完成后清除记录的位置
 	setTimeout(() => {
-		originalScrollTop = -1
+		originalFirstVisibleRow = -1
+		originalFirstVisibleCol = -1
 		lastZoom = 1
 	}, 200)
 }
 
 // 文本框输入
-let inputTimer = null
-let inputRange = null
-let inputHistory = null
-const onInput = (event) => {
-	const range = useSelectionRangeHook.getRangeData()
-	if (
-		!inputRange ||
-		range.startRow !== inputRange.startRow ||
-		range.startCol !== inputRange.startCol
-	) {
-		inputRange = range
-		inputHistory = sheet.celldata.get(range.startRow)?.[range.startCol]
+const inputCache = new Map()
+const inputCacheCell = []
+const onInput = (e) => {
+	const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+	for (let i = r; i <= rr; i++) {
+		for (let j = c; j <= cc; j++) {
+			if (!inputCache.has(`${i}-${j}`)) {
+				const v = sheet.celldata.get(i)[j]
+				inputCache.set(`${i}-${j}`, v)
+				inputCacheCell.push({
+					c: j,
+					r: i,
+					v,
+				})
+			}
+			sheet.hooks.editHook.setCellValue(i, j, e.target.value)
+		}
 	}
-	useEditHook.setCellValue(null, null, event.target.value)
-
-	// 清除之前的定时器
-	clearTimeout(inputTimer)
-	// 设置新的定时器
-	inputTimer = setTimeout(() => {
-		useEditHook.setFormulaValue()
-		useEditHook.setRowHeight(null, null)
-	}, 250)
+	useDebounce(
+		() => {
+			sheet.hooks.editHook.setFormulaValue()
+			sheet.hooks.editHook.setRowHeight(null, null)
+		},
+		250,
+		'onInputTextarea'
+	)()
 }
 
 const onInputBlur = () => {
-	if (!inputRange) return
-	const cell = {
-		rowIndex: inputRange.startRow,
-		colIndex: inputRange.startCol,
-		value: inputHistory,
-	}
-	useHistoryHook.saveHistory(cell)
-	inputHistory = null
-	inputRange = null
+	sheet.hooks.historyHook.save(inputCacheCell.filter(Boolean))
+	inputCache.clear()
+	inputCacheCell.length = 0
 }
 
 // 拖拽到单元格时
@@ -967,18 +1058,19 @@ const setSelectionRange = () => {
 		return
 	}
 
-	// useSelectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
+	sheet.hooks.selectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
 }
 
 const mobileSetRowHeight = (e) => {
 	const {r, c} = selectionRange.value
-	useResizeHook.setRowHeight(r - 1, e.target.value)
+	sheet.hooks.resizeHook.setRowHeight(r, e.target.value)
+
 	// useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
 }
 
-const mobileSetColWidth = () => {
+const mobileSetColWidth = (e) => {
 	const {r, c} = selectionRange.value
-	useResizeHook.setColWidth(c - 1, selectionSize.value.w)
+	sheet.hooks.resizeHook.setColWidth(c, e.target.value)
 	// useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
 }
 
@@ -988,6 +1080,24 @@ const isLandscape = () => {
 		return window.innerWidth > window.innerHeight
 	}
 	return false
+}
+
+let originalParent = null
+let originalSheet = null
+const onFull = () => {
+	full.value = !full.value
+	if (full.value) {
+		const sheetComponentEl = containerRef.value.closest('.air-sheet-component')
+		if (sheetComponentEl) {
+			originalSheet = sheetComponentEl
+			originalParent = sheetComponentEl.parentNode
+			document.body.appendChild(sheetComponentEl)
+		}
+	} else if (originalParent && originalSheet) {
+		originalParent.appendChild(originalSheet)
+		originalParent = null
+		originalSheet = null
+	}
 }
 
 watch(
@@ -1504,7 +1614,7 @@ defineExpose({
 						<div
 							class="item"
 							:class="{active: setActiveTool('formula').fxVal?.includes('SUM')}"
-							@click="useEditHook.setCellFormula('SUM')"
+							@click="sheet.hooks.editHook.setCellFormula('SUM')"
 						>
 							<Icons name="Fx"></Icons>
 							<span>求和</span>
@@ -1514,7 +1624,7 @@ defineExpose({
 							:class="{
 								active: setActiveTool('formula').fxVal?.includes('AVERAGE'),
 							}"
-							@click="useEditHook.setCellFormula('AVERAGE')"
+							@click="sheet.hooks.editHook.setCellFormula('AVERAGE')"
 						>
 							<Icons name="Fx"></Icons>
 							<span>平均值</span>
@@ -1522,7 +1632,7 @@ defineExpose({
 						<div
 							class="item"
 							:class="{active: setActiveTool('formula').fxVal?.includes('MAX')}"
-							@click="useEditHook.setCellFormula('MAX')"
+							@click="sheet.hooks.editHook.setCellFormula('MAX')"
 						>
 							<Icons name="Fx"></Icons>
 							<span>最大值</span>
@@ -1530,7 +1640,7 @@ defineExpose({
 						<div
 							class="item"
 							:class="{active: setActiveTool('formula').fxVal?.includes('MIN')}"
-							@click="useEditHook.setCellFormula('MIN')"
+							@click="sheet.hooks.editHook.setCellFormula('MIN')"
 						>
 							<Icons name="Fx"></Icons>
 							<span>最小值</span>
@@ -1540,7 +1650,7 @@ defineExpose({
 
 				<!-- 全屏 -->
 				<div v-if="sheet.config.full" class="group" :class="{'group-merge': !isMobile()}">
-					<div class="item" @click="full = !full">
+					<div class="item" @click="onFull">
 						<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
 						<span>{{ full ? '退出' : '全屏' }}</span>
 					</div>
@@ -1599,7 +1709,7 @@ defineExpose({
 
 			<div v-if="sheet.config.edit" class="inputbar">
 				<textarea
-					v-model="sheet.hooks.editHook.inputValue.value"
+					v-model="sheet.hooks.editHook.inputValue"
 					:disabled="setActiveTool('lock').lock"
 					@input="onInput"
 					@blur="onInputBlur"
@@ -1860,9 +1970,9 @@ defineExpose({
 
 					<!-- 右键菜单 -->
 					<div
-						v-show="sheet.hooks.contextMenuHook.contextMenuVisible.value"
+						v-show="sheet.hooks.contextMenuHook.contextMenuVisible"
 						class="context-menu shadow-12"
-						:style="sheet.hooks.contextMenuHook.contextMenuStyle.value"
+						:style="sheet.hooks.contextMenuHook.contextMenuStyle"
 					>
 						<div
 							v-if="sheet.config.addRow"
@@ -1900,9 +2010,9 @@ defineExpose({
 
 					<!-- 公式菜单 -->
 					<div
-						v-if="sheet.hooks.editHook.isFormula.value && sheet.config.edit"
+						v-if="sheet.hooks.editHook.isFormula && sheet.config.edit"
 						class="context-menu shadow-12"
-						:style="{...sheet.hooks.editHook.formulaStyle.value, width: '145px'}"
+						:style="{...sheet.hooks.editHook.formulaStyle, width: '145px'}"
 					>
 						<div
 							class="menu-item"
@@ -2061,7 +2171,7 @@ defineExpose({
 						type="range"
 						min="0.5"
 						max="3"
-						step="0.01"
+						step="0.1"
 						@input="onZoomInput"
 						@change="onZoomChange"
 					/>
@@ -2099,22 +2209,18 @@ defineExpose({
 			</div>
 
 			<!-- 遮罩 -->
-			<div class="mask" :class="{active: sheet.state.loading || state === stateType.loading}">
+			<div
+				class="mask"
+				:class="{
+					active: isLoading,
+				}"
+			>
 				<div>
 					<Icons name="Loading" class="loading-animation"></Icons>
 					<span>
-						{{
-							sheet.state.loading || state === stateType.loading
-								? sheet.state.msg
-								: stateText
-						}}
+						{{ isLoading ? sheet.state.msg : stateText }}
 					</span>
-					<span
-						v-if="
-							sheet.state.progress !== -1 &&
-							(sheet.state.loading || state === stateType.loading)
-						"
-					>
+					<span v-if="sheet.state.progress !== -1 && isLoading">
 						{{ sheet.state.progress }}%
 					</span>
 				</div>

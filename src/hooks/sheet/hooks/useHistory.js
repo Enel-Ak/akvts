@@ -81,7 +81,7 @@ export const useHistory = () => {
 							sheet.id,
 							state.celldata,
 							(rowIndex, rowData) => {
-								if (!rowData) return
+								if (rowData === null || rowData === undefined) return
 								const [r, c] = rowIndex.split('-').map(Number)
 								sheet.celldata.get(r)[c] = rowData
 								const merged = sheet.hooks.mergeHook.findMergedCell(r, c)

@@ -70,6 +70,7 @@ const defaultSheet = {
 		render: false, // 是否正在渲染
 		loading: false, // 是否正在加载
 		importing: false, // 是否正在导入
+		exporting: false, // 是否正在导出
 		scrolling: false, // 是否正在滚动
 		completed: false, // 是否初始化完成
 		msg: '正在加载数据...',

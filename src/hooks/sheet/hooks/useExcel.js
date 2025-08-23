@@ -231,7 +231,7 @@ export const useExcel = () => {
 		colCount,
 		startRow,
 		startCol,
-		batchSize = 5000
+		batchSize = 3000
 	) => {
 		return new Promise((resolve) => {
 			let currentRow = 1
@@ -245,7 +245,7 @@ export const useExcel = () => {
 					const excelRow = worksheet.getRow(currentRow)
 
 					while (currentCol <= colCount && cellsInBatch < batchSize) {
-						const value = useEditHook.getCellValue(
+						const value = sheet.hooks.editHook.getCellValue(
 							currentRow - 1 + startRow,
 							currentCol - 1 + startCol
 						)
@@ -273,8 +273,8 @@ export const useExcel = () => {
 
 				// 更新进度
 				const progress = Math.floor((processedCells / totalCells) * 100)
-				loadingText.value = `正在导出Excel文件...`
-				loadingProgress.value = progress
+				sheet.state.progress = progress
+				sheet.state.msg = `正在导出Excel文件...`
 
 				if (currentRow <= rowCount) {
 					requestAnimationFrame(processNextBatch)
@@ -290,17 +290,20 @@ export const useExcel = () => {
 	// 导出Excel文件
 	const exportExcel = async (fileName = 'export.xlsx') => {
 		try {
-			exporting.value = true
-			loading.value = true
-			loadingText.value = '正在导出Excel文件...'
-			loadingProgress.value = 0
+			sheet.state.exporting = true
+			sheet.state.msg = '正在导出Excel文件...'
+			sheet.state.progress = -1
+			// exporting.value = true
+			// loading.value = true
+			// loadingText.value = '正在导出Excel文件...'
+			// loadingProgress.value = 0
 
 			const workbook = new ExcelJS.Workbook()
 			const worksheet = workbook.addWorksheet('Sheet1')
 
 			// 获取数据范围
-			const ranged = useSelectionRangeHook.ranged
-			if (!ranged) {
+			const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+			if (r === undefined || c === undefined) {
 				throw new Error('无效的数据范围')
 			}
 
@@ -316,7 +319,7 @@ export const useExcel = () => {
 			await processExcelBatch(worksheet, rowCount, colCount, startRow, startCol)
 
 			// 处理合并单元格
-			const mergedCells = useMergedCellsHook.getMergedCells()
+			const mergedCells = sheet.hooks.mergeHook.getMergedCells()
 
 			if (mergedCells && typeof mergedCells === 'object') {
 				Object.entries(mergedCells).forEach(([key, merge]) => {
@@ -326,8 +329,8 @@ export const useExcel = () => {
 						worksheet.mergeCells(
 							row - startRow + 1,
 							col - startCol + 1,
-							row - startRow + merge.rowspan,
-							col - startCol + merge.colspan
+							row - startRow + merge.rs,
+							col - startCol + merge.cs
 						)
 
 						// 获取合并区域的主单元格
@@ -365,10 +368,9 @@ export const useExcel = () => {
 				error: error.message,
 			}
 		} finally {
-			exporting.value = false
-			loading.value = false
-			loadingText.value = ''
-			loadingProgress.value = 0
+			sheet.state.exporting = false
+			sheet.state.msg = ''
+			sheet.state.progress = -1
 		}
 	}
 

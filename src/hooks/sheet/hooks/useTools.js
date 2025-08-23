@@ -702,19 +702,17 @@ export const useTools = () => {
 			ElMessage.warning('当前表格不支持锁定')
 			return
 		}
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		sheet.hooks.historyHook.save()
 
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || c === undefined) return
 
-		for (let row = startRow; row <= endRow; row++) {
-			for (let col = startCol; col <= endCol; col++) {
-				sheet.config.lockCells[`${row}-${col}`] = true
+		for (let row = r; row <= rr; row++) {
+			for (let col = c; col <= cc; col++) {
+				sheet.config.locked[`${row}-${col}`] = true
 			}
 		}
+
 		ElMessage.success(`已锁定`)
 	}
 
@@ -724,19 +722,17 @@ export const useTools = () => {
 			ElMessage.warning('当前表格不支持解锁')
 			return
 		}
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		sheet.hooks.historyHook.save()
 
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || c === undefined) return
 
-		for (let row = startRow; row <= endRow; row++) {
-			for (let col = startCol; col <= endCol; col++) {
-				delete sheet.config.lockCells[`${row}-${col}`]
+		for (let row = r; row <= rr; row++) {
+			for (let col = c; col <= cc; col++) {
+				delete sheet.config.locked[`${row}-${col}`]
 			}
 		}
+
 		ElMessage.success(`已解锁`)
 	}
 
@@ -746,20 +742,15 @@ export const useTools = () => {
 	const setFreeze = (r, c) => {}
 
 	const clearAll = () => {
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || c === undefined) return
 
-		useHistoryHook.saveHistory()
-
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		sheet.hooks.historyHook.save()
 
 		let lockTimer = null
-		for (let row = startRow; row <= endRow; row++) {
-			for (let col = startCol; col <= endCol; col++) {
-				if (sheet.config.lockCells[`${row}-${col}`]) {
+		for (let row = r; row <= rr; row++) {
+			for (let col = c; col <= cc; col++) {
+				if (sheet.config.locked[`${row}-${col}`]) {
 					clearTimeout(lockTimer)
 					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
 					continue
