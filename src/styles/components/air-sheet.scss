@@ -254,6 +254,7 @@
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.3);
 	display: flex;
 	padding: 5px;
+	user-select: none;
 	// transition: all 0.15s linear;
 	> div {
 		font-size: 12px;
@@ -375,6 +376,11 @@
 		position: relative;
 		// transition: width 0.15s linear, height 0.15s linear, font-size 0.15s linear;
 		will-change: contents;
+	}
+
+	.number-cells,
+	.alphabet-row {
+		user-select: none;
 	}
 
 	.cell {

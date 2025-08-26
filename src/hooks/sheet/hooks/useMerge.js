@@ -1,7 +1,7 @@
-// import {useStyle} from './useStyle'
+import {useAirSheetStore} from '../store/useAirSheet'
 export const useMerge = () => {
-	// 基础配置
-	// const {sheet, useResizeHook, renderRange, rowHeight, colWidth, useSelectionRangeHook} = config
+	const sheetStore = useAirSheetStore()
+	let sheetKey = ''
 	let sheet = null
 
 	// 存储合并单元格信息
@@ -172,8 +172,9 @@ export const useMerge = () => {
 		return null
 	}
 
-	const init = (reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 		setTimeout(() => console.log('installed useMerge'), 16)
 		return {
 			getCellStyle,

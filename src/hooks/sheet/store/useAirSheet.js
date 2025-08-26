@@ -113,16 +113,16 @@ export const useAirSheetStore = defineStore('AirSheet', {
 
 				const re = this.sheets.get(key)
 				re.hooks = {
-					renderHook: useRender().init(re),
+					renderHook: useRender().init(key),
 					styleHook: useStyle().init(key),
-					resizeHook: useResize().init(re),
-					mergeHook: useMerge().init(re),
-					copyHook: useCopy().init(re),
+					resizeHook: useResize().init(key),
+					mergeHook: useMerge().init(key),
+					copyHook: useCopy().init(key),
 					toolsHook: useTools().init(key),
 					historyHook: useHistory().init(key),
 					editHook: useEdit().init(key),
-					selectionRangeHook: useSelectionRange().init(key, re),
-					contextMenuHook: useContextMenu().init(key, re),
+					selectionRangeHook: useSelectionRange().init(key),
+					contextMenuHook: useContextMenu().init(key),
 					excelHook: useExcel().init(key),
 				}
 				re.fn = {

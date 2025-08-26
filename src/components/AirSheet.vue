@@ -2006,6 +2006,22 @@ defineExpose({
 							<Icons name="RemoveColumn"></Icons>
 							<span>删除列</span>
 						</div>
+						<div
+							v-if="sheet.config.removeColumn"
+							class="menu-item"
+							@click="sheet.hooks.copyHook.copySelectedCells"
+						>
+							<Icons name="Copy"></Icons>
+							<span>复制</span>
+						</div>
+						<div
+							v-if="sheet.config.removeColumn"
+							class="menu-item"
+							@click="sheet.hooks.copyHook.paste"
+						>
+							<Icons name="Paste"></Icons>
+							<span>粘贴</span>
+						</div>
 					</div>
 
 					<!-- 公式菜单 -->

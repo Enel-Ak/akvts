@@ -1,7 +1,10 @@
-import {nextTick, ref} from 'vue'
+import {ref} from 'vue'
 import {workerCode} from '../worker/resize.worker.js'
+import {useAirSheetStore} from '../store/useAirSheet'
 
 export const useResize = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = null
 	let sheet = null
 
 	// 创建渲染worker
@@ -96,9 +99,11 @@ export const useResize = () => {
 						} else {
 							// 修正位置
 							setTimeout(() => {
-								guideLineRow.style.top = `${
-									resizingElRect.top - sheetRect.top + newHeight - 1.75
-								}px`
+								if (guideLineRow) {
+									guideLineRow.style.top = `${
+										resizingElRect.top - sheetRect.top + newHeight - 1.75
+									}px`
+								}
 							}, 16)
 						}
 					} else {
@@ -216,8 +221,9 @@ export const useResize = () => {
 		renderRequests.clear()
 	}
 
-	const init = (reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 
 		const blob = new Blob([workerCode], {type: 'application/javascript'})
 		const workerUrl = URL.createObjectURL(blob)

@@ -1,5 +1,8 @@
+import {useAirSheetStore} from '../store/useAirSheet'
 import {ElMessage} from 'element-plus'
 export function useCopy() {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = ''
 	let sheet = null
 
 	const handleKeyDown = (event) => {
@@ -73,18 +76,28 @@ export function useCopy() {
 		if (!other) {
 			cellCache.set(key, cell)
 		} else {
-			const [row, col] = key.split('-').map(Number)
+			const [r, c] = key.split('-').map(Number)
 			if (style.borderLeft || style.borderRight || style.borderTop || style.borderBottom) {
-				useToolsHook.setBorder()
+				sheet.hooks.toolsHook.setBorder()
 			}
 			if (style.textAlign) {
-				useToolsHook.setCellStyle({type: 'align', value: style.textAlign, row, col})
+				sheet.hooks.toolsHook.setCellStyle({
+					type: 'align',
+					v: style.textAlign,
+					r,
+					c,
+				})
 			}
 			if (style.color) {
-				useToolsHook.setCellStyle({type: 'color', value: style.color, row, col})
+				sheet.hooks.toolsHook.setCellStyle({type: 'color', v: style.color, r, c})
 			}
 			if (style.backgroundColor) {
-				useToolsHook.setCellStyle({type: 'bg', value: style.backgroundColor, row, col})
+				sheet.hooks.toolsHook.setCellStyle({
+					type: 'bg',
+					v: style.backgroundColor,
+					r,
+					c,
+				})
 			}
 		}
 
@@ -100,11 +113,11 @@ export function useCopy() {
 
 	// 处理剪贴板数据
 	const processClipboardData = async ({html, text, isHtml}) => {
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
+		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
 
-		const baseRow = Math.min(ranged.start.row, ranged.end.row)
-		const baseCol = Math.min(ranged.start.col, ranged.end.col)
+		const baseRow = r
+		const baseCol = c
 
 		let pasteData = {
 			data: [], // 单元格数据
@@ -255,8 +268,6 @@ export function useCopy() {
 				useToolsHook.addRow(null, true)
 			}
 
-			await renderRange()
-
 			pasteData.data.forEach((row, rowIndex) => {
 				row.forEach((cell, colIndex) => {
 					const targetRow = baseRow + rowIndex
@@ -268,9 +279,9 @@ export function useCopy() {
 
 					// 保存原始数据用于历史记录
 					oldCellData.push({
-						rowIndex: targetRow,
-						colIndex: targetCol,
-						value: sheet.celldata.get(targetRow)[targetCol],
+						r: targetRow,
+						c: targetCol,
+						v: sheet.celldata.get(targetRow)[targetCol],
 					})
 
 					// 替换数据
@@ -278,12 +289,12 @@ export function useCopy() {
 				})
 			})
 
-			useHistoryHook.saveHistory(oldCellData, 'edit')
+			sheet.hooks.historyHook.save(oldCellData, 'edit')
 
 			// 先删除目标区域内的所有已存在的合并单元格
 			const targetEndRow = baseRow + pasteData.data.length - 1
 			const targetEndCol = baseCol + pasteData.data[0].length - 1
-			const mergedCells = useMergedCellsHook.getMergedCells()
+			const mergedCells = sheet.hooks.mergeHook.getMergedCells()
 			Object.entries(mergedCells).forEach(([key, value]) => {
 				// 检查是否与目标区域有交集
 				const [row, col] = key.split('-').map(Number)
@@ -295,16 +306,16 @@ export function useCopy() {
 					col <= targetEndCol &&
 					col + colspan - 1 >= baseCol
 				) {
-					useMergedCellsHook.removeMergedCell(row, col)
+					sheet.hooks.mergeHook.removeMergedCell(row, col)
 				}
 			})
 
 			pasteData.merges.forEach((merge) => {
-				useMergedCellsHook.setMergeCell(merge.r, merge.c, merge.rs, merge.cs)
+				sheet.hooks.mergeHook.setMergeCell(merge.r, merge.c, merge.rs, merge.cs)
 			})
 
 			setTimeout(() => {
-				useSelectionRangeHook.setRange(
+				sheet.hooks.selectionRangeHook.setRange(
 					baseRow,
 					baseCol,
 					baseRow + pasteData.data.length - 1,
@@ -317,14 +328,14 @@ export function useCopy() {
 		// 处理高度
 		if (Object.keys(pasteData.styles.rowHeights).length) {
 			Object.entries(pasteData.styles.rowHeights).forEach(([row, height]) => {
-				useResizeHook.setRowHeight(Number(row), height)
+				sheet.hooks.resizeHook.setRowHeight(Number(row), height)
 			})
 		}
 
 		// 处理宽度
 		if (Object.keys(pasteData.styles.colWidths).length) {
 			Object.entries(pasteData.styles.colWidths).forEach(([col, width]) => {
-				useResizeHook.setColWidth(Number(col), width)
+				sheet.hooks.resizeHook.setColWidth(Number(col), width)
 			})
 		}
 
@@ -338,13 +349,8 @@ export function useCopy() {
 
 	// 复制选中单元格到Excel
 	const copySelectedCells = async () => {
-		const ranged = useSelectionRangeHook.ranged
-		if (!ranged) return
-
-		const startRow = Math.min(ranged.start.row, ranged.end.row)
-		const endRow = Math.max(ranged.start.row, ranged.end.row)
-		const startCol = Math.min(ranged.start.col, ranged.end.col)
-		const endCol = Math.max(ranged.start.col, ranged.end.col)
+		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
 
 		// 创建表格HTML，添加完整的表格结构
 		let tableHtml = `
@@ -352,37 +358,37 @@ export function useCopy() {
                 <tbody>
         `
 
-		for (let row = startRow; row <= endRow; row++) {
+		for (let row = r; row <= rr; row++) {
 			tableHtml += '<tr>'
-			for (let col = startCol; col <= endCol; col++) {
-				const merge = useMergedCellsHook.findMergedCell(row, col)
+			for (let col = c; col <= cc; col++) {
+				const merge = sheet.hooks.mergeHook.findMergedCell(row, col)
 				const value = sheet.celldata.get(row)?.[col] || ''
 
 				// 获取单元格的宽高
-				const rowHeight = useResizeHook.getRowHeight(row)
-				const colWidth = useResizeHook.getColWidth(col)
+				const rowHeight = sheet.hooks.resizeHook.getRowHeight(row)
+				const colWidth = sheet.hooks.resizeHook.getColWidth(col)
 				const style = `style="height:${rowHeight}px;width:${colWidth}px;"`
 
 				// 检查是否在合并单元格范围内
 				if (merge) {
 					// 只在合并单元格的起始位置添加单元格
-					if (merge.row === row && merge.col === col) {
+					if (merge.r === row && merge.c === col) {
 						const mergeInfo = JSON.stringify({
-							rs: merge.rowspan,
-							cs: merge.colspan,
+							rs: merge.rs,
+							cs: merge.cs,
 						})
-						tableHtml += `<td data-air-sheet-cell data-row="${
-							row - startRow
-						}" data-col="${col - startCol}" data-merge='${mergeInfo}' rowspan="${
-							merge.rowspan
-						}" colspan="${merge.colspan}">${value}</td>`
+						tableHtml += `<td data-air-sheet-cell data-row="${row - r}" data-col="${
+							col - c
+						}" data-merge='${mergeInfo}' rowspan="${merge.rs}" colspan="${
+							merge.cs
+						}">${value}</td>`
 					}
 					// 如果是合并单元格的非起始位置，跳过
 					continue
 				} else {
 					// 普通单元格
-					tableHtml += `<td data-air-sheet-cell data-row="${row - startRow}" data-col="${
-						col - startCol
+					tableHtml += `<td data-air-sheet-cell data-row="${row - r}" data-col="${
+						col - c
 					}">${value}</td>`
 				}
 			}
@@ -396,13 +402,13 @@ export function useCopy() {
 
 		// 生成纯文本版本（用于兼容性）
 		let plainText = ''
-		for (let row = startRow; row <= endRow; row++) {
+		for (let row = r; row <= rr; row++) {
 			const rowData = []
-			for (let col = startCol; col <= endCol; col++) {
-				const merge = useMergedCellsHook.findMergedCell(row, col)
+			for (let col = c; col <= cc; col++) {
+				const merge = sheet.hooks.mergeHook.findMergedCell(row, col)
 				if (merge) {
 					// 只在合并单元格的起始位置添加值
-					if (merge.row === row && merge.col === col) {
+					if (merge.r === row && merge.c === col) {
 						rowData.push(sheet.celldata.get(row)?.[col] || '')
 					}
 				} else {
@@ -440,15 +446,25 @@ export function useCopy() {
 		}
 	}
 
-	const init = (reactiveSheet) => {
-		sheet = reactiveSheet
+	// 点击粘贴时处理数据
+	const paste = async () => {
+		const text = await navigator.clipboard.readText()
+		processClipboardData({text, isHtml: false})
+	}
+
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 		setTimeout(() => {
 			document.addEventListener('keydown', handleKeyDown)
 			// 添加paste事件监听
 			document.addEventListener('paste', handlePaste)
 			console.log('installed useCopy')
 		}, 16)
+
 		return {
+			paste,
+			copySelectedCells,
 			destroy,
 		}
 	}

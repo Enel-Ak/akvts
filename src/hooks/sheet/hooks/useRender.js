@@ -1,7 +1,10 @@
 import {ref} from 'vue'
+import {useAirSheetStore} from '../store/useAirSheet'
 import {workerCode} from '../worker/render.worker.js'
 
 export const useRender = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = ''
 	let sheet = null
 	// 创建渲染worker
 	let worker = null
@@ -47,8 +50,9 @@ export const useRender = () => {
 		renderRequests.clear()
 	}
 
-	const init = (reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 		const blob = new Blob([workerCode], {type: 'application/javascript'})
 		const workerUrl = URL.createObjectURL(blob)
 		worker = new Worker(workerUrl)

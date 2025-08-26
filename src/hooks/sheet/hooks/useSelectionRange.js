@@ -1,4 +1,5 @@
 import {computed, ref, shallowRef, watch} from 'vue'
+import {useAirSheetStore} from '../store/useAirSheet'
 
 const workerCode = `
 	self.onmessage = (event) => {
@@ -13,6 +14,8 @@ const workerCode = `
 `
 
 export const useSelectionRange = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = null
 	let sheet = null
 	// 基础配置
 	let worker = null
@@ -951,16 +954,17 @@ export const useSelectionRange = () => {
 	}
 
 	// 初始化
-	const init = (containerId, reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 
 		// 初始化缓存监听
 		watchConfigChanges()
 
 		setTimeout(() => {
-			container = document.querySelector(`#${containerId}`)
+			container = document.querySelector(`#${sheetKey}`)
 			if (!container) {
-				console.error('请检查是否存在id为' + containerId + '的容器')
+				console.error('请检查是否存在id为' + sheetKey + '的容器')
 				return
 			}
 

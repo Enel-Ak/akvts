@@ -1,5 +1,9 @@
 import {ref} from 'vue'
+import {useAirSheetStore} from '../store/useAirSheet'
+
 export const useContextMenu = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = null
 	let sheet = null
 	let container = null
 	const contextMenuVisible = ref(false)
@@ -75,11 +79,12 @@ export const useContextMenu = () => {
 		}
 	}
 
-	const init = (containerId, reactiveSheet) => {
-		sheet = reactiveSheet
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
 
 		setTimeout(() => {
-			container = document.querySelector(`#${containerId}`)
+			container = document.querySelector(`#${key}`)
 			if (!container) {
 				return
 			}
