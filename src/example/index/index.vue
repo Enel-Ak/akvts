@@ -438,50 +438,107 @@ const addfChange = () => {
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
 
 		<!-- <Dialog v-model="show" :loading="showLoading"> -->
-		<TableV2
-			:auto-load="false"
-			ref="tableRef"
-			v-model:showForm="showForm"
-			v-model="tabledata"
-			:enableSelection="true"
-			:auto-height="false"
-			:form-column-count="2"
-			:enableLatestData="false"
-			status="none"
-			@before-create="onBeforeCreate"
-			@edit-change="onEditChange"
-			@form-changed="onFormChanged"
-			@beforeRowEdit="onBeforeRowEdit"
-			@click-button="onButtonClick"
-			:buttons="[
-				{
-					label: '测试1',
-					type: 'primary',
-				},
-				{
-					label: '测试2',
-					type: 'primary',
-					more: true,
-				},
-			]"
-			:columns="abc"
-			:form-rules="{
-				uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
-			}"
-		>
-			<template #def>
-				<el-switch />
-			</template>
-			<template #defbb="scoped">
-				{{ scoped.row.defbb ? '男' : '女' }}
-			</template>
-			<template #defbaf="scoped">
-				{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
-			</template>
-			<template #edit-defbcfb="scoped">
-				<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
-			</template>
-		</TableV2>
+		<el-tabs>
+			<el-tab-pane label="Tab 1">
+				<TableV2
+					:auto-load="false"
+					ref="tableRef"
+					v-model:showForm="showForm"
+					v-model="tabledata"
+					:enableSelection="true"
+					:auto-height="false"
+					:form-column-count="2"
+					:enableLatestData="false"
+					status="none"
+					@before-create="onBeforeCreate"
+					@edit-change="onEditChange"
+					@form-changed="onFormChanged"
+					@beforeRowEdit="onBeforeRowEdit"
+					@click-button="onButtonClick"
+					:buttons="[
+						{
+							label: '测试1',
+							type: 'primary',
+						},
+						{
+							label: '测试2',
+							type: 'primary',
+						},
+					]"
+					:columns="abc"
+					:form-rules="{
+						uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
+					}"
+				>
+					<template #def>
+						<el-switch />
+					</template>
+					<template #defbb="scoped">
+						{{ scoped.row.defbb ? '男' : '女' }}
+					</template>
+					<template #defbaf="scoped">
+						{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
+					</template>
+					<template #edit-defbcfb="scoped">
+						<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
+					</template>
+				</TableV2>
+			</el-tab-pane>
+			<el-tab-pane label="Tab 2">
+				<TableV2
+					:auto-load="false"
+					ref="tableRef"
+					v-model:showForm="showForm"
+					v-model="tabledata"
+					:enableSelection="true"
+					:auto-height="false"
+					:form-column-count="2"
+					:enableLatestData="false"
+					status="none"
+					@before-create="onBeforeCreate"
+					@edit-change="onEditChange"
+					@form-changed="onFormChanged"
+					@beforeRowEdit="onBeforeRowEdit"
+					@click-button="onButtonClick"
+					:buttons="[
+						{
+							label: '测试3',
+							type: 'primary',
+						},
+						{
+							label: '测试4',
+							type: 'primary',
+						},
+						{
+							label: '测试3',
+							type: 'primary',
+						},
+						{
+							label: '测试4',
+							type: 'primary',
+						},
+					]"
+					:columns="abc"
+					:form-rules="{
+						uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
+					}"
+				>
+					<template #def>
+						<el-switch />
+					</template>
+					<template #defbb="scoped">
+						{{ scoped.row.defbb ? '男' : '女' }}
+					</template>
+					<template #defbaf="scoped">
+						{{ scoped.row.defbaf?.map((item) => (item ? '男' : '女')).join(',') }}
+					</template>
+					<template #edit-defbcfb="scoped">
+						<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
+					</template>
+				</TableV2>
+			</el-tab-pane>
+		</el-tabs>
+
 		<!-- </Dialog> -->
 	</Block>
 </template>

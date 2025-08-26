@@ -801,6 +801,7 @@ const setFnWidth = (again = false) => {
 		}
 	}
 	__fnWidth.value = width
+	return width
 }
 
 const setEval = (str, row) => {
@@ -1103,7 +1104,7 @@ defineExpose({
 				label="操作"
 				align="center"
 				fixed="right"
-				:width="__fnWidth"
+				:width="setFnWidth()"
 				class="table-component-btns"
 			>
 				<template #="scoped">
