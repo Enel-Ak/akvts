@@ -94,6 +94,11 @@ export const useEdit = () => {
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
 		if (!enter || !cell) return
 
+		if (cell.mergedCell) {
+			cell.r = cell.mergedCell.r
+			cell.c = cell.mergedCell.c
+		}
+
 		// 不允许编辑
 		if (!sheet.config.edit) {
 			ElMessage.warning('当前表格不支持编辑')

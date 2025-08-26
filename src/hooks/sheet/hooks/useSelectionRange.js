@@ -27,6 +27,13 @@ export const useSelectionRange = () => {
 	const ranged = shallowRef({r: -1, c: -1, rr: -1, cc: -1})
 	const statistics = shallowRef({count: 0, average: 0, min: 0, max: 0, sum: 0})
 
+	// 缓存优化：避免重复计算
+	let modifiedRowsCacheData = null
+	let modifiedColsCacheData = null
+	let cacheVersion = 0
+	let rowResizeVersion = 0
+	let colResizeVersion = 0
+
 	// 获取单元格位置
 	const getCellPosition = (e) => {
 		const rect = container.getBoundingClientRect()
@@ -137,27 +144,43 @@ export const useSelectionRange = () => {
 
 	// 缓存修改过的行和列的信息
 	const modifiedRowsCache = () => {
+		const currentVersion = Object.keys(sheet.config.rResize || {}).length
+		if (modifiedRowsCacheData && rowResizeVersion === currentVersion) {
+			return modifiedRowsCacheData
+		}
+
 		const before = new Map()
 		let beforeSum = 0
-		Object.entries(sheet.config.rResize).forEach(([row, height]) => {
+		Object.entries(sheet.config.rResize || {}).forEach(([row, height]) => {
 			const rowNum = Number(row)
 			const diff = height - sheet.props.rowHeight
 			before.set(rowNum, diff)
 			beforeSum += diff
 		})
-		return {map: before, sum: beforeSum}
+
+		modifiedRowsCacheData = {map: before, sum: beforeSum}
+		rowResizeVersion = currentVersion
+		return modifiedRowsCacheData
 	}
 
 	const modifiedColsCache = () => {
+		const currentVersion = Object.keys(sheet.config.cResize || {}).length
+		if (modifiedColsCacheData && colResizeVersion === currentVersion) {
+			return modifiedColsCacheData
+		}
+
 		const before = new Map()
 		let beforeSum = 0
-		Object.entries(sheet.config.cResize).forEach(([col, width]) => {
+		Object.entries(sheet.config.cResize || {}).forEach(([col, width]) => {
 			const colNum = Number(col)
 			const diff = width - sheet.props.colWidth
 			before.set(colNum, diff)
 			beforeSum += diff
 		})
-		return {map: before, sum: beforeSum}
+
+		modifiedColsCacheData = {map: before, sum: beforeSum}
+		colResizeVersion = currentVersion
+		return modifiedColsCacheData
 	}
 
 	const highlightRanges = new Map()
@@ -308,7 +331,63 @@ export const useSelectionRange = () => {
 		return isSingleCell ? 'selection-single' : 'selection-range'
 	})
 
-	// 计算选区样式
+	// 优化的样式计算函数
+	const calculateRangeStyle = (r, c, rr, cc) => {
+		// 基础计算
+		let totalOffsetTop = r * sheet.props.rowHeight
+		let totleHeight = (rr - r + 1) * sheet.props.rowHeight
+		let totaloffsetLeft = c * sheet.props.colWidth
+		let totleWidth = (cc - c + 1) * sheet.props.colWidth
+
+		// 只在有修改的行列时才进行计算
+		const rowCache = modifiedRowsCache()
+		const colCache = modifiedColsCache()
+
+		if (rowCache.map.size > 0) {
+			let modifiedBefore = 0
+			let modifiedInRange = 0
+
+			// 优化：只遍历实际修改过的行
+			rowCache.map.forEach((diff, row) => {
+				if (row < r) {
+					modifiedBefore += diff
+				} else if (row >= r && row <= rr) {
+					modifiedInRange += diff
+				}
+			})
+
+			totalOffsetTop += modifiedBefore
+			totleHeight += modifiedInRange
+		}
+
+		if (colCache.map.size > 0) {
+			let modifiedColBefore = 0
+			let modifiedColInRange = 0
+
+			// 优化：只遍历实际修改过的列
+			colCache.map.forEach((diff, col) => {
+				if (col < c) {
+					modifiedColBefore += diff
+				} else if (col >= c && col <= cc) {
+					modifiedColInRange += diff
+				}
+			})
+
+			totaloffsetLeft += modifiedColBefore
+			totleWidth += modifiedColInRange
+		}
+
+		const zoom = sheet.config.zoom || 1
+
+		return {
+			top: `${totalOffsetTop * zoom}px`,
+			left: `${totaloffsetLeft * zoom}px`,
+			height: `${totleHeight * zoom}px`,
+			width: `${totleWidth * zoom}px`,
+		}
+	}
+
+	// 计算选区样式（优化版本）
 	const rangeStyle = computed(() => {
 		if (!selecting.value && !ranged.value) return {}
 
@@ -320,44 +399,7 @@ export const useSelectionRange = () => {
 			expand = getExpandedRange(r, c, rr, cc)
 		}
 
-		// 计算行高
-		let totalOffsetTop = expand.r * sheet.props.rowHeight
-		let totleHeight = (expand.rr - expand.r + 1) * sheet.props.rowHeight
-
-		// 使用缓存计算修改的行的差值
-		let modifiedBefore = 0
-		let modifiedInRange = 0
-		modifiedRowsCache().map.forEach((diff, row) => {
-			if (row < expand.r) {
-				modifiedBefore += diff
-			} else if (row >= expand.r && row <= expand.rr) {
-				modifiedInRange += diff
-			}
-		})
-
-		// 计算列宽
-		let totaloffsetLeft = expand.c * sheet.props.colWidth
-		let totleWidth = (expand.cc - expand.c + 1) * sheet.props.colWidth
-
-		// 使用缓存计算修改的列的差值
-		let modifiedColBefore = 0
-		let modifiedColInRange = 0
-		modifiedColsCache().map.forEach((diff, col) => {
-			if (col < expand.c) {
-				modifiedColBefore += diff
-			} else if (col >= expand.c && col <= expand.cc) {
-				modifiedColInRange += diff
-			}
-		})
-
-		const zoom = sheet.config.zoom
-
-		return {
-			top: `${(totalOffsetTop + modifiedBefore) * zoom}px`,
-			left: `${(totaloffsetLeft + modifiedColBefore) * zoom}px`,
-			height: `${(totleHeight + modifiedInRange) * zoom}px`,
-			width: `${(totleWidth + modifiedColInRange) * zoom}px`,
-		}
+		return calculateRangeStyle(expand.r, expand.c, expand.rr, expand.cc)
 	})
 
 	// 计算选区序号和字母样式
@@ -465,17 +507,31 @@ export const useSelectionRange = () => {
 		ranged.value = {...selection}
 	}
 
-	// 鼠标移动处理
+	// 防抖优化的鼠标移动处理
+	let mouseMoveTimer = null
+	let lastMouseMoveTime = 0
+	const MOUSE_MOVE_THROTTLE = 16 // 约60fps
+
 	const handleMouseMove = (e) => {
 		// 移动选择时候, 不是拖拽
 		if (!selecting.value || dragging.value) return
 
+		const now = Date.now()
+		if (now - lastMouseMoveTime < MOUSE_MOVE_THROTTLE) {
+			// 使用防抖，避免过于频繁的更新
+			clearTimeout(mouseMoveTimer)
+			mouseMoveTimer = setTimeout(() => {
+				handleMouseMoveInternal(e)
+			}, MOUSE_MOVE_THROTTLE)
+			return
+		}
+
+		lastMouseMoveTime = now
+		handleMouseMoveInternal(e)
+	}
+
+	const handleMouseMoveInternal = (e) => {
 		const currentPos = limitRange(getCellPosition(e))
-		// 获取当前选区范围
-		const sr = Math.min(selection.r, currentPos.r)
-		const er = Math.max(selection.rr, currentPos.r)
-		const sc = Math.min(selection.c, currentPos.c)
-		const ec = Math.max(selection.cc, currentPos.c)
 
 		if (
 			!currentPos ||
@@ -484,13 +540,19 @@ export const useSelectionRange = () => {
 		)
 			return
 
+		// 获取当前选区范围
+		const sr = Math.min(selection.r, currentPos.r)
+		const er = Math.max(selection.rr, currentPos.r)
+		const sc = Math.min(selection.c, currentPos.c)
+		const ec = Math.max(selection.cc, currentPos.c)
+
+		// 检查是否有变化，避免不必要的更新
 		if (
 			sr === ranged.value.r &&
 			sc === ranged.value.c &&
 			er === ranged.value.rr &&
 			ec === ranged.value.cc
 		) {
-			// 没有变化，直接返回, 不触发computed
 			return
 		}
 
@@ -505,6 +567,7 @@ export const useSelectionRange = () => {
 		if (r === expanded.r && c === expanded.c && rr === expanded.rr && cc === expanded.cc) {
 			return
 		}
+
 		// 更新选区，确保不超过最大范围
 		ranged.value = {...expanded}
 	}
@@ -531,10 +594,21 @@ export const useSelectionRange = () => {
 		selection = {...ranged.value, rr: pos.r, cc: pos.c}
 	}
 
-	// 处理拖拽移动
+	// 处理拖拽移动（优化版本）
+	let dragMoveTimer = null
 	const handleDragMove = (e) => {
 		if (!dragging.value || selecting.value) return
 
+		// 使用节流优化拖拽性能
+		if (dragMoveTimer) return
+
+		dragMoveTimer = setTimeout(() => {
+			dragMoveTimer = null
+			handleDragMoveInternal(e)
+		}, MOUSE_MOVE_THROTTLE)
+	}
+
+	const handleDragMoveInternal = (e) => {
 		const currentPos = limitRange(getCellPosition(e))
 		if (
 			!currentPos ||
@@ -545,22 +619,14 @@ export const useSelectionRange = () => {
 
 		// 获取当前选区范围
 		const sr = Math.min(selection.r, currentPos.r)
-		const er = Math.max(selection.rr, currentPos.r)
+		const er = Math.max(selection.r, currentPos.r)
 		const sc = Math.min(selection.c, currentPos.c)
-		const ec = Math.max(selection.cc, currentPos.c)
-
-		if (sr < 0 || sc < 0) {
-			return
-		}
+		const ec = Math.max(selection.c, currentPos.c)
 
 		// 扩展选区以包含所有相关的合并单元格
 		const expanded = getExpandedRange(sr, sc, er, ec)
 
-		// 更新选区的结束位置，使用当前鼠标位置来决定方向
-		selection.rr = currentPos.r < selection.r ? expanded.rr : expanded.r
-		selection.cc = currentPos.c < selection.c ? expanded.cc : expanded.c
-
-		// 没有变化，直接返回, 不触发computed
+		// 检查是否有变化
 		const {r, c, rr, cc} = ranged.value
 		if (r === expanded.r && c === expanded.c && rr === expanded.rr && cc === expanded.cc) {
 			return
@@ -681,22 +747,22 @@ export const useSelectionRange = () => {
 		const mergedCells = new Set() // 用于记录已经计算过的合并单元格
 
 		// 遍历选中区域的每个单元格
-		for (let row = startRow; row <= endRow; row++) {
-			for (let col = startCol; col <= endCol; col++) {
+		for (let row = r; row <= rr; row++) {
+			for (let col = c; col <= cc; col++) {
 				// 检查当前位置是否在合并单元格内
-				const mergedCell = sheet.hooks.mergedCellsHook.findMergedCell(row, col)
+				const mergedCell = sheet.hooks.mergeHook.findMergedCell(row, col)
 				if (mergedCell) {
 					// 生成合并单元格的唯一标识
-					const mergedId = `${mergedCell.row}-${mergedCell.col}`
+					const mergedId = `${mergedCell.r}-${mergedCell.c}`
 					// 如果这个合并单元格还没计算过，就计数
 					if (!mergedCells.has(mergedId)) {
 						//计数
 						count++
 
 						// 平均值
-						const rowData = sheet.celldata.get(mergedCell.row)
+						const rowData = sheet.celldata.get(mergedCell.r)
 						if (rowData) {
-							const cellData = rowData[mergedCell.col]
+							const cellData = rowData[mergedCell.c]
 							if (!isNaN(cellData)) {
 								sum += parseFloat(cellData)
 								values.push(parseFloat(cellData))
@@ -824,10 +890,36 @@ export const useSelectionRange = () => {
 	}
 
 	// 移除事件监听器
+	// 清理缓存的函数
+	const clearCache = () => {
+		modifiedRowsCacheData = null
+		modifiedColsCacheData = null
+		cacheVersion = 0
+		rowResizeVersion = 0
+		colResizeVersion = 0
+	}
+
 	const destroy = () => {
 		clear()
+
+		// 清理定时器
+		if (mouseMoveTimer) {
+			clearTimeout(mouseMoveTimer)
+			mouseMoveTimer = null
+		}
+		if (dragMoveTimer) {
+			clearTimeout(dragMoveTimer)
+			dragMoveTimer = null
+		}
+
+		// 清理缓存
+		clearCache()
+
 		if (container) {
-			worker.terminate()
+			if (worker) {
+				worker.terminate()
+				worker = null
+			}
 			container.removeEventListener('mousedown', handleMouseDown)
 			window.removeEventListener('mousemove', handleMouseMove)
 			window.removeEventListener('mouseup', handleMouseUp)
@@ -835,12 +927,35 @@ export const useSelectionRange = () => {
 			document.removeEventListener('mouseup', handleDragEnd)
 			document.removeEventListener('keydown', handleKeyDown)
 			document.removeEventListener('keyup', handleKeyUp)
+			container = null
+		}
+
+		// 重置状态
+		selecting.value = false
+		dragging.value = false
+		ranged.value = {r: -1, c: -1, rr: -1, cc: -1}
+		selection = {r: -1, c: -1, rr: -1, cc: -1}
+	}
+
+	// 监听配置变化，清理缓存
+	const watchConfigChanges = () => {
+		if (sheet?.config) {
+			watch(
+				() => [sheet.config.rResize, sheet.config.cResize],
+				() => {
+					clearCache()
+				},
+				{deep: true}
+			)
 		}
 	}
 
 	// 初始化
 	const init = (containerId, reactiveSheet) => {
 		sheet = reactiveSheet
+
+		// 初始化缓存监听
+		watchConfigChanges()
 
 		setTimeout(() => {
 			container = document.querySelector(`#${containerId}`)
@@ -867,7 +982,7 @@ export const useSelectionRange = () => {
 			document.addEventListener('keydown', handleKeyDown)
 			document.addEventListener('keyup', handleKeyUp)
 
-			setTimeout(() => console.log('installed useSelectionRange'), 16)
+			setTimeout(() => console.log('installed useSelectionRange with optimizations'), 16)
 		}, 16)
 
 		return {
@@ -892,15 +1007,16 @@ export const useSelectionRange = () => {
 			setHighlightRange,
 			drag: handleDragStart,
 			clear,
+			clearCache,
 			destroy,
 		}
 	}
 
 	// 更新统计信息
-	// watch(
-	// 	() => [ranged.value, sheet.config.mergedCells],
-	// 	() => getStatistics()
-	// )
+	watch(
+		() => [ranged.value, sheet?.config.merged],
+		() => getStatistics()
+	)
 
 	return {
 		init,
