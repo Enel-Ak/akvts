@@ -341,7 +341,7 @@ export const useTools = () => {
 
 	// 添加行
 	const addRowCount = ref(1)
-	const addRow = async (_, isEnd = false, save = false) => {
+	const addRow = async (_, isEnd = false, save = true) => {
 		if (!sheet.config.addRow) {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
@@ -501,7 +501,7 @@ export const useTools = () => {
 
 	// 添加列
 	const addColumnCount = ref(1)
-	const addColumn = async (_, isEnd = false, save = false) => {
+	const addColumn = async (_, isEnd = false, save = true) => {
 		if (!sheet.config.addColumn) {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return

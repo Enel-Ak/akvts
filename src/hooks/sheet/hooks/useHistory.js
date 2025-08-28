@@ -84,8 +84,11 @@ export const useHistory = () => {
 								if (rowData === null || rowData === undefined) {
 									rowData = ''
 								}
+
 								const [r, c] = rowIndex.split('-').map(Number)
-								sheet.celldata.get(r)[c] = rowData
+								if (sheet.celldata.get(r)) {
+									sheet.celldata.get(r)[c] = rowData
+								}
 								const merged = sheet.hooks.mergeHook.findMergedCell(r, c)
 								if (merged) {
 									sheet.hooks.selectionRangeHook.setRange(

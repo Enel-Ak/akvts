@@ -174,7 +174,7 @@ const initialData = () => {
 			sheet.state.progress = 100
 			sheetStore.$patch((state) => {
 				state.sheets.get(id).celldata = markRaw(cellMap)
-				sheet.hooks.historyHook.save(cellMap)
+				// sheet.hooks.historyHook.save(cellMap)
 			})
 			useSleep(250).then(() => {
 				sheet.state.loading = false

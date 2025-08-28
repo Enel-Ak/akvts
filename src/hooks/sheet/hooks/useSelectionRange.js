@@ -122,7 +122,13 @@ export const useSelectionRange = () => {
 				finalStartRow !== r ||
 				finalEndRow !== rr ||
 				finalStartCol !== c ||
-				finalEndCol !== cc
+				(finalEndCol !== cc &&
+					!(
+						isNaN(finalStartRow) ||
+						isNaN(finalEndRow) ||
+						isNaN(finalStartCol) ||
+						isNaN(finalEndCol)
+					))
 			) {
 				return getExpandedRange(
 					finalStartRow,
