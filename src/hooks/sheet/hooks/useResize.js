@@ -40,11 +40,12 @@ export const useResize = () => {
 
 	const setRowHeight = (index, height) => {
 		sheet.config.rResize[index] =
-			height < sheet.props.rowHeight ? sheet.props.rowHeight : height
+			height < sheet.props.rowHeight ? sheet.props.rowHeight : height || sheet.props.rowHeight
 	}
 
 	const setColWidth = (index, width) => {
-		sheet.config.cResize[index] = width < sheet.props.colWidth ? sheet.props.colWidth : width
+		sheet.config.cResize[index] =
+			width < sheet.props.colWidth ? sheet.props.colWidth : width || sheet.props.colWidth
 	}
 
 	// 开始调整行高

@@ -21,13 +21,13 @@ const config = ref({
 			// {id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
 		],
 	},
-	celldata: Array.from({length: 50000}, (_, r) => {
-		return Array.from({length: 20}, (_, c) => {
-			return `R${r + 1}-C${c + 1}`
-			// return undefined
-		})
-	}),
-	// celldata: [],
+	// celldata: Array.from({length: 50000}, (_, r) => {
+	// 	return Array.from({length: 20}, (_, c) => {
+	// 		return `R${r + 1}-C${c + 1}`
+	// 		// return undefined
+	// 	})
+	// }),
+	celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',
@@ -1089,7 +1089,7 @@ onActivated(() => {
 	// 	})
 
 	// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
-	// sheetRef.value.setMergeCell(5, 4, 4, 4)
+	// sheetRef.value.setMerge(5, 4, 4, 4)
 	// sheetRef.value.setMergeCell(1, 5, 4, 4)
 	// sheetRef.value.setCellValue(0, 0, 'hello')
 

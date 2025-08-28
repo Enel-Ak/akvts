@@ -341,7 +341,7 @@ export const useTools = () => {
 
 	// 添加行
 	const addRowCount = ref(1)
-	const addRow = async (_, isEnd = false) => {
+	const addRow = async (_, isEnd = false, save = false) => {
 		if (!sheet.config.addRow) {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
@@ -396,13 +396,15 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
-			sheet.hooks.historyHook.save(
-				{
-					r: insertRowIndex,
-					rs: addRowCount.value,
-				},
-				'addRow'
-			)
+			if (save) {
+				sheet.hooks.historyHook.save(
+					{
+						r: insertRowIndex,
+						rs: addRowCount.value,
+					},
+					'addRow'
+				)
+			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
@@ -499,7 +501,7 @@ export const useTools = () => {
 
 	// 添加列
 	const addColumnCount = ref(1)
-	const addColumn = async (_, isEnd = false) => {
+	const addColumn = async (_, isEnd = false, save = false) => {
 		if (!sheet.config.addColumn) {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return
@@ -558,14 +560,16 @@ export const useTools = () => {
 			})
 			sheet.hooks.mergeHook.setMergeCells(nmc)
 
-			// 保存历史记录
-			sheet.hooks.historyHook.save(
-				{
-					c: insertColIndex,
-					cs: addColumnCount.value,
-				},
-				'addCol'
-			)
+			if (save) {
+				// 保存历史记录
+				sheet.hooks.historyHook.save(
+					{
+						c: insertColIndex,
+						cs: addColumnCount.value,
+					},
+					'addCol'
+				)
+			}
 		} catch (error) {
 			console.error('添加列失败', error)
 		} finally {
@@ -867,8 +871,8 @@ export const useTools = () => {
 			try {
 				const total = data.length
 				const celldata = []
-				const style = {}
-				const mergedCells = {}
+				const styled = {}
+				const merged = {}
 
 				let processed = 0
 				const batchSize = 3000
@@ -877,9 +881,9 @@ export const useTools = () => {
 					// 合并单元格处理
 					if (config.merge) {
 						Object.entries(config.merge).forEach(([key, value]) => {
-							mergedCells[`${value.r}-${value.c}`] = {
-								rowspan: value.rs,
-								colspan: value.cs,
+							merged[`${value.r}-${value.c}`] = {
+								rs: value.rs - 1,
+								cs: value.cs - 1,
 							}
 						})
 					}
@@ -919,8 +923,8 @@ export const useTools = () => {
 								const r = item.value.row_index
 								const c = item.value.col_index
 
-								if (!style[`${r}-${c}`]) {
-									style[`${r}-${c}`] = {}
+								if (!styled[`${r}-${c}`]) {
+									styled[`${r}-${c}`] = {}
 								}
 
 								// 使用精确的边框定义，指定每个边的边框
@@ -931,19 +935,19 @@ export const useTools = () => {
 
 								// 设置每个边的边框
 								if (borderTop) {
-									style[`${r}-${c}`].bt = true
+									styled[`${r}-${c}`].bt = true
 								}
 
 								if (borderLeft) {
-									style[`${r}-${c}`].bl = true
+									styled[`${r}-${c}`].bl = true
 								}
 
-								style[`${r}-${c}`].br = true
-								style[`${r}-${c}`].bb = true
+								styled[`${r}-${c}`].br = true
+								styled[`${r}-${c}`].bb = true
 
 								// 设置边框颜色（如果需要）
 								if (borderTop || borderRight || borderBottom || borderLeft) {
-									// style[`${r}-${c}`].bc = '#000000' // 边框颜色
+									// styled[`${r}-${c}`].bc = '#000000' // 边框颜色
 								}
 							}
 						})
@@ -965,7 +969,7 @@ export const useTools = () => {
 									const endCol = Math.max(start.col, end.col)
 									for (let row = startRow; row <= endRow; row++) {
 										for (let col = startCol; col <= endCol; col++) {
-											sheet.config.lockCells[`${row}-${col}`] = true
+											sheet.config.locked[`${row}-${col}`] = true
 										}
 									}
 								}
@@ -990,49 +994,49 @@ export const useTools = () => {
 						}
 						celldata[item.r][item.c] = item.v.v
 
-						if (!style[item.r + '-' + item.c]) {
-							style[item.r + '-' + item.c] = {}
+						if (!styled[item.r + '-' + item.c]) {
+							styled[item.r + '-' + item.c] = {}
 						}
 
 						// 背景
 						if (item?.v?.bg) {
-							style[item.r + '-' + item.c]['bg'] = item.v.bg
+							styled[item.r + '-' + item.c]['bg'] = item.v.bg
 						}
 
 						// 粗体
 						if (item?.v?.bl) {
-							style[item.r + '-' + item.c]['bold'] = true
+							styled[item.r + '-' + item.c]['bold'] = true
 						}
 
 						// 斜体
 						if (item?.v?.it) {
-							style[item.r + '-' + item.c]['it'] = true
+							styled[item.r + '-' + item.c]['it'] = true
 						}
 
 						// 下划线
 						if (item?.v?.un) {
-							style[item.r + '-' + item.c]['un'] = true
+							styled[item.r + '-' + item.c]['un'] = true
 						}
 
 						// 删除线
 						if (item?.v?.st) {
-							style[item.r + '-' + item.c]['st'] = true
+							styled[item.r + '-' + item.c]['st'] = true
 						}
 
 						// 颜色
 						if (item?.v?.fc) {
-							style[item.r + '-' + item.c]['fc'] = item.v.fc
+							styled[item.r + '-' + item.c]['fc'] = item.v.fc
 						}
 
 						// 字体大小
 						if (item?.v?.fs) {
 							const size = parseInt(item.v.fs)
-							style[item.r + '-' + item.c]['fs'] = parseInt(size)
+							styled[item.r + '-' + item.c]['fs'] = parseInt(size)
 						}
 
 						// 字体
 						if (item?.v?.ff) {
-							style[item.r + '-' + item.c]['ff'] = item.v.ff
+							styled[item.r + '-' + item.c]['ff'] = item.v.ff
 						}
 
 						// 对齐
@@ -1044,26 +1048,27 @@ export const useTools = () => {
 							} else if (ht === 2) {
 								align = 'right'
 							}
-							style[item.r + '-' + item.c]['align'] = align
+							styled[item.r + '-' + item.c]['align'] = align
 						}
 
 						processed++
 						count++
 					}
 
-					loadingText.value = `数据转换中...`
-					loadingProgress.value = Math.floor((processed / total) * 100)
+					sheet.state.loading = true
+					sheet.state.msg = '数据转换中...'
+					sheet.state.progress = Math.floor((processed / total) * 100)
 
 					if (processed < total) {
 						requestAnimationFrame(processBatch)
 					} else {
-						loadingProgress.value = 100
-						loading.value = false
-						renderRange()
+						sheet.state.progress = 100
+						sheet.state.loading = false
+
 						resolve({
 							config: {
-								style,
-								mergedCells,
+								styled,
+								merged,
 							},
 							celldata,
 						})

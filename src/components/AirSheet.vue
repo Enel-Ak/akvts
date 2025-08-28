@@ -1107,8 +1107,9 @@ watch(
 		useDebounce(
 			() => {
 				console.log('updated AirSheet', newVal)
+				updateVisibleRange()
 			},
-			300,
+			150,
 			'airSheetLogs'
 		)()
 	},
@@ -1119,15 +1120,15 @@ watch(
 watch(
 	() => props.modelValue?.config,
 	(newVal) => {
-		// sheet.config = Object.assign(sheet.config, newVal)
-		// const mc = newVal.mergedCells
-		// if (Object.keys(mc).length > 0) {
-		// 	Object.entries(mc).forEach(([key, value]) => {
-		// 		const [r, c] = key.split('-').map(Number)
-		// 		const {rowspan: rs, colspan: cs} = value
-		// 		sheetStore.sheets.get(id)?.hooks?.mergeHook?.setMergeCell(r, c, rs, cs, false)
-		// 	})
-		// }
+		sheet.config = Object.assign(sheet.config, newVal)
+		const mc = newVal.merged
+		if (Object.keys(mc).length > 0) {
+			Object.entries(mc).forEach(([key, value]) => {
+				const [r, c] = key.split('-').map(Number)
+				const {rs, cs} = value
+				sheet.hooks.mergeHook.setMerge(r, c, rs, cs, false)
+			})
+		}
 	}
 )
 
@@ -1162,10 +1163,9 @@ watch(
 
 onBeforeMount(() => {})
 
+sheetStore.init(id, props, () => init())
 // 初始化
-onMounted(() => {
-	sheetStore.init(id, props, () => init())
-})
+onMounted(() => {})
 
 onActivated(() => {})
 
@@ -1185,30 +1185,30 @@ onUnmounted(() => {
 
 defineExpose({
 	destroy,
-	// setRange: useSelectionRangeHook.setRange,
-	// setMergeCell: sheetStore.sheets?.get(id)?.hooks?.mergeHook?.setMergeCell,
-	// setCellValue: useEditHook.setCellValue,
-	// setLocked: useToolsHook.setLocked,
-	// setUnlocked: useToolsHook.setUnlocked,
-	// importExcel: useToolsHook.importExcel,
-	// exportExcel: useToolsHook.exportExcel,
+	setRange: (...arg) => sheet.hooks.selectionRangeHook.setRange(...arg),
+	setMerge: (...arg) => sheet.hooks.mergeHook.setMerge(...arg),
+	setCellValue: (...arg) => sheet.hooks.editHook.setCellValue(...arg),
+	setLocked: (...arg) => sheet.hooks.toolsHook.setLocked(...arg),
+	setUnlocked: (...arg) => sheet.hooks.toolsHook.setUnlocked(...arg),
+	importExcel: (...arg) => sheet.hooks.toolsHook.readExcelFile(...arg),
+	exportExcel: (...arg) => sheet.hooks.toolsHook.exportExcel(...arg),
 
-	// setCellBackground: (row, col, rowspan, colspan, color) => {
-	// 	useToolsHook.setCellStyle({
-	// 		type: 'bg',
-	// 		value: color,
-	// 		row,
-	// 		col,
-	// 		rowspan,
-	// 		colspan,
-	// 	})
-	// },
+	setCellBackground: (row, col, rowspan, colspan, color) => {
+		sheet.hooks.toolsHook.setCellStyle({
+			type: 'bg',
+			value: color,
+			row,
+			col,
+			rowspan,
+			colspan,
+		})
+	},
 
-	// getSheet: () => JSON.parse(JSON.stringify({...sheet, celldata: [...sheet.celldata]})),
-	// getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+	getSheet: () => sheet,
+	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
 
-	// luckyToAir: async (config, data) => await useToolsHook.luckyToAir(config, data),
-	// airToLucky: async () => await useToolsHook.airToLucky(sheet),
+	luckyToAir: async (config, data) => await sheet.hooks?.toolsHook?.luckyToAir(config, data),
+	airToLucky: async () => await sheet.hooks?.toolsHook?.airToLucky(sheet),
 })
 </script>
 <template>
@@ -2007,7 +2007,7 @@ defineExpose({
 							<span>删除列</span>
 						</div>
 						<div
-							v-if="sheet.config.removeColumn"
+							v-if="sheet.config.paste"
 							class="menu-item"
 							@click="sheet.hooks.copyHook.copySelectedCells"
 						>
@@ -2015,7 +2015,7 @@ defineExpose({
 							<span>复制</span>
 						</div>
 						<div
-							v-if="sheet.config.removeColumn"
+							v-if="sheet.config.copy"
 							class="menu-item"
 							@click="sheet.hooks.copyHook.paste"
 						>

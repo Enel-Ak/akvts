@@ -1,5 +1,6 @@
 import {useAirSheetStore} from '../store/useAirSheet'
 import {ElMessage} from 'element-plus'
+
 export function useCopy() {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = ''
@@ -257,15 +258,15 @@ export function useCopy() {
 			// 检查是否需要添加列
 			if (maxCols > sheet.config.colCount) {
 				const colsToAdd = maxCols - sheet.config.colCount
-				useToolsHook.addColumnCount.value = colsToAdd
-				useToolsHook.addColumn(null, true)
+				sheet.hooks.toolsHook.addColumnCount = colsToAdd
+				sheet.hooks.toolsHook.addColumn(null, true, false)
 			}
 
 			// 检查是否需要添加行
 			if (maxRows > sheet.config.rowCount) {
 				const rowsToAdd = maxRows - sheet.config.rowCount
-				useToolsHook.addRowCount.value = rowsToAdd
-				useToolsHook.addRow(null, true)
+				sheet.hooks.toolsHook.addRowCount = rowsToAdd
+				sheet.hooks.toolsHook.addRow(null, true, false)
 			}
 
 			pasteData.data.forEach((row, rowIndex) => {
@@ -285,7 +286,9 @@ export function useCopy() {
 					})
 
 					// 替换数据
-					sheet.celldata.get(targetRow)[targetCol] = cell
+					requestAnimationFrame(() => {
+						sheet.celldata.get(targetRow)[targetCol] = cell
+					})
 				})
 			})
 
