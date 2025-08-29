@@ -44,6 +44,8 @@ const defaultSheet = {
 		zoom: 1, //缩放
 		freeze: false, // 冻结
 		full: true, // 全屏
+		filter: true, // 筛选
+		find: true, // 查找
 
 		online: [], // 协同高亮在线的
 		merged: {}, // 已合并单元格

@@ -1648,6 +1648,18 @@ defineExpose({
 					</div>
 				</div>
 
+				<!-- 筛选、查找 -->
+				<div class="group" v-if="sheet.config.filter || sheet.config.find">
+					<div class="item">
+						<Icons name="Filter"></Icons>
+						<span>筛选</span>
+					</div>
+					<div class="item">
+						<Icons name="Search"></Icons>
+						<span>筛选</span>
+					</div>
+				</div>
+
 				<!-- 全屏 -->
 				<div v-if="sheet.config.full" class="group" :class="{'group-merge': !isMobile()}">
 					<div class="item" @click="onFull">
@@ -2006,6 +2018,15 @@ defineExpose({
 							<Icons name="RemoveColumn"></Icons>
 							<span>删除列</span>
 						</div>
+						<div
+							v-if="sheet.config.paste"
+							class="menu-item"
+							@click="sheet.hooks.copyHook.cutSelectedCells"
+						>
+							<Icons name="Cut"></Icons>
+							<span>剪切</span>
+						</div>
+
 						<div
 							v-if="sheet.config.paste"
 							class="menu-item"

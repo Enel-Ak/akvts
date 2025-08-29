@@ -351,7 +351,7 @@ export function useCopy() {
 	}
 
 	// 复制选中单元格到Excel
-	const copySelectedCells = async () => {
+	const copySelectedCells = async (isCut = false) => {
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
 
@@ -432,9 +432,9 @@ export function useCopy() {
 					'text/plain': textBlob,
 				}),
 			])
-			ElMessage.success('复制成功')
+			ElMessage.success(isCut ? '剪切成功' : '复制成功')
 		} catch (error) {
-			console.error('复制失败:', error)
+			console.error(isCut ? '剪切失败' : '复制失败:', error)
 			// 降级方案：使用传统方法
 			const tempDiv = document.createElement('div')
 			tempDiv.innerHTML = tableHtml
@@ -447,6 +447,24 @@ export function useCopy() {
 			document.execCommand('copy')
 			document.body.removeChild(tempDiv)
 		}
+	}
+
+	// 剪切选中单元格
+	const cutSelectedCells = () => {
+		copySelectedCells(true)
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		const oldCellData = []
+		for (let i = r; i <= rr; i++) {
+			for (let j = c; j <= cc; j++) {
+				oldCellData.push({
+					r: i,
+					c: j,
+					v: sheet.celldata.get(i)[j],
+				})
+				sheet.celldata.get(i)[j] = ''
+			}
+		}
+		sheet.hooks.historyHook.save(oldCellData, 'edit')
 	}
 
 	// 点击粘贴时处理数据
@@ -467,6 +485,7 @@ export function useCopy() {
 
 		return {
 			paste,
+			cutSelectedCells,
 			copySelectedCells,
 			destroy,
 		}
