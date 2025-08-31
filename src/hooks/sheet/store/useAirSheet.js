@@ -52,6 +52,7 @@ const defaultSheet = {
 		locked: {}, // 锁定单元格
 		styled: {}, // 有样式的单元格
 		formulaed: {}, // 有公式的单元格
+		filtered: {}, // 有筛选的单元格
 		rResize: {}, // 有调整大小的行
 		cResize: {}, // 有调整大小的列
 		keys: [], //  配置单元格的 Key

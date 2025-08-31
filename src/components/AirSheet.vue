@@ -19,6 +19,7 @@ import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {useSleep} from '@/hooks/useSleep'
 import {useDebounce} from '@/hooks/useDebounce'
+import AirSheetFilter from './AirSheetFilter.vue'
 
 const stateType = {
 	normal: 0,
@@ -84,6 +85,10 @@ const isLoading = computed(() => {
 })
 
 const fns = ref(props.modelValue?.fns || [])
+
+const filterEl = ref(null)
+const filterCol = ref(null)
+const filterColIndex = ref(-1)
 
 // 移动端设置宽高/框选范围
 const selectionSize = ref({w: 0, h: 0})
@@ -1100,9 +1105,17 @@ const onFull = () => {
 	}
 }
 
+const onFilter = async (e, alphabet) => {
+	filterEl.value = e.target.closest('.touch-filter')
+	filterCol.value = await sheet.hooks.toolsHook.filterCol(alphabet)
+	filterColIndex.value = alphabet.c
+}
+
 watch(
 	() => sheetStore.getSheet(id),
 	(newVal) => {
+		if (sheet.hooks?.resizeHook?.isResizing) return
+
 		Object.assign(sheet, newVal)
 		useDebounce(
 			() => {
@@ -1656,7 +1669,7 @@ defineExpose({
 					</div>
 					<div class="item">
 						<Icons name="Search"></Icons>
-						<span>筛选</span>
+						<span>查找</span>
 					</div>
 				</div>
 
@@ -1795,6 +1808,14 @@ defineExpose({
 										"
 										@click.stop
 									></div>
+
+									<!-- 筛选 -->
+									<div
+										class="touch-filter"
+										@click.stop="onFilter($event, alphabet)"
+									>
+										<Icons name="ArrowRight" />
+									</div>
 								</div>
 							</template>
 						</div>
@@ -1893,7 +1914,14 @@ defineExpose({
 					>
 						<!-- 只渲染可视区域的单元格 -->
 						<template v-for="row of visibleRows" :key="row.r">
-							<div class="row" :data-row="row.r" :style="{height: `${row.h}px`}">
+							<div
+								v-if="
+									row.config.hasOwnProperty('filter') ? row.config.filter : true
+								"
+								class="row"
+								:data-row="row.r"
+								:style="{height: `${row.h}px`}"
+							>
 								<template v-for="cell of visibleCells(row)" :key="cell.c">
 									<div
 										v-if="isMergedCellStart(cell)"
@@ -2272,6 +2300,14 @@ defineExpose({
 				<span>此操作需要横向屏幕</span>
 			</div>
 		</template>
+
+		<AirSheetFilter
+			v-model="filterEl"
+			:colIndex="filterColIndex"
+			:filterCol="filterCol"
+			@confirm="sheet?.hooks?.toolsHook?.filterByChecked"
+			@confirmOnly=""
+		/>
 	</div>
 </template>
 <style scoped lang="scss">

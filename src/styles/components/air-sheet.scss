@@ -409,7 +409,7 @@
 		> :deep(div) {
 			word-break: break-all;
 
-			&:not(.merged, .resize-handle) {
+			&:not(.merged, .resize-handle, .touch-filter) {
 				pointer-events: none;
 			}
 		}
@@ -591,6 +591,26 @@
 					right: -3px;
 					width: 6px;
 				}
+			}
+		}
+	}
+
+	.alphabet-cell {
+		position: relative;
+		.touch-filter {
+			background: linear-gradient(
+				to left,
+				rgba(var(--z-theme-rgb), 1),
+				rgba(var(--z-theme-rgb), 0)
+			);
+
+			cursor: pointer;
+
+			position: absolute;
+			right: 0;
+
+			> i {
+				transform: rotate(90deg);
 			}
 		}
 	}

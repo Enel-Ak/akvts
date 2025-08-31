@@ -740,6 +740,30 @@ export const useTools = () => {
 		ElMessage.success(`已解锁`)
 	}
 
+	// 筛选, 先把当前列所有数据取出来
+	const filterCol = async (alphabet) => {
+		const data = []
+		await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
+			if (rowData[alphabet.c] === undefined) return
+			data.push({
+				r: rowIndex,
+				c: alphabet.c,
+				v: rowData[alphabet.c],
+				_filter: true,
+			})
+		})
+		return data
+	}
+
+	// 筛选, 过滤勾选列的数据
+	const filterByChecked = async (checked) => {
+		if (!sheet.config.filter) {
+			ElMessage.warning('当前表格不支持筛选')
+			return
+		}
+		sheet.config.filtered = checked
+	}
+
 	// 冻结
 	const freezeRow = ref(1)
 	const freezeCol = ref(1)
@@ -1270,6 +1294,9 @@ export const useTools = () => {
 
 			setLocked,
 			setUnlocked,
+
+			filterCol,
+			filterByChecked,
 
 			luckyToAir,
 			airToLucky,
