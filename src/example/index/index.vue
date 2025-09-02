@@ -159,6 +159,46 @@ const addfChange = () => {
 		URL.revokeObjectURL(url)
 	}
 }
+const tableButtons = {
+	abc: [{label: '审核', code: 'toexamine', type: 'primary'}],
+	def: [
+		{
+			label: '填报',
+			code: 'fill',
+			type: 'primary',
+		},
+		{
+			label: '转发',
+			code: 'turn',
+			type: 'primary',
+			disabled: `!row?._raw?.businessExtend?.hasTranspond`,
+		},
+		{
+			label: '提交',
+			code: 'push',
+			type: 'primary',
+			disabled: `false`,
+		},
+		{
+			label: '完成',
+			code: 'complete',
+			type: 'primary',
+		},
+		{
+			label: '拒绝接受',
+			code: 'refuse',
+			type: 'primary',
+			show: 'row.uui === 1',
+		},
+		// {
+		// 	label: '删除',
+		// 	code: 'delete',
+		// 	type: 'danger',
+		// 	popconfirm: '是否删除该任务?',
+		// 	disabled: '!row?._raw?.stop',
+		// },
+	],
+}
 </script>
 <template>
 	<Block
@@ -438,6 +478,7 @@ const addfChange = () => {
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
 
 		<!-- <Dialog v-model="show" :loading="showLoading"> -->
+
 		<el-tabs>
 			<el-tab-pane label="Tab 1">
 				<TableV2
@@ -455,16 +496,7 @@ const addfChange = () => {
 					@form-changed="onFormChanged"
 					@beforeRowEdit="onBeforeRowEdit"
 					@click-button="onButtonClick"
-					:buttons="[
-						{
-							label: '测试1',
-							type: 'primary',
-						},
-						{
-							label: '测试2',
-							type: 'primary',
-						},
-					]"
+					:buttons="tableButtons.def"
 					:columns="abc"
 					:form-rules="{
 						uui: [{required: true, message: '请输入测试', trigger: 'blur'}],
@@ -481,6 +513,9 @@ const addfChange = () => {
 					</template>
 					<template #edit-defbcfb="scoped">
 						<el-input size="small" v-model="scoped.row.defbcfb" @click.stop />
+					</template>
+					<template #buttons>
+						<el-button size="small">abc</el-button>
 					</template>
 				</TableV2>
 			</el-tab-pane>

@@ -299,11 +299,22 @@ const visibleRows = computed(() => {
 	const end = Math.min(sheet.config.rowCount, endRow)
 
 	for (let i = start; i < end; i++) {
-		const row = {
+		let row = {
 			r: i,
 			h: sheet.hooks.resizeHook.getRowHeight(i),
 			config: {},
 		}
+
+		// 有筛选时
+		if (sheet.config.filtered.length) {
+			const keys = Array.from(sheet.filterCellData.keys())
+			if (keys.length && keys[i]) {
+				// 重置行号
+				// row.r = keys[i]
+				// row.h = sheet.hooks.resizeHook.getRowHeight(keys[i])
+			}
+		}
+
 		rows.push(row)
 	}
 	return rows
@@ -318,42 +329,82 @@ const visibleCells = (row) => {
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
 
-	for (let i = start; i < end; i++) {
-		// 检查当前单元格是否是合并单元格的从属单元格
-		const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.r, i)
+	if (sheet.filterCellData.size) {
+		for (let i = start; i < end; i++) {
+			// 检查当前单元格是否是合并单元格的从属单元格
+			const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.r, i)
 
-		let value = null
-		let inMerged = false
+			let value = null
+			let inMerged = false
 
-		if (mergedCell) {
-			if (mergedCell.r === row.r && mergedCell.c === i) {
-				// 如果是合并单元格的起始位置，设置值
-				value = sheet.celldata.get(row.r)?.[i] || ''
+			if (mergedCell) {
+				if (mergedCell.r === row.r && mergedCell.c === i) {
+					// 如果是合并单元格的起始位置，设置值
+					value = sheet.filterCellData.get(row.r)?.[i] || ''
+				} else {
+					// 如果在合并单元格内部，不设置值
+					value = ''
+					inMerged = true
+				}
 			} else {
-				// 如果在合并单元格内部，不设置值
-				value = ''
-				inMerged = true
+				// 普通单元格，正常取值
+				value = sheet.filterCellData.get(row.r)?.[i] || ''
 			}
-		} else {
-			// 普通单元格，正常取值
-			value = sheet.celldata.get(row.r)?.[i] || ''
-		}
 
-		if (!sheet.celldata.get(row.r)) {
-			sheet.celldata.set(row.r, [])
-		}
+			if (!sheet.filterCellData.get(row.r)) {
+				sheet.filterCellData.set(row.r, [])
+			}
 
-		cells.push({
-			r: row.r,
-			h: row.h,
-			c: i,
-			w: sheet.hooks.resizeHook.getColWidth(i),
-			v: value,
-			config: {
-				key: sheet.config.keys?.[i],
-			},
-			inMerged,
-		})
+			cells.push({
+				r: row.r,
+				h: row.h,
+				c: i,
+				w: sheet.hooks.resizeHook.getColWidth(i),
+				v: value,
+				config: {
+					key: sheet.config.keys?.[i],
+				},
+				inMerged,
+			})
+		}
+	} else {
+		for (let i = start; i < end; i++) {
+			// 检查当前单元格是否是合并单元格的从属单元格
+			const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.r, i)
+
+			let value = null
+			let inMerged = false
+
+			if (mergedCell) {
+				if (mergedCell.r === row.r && mergedCell.c === i) {
+					// 如果是合并单元格的起始位置，设置值
+					value = sheet.celldata.get(row.r)?.[i] || ''
+				} else {
+					// 如果在合并单元格内部，不设置值
+					value = ''
+					inMerged = true
+				}
+			} else {
+				// 普通单元格，正常取值
+				value = sheet.celldata.get(row.r)?.[i] || ''
+			}
+
+			if (!sheet.celldata.get(row.r)) {
+				sheet.celldata.set(row.r, [])
+			}
+
+			cells.push({
+				r: row.r,
+				h: row.h,
+				c: i,
+				w: sheet.hooks.resizeHook.getColWidth(i),
+				v: value,
+				config: {
+					key: sheet.config.keys?.[i],
+				},
+				inMerged,
+			})
+		}
 	}
 
 	return cells

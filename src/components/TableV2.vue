@@ -756,20 +756,18 @@ const setFnWidth = (again = false) => {
 	if (el) {
 		let btns = el.querySelector('.table-component-btns')?.children
 
-		if (again) {
-			el.querySelectorAll('.el-table__body tbody tr').forEach((tr) => {
-				const buttons = tr.querySelector('td:last-child .cell')?.children
-				if (buttons?.length > btns?.length) {
+		el.querySelectorAll('.el-table__body tbody tr').forEach((tr) => {
+			const buttons = tr.querySelector('td:last-child .cell')?.children
+			if (buttons?.length >= btns?.length) {
+				btns = buttons
+			} else {
+				const totalWidth = (arr) =>
+					Array.from(arr || []).reduce((a, b) => a + b.offsetWidth, 0)
+				if (totalWidth(buttons) > totalWidth(btns)) {
 					btns = buttons
-				} else {
-					const totalWidth = (arr) =>
-						Array.from(arr || []).reduce((a, b) => a + b.offsetWidth, 0)
-					if (totalWidth(buttons) > totalWidth(btns)) {
-						btns = buttons
-					}
 				}
-			})
-		}
+			}
+		})
 
 		if (btns) {
 			width += btns.length * 12 + 23
@@ -800,7 +798,9 @@ const setFnWidth = (again = false) => {
 			width += 70
 		}
 	}
+
 	__fnWidth.value = width
+
 	return width
 }
 

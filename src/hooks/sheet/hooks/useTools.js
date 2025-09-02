@@ -743,7 +743,8 @@ export const useTools = () => {
 	// 筛选, 先把当前列所有数据取出来
 	const filterCol = async (alphabet) => {
 		const data = []
-		await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
+		const org = sheet.filterCellData.size ? sheet.filterCellData : sheet.celldata
+		await useProcessMapInBatches(sheet.id, org, (rowIndex, rowData) => {
 			if (rowData[alphabet.c] === undefined) return
 			data.push({
 				r: rowIndex,
@@ -762,6 +763,17 @@ export const useTools = () => {
 			return
 		}
 		sheet.config.filtered = checked
+		sheet.filterCellData.clear()
+		await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
+			if (sheet.config.filtered.length) {
+				sheet.config.filtered.forEach((filter) => {
+					if (rowData[filter.c] === filter.v) {
+						sheet.filterCellData.set(rowIndex, rowData)
+					}
+				})
+			}
+		})
+		console.log(111, sheet.filterCellData)
 	}
 
 	// 冻结
