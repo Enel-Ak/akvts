@@ -782,10 +782,10 @@ const setFnWidth = (again = false) => {
 				setFnWidthCount = 0
 				return
 			}
-			setTimeout(() => {
-				setFnWidthCount++
-				setFnWidth(true)
-			}, 1)
+			// setTimeout(() => {
+			// 	setFnWidthCount++
+			// 	setFnWidth(true)
+			// }, 1)
 		}
 	}
 
@@ -859,7 +859,7 @@ const init = () => {
 
 	nextTick(() => {
 		setTableHeight()
-		// setFnWidth()
+		setFnWidth()
 		window.addEventListener('resize', setTableHeight)
 		initializing.value = false
 	})
