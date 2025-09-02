@@ -303,7 +303,7 @@ const getList = () => {
 					emits('completed', props.method)
 					nextTick(() => {
 						props.status === 'edit' && setTableStatus(props.status)
-						setFnWidth(true)
+						setTimeout(() => setFnWidth(true), 16.7)
 					})
 				}
 
@@ -859,7 +859,7 @@ const init = () => {
 
 	nextTick(() => {
 		setTableHeight()
-		setFnWidth()
+		// setFnWidth()
 		window.addEventListener('resize', setTableHeight)
 		initializing.value = false
 	})
