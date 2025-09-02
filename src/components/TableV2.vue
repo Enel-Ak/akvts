@@ -146,6 +146,7 @@ const __fnWidth = ref(142)
 let __requestTimer = null
 let clickTimer = null
 let isCreate = false
+let observer = null
 
 watch(
 	() => props.showForm,
@@ -859,15 +860,27 @@ const init = () => {
 
 	nextTick(() => {
 		setTableHeight()
-		// setFnWidth()
+		observer = new IntersectionObserver((entries) => {
+			entries.forEach((entry) => {
+				if (entry.isIntersecting) {
+					// console.log('是否可见:', entry.isIntersecting)
+					setFnWidth()
+				}
+			})
+		})
+		observer.observe(tableComponentRef.value.$el)
 		window.addEventListener('resize', setTableHeight)
 		initializing.value = false
 	})
 }
 
-onMounted(() => init())
+onMounted(() => {
+	init()
+})
 
-onActivated(() => init())
+onActivated(() => {
+	init()
+})
 
 onDeactivated(() => {
 	initializing.value = false
@@ -878,7 +891,9 @@ onBeforeUnmount(() => {
 	window.removeEventListener('resize', setTableHeight)
 })
 
-onUnmounted(() => {})
+onUnmounted(() => {
+	observer.disconnect()
+})
 
 defineExpose({
 	clear: () => onClear(),
@@ -1101,10 +1116,10 @@ defineExpose({
 					buttons.some((f) => f.important) ||
 					$slots.buttons
 				"
-				label="操作"
+				:label="`操作${__fnWidth}`"
 				align="center"
 				fixed="right"
-				:width="setFnWidth()"
+				:width="__fnWidth"
 				class="table-component-btns"
 			>
 				<template #="scoped">
