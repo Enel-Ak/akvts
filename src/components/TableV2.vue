@@ -99,6 +99,7 @@ const props = defineProps({
 	createText: {type: String, default: '新增'},
 	editText: {type: String, default: '编辑'},
 	deleteText: {type: String, default: '删除'},
+	operateText: {type: String, default: '操作'},
 	createIcon: {type: String, default: 'Create'},
 	editIcon: {type: String, default: 'Edit'},
 	deleteIcon: {type: String, default: 'Delete'},
@@ -1116,7 +1117,7 @@ defineExpose({
 					buttons.some((f) => f.important) ||
 					$slots.buttons
 				"
-				:label="`操作${__fnWidth}`"
+				:label="operateText"
 				align="center"
 				fixed="right"
 				:width="__fnWidth"
