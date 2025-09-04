@@ -893,7 +893,7 @@ onBeforeUnmount(() => {
 })
 
 onUnmounted(() => {
-	observer.disconnect()
+	observer?.disconnect()
 })
 
 defineExpose({
