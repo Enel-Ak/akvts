@@ -1,7 +1,5 @@
-import {reactive} from 'vue'
 import {useProcessMapInBatches} from './useProcessMapInBatches'
 import {useAirSheetStore} from '../store/useAirSheet'
-import {useSleep} from '@/hooks/useSleep'
 
 export const useHistory = () => {
 	const sheetStore = useAirSheetStore()
@@ -12,7 +10,7 @@ export const useHistory = () => {
 
 	// 准备修改前保存当前状态
 	const save = (data = null, type = 'edit') => {
-		// 保存完整的 sheet 状态
+		// 保存完整的 sheet 状态，包括筛选状态
 		const state = {
 			config: JSON.parse(JSON.stringify(sheet.config)),
 			celldata: new Map(),
@@ -20,6 +18,18 @@ export const useHistory = () => {
 			addCol: null,
 			removeRow: new Map(),
 			removeCol: new Map(),
+			// 保存筛选相关状态
+			filterState: {
+				filtered:
+					sheet.config.filtered && Array.isArray(sheet.config.filtered)
+						? [...sheet.config.filtered]
+						: [],
+				filterCellData: new Map(sheet.filterCellData || new Map()),
+				rowMapping:
+					sheet.rowMapping && Array.isArray(sheet.rowMapping)
+						? [...sheet.rowMapping]
+						: [],
+			},
 			creationTime: Date.now(),
 		}
 
@@ -45,6 +55,9 @@ export const useHistory = () => {
 					break
 				case 'removeCol':
 					state.removeCol = data
+					break
+				case 'filter':
+					// 筛选操作不需要额外数据，状态已经在filterState中保存
 					break
 			}
 		}
@@ -73,6 +86,25 @@ export const useHistory = () => {
 
 				// 撤销修改配置
 				Object.assign(sheet.config, state.config)
+
+				// 恢复筛选状态
+				if (state.filterState) {
+					sheet.config.filtered = Array.isArray(state.filterState.filtered)
+						? [...state.filterState.filtered]
+						: []
+
+					// 清空并重新设置筛选数据，确保Vue能检测到变化
+					sheet.filterCellData.clear()
+					if (state.filterState.filterCellData) {
+						state.filterState.filterCellData.forEach((value, key) => {
+							sheet.filterCellData.set(key, value)
+						})
+					}
+
+					sheet.rowMapping = Array.isArray(state.filterState.rowMapping)
+						? [...state.filterState.rowMapping]
+						: []
+				}
 
 				// 撤销单元格修改
 				if (state.celldata.size > 0) {
@@ -115,22 +147,41 @@ export const useHistory = () => {
 						const r = state.addRow.r // insertRowIndex
 						const rs = state.addRow.rs
 
-						await useProcessMapInBatches(
-							sheet.id,
-							sheet.celldata,
-							(rowIndex, rowData) => {
-								// 保持和添加时后逻辑一样, 后续修改多行
-								if (rowIndex < r) {
-									// 插入行之前的数据保持不变
-									// newMap.set(rowIndex, rowData)
-								} else if (rowIndex > r + rs - 1) {
-									// 插入行之后的数据向上移动
-									sheet.celldata.set(rowIndex - rs, rowData)
-								}
+						// 检查是否是在筛选状态下添加的行（添加到末尾）
+						const wasFilteredAdd = r >= sheet.config.rowCount - rs
+
+						if (wasFilteredAdd) {
+							// 筛选状态下添加的行，直接删除末尾的行
+							for (let i = 0; i < rs; i++) {
+								sheet.celldata.delete(sheet.config.rowCount - 1 - i)
 							}
-						)
+						} else {
+							// 正常状态下添加的行，需要移动数据
+							await useProcessMapInBatches(
+								sheet.id,
+								sheet.celldata,
+								(rowIndex, rowData) => {
+									// 保持和添加时后逻辑一样, 后续修改多行
+									if (rowIndex < r) {
+										// 插入行之前的数据保持不变
+										// newMap.set(rowIndex, rowData)
+									} else if (rowIndex > r + rs - 1) {
+										// 插入行之后的数据向上移动
+										sheet.celldata.set(rowIndex - rs, rowData)
+									}
+								}
+							)
+						}
 
 						sheet.config.rowCount -= rs
+
+						// 如果当前处于筛选状态，需要更新筛选数据
+						if (sheet.config.filtered && sheet.config.filtered.length > 0) {
+							// 使用静默模式重新执行筛选，避免闪烁
+							const currentFiltered = [...sheet.config.filtered]
+							await sheet.hooks.toolsHook.filterByCheckedSilent(currentFiltered)
+						}
+
 						state.addRow = null
 					} catch (error) {
 						console.error('撤销添加行失败:', error)
@@ -158,6 +209,14 @@ export const useHistory = () => {
 						)
 
 						sheet.config.colCount -= state.addCol.cs
+
+						// 如果当前处于筛选状态，需要更新筛选数据
+						if (sheet.config.filtered && sheet.config.filtered.length > 0) {
+							// 使用静默模式重新执行筛选，避免闪烁
+							const currentFiltered = [...sheet.config.filtered]
+							await sheet.hooks.toolsHook.filterByCheckedSilent(currentFiltered)
+						}
+
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)
@@ -184,6 +243,8 @@ export const useHistory = () => {
 
 						// 更新 sheet.celldata
 						state.removeRow.clear()
+
+						// 筛选状态已经在前面恢复，不需要重新筛选
 					} catch (error) {
 						console.error('撤销删除行失败:', error)
 					}
@@ -220,6 +281,8 @@ export const useHistory = () => {
 							}
 						)
 						state.removeCol.clear()
+
+						// 筛选状态已经在前面恢复，不需要重新筛选
 					} catch (error) {
 						console.error('撤销删除列失败:', error)
 					}

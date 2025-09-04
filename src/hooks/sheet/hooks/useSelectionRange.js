@@ -43,19 +43,48 @@ export const useSelectionRange = () => {
 		const x = e.clientX - rect.left + container.scrollLeft
 		const y = e.clientY - rect.top + container.scrollTop
 
+		// 检查是否处于筛选状态
+		const isFiltered = sheet.config?.filtered && sheet.config.filtered.length > 0
+		const hasFilteredData = sheet.filterCellData && sheet.filterCellData.size > 0
+
 		// 使用累加方式找到正确的行
 		let currentHeight = 0
 		let row = 0
-		while (currentHeight <= y) {
-			const rowCurrentHeight = sheet.hooks.resizeHook.getRowHeight(row)
-			if (currentHeight + rowCurrentHeight > y) {
-				break
+
+		if (isFiltered && hasFilteredData) {
+			// 筛选状态下，需要基于筛选后的数据计算行位置
+			// 遍历筛选后的行，找到对应的物理位置
+			const filteredRowCount = sheet.filterCellData.size
+			let filteredRowIndex = 0
+
+			while (currentHeight <= y && filteredRowIndex < filteredRowCount) {
+				// 获取筛选后行对应的原始行号
+				const originalRowIndex =
+					sheet.rowMapping?.[filteredRowIndex]?.originalIndex ?? filteredRowIndex
+				const rowCurrentHeight = sheet.hooks.resizeHook.getRowHeight(originalRowIndex)
+
+				if (currentHeight + rowCurrentHeight > y) {
+					break
+				}
+				currentHeight += rowCurrentHeight
+				filteredRowIndex++
 			}
-			currentHeight += rowCurrentHeight
-			row++
+
+			// 在筛选状态下，返回原始行号（用于样式操作）
+			row = sheet.rowMapping?.[filteredRowIndex]?.originalIndex ?? filteredRowIndex
+		} else {
+			// 正常状态下的行计算
+			while (currentHeight <= y) {
+				const rowCurrentHeight = sheet.hooks.resizeHook.getRowHeight(row)
+				if (currentHeight + rowCurrentHeight > y) {
+					break
+				}
+				currentHeight += rowCurrentHeight
+				row++
+			}
 		}
 
-		// 使用累加方式计算列位置
+		// 使用累加方式计算列位置（列不受筛选影响）
 		let currentWidth = 0
 		let col = 0
 		while (currentWidth <= x) {
@@ -342,38 +371,91 @@ export const useSelectionRange = () => {
 
 	// 优化的样式计算函数
 	const calculateRangeStyle = (r, c, rr, cc) => {
-		// 基础计算
-		let totalOffsetTop = r * sheet.props.rowHeight
-		let totleHeight = (rr - r + 1) * sheet.props.rowHeight
+		// 检查是否处于筛选状态
+		const isFiltered = sheet.config?.filtered && sheet.config.filtered.length > 0
+		const hasFilteredData = sheet.filterCellData && sheet.filterCellData.size > 0
+
+		let totalOffsetTop = 0
+		let totleHeight = 0
+
+		if (isFiltered && hasFilteredData) {
+			// 筛选状态下，需要计算选择范围在筛选视图中的位置
+			// 找到选择范围中的行在筛选数据中的位置
+			let filteredStartRow = -1
+			let filteredEndRow = -1
+			let visibleRowCount = 0
+
+			// 遍历筛选后的行映射，找到选择范围对应的筛选行
+			if (sheet.rowMapping) {
+				sheet.rowMapping.forEach((mapping, filteredIndex) => {
+					const originalIndex = mapping.originalIndex
+					if (originalIndex >= r && originalIndex <= rr) {
+						if (filteredStartRow === -1) {
+							filteredStartRow = filteredIndex
+						}
+						filteredEndRow = filteredIndex
+						visibleRowCount++
+					}
+				})
+			}
+
+			if (filteredStartRow !== -1) {
+				// 计算筛选视图中的位置
+
+				// 计算top位置：累加筛选视图中前面行的高度
+				for (let i = 0; i < filteredStartRow; i++) {
+					const originalRowIndex = sheet.rowMapping[i]?.originalIndex ?? i
+					totalOffsetTop += sheet.hooks.resizeHook.getRowHeight(originalRowIndex)
+				}
+
+				// 计算height：累加选择范围内可见行的高度
+				for (let i = filteredStartRow; i <= filteredEndRow; i++) {
+					const originalRowIndex = sheet.rowMapping[i]?.originalIndex ?? i
+					totleHeight += sheet.hooks.resizeHook.getRowHeight(originalRowIndex)
+				}
+			} else {
+				// 选择的行在筛选结果中不可见，返回空样式
+				return {
+					top: '0px',
+					left: '0px',
+					height: '0px',
+					width: '0px',
+					display: 'none',
+				}
+			}
+		} else {
+			// 正常状态下的计算
+			totalOffsetTop = r * sheet.props.rowHeight
+			totleHeight = (rr - r + 1) * sheet.props.rowHeight
+
+			// 处理行高调整
+			const rowCache = modifiedRowsCache()
+			if (rowCache.map.size > 0) {
+				let modifiedBefore = 0
+				let modifiedInRange = 0
+
+				rowCache.map.forEach((diff, row) => {
+					if (row < r) {
+						modifiedBefore += diff
+					} else if (row >= r && row <= rr) {
+						modifiedInRange += diff
+					}
+				})
+
+				totalOffsetTop += modifiedBefore
+				totleHeight += modifiedInRange
+			}
+		}
+
+		// 列的计算不受筛选影响
 		let totaloffsetLeft = c * sheet.props.colWidth
 		let totleWidth = (cc - c + 1) * sheet.props.colWidth
 
-		// 只在有修改的行列时才进行计算
-		const rowCache = modifiedRowsCache()
 		const colCache = modifiedColsCache()
-
-		if (rowCache.map.size > 0) {
-			let modifiedBefore = 0
-			let modifiedInRange = 0
-
-			// 优化：只遍历实际修改过的行
-			rowCache.map.forEach((diff, row) => {
-				if (row < r) {
-					modifiedBefore += diff
-				} else if (row >= r && row <= rr) {
-					modifiedInRange += diff
-				}
-			})
-
-			totalOffsetTop += modifiedBefore
-			totleHeight += modifiedInRange
-		}
-
 		if (colCache.map.size > 0) {
 			let modifiedColBefore = 0
 			let modifiedColInRange = 0
 
-			// 优化：只遍历实际修改过的列
 			colCache.map.forEach((diff, col) => {
 				if (col < c) {
 					modifiedColBefore += diff

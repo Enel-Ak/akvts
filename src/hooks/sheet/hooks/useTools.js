@@ -353,7 +353,16 @@ export const useTools = () => {
 
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 
-		const insertRowIndex = isEnd ? sheet.config.rowCount : rr + 1
+		// 确定插入位置
+		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
+		let insertRowIndex
+
+		if (isEnd) {
+			insertRowIndex = sheet.config.rowCount
+		} else {
+			// 在选中行的下一行插入（无论是否筛选状态）
+			insertRowIndex = rr + 1
+		}
 
 		if (sheet.celldata.size >= sheet.props.limit) {
 			sheet.state.loading = true
@@ -362,48 +371,68 @@ export const useTools = () => {
 		}
 
 		try {
+			// 移动现有数据为新行腾出空间
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					if (rowIndex < insertRowIndex) {
+						// 插入位置之前的数据保持不变
 						// sheet.celldata.set(rowIndex, rowData)
 					} else {
+						// 插入位置之后的数据向下移动
 						sheet.celldata.set(rowIndex + addRowCount.value, rowData)
 					}
 				}
 			})
 
+			// 在指定位置插入新的空行
 			for (let i = insertRowIndex; i < insertRowIndex + addRowCount.value; i++) {
 				sheet.celldata.set(i, [])
 			}
 
-			// 处理合并单元格
-			const mergedCells = sheet.hooks.mergeHook.getMergedCells()
-			const newMergedCells = new Map()
+			// 处理合并单元格（筛选状态下不需要移动合并单元格）
+			if (!isFiltered) {
+				const mergedCells = sheet.hooks.mergeHook.getMergedCells()
+				const newMergedCells = new Map()
 
-			for (const [key, value] of Object.entries(mergedCells)) {
-				const [row, col] = key.split('-').map(Number)
-				if (row >= insertRowIndex) {
-					// 如果合并单元格在插入行之后，向下移动一行
-					newMergedCells.set(`${row + addRowCount.value}-${col}`, value)
-				} else {
-					newMergedCells.set(key, value)
+				for (const [key, value] of Object.entries(mergedCells)) {
+					const [row, col] = key.split('-').map(Number)
+					if (row >= insertRowIndex) {
+						// 如果合并单元格在插入行之后，向下移动一行
+						newMergedCells.set(`${row + addRowCount.value}-${col}`, value)
+					} else {
+						newMergedCells.set(key, value)
+					}
 				}
-			}
 
-			// 更新合并单元格
-			sheet.hooks.mergeHook.setMergeCells(newMergedCells)
+				// 更新合并单元格
+				sheet.hooks.mergeHook.setMergeCells(newMergedCells)
+			}
 
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
+			// 如果当前处于筛选状态，重新筛选以包含新行
+			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
+				// 保存当前筛选条件
+				const currentFiltered = [...sheet.config.filtered]
+
+				// 最终解决方案：使用静默筛选 + 最小化loading状态切换
+				await filterByCheckedSilent(currentFiltered)
+
+				ElMessage.success(`添加了 ${addRowCount.value} 行，筛选数据已更新`)
+			}
+
 			if (save) {
-				sheet.hooks.historyHook.save(
-					{
-						r: insertRowIndex,
-						rs: addRowCount.value,
-					},
-					'addRow'
-				)
+				// 为每一行分别保存历史记录，确保可以依次撤销
+				for (let i = 0; i < addRowCount.value; i++) {
+					sheet.hooks.historyHook.save(
+						{
+							r: insertRowIndex + i,
+							rs: 1,
+						},
+						'addRow'
+					)
+				}
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)
@@ -491,6 +520,14 @@ export const useTools = () => {
 
 			// 更新sheet.celldata
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
+
+			// 如果当前处于筛选状态，需要更新筛选数据和行号映射
+			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
+				// 使用静默模式重新执行筛选，避免闪烁
+				const currentFiltered = [...sheet.config.filtered]
+				await filterByCheckedSilent(currentFiltered)
+				ElMessage.success(`删除了 ${deleteCount} 行，筛选数据已更新`)
+			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
@@ -560,15 +597,49 @@ export const useTools = () => {
 			})
 			sheet.hooks.mergeHook.setMergeCells(nmc)
 
+			// 如果当前处于筛选状态，需要更新筛选数据
+			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
+				// 更新筛选数据中的列数据，保持现有的筛选行数据
+				const updatedFilterCellData = new Map()
+
+				sheet.filterCellData.forEach((rowData, rowIndex) => {
+					if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+						// 创建新的行数据数组
+						const newRowData = Array.from(rowData || [])
+
+						// 在指定位置插入空值，根据addColumnCount插入多列
+						for (let i = 0; i < addColumnCount.value; i++) {
+							newRowData.splice(insertColIndex + i, 0, '')
+						}
+
+						// 保存更新后的行数据
+						updatedFilterCellData.set(rowIndex, newRowData)
+					}
+				})
+
+				// 更新筛选数据，保持现有的筛选行
+				sheet.filterCellData.clear()
+				updatedFilterCellData.forEach((value, key) => {
+					sheet.filterCellData.set(key, value)
+				})
+
+				ElMessage.success(`添加了 ${addColumnCount.value} 列，筛选数据已更新`)
+			} else {
+				// 非筛选状态下的正常处理
+				ElMessage.success(`添加了 ${addColumnCount.value} 列`)
+			}
+
 			if (save) {
-				// 保存历史记录
-				sheet.hooks.historyHook.save(
-					{
-						c: insertColIndex,
-						cs: addColumnCount.value,
-					},
-					'addCol'
-				)
+				// 为每一列分别保存历史记录，确保可以依次撤销
+				for (let i = 0; i < addColumnCount.value; i++) {
+					sheet.hooks.historyHook.save(
+						{
+							c: insertColIndex + i,
+							cs: 1,
+						},
+						'addCol'
+					)
+				}
 			}
 		} catch (error) {
 			console.error('添加列失败', error)
@@ -664,6 +735,48 @@ export const useTools = () => {
 			// 更新sheet.celldata和其他相关操作
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
 			sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc)
+
+			// 如果当前处于筛选状态，需要更新筛选条件中的列索引
+			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
+				// 更新筛选条件中的列索引
+				const updatedFiltered = []
+				sheet.config.filtered.forEach((filter) => {
+					if (filter.c < c) {
+						// 删除列之前的筛选条件保持不变
+						updatedFiltered.push(filter)
+					} else if (filter.c > cc) {
+						// 删除列之后的筛选条件需要更新列索引
+						updatedFiltered.push({
+							...filter,
+							c: filter.c - deleteCount,
+						})
+					}
+					// 删除列范围内的筛选条件被移除（不添加到updatedFiltered）
+				})
+
+				// 更新筛选条件
+				sheet.config.filtered = updatedFiltered
+
+				// 如果还有筛选条件，重新执行筛选
+				if (updatedFiltered.length > 0) {
+					await filterByCheckedSilent(updatedFiltered)
+					// 强制触发界面更新
+					sheet.state.loading = true
+					await nextTick()
+					sheet.state.loading = false
+					ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已更新`)
+				} else {
+					// 如果没有筛选条件了，清除筛选状态
+					sheet.config.filtered = []
+					sheet.filterCellData.clear()
+					sheet.rowMapping = []
+					// 强制触发界面更新
+					sheet.state.loading = true
+					await nextTick()
+					sheet.state.loading = false
+					ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已清除`)
+				}
+			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
@@ -762,18 +875,254 @@ export const useTools = () => {
 			ElMessage.warning('当前表格不支持筛选')
 			return
 		}
-		sheet.config.filtered = checked
-		sheet.filterCellData.clear()
-		await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
-			if (sheet.config.filtered.length) {
-				sheet.config.filtered.forEach((filter) => {
-					if (rowData[filter.c] === filter.v) {
-						sheet.filterCellData.set(rowIndex, rowData)
-					}
-				})
+
+		// 边界情况处理：检查参数有效性
+		if (!checked || !Array.isArray(checked)) {
+			ElMessage.warning('筛选条件无效')
+			return
+		}
+
+		// 保存筛选操作的历史记录
+		sheet.hooks.historyHook.save(null, 'filter')
+
+		// 设置加载状态
+		sheet.state.loading = true
+		sheet.state.msg = '正在筛选数据...'
+
+		try {
+			sheet.config.filtered = checked
+			sheet.filterCellData.clear()
+
+			// 清空之前的行号映射
+			sheet.rowMapping = []
+
+			// 如果没有筛选条件，清除筛选状态
+			if (checked.length === 0) {
+				sheet.state.loading = false
+				ElMessage.success('筛选已清除')
+				return
 			}
-		})
-		console.log(111, sheet.filterCellData)
+
+			// 边界情况处理：检查数据源是否存在
+			if (!sheet.celldata || sheet.celldata.size === 0) {
+				sheet.state.loading = false
+				ElMessage.warning('没有可筛选的数据')
+				return
+			}
+
+			let filteredRowIndex = 0 // 筛选后的行索引
+			const rowMappingData = [] // 存储行号映射关系
+			let processedCount = 0 // 已处理的行数
+			const totalRows = sheet.celldata.size
+
+			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
+				processedCount++
+
+				// 边界情况处理：检查行数据有效性
+				if (!rowData || !Array.isArray(rowData)) {
+					return
+				}
+
+				// 检查当前行是否符合筛选条件
+				// 正确的筛选逻辑：
+				// 1. 按列分组筛选条件
+				// 2. 同一列的多个值是OR关系（满足任一即可）
+				// 3. 不同列之间是AND关系（都必须满足）
+
+				// 按列分组筛选条件
+				const filtersByColumn = new Map()
+				for (const filter of sheet.config.filtered) {
+					if (!filtersByColumn.has(filter.c)) {
+						filtersByColumn.set(filter.c, [])
+					}
+					filtersByColumn.get(filter.c).push(filter.v)
+				}
+
+				let matchesAllColumns = true
+
+				// 检查每一列的筛选条件
+				for (const [columnIndex, filterValues] of filtersByColumn) {
+					// 边界情况处理：检查列索引有效性
+					if (columnIndex < 0 || columnIndex >= rowData.length) {
+						continue
+					}
+
+					const cellValue = rowData[columnIndex]
+
+					// 检查当前列的值是否匹配任一筛选值（OR逻辑）
+					let matchesThisColumn = false
+					for (const filterValue of filterValues) {
+						if (cellValue === filterValue) {
+							matchesThisColumn = true
+							break
+						}
+					}
+
+					// 如果当前列不匹配任何筛选值，则整行不匹配
+					if (!matchesThisColumn) {
+						matchesAllColumns = false
+						break
+					}
+				}
+
+				// 如果符合所有筛选条件，将行数据添加到筛选结果中
+				if (matchesAllColumns && rowData.length > 0) {
+					// 将符合条件的行数据存储到filterCellData中
+					sheet.filterCellData.set(filteredRowIndex, rowData)
+
+					// 存储行号映射关系
+					rowMappingData.push({
+						filteredIndex: filteredRowIndex,
+						originalIndex: rowIndex,
+					})
+
+					filteredRowIndex++
+				}
+
+				// 更新进度
+				if (processedCount % 1000 === 0) {
+					sheet.state.progress = Math.floor((processedCount / totalRows) * 100)
+				}
+			})
+
+			// 将行号映射信息存储到sheet中，供前端使用
+			sheet.rowMapping = rowMappingData
+
+			// 边界情况处理：检查筛选结果
+			if (sheet.filterCellData.size === 0) {
+				ElMessage.warning('没有符合筛选条件的数据')
+			} else {
+				ElMessage.success(`筛选完成，找到 ${sheet.filterCellData.size} 条记录`)
+			}
+
+			console.log('筛选完成:', {
+				原始数据行数: sheet.celldata.size,
+				筛选后行数: sheet.filterCellData.size,
+				筛选条件: sheet.config.filtered,
+				处理时间: Date.now(),
+			})
+		} catch (error) {
+			console.error('筛选过程中发生错误:', error)
+			ElMessage.error('筛选失败，请重试')
+		} finally {
+			// 重置加载状态
+			sheet.state.loading = false
+			sheet.state.progress = 100
+		}
+	}
+
+	// 静默筛选方法，用于避免数据闪烁
+	const filterByCheckedSilent = async (checked) => {
+		if (!sheet.config.filter) {
+			return
+		}
+
+		// 边界情况处理：检查参数有效性
+		if (!checked || !Array.isArray(checked)) {
+			return
+		}
+
+		// 不设置加载状态，避免界面闪烁
+		try {
+			sheet.config.filtered = checked
+			sheet.filterCellData.clear()
+
+			// 清空之前的行号映射
+			sheet.rowMapping = []
+
+			// 如果没有筛选条件，清除筛选状态
+			if (checked.length === 0) {
+				return
+			}
+
+			// 边界情况处理：检查数据源是否存在
+			if (!sheet.celldata || sheet.celldata.size === 0) {
+				return
+			}
+
+			let filteredRowIndex = 0 // 筛选后的行索引
+			const rowMappingData = [] // 存储行号映射关系
+
+			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
+				// 边界情况处理：检查行数据有效性
+				if (!rowData || !Array.isArray(rowData)) {
+					return
+				}
+
+				// 按列分组筛选条件
+				const filtersByColumn = new Map()
+				for (const filter of sheet.config.filtered) {
+					if (!filtersByColumn.has(filter.c)) {
+						filtersByColumn.set(filter.c, [])
+					}
+					filtersByColumn.get(filter.c).push(filter.v)
+				}
+
+				let matchesAllColumns = true
+
+				// 检查是否为空行（筛选后添加行时需要包含空行）
+				let isEmptyRow = true
+				for (let i = 0; i < rowData.length; i++) {
+					const cellValue = rowData[i]
+					if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+						isEmptyRow = false
+						break
+					}
+				}
+
+				// 如果是空行，直接包含在筛选结果中（筛选后添加行时不过滤空行）
+				if (isEmptyRow) {
+					matchesAllColumns = true
+				} else {
+					// 非空行：检查每一列的筛选条件
+					for (const [columnIndex, filterValues] of filtersByColumn) {
+						// 边界情况处理：检查列索引有效性
+						if (columnIndex < 0 || columnIndex >= rowData.length) {
+							// 如果列不存在，直接跳过该行（不匹配）
+							matchesAllColumns = false
+							break
+						}
+
+						const cellValue = rowData[columnIndex]
+
+						// 检查当前列的值是否匹配任一筛选值（OR逻辑）
+						let matchesThisColumn = false
+						for (const filterValue of filterValues) {
+							// 严格匹配，不处理空值的特殊情况
+							if (cellValue === filterValue) {
+								matchesThisColumn = true
+								break
+							}
+						}
+
+						// 如果当前列不匹配任何筛选值，则整行不匹配
+						if (!matchesThisColumn) {
+							matchesAllColumns = false
+							break
+						}
+					}
+				}
+
+				// 如果符合所有筛选条件，将行数据添加到筛选结果中
+				if (matchesAllColumns) {
+					// 将符合条件的行数据存储到filterCellData中
+					sheet.filterCellData.set(filteredRowIndex, rowData)
+
+					// 存储行号映射关系
+					rowMappingData.push({
+						filteredIndex: filteredRowIndex,
+						originalIndex: rowIndex,
+					})
+
+					filteredRowIndex++
+				}
+			})
+
+			// 将行号映射信息存储到sheet中，供前端使用
+			sheet.rowMapping = rowMappingData
+		} catch (error) {
+			console.error('静默筛选过程中发生错误:', error)
+		}
 	}
 
 	// 冻结
@@ -1309,6 +1658,7 @@ export const useTools = () => {
 
 			filterCol,
 			filterByChecked,
+			filterByCheckedSilent,
 
 			luckyToAir,
 			airToLucky,

@@ -90,6 +90,106 @@ const filterEl = ref(null)
 const filterCol = ref(null)
 const filterColIndex = ref(-1)
 
+// 筛选状态管理
+const isFiltered = computed(() => {
+	return sheet.config?.filtered && sheet.config.filtered.length > 0
+})
+
+const hasFilteredData = computed(() => {
+	return sheet.filterCellData && sheet.filterCellData.size > 0
+})
+
+// 当前数据源管理
+const currentDataSource = computed(() => {
+	// 边界情况处理：确保sheet对象存在
+	if (!sheet || !sheet.celldata) {
+		return new Map()
+	}
+
+	// 如果有筛选条件且有筛选数据，使用筛选数据
+	if (isFiltered.value && hasFilteredData.value) {
+		return sheet.filterCellData
+	}
+	// 否则使用原始数据
+	return sheet.celldata
+})
+
+// 当前数据行数
+const currentRowCount = computed(() => {
+	// 边界情况处理：确保sheet对象存在
+	if (!sheet || !sheet.config) {
+		return 0
+	}
+
+	if (isFiltered.value && hasFilteredData.value) {
+		return sheet.filterCellData ? sheet.filterCellData.size : 0
+	}
+	return sheet.config.rowCount || 0
+})
+
+// 行号映射机制
+const rowMapping = computed(() => {
+	const mapping = {
+		filteredToOriginal: new Map(), // 筛选后行号 -> 原始行号
+		originalToFiltered: new Map(), // 原始行号 -> 筛选后行号
+	}
+
+	if (isFiltered.value && hasFilteredData.value && sheet.rowMapping) {
+		// 使用从filterByChecked方法中生成的行号映射数据
+		sheet.rowMapping.forEach((item) => {
+			mapping.filteredToOriginal.set(item.filteredIndex, item.originalIndex)
+			mapping.originalToFiltered.set(item.originalIndex, item.filteredIndex)
+		})
+	}
+
+	return mapping
+})
+
+// 获取原始行号的辅助函数
+const getOriginalRowIndex = (filteredRowIndex) => {
+	// 边界情况处理：确保参数有效
+	if (typeof filteredRowIndex !== 'number' || filteredRowIndex < 0) {
+		return 0
+	}
+
+	if (!isFiltered.value) return filteredRowIndex
+	return rowMapping.value.filteredToOriginal.get(filteredRowIndex) ?? filteredRowIndex
+}
+
+// 获取筛选后行号的辅助函数
+const getFilteredRowIndex = (originalRowIndex) => {
+	if (!isFiltered.value) return originalRowIndex
+	return rowMapping.value.originalToFiltered.get(originalRowIndex) ?? -1
+}
+
+// 获取行数据的辅助函数，确保在筛选状态下获取正确的数据
+const getRowData = (row) => {
+	const dataSource = currentDataSource.value
+	const dataRowIndex = row.filteredR !== undefined ? row.filteredR : row.r
+	return dataSource.get(dataRowIndex)
+}
+
+// 检查行是否在当前筛选结果中可见
+const isRowVisible = (originalRowIndex) => {
+	if (!isFiltered.value) return true
+	return getFilteredRowIndex(originalRowIndex) !== -1
+}
+
+// 样式操作辅助函数：确保在筛选状态下操作正确的行号
+const applyStyleToRow = (displayRow, styleFunction) => {
+	// displayRow 是当前显示的行对象，包含 r（原始行号）和 filteredR（筛选行号）
+	const originalRowIndex = displayRow.r // 这已经是原始行号了
+
+	// 调用样式函数，传入原始行号
+	return styleFunction(originalRowIndex)
+}
+
+// 获取单元格操作的正确行号
+const getCellOperationRowIndex = (displayRow) => {
+	// 返回原始行号，确保样式等操作应用到正确的位置
+	return displayRow.r
+}
+
 // 移动端设置宽高/框选范围
 const selectionSize = ref({w: 0, h: 0})
 const selectionRange = ref({
@@ -264,7 +364,8 @@ const updateVisibleRange = async () => {
 			scrollLeft: scrollLeft.value,
 			viewportHeight: viewportHeight.value,
 			viewportWidth: viewportWidth.value,
-			rowCount: sheet.config.rowCount,
+			// 在筛选状态下使用筛选后的行数，否则使用原始行数
+			rowCount: currentRowCount.value,
 			colCount: sheet.config.colCount,
 			buffer: props.buffer,
 			defaultRowHeight: props.rowHeight * currentZoom,
@@ -296,25 +397,25 @@ const visibleRows = computed(() => {
 	const {startRow, endRow} = visibleRangeRef.value.visible
 
 	const start = Math.max(0, startRow)
-	const end = Math.min(sheet.config.rowCount, endRow)
+
+	// 根据是否筛选使用不同的行数限制
+	const totalRowCount =
+		isFiltered.value && hasFilteredData.value ? currentRowCount.value : sheet.config.rowCount
+	const end = Math.min(totalRowCount, endRow)
 
 	for (let i = start; i < end; i++) {
+		// 在筛选状态下，i是筛选后的行索引
+		// 需要获取对应的原始行号来获取正确的行高
+		const originalRowIndex =
+			isFiltered.value && hasFilteredData.value ? getOriginalRowIndex(i) : i
+
 		let row = {
-			r: i,
-			h: sheet.hooks.resizeHook.getRowHeight(i),
+			r: originalRowIndex, // 显示原始行号，不是筛选后的行号
+			filteredR: i, // 筛选后的行索引，用于数据获取
+			originalR: originalRowIndex, // 原始行号，保持兼容性
+			h: sheet.hooks.resizeHook.getRowHeight(originalRowIndex),
 			config: {},
 		}
-
-		// 有筛选时
-		if (sheet.config.filtered.length) {
-			const keys = Array.from(sheet.filterCellData.keys())
-			if (keys.length && keys[i]) {
-				// 重置行号
-				// row.r = keys[i]
-				// row.h = sheet.hooks.resizeHook.getRowHeight(keys[i])
-			}
-		}
-
 		rows.push(row)
 	}
 	return rows
@@ -329,82 +430,57 @@ const visibleCells = (row) => {
 	const start = Math.max(0, startCol)
 	const end = Math.min(sheet.config.colCount, endCol)
 
-	if (sheet.filterCellData.size) {
-		for (let i = start; i < end; i++) {
-			// 检查当前单元格是否是合并单元格的从属单元格
-			const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.r, i)
+	// 确定要使用的数据源和行索引
+	const dataSource = currentDataSource.value
+	// 在筛选状态下，使用filteredR来获取数据，否则使用r
+	const dataRowIndex =
+		isFiltered.value && hasFilteredData.value && row.filteredR !== undefined
+			? row.filteredR
+			: isFiltered.value && hasFilteredData.value
+			? 0
+			: row.r
 
-			let value = null
-			let inMerged = false
+	// 获取行数据
+	const rowData = dataSource.get(dataRowIndex)
+	if (!rowData) {
+		return cells
+	}
 
-			if (mergedCell) {
-				if (mergedCell.r === row.r && mergedCell.c === i) {
-					// 如果是合并单元格的起始位置，设置值
-					value = sheet.filterCellData.get(row.r)?.[i] || ''
-				} else {
-					// 如果在合并单元格内部，不设置值
-					value = ''
-					inMerged = true
-				}
+	for (let i = start; i < end; i++) {
+		// 在筛选状态下，需要使用原始行号来检查合并单元格
+		const checkRowIndex = row.originalR !== undefined ? row.originalR : row.r
+		const mergedCell = sheet.hooks.mergeHook.findMergedCell(checkRowIndex, i)
+
+		let value = null
+		let inMerged = false
+
+		if (mergedCell) {
+			if (mergedCell.r === checkRowIndex && mergedCell.c === i) {
+				// 如果是合并单元格的起始位置，设置值
+				value = rowData[i] || ''
 			} else {
-				// 普通单元格，正常取值
-				value = sheet.filterCellData.get(row.r)?.[i] || ''
+				// 如果在合并单元格内部，不设置值
+				value = ''
+				inMerged = true
 			}
-
-			if (!sheet.filterCellData.get(row.r)) {
-				sheet.filterCellData.set(row.r, [])
-			}
-
-			cells.push({
-				r: row.r,
-				h: row.h,
-				c: i,
-				w: sheet.hooks.resizeHook.getColWidth(i),
-				v: value,
-				config: {
-					key: sheet.config.keys?.[i],
-				},
-				inMerged,
-			})
+		} else {
+			// 普通单元格，从行数据中取值
+			value = rowData[i] || ''
 		}
-	} else {
-		for (let i = start; i < end; i++) {
-			// 检查当前单元格是否是合并单元格的从属单元格
-			const mergedCell = sheet.hooks.mergeHook.findMergedCell(row.r, i)
 
-			let value = null
-			let inMerged = false
-
-			if (mergedCell) {
-				if (mergedCell.r === row.r && mergedCell.c === i) {
-					// 如果是合并单元格的起始位置，设置值
-					value = sheet.celldata.get(row.r)?.[i] || ''
-				} else {
-					// 如果在合并单元格内部，不设置值
-					value = ''
-					inMerged = true
-				}
-			} else {
-				// 普通单元格，正常取值
-				value = sheet.celldata.get(row.r)?.[i] || ''
-			}
-
-			if (!sheet.celldata.get(row.r)) {
-				sheet.celldata.set(row.r, [])
-			}
-
-			cells.push({
-				r: row.r,
-				h: row.h,
-				c: i,
-				w: sheet.hooks.resizeHook.getColWidth(i),
-				v: value,
-				config: {
-					key: sheet.config.keys?.[i],
-				},
-				inMerged,
-			})
-		}
+		cells.push({
+			r: row.r, // 始终使用原始行号，确保样式系统正常工作
+			filteredR: row.filteredR, // 筛选后的行索引，用于数据获取
+			originalR: row.originalR, // 原始行号，保持兼容性
+			h: row.h,
+			c: i,
+			w: sheet.hooks.resizeHook.getColWidth(i),
+			v: value,
+			config: {
+				key: sheet.config.keys?.[i],
+			},
+			inMerged,
+		})
 	}
 
 	return cells
@@ -736,7 +812,12 @@ const updateViewportSize = () => {
 
 // 点击序号
 const onClickNumber = (e, row) => {
-	sheet.hooks.selectionRangeHook.setRange(row.r, 0, row.r, sheet.config.colCount - 1, true)
+	// 在筛选状态下，我们需要选择原始行号
+	// 这样样式操作会应用到正确的原始行上
+	// 当清除筛选后，样式会保持在正确的位置
+	const rowIndex = row.r // 使用原始行号
+
+	sheet.hooks.selectionRangeHook.setRange(rowIndex, 0, rowIndex, sheet.config.colCount - 1, true)
 }
 
 // 点击字母
@@ -2162,7 +2243,7 @@ defineExpose({
 							width: `${fnWidth}px`,
 						}"
 					>
-						<template v-for="row of visibleRows" :key="row.rowIndex">
+						<template v-for="row of visibleRows" :key="row.r">
 							<slot name="fn" :row="row">
 								<div
 									class="fns"
@@ -2170,12 +2251,20 @@ defineExpose({
 										selection:
 											sheet.hooks.selectionRangeHook.setSelectionClass(row),
 									}"
-									:style="{height: `${row.rowHeight}px`}"
+									:style="{height: `${row.h}px`}"
 								>
 									<span
 										v-for="fn in fns"
 										@click="
-											() => fn.click(row, sheet.celldata.get(row.rowIndex))
+											() =>
+												fn.click(
+													row,
+													currentDataSource.get(
+														row.filteredR !== undefined
+															? row.filteredR
+															: row.r
+													)
+												)
 										"
 									>
 										{{ fn.label }}
@@ -2356,6 +2445,7 @@ defineExpose({
 			v-model="filterEl"
 			:colIndex="filterColIndex"
 			:filterCol="filterCol"
+			:currentFiltered="Array.isArray(sheet?.config?.filtered) ? sheet.config.filtered : []"
 			@confirm="sheet?.hooks?.toolsHook?.filterByChecked"
 			@confirmOnly=""
 		/>

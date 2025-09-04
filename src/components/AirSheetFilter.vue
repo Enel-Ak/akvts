@@ -15,6 +15,11 @@ const props = defineProps({
 		type: Number,
 		default: -1,
 	},
+	// 当前筛选状态，用于同步选中项
+	currentFiltered: {
+		type: Array,
+		default: () => [],
+	},
 })
 
 const mask = ref(false)
@@ -65,6 +70,30 @@ watch(
 	(newVal) => {
 		filterList.value = newVal
 	}
+)
+
+// 监听当前筛选状态的变化，同步更新选中项
+watch(
+	() => props.currentFiltered,
+	(newVal) => {
+		// 如果没有筛选条件，清空选中项
+		if (!newVal || !Array.isArray(newVal) || newVal.length === 0) {
+			checked.value = []
+			return
+		}
+
+		// 根据当前列的筛选条件更新选中项
+		const currentColFilters = newVal.filter((filter) => filter.c === props.colIndex)
+
+		// 只更新当前列的选中项
+		if (currentColFilters.length > 0) {
+			checked.value = currentColFilters.map((filter) => filter.v)
+		} else {
+			// 如果当前列没有筛选条件，清空当前列的选中项
+			checked.value = []
+		}
+	},
+	{immediate: true, deep: true}
 )
 </script>
 <template>
