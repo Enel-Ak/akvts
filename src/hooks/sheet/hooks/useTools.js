@@ -1051,7 +1051,40 @@ export const useTools = () => {
 		return data
 	}
 
-	// 筛选, 过滤勾选列的数据
+	// 获取合并单元格组信息
+	const getMergedCellGroups = () => {
+		const mergedCells = sheet.hooks.mergeHook.getMergedCells()
+		const groups = []
+
+		for (const [key, value] of Object.entries(mergedCells)) {
+			const [startRow, startCol] = key.split('-').map(Number)
+			const endRow = startRow + value.rs - 1
+			const endCol = startCol + value.cs - 1
+
+			const rows = []
+			for (let r = startRow; r <= endRow; r++) {
+				rows.push(r)
+			}
+
+			groups.push({
+				startRow,
+				endRow,
+				startCol,
+				endCol,
+				rows,
+				key,
+			})
+		}
+
+		return groups
+	}
+
+	// 检查行是否属于合并单元格组（保留供将来使用）
+	// const findMergedGroupForRow = (rowIndex, mergedGroups) => {
+	// 	return mergedGroups.find((group) => group.rows.includes(rowIndex))
+	// }
+
+	// 筛选, 过滤勾选列的数据（支持合并单元格完整性）
 	const filterByChecked = async (checked) => {
 		if (!sheet.config.filter) {
 			ElMessage.warning('当前表格不支持筛选')
@@ -1092,9 +1125,12 @@ export const useTools = () => {
 				return
 			}
 
-			let filteredRowIndex = 0 // 筛选后的行索引
-			const rowMappingData = [] // 存储行号映射关系
-			let processedCount = 0 // 已处理的行数
+			// 获取所有合并单元格组
+			const mergedGroups = getMergedCellGroups()
+
+			// 第一阶段：标准筛选，找出符合条件的行
+			const matchedRows = new Set()
+			let processedCount = 0
 			const totalRows = sheet.celldata.size
 
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
@@ -1104,12 +1140,6 @@ export const useTools = () => {
 				if (!rowData || !Array.isArray(rowData)) {
 					return
 				}
-
-				// 检查当前行是否符合筛选条件
-				// 正确的筛选逻辑：
-				// 1. 按列分组筛选条件
-				// 2. 同一列的多个值是OR关系（满足任一即可）
-				// 3. 不同列之间是AND关系（都必须满足）
 
 				// 按列分组筛选条件
 				const filtersByColumn = new Map()
@@ -1129,7 +1159,17 @@ export const useTools = () => {
 						continue
 					}
 
-					const cellValue = rowData[columnIndex]
+					let cellValue = rowData[columnIndex]
+
+					// 特殊处理：对于合并单元格，需要检查是否应该使用合并单元格的值
+					const mergedCell = sheet.hooks.mergeHook.findMergedCell(rowIndex, columnIndex)
+					if (mergedCell && mergedCell.r !== rowIndex) {
+						// 如果当前行不是合并单元格的起始行，获取起始行的值
+						const startRowData = sheet.celldata.get(mergedCell.r)
+						if (startRowData && startRowData[columnIndex] !== undefined) {
+							cellValue = startRowData[columnIndex]
+						}
+					}
 
 					// 检查当前列的值是否匹配任一筛选值（OR逻辑）
 					let matchesThisColumn = false
@@ -1147,25 +1187,55 @@ export const useTools = () => {
 					}
 				}
 
-				// 如果符合所有筛选条件，将行数据添加到筛选结果中
+				// 如果符合所有筛选条件，标记为匹配行
 				if (matchesAllColumns && rowData.length > 0) {
+					matchedRows.add(rowIndex)
+				}
+
+				// 更新进度
+				if (processedCount % 1000 === 0) {
+					sheet.state.progress = Math.floor((processedCount / totalRows) * 50) // 第一阶段占50%
+				}
+			})
+
+			// 第二阶段：合并单元格完整性检查
+			const completeRows = new Set(matchedRows)
+
+			for (const group of mergedGroups) {
+				// 检查合并单元格组中是否有任何行匹配筛选条件
+				const hasMatchInGroup = group.rows.some((row) => matchedRows.has(row))
+
+				if (hasMatchInGroup) {
+					// 如果组中有匹配的行，则包含整个组的所有行
+					group.rows.forEach((row) => {
+						// 确保行在数据范围内
+						if (sheet.celldata.has(row)) {
+							completeRows.add(row)
+						}
+					})
+				}
+			}
+
+			// 第三阶段：构建最终筛选结果
+			const sortedRows = Array.from(completeRows).sort((a, b) => a - b)
+			const rowMappingData = []
+			let filteredRowIndex = 0
+
+			for (const originalRowIndex of sortedRows) {
+				const rowData = sheet.celldata.get(originalRowIndex)
+				if (rowData && Array.isArray(rowData)) {
 					// 将符合条件的行数据存储到filterCellData中
 					sheet.filterCellData.set(filteredRowIndex, rowData)
 
 					// 存储行号映射关系
 					rowMappingData.push({
 						filteredIndex: filteredRowIndex,
-						originalIndex: rowIndex,
+						originalIndex: originalRowIndex,
 					})
 
 					filteredRowIndex++
 				}
-
-				// 更新进度
-				if (processedCount % 1000 === 0) {
-					sheet.state.progress = Math.floor((processedCount / totalRows) * 100)
-				}
-			})
+			}
 
 			// 将行号映射信息存储到sheet中，供前端使用
 			sheet.rowMapping = rowMappingData
@@ -1174,13 +1244,21 @@ export const useTools = () => {
 			if (sheet.filterCellData.size === 0) {
 				ElMessage.warning('没有符合筛选条件的数据')
 			} else {
-				ElMessage.success(`筛选完成，找到 ${sheet.filterCellData.size} 条记录`)
+				const mergedCellsIncluded = completeRows.size - matchedRows.size
+				const message =
+					mergedCellsIncluded > 0
+						? `筛选完成，找到 ${sheet.filterCellData.size} 条记录（包含 ${mergedCellsIncluded} 条合并单元格相关行）`
+						: `筛选完成，找到 ${sheet.filterCellData.size} 条记录`
+				ElMessage.success(message)
 			}
 
-			console.log('筛选完成:', {
+			console.log('合并单元格感知筛选完成:', {
 				原始数据行数: sheet.celldata.size,
-				筛选后行数: sheet.filterCellData.size,
+				直接匹配行数: matchedRows.size,
+				合并单元格补充行数: completeRows.size - matchedRows.size,
+				最终筛选行数: sheet.filterCellData.size,
 				筛选条件: sheet.config.filtered,
+				合并单元格组数: mergedGroups.length,
 				处理时间: Date.now(),
 			})
 		} catch (error) {
@@ -1193,7 +1271,7 @@ export const useTools = () => {
 		}
 	}
 
-	// 静默筛选方法，用于避免数据闪烁
+	// 静默筛选方法，用于避免数据闪烁（支持合并单元格完整性）
 	const filterByCheckedSilent = async (checked) => {
 		if (!sheet.config.filter) {
 			return
@@ -1222,8 +1300,11 @@ export const useTools = () => {
 				return
 			}
 
-			let filteredRowIndex = 0 // 筛选后的行索引
-			const rowMappingData = [] // 存储行号映射关系
+			// 获取所有合并单元格组
+			const mergedGroups = getMergedCellGroups()
+
+			// 第一阶段：标准筛选，找出符合条件的行
+			const matchedRows = new Set()
 
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				// 边界情况处理：检查行数据有效性
@@ -1265,7 +1346,20 @@ export const useTools = () => {
 							break
 						}
 
-						const cellValue = rowData[columnIndex]
+						let cellValue = rowData[columnIndex]
+
+						// 特殊处理：对于合并单元格，需要检查是否应该使用合并单元格的值
+						const mergedCell = sheet.hooks.mergeHook.findMergedCell(
+							rowIndex,
+							columnIndex
+						)
+						if (mergedCell && mergedCell.r !== rowIndex) {
+							// 如果当前行不是合并单元格的起始行，获取起始行的值
+							const startRowData = sheet.celldata.get(mergedCell.r)
+							if (startRowData && startRowData[columnIndex] !== undefined) {
+								cellValue = startRowData[columnIndex]
+							}
+						}
 
 						// 检查当前列的值是否匹配任一筛选值（OR逻辑）
 						let matchesThisColumn = false
@@ -1285,20 +1379,50 @@ export const useTools = () => {
 					}
 				}
 
-				// 如果符合所有筛选条件，将行数据添加到筛选结果中
+				// 如果符合所有筛选条件，标记为匹配行
 				if (matchesAllColumns) {
+					matchedRows.add(rowIndex)
+				}
+			})
+
+			// 第二阶段：合并单元格完整性检查
+			const completeRows = new Set(matchedRows)
+
+			for (const group of mergedGroups) {
+				// 检查合并单元格组中是否有任何行匹配筛选条件
+				const hasMatchInGroup = group.rows.some((row) => matchedRows.has(row))
+
+				if (hasMatchInGroup) {
+					// 如果组中有匹配的行，则包含整个组的所有行
+					group.rows.forEach((row) => {
+						// 确保行在数据范围内
+						if (sheet.celldata.has(row)) {
+							completeRows.add(row)
+						}
+					})
+				}
+			}
+
+			// 第三阶段：构建最终筛选结果
+			const sortedRows = Array.from(completeRows).sort((a, b) => a - b)
+			const rowMappingData = []
+			let filteredRowIndex = 0
+
+			for (const originalRowIndex of sortedRows) {
+				const rowData = sheet.celldata.get(originalRowIndex)
+				if (rowData && Array.isArray(rowData)) {
 					// 将符合条件的行数据存储到filterCellData中
 					sheet.filterCellData.set(filteredRowIndex, rowData)
 
 					// 存储行号映射关系
 					rowMappingData.push({
 						filteredIndex: filteredRowIndex,
-						originalIndex: rowIndex,
+						originalIndex: originalRowIndex,
 					})
 
 					filteredRowIndex++
 				}
-			})
+			}
 
 			// 将行号映射信息存储到sheet中，供前端使用
 			sheet.rowMapping = rowMappingData
@@ -1685,7 +1809,7 @@ export const useTools = () => {
 		loading.value = true
 		loadingText.value = '数据转换中...'
 
-		await processMapInBatches(sheet.celldata, (rowIndex, rowData) => {
+		await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 			const cells = []
 			if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 				rowData.forEach((cell, colIndex) => {

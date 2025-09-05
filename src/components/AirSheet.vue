@@ -455,52 +455,14 @@ const visibleCells = (row) => {
 		let inMerged = false
 
 		if (mergedCell) {
-			// 在筛选状态下，需要特殊处理合并单元格
-			if (isFiltered.value && hasFilteredData.value) {
-				// 检查合并单元格的所有行是否都在筛选结果中
-				const mergeStartRow = mergedCell.r
-				const mergeEndRow = mergedCell.r + mergedCell.rs - 1
-
-				// 检查合并单元格范围内的行是否都在筛选结果中
-				let allRowsInFilter = true
-				const mergedRowsInFilter = []
-
-				for (let mergeRow = mergeStartRow; mergeRow <= mergeEndRow; mergeRow++) {
-					const filteredIndex = sheet.rowMapping?.findIndex(
-						(mapping) => mapping.originalIndex === mergeRow
-					)
-					if (filteredIndex !== -1) {
-						mergedRowsInFilter.push(filteredIndex)
-					} else {
-						allRowsInFilter = false
-					}
-				}
-
-				if (allRowsInFilter && mergedRowsInFilter.length > 0) {
-					// 所有合并行都在筛选结果中，正常处理合并单元格
-					if (mergedCell.r === checkRowIndex && mergedCell.c === i) {
-						// 合并单元格起始位置
-						value = rowData[i] || ''
-					} else {
-						// 合并单元格内部
-						value = ''
-						inMerged = true
-					}
-				} else {
-					// 合并单元格被部分过滤，当作普通单元格处理
-					value = rowData[i] || ''
-					inMerged = false
-				}
+			// 由于后端筛选逻辑已确保合并单元格完整性，这里可以简化处理
+			if (mergedCell.r === checkRowIndex && mergedCell.c === i) {
+				// 合并单元格起始位置，显示数据
+				value = rowData[i] || ''
 			} else {
-				// 正常状态下的合并单元格处理
-				if (mergedCell.r === checkRowIndex && mergedCell.c === i) {
-					// 如果是合并单元格的起始位置，设置值
-					value = rowData[i] || ''
-				} else {
-					// 如果在合并单元格内部，不设置值
-					value = ''
-					inMerged = true
-				}
+				// 合并单元格内部，不显示数据但保持合并状态
+				value = ''
+				inMerged = true
 			}
 		} else {
 			// 普通单元格，从行数据中取值
@@ -684,7 +646,9 @@ const isMergedCellStart = (cell) => {
 	if (Object.keys(mergedCells).length === 0) {
 		return false
 	}
-	const key = `${cell.r}-${cell.c}`
+	// 在筛选状态下，使用原始行号来检查合并单元格
+	const checkRowIndex = cell.originalR !== undefined ? cell.originalR : cell.r
+	const key = `${checkRowIndex}-${cell.c}`
 
 	return mergedCells.hasOwnProperty(key)
 }
