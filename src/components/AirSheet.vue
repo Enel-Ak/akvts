@@ -1224,9 +1224,20 @@ const isLandscape = () => {
 
 let originalParent = null
 let originalSheet = null
-const onFull = () => {
+const onFull = async () => {
+	// 在全屏切换前保存当前滚动位置
+	if (containerRef.value) {
+		savedScrollPosition.value = {
+			top: containerRef.value.scrollTop,
+			left: containerRef.value.scrollLeft,
+		}
+		console.log('AirSheet - 全屏切换前保存滚动位置:', savedScrollPosition.value)
+	}
+
 	full.value = !full.value
+
 	if (full.value) {
+		// 进入全屏模式
 		const sheetComponentEl = containerRef.value.closest('.air-sheet-component')
 		if (sheetComponentEl) {
 			originalSheet = sheetComponentEl
@@ -1234,10 +1245,19 @@ const onFull = () => {
 			document.body.appendChild(sheetComponentEl)
 		}
 	} else if (originalParent && originalSheet) {
+		// 退出全屏模式
 		originalParent.appendChild(originalSheet)
 		originalParent = null
 		originalSheet = null
 	}
+
+	// 等待DOM更新完成后恢复滚动位置
+	await nextTick()
+
+	// 恢复滚动位置到所有相关容器
+	restoreScrollPosition()
+
+	console.log('AirSheet - 全屏切换完成，滚动位置已恢复')
 }
 
 const onFilter = async (e, alphabet) => {
