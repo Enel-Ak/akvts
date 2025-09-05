@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue'
+import {computed, nextTick, onMounted, ref, watch} from 'vue'
 import {ElMessage} from 'element-plus'
 
 const emits = defineEmits(['update:modelValue', 'confirm', 'confirmOnly'])
@@ -29,7 +29,150 @@ const filterList = ref([])
 const checked = ref([])
 const searchValue = ref('')
 
+// 虚拟滚动相关状态
+const scrollContainer = ref(null)
+const itemHeight = ref(32) // 每个筛选项的预估高度（px）
+const containerHeight = ref(300) // 滚动容器的高度（px）
+const scrollTop = ref(0) // 当前滚动位置
+const bufferCount = ref(10) // 缓冲区项目数量（上下各添加的额外项目）
+const startIndex = ref(0) // 可视区域起始索引
+const endIndex = ref(0) // 可视区域结束索引
+const savedScrollPosition = ref(0) // 保存的滚动位置
+
+// 计算属性：过滤后的数据列表
+const filteredList = computed(() => {
+	if (!searchValue.value) {
+		return filterList.value.filter((item) => item.v)
+	}
+	return filterList.value.filter((item) => item.v && item.v.includes(searchValue.value))
+})
+
+// 计算属性：可视区域内的数据
+const visibleItems = computed(() => {
+	const start = Math.max(0, startIndex.value - bufferCount.value)
+	const end = Math.min(filteredList.value.length, endIndex.value + bufferCount.value)
+	return filteredList.value.slice(start, end).map((item, index) => ({
+		...item,
+		virtualIndex: start + index, // 虚拟索引，用于定位
+	}))
+})
+
+// 计算属性：上方占位空间高度
+const offsetTop = computed(() => {
+	const start = Math.max(0, startIndex.value - bufferCount.value)
+	return start * itemHeight.value
+})
+
+// 计算属性：下方占位空间高度
+const offsetBottom = computed(() => {
+	const end = Math.min(filteredList.value.length, endIndex.value + bufferCount.value)
+	return (filteredList.value.length - end) * itemHeight.value
+})
+
+// 计算可视区域索引的函数
+const updateVisibleRange = () => {
+	const scrollPosition = scrollTop.value
+	const containerH = containerHeight.value
+	const itemH = itemHeight.value
+
+	// 计算可视区域的起始和结束索引
+	const start = Math.floor(scrollPosition / itemH)
+	const visibleItemCount = Math.ceil(containerH / itemH)
+	const end = start + visibleItemCount
+
+	// 更新可视区域索引
+	startIndex.value = Math.max(0, start)
+	endIndex.value = Math.min(filteredList.value.length, end)
+
+	console.log('虚拟滚动 - 可视区域更新:', {
+		scrollPosition,
+		startIndex: startIndex.value,
+		endIndex: endIndex.value,
+		totalItems: filteredList.value.length,
+		visibleItems: endIndex.value - startIndex.value,
+	})
+}
+
+// 初始化可视区域
+const initializeVisibleRange = () => {
+	// 计算初始的可视区域
+	const containerH = containerHeight.value
+	const itemH = itemHeight.value
+	const initialVisibleCount = Math.ceil(containerH / itemH)
+
+	startIndex.value = 0
+	endIndex.value = Math.min(filteredList.value.length, initialVisibleCount)
+	scrollTop.value = 0
+
+	console.log('虚拟滚动 - 初始化:', {
+		containerHeight: containerH,
+		itemHeight: itemH,
+		initialVisibleCount,
+		endIndex: endIndex.value,
+	})
+}
+
+// 防抖函数
+const debounce = (func, wait) => {
+	let timeout
+	return function executedFunction(...args) {
+		const later = () => {
+			clearTimeout(timeout)
+			func(...args)
+		}
+		clearTimeout(timeout)
+		timeout = setTimeout(later, wait)
+	}
+}
+
+// 节流函数
+const throttle = (func, limit) => {
+	let inThrottle
+	return function executedFunction(...args) {
+		if (!inThrottle) {
+			func.apply(this, args)
+			inThrottle = true
+			setTimeout(() => (inThrottle = false), limit)
+		}
+	}
+}
+
+// 优化的滚动事件处理
+const handleScroll = throttle((event) => {
+	const target = event.target
+	scrollTop.value = target.scrollTop
+
+	// 使用 requestAnimationFrame 优化性能
+	requestAnimationFrame(() => {
+		updateVisibleRange()
+	})
+}, 16) // 约60fps
+
+// 搜索变化时的处理（使用防抖）
+const handleSearchChange = debounce(() => {
+	console.log('虚拟滚动 - 搜索变化，重新初始化')
+	initializeVisibleRange()
+}, 300)
+
+// 保存滚动位置
+const saveScrollPosition = () => {
+	savedScrollPosition.value = scrollTop.value
+	console.log('虚拟滚动 - 保存滚动位置:', savedScrollPosition.value)
+}
+
+// 恢复滚动位置
+const restoreScrollPosition = () => {
+	if (savedScrollPosition.value > 0 && scrollContainer.value) {
+		scrollContainer.value.scrollTop = savedScrollPosition.value
+		scrollTop.value = savedScrollPosition.value
+		updateVisibleRange()
+		console.log('虚拟滚动 - 恢复滚动位置:', savedScrollPosition.value)
+	}
+}
+
 const onClose = () => {
+	// 关闭前保存滚动位置
+	saveScrollPosition()
 	mask.value = false
 	emits('update:modelValue', null)
 }
@@ -123,6 +266,11 @@ watch(
 			left,
 		}
 		mask.value = true
+
+		// 面板打开后恢复滚动位置
+		nextTick(() => {
+			restoreScrollPosition()
+		})
 	}
 )
 
@@ -183,6 +331,25 @@ watch(
 	},
 	{immediate: true, deep: true}
 )
+
+// 监听搜索值变化
+watch(searchValue, handleSearchChange)
+
+// 监听筛选数据变化，重新初始化虚拟滚动
+watch(
+	filterList,
+	() => {
+		console.log('虚拟滚动 - 筛选数据变化，重新初始化')
+		initializeVisibleRange()
+	},
+	{immediate: true}
+)
+
+// 组件挂载后初始化
+onMounted(() => {
+	console.log('虚拟滚动 - 组件挂载，初始化虚拟滚动')
+	initializeVisibleRange()
+})
 </script>
 <template>
 	<div v-show="mask" class="filter-layout" @click="onClose">
@@ -194,16 +361,20 @@ watch(
 			<div class="search">
 				<el-input v-model="searchValue" placeholder="搜包含任一关键字" />
 			</div>
-			<div class="scroll">
-				<el-checkbox-group v-if="filterList.length" v-model="checked">
-					<template
-						v-for="(item, index) of filterList.filter((item) =>
-							item.v && searchValue ? item.v.includes(searchValue) : true
-						)"
-						:key="item.r"
-					>
-						<div class="item" v-if="item.v">
-							<el-checkbox :label="item.v" :value="item.v" :key="index" />
+			<div class="scroll" ref="scrollContainer" @scroll="handleScroll">
+				<div v-if="filterList.length" class="virtual-scroll-container">
+					<!-- 上方占位空间 -->
+					<div class="virtual-spacer" :style="{height: offsetTop + 'px'}"></div>
+
+					<!-- 可视区域内的项目 -->
+					<el-checkbox-group v-model="checked">
+						<div
+							v-for="item in visibleItems"
+							:key="item.r"
+							class="item virtual-item"
+							:style="{height: itemHeight + 'px'}"
+						>
+							<el-checkbox :label="item.v" :value="item.v" />
 							<span class="flx">{{ item.v }}</span>
 							<el-button
 								size="small"
@@ -214,8 +385,11 @@ watch(
 								仅筛选此项
 							</el-button>
 						</div>
-					</template>
-				</el-checkbox-group>
+					</el-checkbox-group>
+
+					<!-- 下方占位空间 -->
+					<div class="virtual-spacer" :style="{height: offsetBottom + 'px'}"></div>
+				</div>
 				<div v-else class="pd-20">
 					<LoadingTransition text="数据加载中" />
 				</div>
@@ -261,6 +435,14 @@ watch(
 		padding: 0 0 0 10px;
 	}
 
+	.virtual-scroll-container {
+		position: relative;
+	}
+
+	.virtual-spacer {
+		width: 100%;
+	}
+
 	.item {
 		align-items: center;
 		display: flex;
@@ -274,6 +456,12 @@ watch(
 				display: block;
 			}
 		}
+	}
+
+	.virtual-item {
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
 	}
 
 	.btns {
