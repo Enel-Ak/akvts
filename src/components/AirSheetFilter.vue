@@ -1,5 +1,6 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue'
+import {ElMessage} from 'element-plus'
 
 const emits = defineEmits(['update:modelValue', 'confirm', 'confirmOnly'])
 const props = defineProps({
@@ -34,13 +35,50 @@ const onClose = () => {
 }
 
 const onConfirm = () => {
-	const output = checked.value.map((item) => ({v: item, c: props.colIndex}))
+	// 确保colIndex是有效的
+	if (props.colIndex === -1 || props.colIndex === undefined || props.colIndex === null) {
+		console.error('AirSheetFilter - onConfirm: invalid colIndex', props.colIndex)
+		ElMessage.error('列索引无效，无法执行筛选操作')
+		return
+	}
+
+	// 过滤掉无效的选中项
+	const validChecked = checked.value.filter(
+		(item) => item !== undefined && item !== null && item !== ''
+	)
+
+	const output = validChecked.map((item) => ({
+		v: item,
+		c: props.colIndex,
+	}))
+
+	console.log('AirSheetFilter - 筛选确认:', {
+		列索引: props.colIndex,
+		原始选中项: checked.value,
+		有效选中项: validChecked,
+		输出结果: output,
+	})
+
 	emits('confirm', output)
 	onClose()
 }
 
 const onClickOnly = (value) => {
-	emits('confirmOnly', value)
+	// 确保colIndex是有效的
+	if (props.colIndex === -1 || props.colIndex === undefined || props.colIndex === null) {
+		console.error('AirSheetFilter - onClickOnly: invalid colIndex', props.colIndex)
+		ElMessage.error('列索引无效，无法执行筛选操作')
+		return
+	}
+
+	const output = [{v: value, c: props.colIndex}]
+	console.log('AirSheetFilter - 仅筛选此项:', {
+		列索引: props.colIndex,
+		筛选值: value,
+		输出结果: output,
+	})
+
+	emits('confirm', output)
 	onClose()
 }
 
@@ -68,24 +106,57 @@ watch(
 watch(
 	() => props.filterCol,
 	(newVal) => {
+		// 调试信息：筛选数据更新
+		if (newVal?.length > 0) {
+			console.log('AirSheetFilter - 筛选数据更新:', {
+				列索引: props.colIndex,
+				数据数量: newVal.length,
+				数据样本: newVal.slice(0, 3),
+			})
+		}
 		filterList.value = newVal
 	}
 )
 
 // 监听当前筛选状态的变化，同步更新选中项
 watch(
-	() => props.colIndex,
-	(newVal) => {
+	[() => props.colIndex, () => props.currentFiltered],
+	([newColIndex, newCurrentFiltered]) => {
+		console.log('AirSheetFilter - 列索引同步:', {
+			列索引: newColIndex,
+			当前筛选条件数量: newCurrentFiltered?.length || 0,
+			筛选数据数量: props.filterCol.length,
+		})
+
+		// 确保colIndex是有效的数字
+		if (newColIndex === -1 || newColIndex === undefined || newColIndex === null) {
+			console.log('AirSheetFilter - 列索引无效，清空选中项')
+			checked.value = []
+			return
+		}
+
 		// 根据当前列的筛选条件更新选中项
-		const currentColFilters = props.currentFiltered.filter((filter) => filter.c === newVal)
+		const currentColFilters = (newCurrentFiltered || []).filter((filter) => {
+			// 确保filter对象有效且列索引匹配
+			return filter && typeof filter.c === 'number' && filter.c === newColIndex
+		})
+
+		console.log('AirSheetFilter - 当前列筛选条件:', {
+			列索引: newColIndex,
+			匹配的筛选条件: currentColFilters,
+		})
 
 		// 只更新当前列的选中项
 		if (currentColFilters.length > 0) {
-			checked.value = currentColFilters.map((filter) => filter.v)
+			checked.value = currentColFilters
+				.map((filter) => filter.v)
+				.filter((v) => v !== undefined && v !== null)
 		} else {
 			// 如果当前列没有筛选条件，清空当前列的选中项
 			checked.value = []
 		}
+
+		console.log('AirSheetFilter - 选中项已更新:', checked.value)
 	},
 	{immediate: true, deep: true}
 )

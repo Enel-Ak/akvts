@@ -998,6 +998,13 @@ export const useTools = () => {
 
 	// 筛选, 先把当前列所有数据取出来
 	const filterCol = async (alphabet) => {
+		console.log('useTools - 获取列筛选数据:', {
+			列信息: alphabet,
+			列索引: alphabet.c,
+			使用筛选后数据: sheet.filterCellData.size > 0,
+			原始数据行数: sheet.celldata.size,
+		})
+
 		const data = []
 		const org = sheet.filterCellData.size ? sheet.filterCellData : sheet.celldata
 		const addedValues = new Set() // 用于去重，避免合并单元格重复添加相同值
@@ -1048,6 +1055,13 @@ export const useTools = () => {
 				}
 			}
 		})
+
+		console.log('useTools - 列筛选数据获取完成:', {
+			列索引: alphabet.c,
+			数据数量: data.length,
+			数据样本: data.slice(0, 3),
+		})
+
 		return data
 	}
 

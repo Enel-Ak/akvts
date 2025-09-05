@@ -87,7 +87,7 @@ const isLoading = computed(() => {
 const fns = ref(props.modelValue?.fns || [])
 
 const filterEl = ref(null)
-const filterCol = ref(null)
+const filterCol = ref([])
 const filterColIndex = ref(-1)
 
 // 筛选状态管理
@@ -1241,9 +1241,20 @@ const onFull = () => {
 }
 
 const onFilter = async (e, alphabet) => {
+	console.log('AirSheet - 筛选面板打开:', {
+		列信息: alphabet,
+		列索引: alphabet.c,
+		当前筛选状态: sheet?.config?.filtered || [],
+	})
+
 	filterEl.value = e.target.closest('.touch-filter')
 	filterCol.value = await sheet.hooks.toolsHook.filterCol(alphabet)
 	filterColIndex.value = alphabet.c
+
+	console.log('AirSheet - 筛选数据获取完成:', {
+		列索引: filterColIndex.value,
+		筛选数据数量: filterCol.value?.length || 0,
+	})
 }
 
 watch(
@@ -1311,9 +1322,10 @@ watch(
 
 onBeforeMount(() => {})
 
-sheetStore.init(id, props, () => init())
 // 初始化
-onMounted(() => {})
+onMounted(() => {
+	sheetStore.init(id, props, () => init())
+})
 
 onActivated(() => {})
 
@@ -2450,7 +2462,7 @@ defineExpose({
 			:filterCol="filterCol"
 			:currentFiltered="Array.isArray(sheet?.config?.filtered) ? sheet.config.filtered : []"
 			@confirm="sheet?.hooks?.toolsHook?.filterByChecked"
-			@confirmOnly=""
+			@confirmOnly="sheet?.hooks?.toolsHook?.filterByChecked"
 		/>
 	</div>
 </template>
