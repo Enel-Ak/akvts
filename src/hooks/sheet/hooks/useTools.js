@@ -9,27 +9,138 @@ export const useTools = () => {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = ''
 	let sheet = null
-	// const {
-	// 	sheet,
-	// 	limit,
-	// 	loading,
-	// 	loadingText,
-	// 	loadingProgress,
-	// 	containerRef,
-	// 	useEditHook,
-	// 	useExcelHook,
-	// 	useResizeHook,
-	// 	useHistoryHook,
-	// 	useMergedCellsHook,
-	// 	useSelectionRangeHook,
-	// 	isLocked,
-	// 	renderRange,
-	// 	processMapInBatches,
-	// } = config
 
 	const isLocked = () => {
 		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
 		return !!sheet.config.locked[`${r}-${c}`]
+	}
+
+	// 检查指定行是否有锁定的单元格
+	const isRowLocked = (rowIndex) => {
+		if (!sheet.config.locked) return false
+
+		for (let col = 0; col < sheet.config.colCount; col++) {
+			if (sheet.config.locked[`${rowIndex}-${col}`]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// 检查指定列是否有锁定的单元格
+	const isColumnLocked = (colIndex) => {
+		if (!sheet.config.locked) return false
+
+		for (let row = 0; row < sheet.config.rowCount; row++) {
+			if (sheet.config.locked[`${row}-${colIndex}`]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// 检查在指定行位置添加行是否会影响锁定单元格
+	// 只有在锁定单元格的具体行位置插入才禁止，在上方插入允许（锁定单元格会下移）
+	const canAddRowAt = (insertRowIndex, selectedRowStart, selectedRowEnd) => {
+		if (!sheet.config.locked) return {canAdd: true, reason: ''}
+
+		// 检查选中的行范围内是否有锁定单元格
+		for (let row = selectedRowStart; row <= selectedRowEnd; row++) {
+			if (isRowLocked(row)) {
+				return {
+					canAdd: false,
+					reason: `无法在选中区域添加行：第${row + 1}行包含锁定的单元格`,
+				}
+			}
+		}
+
+		return {canAdd: true, reason: ''}
+	}
+
+	// 检查在指定列位置添加列是否会影响锁定单元格
+	// 只有在锁定单元格的具体列位置插入才禁止，在左侧插入允许（锁定单元格会右移）
+	const canAddColumnAt = (insertColIndex, selectedColStart, selectedColEnd) => {
+		if (!sheet.config.locked) return {canAdd: true, reason: ''}
+
+		// 检查选中的列范围内是否有锁定单元格
+		for (let col = selectedColStart; col <= selectedColEnd; col++) {
+			if (isColumnLocked(col)) {
+				return {
+					canAdd: false,
+					reason: `无法在选中区域添加列：第${col + 1}列包含锁定的单元格`,
+				}
+			}
+		}
+
+		return {canAdd: true, reason: ''}
+	}
+
+	// 检查删除行范围是否包含锁定单元格
+	const canRemoveRows = (startRow, endRow) => {
+		if (!sheet.config.locked) return {canRemove: true, reason: ''}
+
+		for (let row = startRow; row <= endRow; row++) {
+			if (isRowLocked(row)) {
+				return {
+					canRemove: false,
+					reason: `无法删除行：第${row + 1}行包含锁定的单元格`,
+				}
+			}
+		}
+
+		return {canRemove: true, reason: ''}
+	}
+
+	// 检查删除列范围是否包含锁定单元格
+	const canRemoveColumns = (startCol, endCol) => {
+		if (!sheet.config.locked) return {canRemove: true, reason: ''}
+
+		for (let col = startCol; col <= endCol; col++) {
+			if (isColumnLocked(col)) {
+				return {
+					canRemove: false,
+					reason: `无法删除列：第${col + 1}列包含锁定的单元格`,
+				}
+			}
+		}
+
+		return {canRemove: true, reason: ''}
+	}
+
+	// 更新锁定单元格位置 - 添加行时
+	const updateLockedCellsAfterAddRow = (insertRowIndex, addCount) => {
+		if (!sheet.config.locked) return
+
+		const newLocked = {}
+		Object.entries(sheet.config.locked).forEach(([key, value]) => {
+			const [row, col] = key.split('-').map(Number)
+			if (row >= insertRowIndex) {
+				// 锁定单元格在插入位置之后，需要向下移动
+				newLocked[`${row + addCount}-${col}`] = value
+			} else {
+				// 锁定单元格在插入位置之前，位置不变
+				newLocked[key] = value
+			}
+		})
+		sheet.config.locked = newLocked
+	}
+
+	// 更新锁定单元格位置 - 添加列时
+	const updateLockedCellsAfterAddColumn = (insertColIndex, addCount) => {
+		if (!sheet.config.locked) return
+
+		const newLocked = {}
+		Object.entries(sheet.config.locked).forEach(([key, value]) => {
+			const [row, col] = key.split('-').map(Number)
+			if (col >= insertColIndex) {
+				// 锁定单元格在插入位置之后，需要向右移动
+				newLocked[`${row}-${col + addCount}`] = value
+			} else {
+				// 锁定单元格在插入位置之前，位置不变
+				newLocked[key] = value
+			}
+		})
+		sheet.config.locked = newLocked
 	}
 
 	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
@@ -364,6 +475,14 @@ export const useTools = () => {
 			insertRowIndex = rr + 1
 		}
 
+		// 检查是否可以在选中区域添加行
+		// 只有在锁定单元格的具体行位置插入才禁止，在上方插入允许（锁定单元格会下移）
+		const checkResult = canAddRowAt(insertRowIndex, r, rr)
+		if (!checkResult.canAdd) {
+			ElMessage.warning(checkResult.reason)
+			return
+		}
+
 		if (sheet.celldata.size >= sheet.props.limit) {
 			sheet.state.loading = true
 			sheet.state.progress = 0
@@ -411,6 +530,9 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
+			// 更新锁定单元格位置（在插入位置之后的锁定单元格需要向下移动）
+			updateLockedCellsAfterAddRow(insertRowIndex, addRowCount.value)
+
 			// 如果当前处于筛选状态，重新筛选以包含新行
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
 				// 保存当前筛选条件
@@ -423,16 +545,13 @@ export const useTools = () => {
 			}
 
 			if (save) {
-				// 为每一行分别保存历史记录，确保可以依次撤销
-				for (let i = 0; i < addRowCount.value; i++) {
-					sheet.hooks.historyHook.save(
-						{
-							r: insertRowIndex + i,
-							rs: 1,
-						},
-						'addRow'
-					)
-				}
+				sheet.hooks.historyHook.save(
+					{
+						r: insertRowIndex,
+						rs: addRowCount.value,
+					},
+					'addRow'
+				)
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)
@@ -450,6 +569,13 @@ export const useTools = () => {
 		}
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined) return
+
+		// 检查要删除的行范围是否有锁定的单元格
+		const checkResult = canRemoveRows(r, rr)
+		if (!checkResult.canRemove) {
+			ElMessage.warning(checkResult.reason)
+			return
+		}
 
 		if (sheet.celldata.size >= sheet.props.limit) {
 			sheet.state.loading = true
@@ -551,13 +677,22 @@ export const useTools = () => {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
 
+		// 确定插入列的位置
+		const insertColIndex = isEnd ? sheet.config.colCount : cc + 1
+
+		// 检查是否可以在选中区域添加列
+		// 只有在锁定单元格的具体列位置插入才禁止，在左侧插入允许（锁定单元格会右移）
+		const checkResult = canAddColumnAt(insertColIndex, c, cc)
+		if (!checkResult.canAdd) {
+			ElMessage.warning(checkResult.reason)
+			return
+		}
+
 		if (sheet.celldata.size >= sheet.props.limit) {
 			sheet.state.loading = true
 			sheet.state.progress = 0
 			sheet.state.msg = '正在处理数据...'
 		}
-
-		const insertColIndex = isEnd ? sheet.config.colCount : cc + 1
 
 		try {
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
@@ -576,6 +711,9 @@ export const useTools = () => {
 			})
 
 			sheet.config.colCount += addColumnCount.value
+
+			// 更新锁定单元格位置（在插入位置之后的锁定单元格需要向右移动）
+			updateLockedCellsAfterAddColumn(insertColIndex, addColumnCount.value)
 
 			// 更新合并单元格
 			const mc = sheet.hooks.mergeHook.getMergedCells()
@@ -631,15 +769,13 @@ export const useTools = () => {
 
 			if (save) {
 				// 为每一列分别保存历史记录，确保可以依次撤销
-				for (let i = 0; i < addColumnCount.value; i++) {
-					sheet.hooks.historyHook.save(
-						{
-							c: insertColIndex + i,
-							cs: 1,
-						},
-						'addCol'
-					)
-				}
+				sheet.hooks.historyHook.save(
+					{
+						c: insertColIndex,
+						cs: addColumnCount.value,
+					},
+					'addCol'
+				)
 			}
 		} catch (error) {
 			console.error('添加列失败', error)
@@ -657,6 +793,13 @@ export const useTools = () => {
 		}
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
+
+		// 检查要删除的列范围是否有锁定的单元格
+		const checkResult = canRemoveColumns(c, cc)
+		if (!checkResult.canRemove) {
+			ElMessage.warning(checkResult.reason)
+			return
+		}
 
 		if (sheet.celldata.size >= sheet.props.limit) {
 			sheet.state.loading = true
@@ -857,14 +1000,53 @@ export const useTools = () => {
 	const filterCol = async (alphabet) => {
 		const data = []
 		const org = sheet.filterCellData.size ? sheet.filterCellData : sheet.celldata
+		const addedValues = new Set() // 用于去重，避免合并单元格重复添加相同值
+
 		await useProcessMapInBatches(sheet.id, org, (rowIndex, rowData) => {
 			if (rowData[alphabet.c] === undefined) return
-			data.push({
-				r: rowIndex,
-				c: alphabet.c,
-				v: rowData[alphabet.c],
-				_filter: true,
-			})
+
+			// 检查当前单元格是否在合并单元格内
+			const mergedCell = sheet.hooks.mergeHook.findMergedCell(rowIndex, alphabet.c)
+
+			if (mergedCell) {
+				// 如果是合并单元格，只有起始位置的单元格才应该出现在筛选选项中
+				if (mergedCell.r === rowIndex && mergedCell.c === alphabet.c) {
+					// 这是合并单元格的起始位置，添加到筛选选项中
+					const cellValue = rowData[alphabet.c]
+					if (
+						cellValue !== undefined &&
+						cellValue !== null &&
+						cellValue !== '' &&
+						!addedValues.has(cellValue)
+					) {
+						addedValues.add(cellValue)
+						data.push({
+							r: rowIndex,
+							c: alphabet.c,
+							v: cellValue,
+							_filter: true,
+						})
+					}
+				}
+				// 如果不是起始位置，跳过（不添加到筛选选项中）
+			} else {
+				// 普通单元格，直接添加到筛选选项中
+				const cellValue = rowData[alphabet.c]
+				if (
+					cellValue !== undefined &&
+					cellValue !== null &&
+					cellValue !== '' &&
+					!addedValues.has(cellValue)
+				) {
+					addedValues.add(cellValue)
+					data.push({
+						r: rowIndex,
+						c: alphabet.c,
+						v: cellValue,
+						_filter: true,
+					})
+				}
+			}
 		})
 		return data
 	}
@@ -1487,7 +1669,7 @@ export const useTools = () => {
 		})
 
 		// 锁定单元格处理
-		Object.entries(sheet.config.lockCells).forEach(([key, value]) => {
+		Object.entries(sheet.config.locked).forEach(([key, value]) => {
 			const range = parseCellRange(key)
 			authority.allowRangeList.push({
 				sqref: range.sqref,

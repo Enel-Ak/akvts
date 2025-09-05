@@ -74,16 +74,10 @@ watch(
 
 // 监听当前筛选状态的变化，同步更新选中项
 watch(
-	() => props.currentFiltered,
+	() => props.colIndex,
 	(newVal) => {
-		// 如果没有筛选条件，清空选中项
-		if (!newVal || !Array.isArray(newVal) || newVal.length === 0) {
-			checked.value = []
-			return
-		}
-
 		// 根据当前列的筛选条件更新选中项
-		const currentColFilters = newVal.filter((filter) => filter.c === props.colIndex)
+		const currentColFilters = props.currentFiltered.filter((filter) => filter.c === newVal)
 
 		// 只更新当前列的选中项
 		if (currentColFilters.length > 0) {

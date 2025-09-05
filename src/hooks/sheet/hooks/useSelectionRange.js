@@ -701,21 +701,87 @@ export const useSelectionRange = () => {
 
 	const handleDragMoveInternal = (e) => {
 		const currentPos = limitRange(getCellPosition(e))
-		if (
-			!currentPos ||
-			currentPos.r > sheet.config.rowCount - 1 ||
-			currentPos.c > sheet.config.colCount - 1
-		)
+		if (!currentPos) return
+
+		// 检查是否处于筛选状态
+		const isFiltered = sheet.config?.filtered && sheet.config.filtered.length > 0
+		const hasFilteredData = sheet.filterCellData && sheet.filterCellData.size > 0
+
+		// 在筛选状态下，需要使用筛选后的行数进行边界检查
+		const maxRowCount =
+			isFiltered && hasFilteredData ? sheet.filterCellData.size : sheet.config.rowCount
+		const maxColCount = sheet.config.colCount
+
+		if (currentPos.r >= maxRowCount || currentPos.c >= maxColCount) {
 			return
+		}
 
-		// 获取当前选区范围
-		const sr = Math.min(selection.r, currentPos.r)
-		const er = Math.max(selection.r, currentPos.r)
-		const sc = Math.min(selection.c, currentPos.c)
-		const ec = Math.max(selection.c, currentPos.c)
+		let adjustedCurrentPos = currentPos
+		let adjustedSelectionPos = selection
 
-		// 扩展选区以包含所有相关的合并单元格
-		const expanded = getExpandedRange(sr, sc, er, ec)
+		if (isFiltered && hasFilteredData) {
+			// 筛选状态下：需要将原始行号转换为筛选后的显示行号
+			// getCellPosition返回的是原始行号，需要转换为筛选后的显示索引
+			const currentOriginalRow = currentPos.r
+			const selectionOriginalRow = selection.r
+
+			// 查找原始行号对应的筛选后显示索引
+			const currentFilteredIndex =
+				sheet.rowMapping?.findIndex(
+					(mapping) => mapping.originalIndex === currentOriginalRow
+				) ?? -1
+			const selectionFilteredIndex =
+				sheet.rowMapping?.findIndex(
+					(mapping) => mapping.originalIndex === selectionOriginalRow
+				) ?? -1
+
+			// 如果找到了对应的筛选索引，使用筛选后的索引进行计算
+			if (currentFilteredIndex !== -1 && selectionFilteredIndex !== -1) {
+				adjustedCurrentPos = {...currentPos, r: currentFilteredIndex}
+				adjustedSelectionPos = {...selection, r: selectionFilteredIndex}
+			}
+		}
+
+		// 获取当前选区范围（使用调整后的位置）
+		const sr = Math.min(adjustedSelectionPos.r, adjustedCurrentPos.r)
+		const er = Math.max(adjustedSelectionPos.r, adjustedCurrentPos.r)
+		const sc = Math.min(adjustedSelectionPos.c, adjustedCurrentPos.c)
+		const ec = Math.max(adjustedSelectionPos.c, adjustedCurrentPos.c)
+
+		// 在筛选状态下，需要特殊处理合并单元格
+		let expanded
+		if (isFiltered && hasFilteredData) {
+			// 筛选状态下，先将显示索引转换回原始索引进行合并单元格检查
+			const srOriginal = sheet.rowMapping?.[sr]?.originalIndex ?? sr
+			const erOriginal = sheet.rowMapping?.[er]?.originalIndex ?? er
+
+			// 使用原始索引进行合并单元格扩展
+			const originalExpanded = getExpandedRange(srOriginal, sc, erOriginal, ec)
+
+			// 将扩展后的原始索引转换回显示索引
+			const expandedStartFilteredIndex =
+				sheet.rowMapping?.findIndex(
+					(mapping) => mapping.originalIndex === originalExpanded.r
+				) ?? -1
+			const expandedEndFilteredIndex =
+				sheet.rowMapping?.findIndex(
+					(mapping) => mapping.originalIndex === originalExpanded.rr
+				) ?? -1
+
+			if (expandedStartFilteredIndex !== -1 && expandedEndFilteredIndex !== -1) {
+				expanded = {
+					r: expandedStartFilteredIndex,
+					c: originalExpanded.c,
+					rr: expandedEndFilteredIndex,
+					cc: originalExpanded.cc,
+				}
+			} else {
+				expanded = {r: sr, c: sc, rr: er, cc: ec}
+			}
+		} else {
+			// 正常状态下的合并单元格处理
+			expanded = getExpandedRange(sr, sc, er, ec)
+		}
 
 		// 检查是否有变化
 		const {r, c, rr, cc} = ranged.value
@@ -727,8 +793,8 @@ export const useSelectionRange = () => {
 		ranged.value = {
 			r: Math.max(0, expanded.r),
 			c: Math.max(0, expanded.c),
-			rr: Math.min(sheet.config.rowCount - 1, expanded.rr),
-			cc: Math.min(sheet.config.colCount - 1, expanded.cc),
+			rr: Math.min(maxRowCount - 1, expanded.rr),
+			cc: Math.min(maxColCount - 1, expanded.cc),
 		}
 	}
 

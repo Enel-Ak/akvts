@@ -22,12 +22,12 @@ export const useHistory = () => {
 			filterState: {
 				filtered:
 					sheet.config.filtered && Array.isArray(sheet.config.filtered)
-						? [...sheet.config.filtered]
+						? JSON.parse(JSON.stringify(sheet.config.filtered))
 						: [],
 				filterCellData: new Map(sheet.filterCellData || new Map()),
 				rowMapping:
 					sheet.rowMapping && Array.isArray(sheet.rowMapping)
-						? [...sheet.rowMapping]
+						? JSON.parse(JSON.stringify(sheet.rowMapping))
 						: [],
 			},
 			creationTime: Date.now(),
