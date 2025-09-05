@@ -1003,21 +1003,29 @@ export const useTools = () => {
 			列索引: alphabet.c,
 			使用筛选后数据: sheet.filterCellData.size > 0,
 			原始数据行数: sheet.celldata.size,
+			行映射数量: sheet.rowMapping?.length || 0,
 		})
 
 		const data = []
 		const org = sheet.filterCellData.size ? sheet.filterCellData : sheet.celldata
 		const addedValues = new Set() // 用于去重，避免合并单元格重复添加相同值
+		const isFiltered = sheet.filterCellData.size > 0
 
 		await useProcessMapInBatches(sheet.id, org, (rowIndex, rowData) => {
 			if (rowData[alphabet.c] === undefined) return
 
-			// 检查当前单元格是否在合并单元格内
-			const mergedCell = sheet.hooks.mergeHook.findMergedCell(rowIndex, alphabet.c)
+			// 在筛选状态下，需要将筛选后的行索引转换为原始行索引
+			let originalRowIndex = rowIndex
+			if (isFiltered && sheet.rowMapping && sheet.rowMapping[rowIndex]) {
+				originalRowIndex = sheet.rowMapping[rowIndex].originalIndex
+			}
+
+			// 使用原始行索引检查当前单元格是否在合并单元格内
+			const mergedCell = sheet.hooks.mergeHook.findMergedCell(originalRowIndex, alphabet.c)
 
 			if (mergedCell) {
 				// 如果是合并单元格，只有起始位置的单元格才应该出现在筛选选项中
-				if (mergedCell.r === rowIndex && mergedCell.c === alphabet.c) {
+				if (mergedCell.r === originalRowIndex && mergedCell.c === alphabet.c) {
 					// 这是合并单元格的起始位置，添加到筛选选项中
 					const cellValue = rowData[alphabet.c]
 					if (
@@ -1028,7 +1036,7 @@ export const useTools = () => {
 					) {
 						addedValues.add(cellValue)
 						data.push({
-							r: rowIndex,
+							r: originalRowIndex, // 使用原始行索引
 							c: alphabet.c,
 							v: cellValue,
 							_filter: true,
@@ -1047,7 +1055,7 @@ export const useTools = () => {
 				) {
 					addedValues.add(cellValue)
 					data.push({
-						r: rowIndex,
+						r: originalRowIndex, // 使用原始行索引
 						c: alphabet.c,
 						v: cellValue,
 						_filter: true,
@@ -1060,6 +1068,7 @@ export const useTools = () => {
 			列索引: alphabet.c,
 			数据数量: data.length,
 			数据样本: data.slice(0, 3),
+			筛选状态: isFiltered,
 		})
 
 		return data

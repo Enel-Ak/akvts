@@ -47,19 +47,30 @@ const onConfirm = () => {
 		(item) => item !== undefined && item !== null && item !== ''
 	)
 
-	const output = validChecked.map((item) => ({
+	// 构建当前列的筛选条件
+	const currentColumnFilters = validChecked.map((item) => ({
 		v: item,
 		c: props.colIndex,
 	}))
+
+	// 保留其他列的现有筛选条件，移除当前列的旧条件
+	const otherColumnsFilters = (props.currentFiltered || []).filter(
+		(filter) => filter && typeof filter.c === 'number' && filter.c !== props.colIndex
+	)
+
+	// 合并当前列的新筛选条件与其他列的现有筛选条件
+	const mergedFilters = [...otherColumnsFilters, ...currentColumnFilters]
 
 	console.log('AirSheetFilter - 筛选确认:', {
 		列索引: props.colIndex,
 		原始选中项: checked.value,
 		有效选中项: validChecked,
-		输出结果: output,
+		当前列筛选条件: currentColumnFilters,
+		其他列筛选条件: otherColumnsFilters,
+		合并后筛选条件: mergedFilters,
 	})
 
-	emits('confirm', output)
+	emits('confirm', mergedFilters)
 	onClose()
 }
 
@@ -71,14 +82,26 @@ const onClickOnly = (value) => {
 		return
 	}
 
-	const output = [{v: value, c: props.colIndex}]
+	// 构建当前列的筛选条件（仅筛选此项）
+	const currentColumnFilter = [{v: value, c: props.colIndex}]
+
+	// 保留其他列的现有筛选条件，移除当前列的旧条件
+	const otherColumnsFilters = (props.currentFiltered || []).filter(
+		(filter) => filter && typeof filter.c === 'number' && filter.c !== props.colIndex
+	)
+
+	// 合并当前列的新筛选条件与其他列的现有筛选条件
+	const mergedFilters = [...otherColumnsFilters, ...currentColumnFilter]
+
 	console.log('AirSheetFilter - 仅筛选此项:', {
 		列索引: props.colIndex,
 		筛选值: value,
-		输出结果: output,
+		当前列筛选条件: currentColumnFilter,
+		其他列筛选条件: otherColumnsFilters,
+		合并后筛选条件: mergedFilters,
 	})
 
-	emits('confirm', output)
+	emits('confirm', mergedFilters)
 	onClose()
 }
 
