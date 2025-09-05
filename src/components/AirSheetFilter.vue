@@ -39,6 +39,14 @@ const startIndex = ref(0) // 可视区域起始索引
 const endIndex = ref(0) // 可视区域结束索引
 const savedScrollPosition = ref(0) // 保存的滚动位置
 
+// 滚动优化相关状态
+const isScrolling = ref(false) // 是否正在滚动
+const scrollAnimationId = ref(null) // requestAnimationFrame ID
+const lastScrollTime = ref(0) // 上次滚动时间
+const scrollVelocity = ref(0) // 滚动速度
+const isRendering = ref(false) // 是否正在渲染
+const renderQueue = ref([]) // 渲染队列
+
 // 计算属性：过滤后的数据列表
 const filteredList = computed(() => {
 	if (!searchValue.value) {
@@ -47,50 +55,131 @@ const filteredList = computed(() => {
 	return filterList.value.filter((item) => item.v && item.v.includes(searchValue.value))
 })
 
-// 计算属性：可视区域内的数据
+// 计算属性：动态缓冲区大小
+const dynamicBufferCount = computed(() => {
+	// 根据滚动速度动态调整缓冲区大小
+	const baseBuffer = bufferCount.value
+	const velocityMultiplier = Math.min(scrollVelocity.value * 0.1, 3) // 最大3倍缓冲区
+	const dynamicBuffer = Math.ceil(baseBuffer * (1 + velocityMultiplier))
+
+	// 快速滚动时增加缓冲区，最大不超过50个项目
+	return Math.min(dynamicBuffer, 50)
+})
+
+// 缓存相关状态
+const visibleItemsCache = ref(new Map())
+const lastCacheKey = ref('')
+
+// 计算属性：可视区域内的数据 - 带缓存优化
 const visibleItems = computed(() => {
-	const start = Math.max(0, startIndex.value - bufferCount.value)
-	const end = Math.min(filteredList.value.length, endIndex.value + bufferCount.value)
-	return filteredList.value.slice(start, end).map((item, index) => ({
+	const currentBuffer = dynamicBufferCount.value
+	const start = Math.max(0, startIndex.value - currentBuffer)
+	const end = Math.min(filteredList.value.length, endIndex.value + currentBuffer)
+
+	// 生成缓存键
+	const cacheKey = `${start}-${end}-${filteredList.value.length}-${currentBuffer}`
+
+	// 检查缓存
+	if (cacheKey === lastCacheKey.value && visibleItemsCache.value.has(cacheKey)) {
+		return visibleItemsCache.value.get(cacheKey)
+	}
+
+	// 计算新的可视项目
+	const items = filteredList.value.slice(start, end).map((item, index) => ({
 		...item,
 		virtualIndex: start + index, // 虚拟索引，用于定位
 	}))
+
+	// 更新缓存（保持缓存大小在合理范围内）
+	if (visibleItemsCache.value.size > 10) {
+		visibleItemsCache.value.clear()
+	}
+	visibleItemsCache.value.set(cacheKey, items)
+	lastCacheKey.value = cacheKey
+
+	return items
 })
 
 // 计算属性：上方占位空间高度
 const offsetTop = computed(() => {
-	const start = Math.max(0, startIndex.value - bufferCount.value)
+	const currentBuffer = dynamicBufferCount.value
+	const start = Math.max(0, startIndex.value - currentBuffer)
 	return start * itemHeight.value
 })
 
 // 计算属性：下方占位空间高度
 const offsetBottom = computed(() => {
-	const end = Math.min(filteredList.value.length, endIndex.value + bufferCount.value)
+	const currentBuffer = dynamicBufferCount.value
+	const end = Math.min(filteredList.value.length, endIndex.value + currentBuffer)
 	return (filteredList.value.length - end) * itemHeight.value
 })
 
-// 计算可视区域索引的函数
+// 计算可视区域索引的函数 - 优化版本
 const updateVisibleRange = () => {
 	const scrollPosition = scrollTop.value
 	const containerH = containerHeight.value
 	const itemH = itemHeight.value
+	const totalItems = filteredList.value.length
 
-	// 计算可视区域的起始和结束索引
-	const start = Math.floor(scrollPosition / itemH)
-	const visibleItemCount = Math.ceil(containerH / itemH)
-	const end = start + visibleItemCount
+	// 边界检查
+	if (totalItems === 0 || itemH <= 0 || containerH <= 0) {
+		startIndex.value = 0
+		endIndex.value = 0
+		return
+	}
 
-	// 更新可视区域索引
-	startIndex.value = Math.max(0, start)
-	endIndex.value = Math.min(filteredList.value.length, end)
+	// 计算可视区域的起始和结束索引，添加容错处理
+	const start = Math.max(0, Math.floor(scrollPosition / itemH))
+	const visibleItemCount = Math.ceil(containerH / itemH) + 1 // +1 确保覆盖边界情况
+	const end = Math.min(totalItems, start + visibleItemCount)
 
-	console.log('虚拟滚动 - 可视区域更新:', {
-		scrollPosition,
-		startIndex: startIndex.value,
-		endIndex: endIndex.value,
-		totalItems: filteredList.value.length,
-		visibleItems: endIndex.value - startIndex.value,
+	// 确保索引有效性
+	const validStart = Math.max(0, Math.min(start, totalItems - 1))
+	const validEnd = Math.max(validStart, Math.min(end, totalItems))
+
+	// 只有在索引真正改变时才更新
+	if (startIndex.value !== validStart || endIndex.value !== validEnd) {
+		startIndex.value = validStart
+		endIndex.value = validEnd
+
+		console.log('虚拟滚动 - 可视区域更新:', {
+			scrollPosition,
+			startIndex: startIndex.value,
+			endIndex: endIndex.value,
+			totalItems,
+			visibleItems: endIndex.value - startIndex.value,
+			bufferSize: dynamicBufferCount.value,
+			scrollVelocity: scrollVelocity.value.toFixed(2),
+		})
+	}
+}
+
+// 渲染队列处理函数
+const processRenderQueue = () => {
+	if (isRendering.value || renderQueue.value.length === 0) {
+		return
+	}
+
+	isRendering.value = true
+	const renderTask = renderQueue.value.shift()
+
+	requestAnimationFrame(() => {
+		try {
+			renderTask()
+		} finally {
+			isRendering.value = false
+			// 继续处理队列中的下一个任务
+			if (renderQueue.value.length > 0) {
+				processRenderQueue()
+			}
+		}
 	})
+}
+
+// 添加渲染任务到队列
+const queueRender = (task) => {
+	renderQueue.value.push(task)
+	processRenderQueue()
 }
 
 // 初始化可视区域
@@ -103,6 +192,8 @@ const initializeVisibleRange = () => {
 	startIndex.value = 0
 	endIndex.value = Math.min(filteredList.value.length, initialVisibleCount)
 	scrollTop.value = 0
+	scrollVelocity.value = 0
+	lastScrollTime.value = 0
 
 	console.log('虚拟滚动 - 初始化:', {
 		containerHeight: containerH,
@@ -125,32 +216,53 @@ const debounce = (func, wait) => {
 	}
 }
 
-// 节流函数
-const throttle = (func, limit) => {
-	let inThrottle
-	return function executedFunction(...args) {
-		if (!inThrottle) {
-			func.apply(this, args)
-			inThrottle = true
-			setTimeout(() => (inThrottle = false), limit)
-		}
-	}
+// 清理缓存的函数
+const clearVisibleItemsCache = () => {
+	visibleItemsCache.value.clear()
+	lastCacheKey.value = ''
 }
 
-// 优化的滚动事件处理
-const handleScroll = throttle((event) => {
+// 优化的滚动事件处理 - 使用渲染队列和 requestAnimationFrame
+const handleScroll = (event) => {
 	const target = event.target
-	scrollTop.value = target.scrollTop
+	const currentTime = performance.now()
 
-	// 使用 requestAnimationFrame 优化性能
-	requestAnimationFrame(() => {
-		updateVisibleRange()
+	// 计算滚动速度
+	if (lastScrollTime.value > 0) {
+		const timeDelta = currentTime - lastScrollTime.value
+		const scrollDelta = Math.abs(target.scrollTop - scrollTop.value)
+		scrollVelocity.value = timeDelta > 0 ? scrollDelta / timeDelta : 0
+	}
+
+	scrollTop.value = target.scrollTop
+	lastScrollTime.value = currentTime
+	isScrolling.value = true
+
+	// 取消之前的动画帧
+	if (scrollAnimationId.value) {
+		cancelAnimationFrame(scrollAnimationId.value)
+	}
+
+	// 使用渲染队列确保数据更新与DOM渲染同步
+	scrollAnimationId.value = requestAnimationFrame(() => {
+		// 清空渲染队列，只保留最新的渲染任务
+		renderQueue.value = []
+
+		queueRender(() => {
+			updateVisibleRange()
+		})
+
+		// 设置滚动结束检测
+		setTimeout(() => {
+			isScrolling.value = false
+		}, 150) // 150ms 后认为滚动结束
 	})
-}, 16) // 约60fps
+}
 
 // 搜索变化时的处理（使用防抖）
 const handleSearchChange = debounce(() => {
 	console.log('虚拟滚动 - 搜索变化，重新初始化')
+	clearVisibleItemsCache()
 	initializeVisibleRange()
 }, 300)
 
@@ -340,6 +452,7 @@ watch(
 	filterList,
 	() => {
 		console.log('虚拟滚动 - 筛选数据变化，重新初始化')
+		clearVisibleItemsCache()
 		initializeVisibleRange()
 	},
 	{immediate: true}
