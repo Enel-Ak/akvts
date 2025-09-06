@@ -78,6 +78,7 @@ const defaultSheet = {
 		exporting: false, // 是否正在导出
 		scrolling: false, // 是否正在滚动
 		completed: false, // 是否初始化完成
+		filter: false, // 是否开启筛选
 		msg: '正在加载数据...',
 		progress: -1,
 	},

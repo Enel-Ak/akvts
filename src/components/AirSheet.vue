@@ -99,11 +99,21 @@ const hasFilteredData = computed(() => {
 	return sheet.filterCellData && sheet.filterCellData.size > 0
 })
 
-// 当前数据源管理
+// 筛选过渡状态管理 - 防止数据交替显示
+const isFilterTransitioning = ref(false)
+const previousDataSource = ref(null)
+const previousRowCount = ref(0)
+
+// 当前数据源管理 - 优化版本，防止筛选过程中的数据交替
 const currentDataSource = computed(() => {
 	// 边界情况处理：确保sheet对象存在
 	if (!sheet || !sheet.celldata) {
 		return new Map()
+	}
+
+	// 如果正在筛选过渡中，保持使用之前的数据源
+	if (isFilterTransitioning.value && previousDataSource.value) {
+		return previousDataSource.value
 	}
 
 	// 如果有筛选条件且有筛选数据，使用筛选数据
@@ -114,11 +124,16 @@ const currentDataSource = computed(() => {
 	return sheet.celldata
 })
 
-// 当前数据行数
+// 当前数据行数 - 优化版本，防止筛选过程中的数据交替
 const currentRowCount = computed(() => {
 	// 边界情况处理：确保sheet对象存在
 	if (!sheet || !sheet.config) {
 		return 0
+	}
+
+	// 如果正在筛选过渡中，保持使用之前的行数
+	if (isFilterTransitioning.value && previousRowCount.value > 0) {
+		return previousRowCount.value
 	}
 
 	if (isFiltered.value && hasFilteredData.value) {
@@ -1260,6 +1275,31 @@ const onFull = async () => {
 	console.log('AirSheet - 全屏切换完成，滚动位置已恢复')
 }
 
+// 筛选确认处理 - 带过渡状态管理
+const onFilterConfirm = async (checked) => {
+	if (!sheet?.hooks?.toolsHook?.filterByChecked) {
+		return
+	}
+
+	// 开始筛选过渡状态
+	isFilterTransitioning.value = true
+
+	// 保存当前数据源和行数
+	previousDataSource.value = currentDataSource.value
+	previousRowCount.value = currentRowCount.value
+
+	try {
+		// 执行筛选操作
+		await sheet.hooks.toolsHook.filterByChecked(checked)
+	} finally {
+		// 筛选完成后，结束过渡状态
+		await nextTick()
+		isFilterTransitioning.value = false
+		previousDataSource.value = null
+		previousRowCount.value = 0
+	}
+}
+
 const onFilter = async (e, alphabet) => {
 	// console.log('AirSheet - 筛选面板打开:', {
 	// 	列信息: alphabet,
@@ -1831,7 +1871,11 @@ defineExpose({
 
 				<!-- 筛选、查找 -->
 				<div class="group" v-if="sheet.config.filter || sheet.config.find">
-					<div class="item">
+					<div
+						class="item"
+						:class="{active: sheet.state.filter}"
+						@click="sheet.hooks.toolsHook.setFilter"
+					>
 						<Icons name="Filter"></Icons>
 						<span>筛选</span>
 					</div>
@@ -1978,12 +2022,31 @@ defineExpose({
 									></div>
 
 									<!-- 筛选 -->
-									<div
-										class="touch-filter"
-										@click.stop="onFilter($event, alphabet)"
-									>
-										<Icons name="ArrowRight" />
-									</div>
+									<template v-if="sheet.state.filter">
+										<template
+											v-if="
+												Array.isArray(sheet.config.filtered) &&
+												sheet.config.filtered.some(
+													(filter) => filter.c === alphabet.c
+												)
+											"
+										>
+											<div
+												class="touch-filter has-filter"
+												@click.stop="onFilter($event, alphabet)"
+											>
+												<Icons name="Filter" />
+											</div>
+										</template>
+										<template v-else>
+											<div
+												class="touch-filter"
+												@click.stop="onFilter($event, alphabet)"
+											>
+												<Icons name="ArrowRight" />
+											</div>
+										</template>
+									</template>
 								</div>
 							</template>
 						</div>
@@ -2482,8 +2545,8 @@ defineExpose({
 			:colIndex="filterColIndex"
 			:filterCol="filterCol"
 			:currentFiltered="Array.isArray(sheet?.config?.filtered) ? sheet.config.filtered : []"
-			@confirm="sheet?.hooks?.toolsHook?.filterByChecked"
-			@confirmOnly="sheet?.hooks?.toolsHook?.filterByChecked"
+			@confirm="onFilterConfirm"
+			@confirmOnly="onFilterConfirm"
 		/>
 	</div>
 </template>

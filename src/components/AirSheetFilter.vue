@@ -289,6 +289,34 @@ const onClose = () => {
 	emits('update:modelValue', null)
 }
 
+const onClear = () => {
+	// 确保colIndex是有效的
+	if (props.colIndex === -1 || props.colIndex === undefined || props.colIndex === null) {
+		console.error('AirSheetFilter - onClear: invalid colIndex', props.colIndex)
+		ElMessage.error('列索引无效，无法执行清空操作')
+		return
+	}
+
+	// 清空当前列的选中项
+	checked.value = []
+
+	// 保留其他列的现有筛选条件，移除当前列的筛选条件
+	const otherColumnsFilters = (props.currentFiltered || []).filter(
+		(filter) => filter && typeof filter.c === 'number' && filter.c !== props.colIndex
+	)
+
+	console.log('AirSheetFilter - 清空当前列筛选:', {
+		列索引: props.colIndex,
+		清空前选中项: checked.value,
+		其他列筛选条件: otherColumnsFilters,
+		最终筛选条件: otherColumnsFilters,
+	})
+
+	// 发送更新后的筛选条件（不包含当前列）
+	emits('confirm', otherColumnsFilters)
+	onClose()
+}
+
 const onConfirm = () => {
 	// 确保colIndex是有效的
 	if (props.colIndex === -1 || props.colIndex === undefined || props.colIndex === null) {
@@ -365,12 +393,12 @@ watch(
 	(newVal) => {
 		if (!newVal) return
 		const rect = newVal.getBoundingClientRect()
-		const container = newVal.closest('.air-sheet-component').getBoundingClientRect()
-		let top = rect.top - 190
-		let left = rect.left + 2
+		const containerRect = newVal.closest('.air-sheet-component').getBoundingClientRect()
+		let top = 5
+		let left = rect.left - (containerRect.right - containerRect.width)
 
-		if (rect.left + 330 >= container.left + container.width) {
-			left = container.left + container.width - 332
+		if (rect.left + 330 >= containerRect.left + containerRect.width) {
+			left = containerRect.left + containerRect.width - 332
 		}
 
 		position.value = {
@@ -509,6 +537,11 @@ onMounted(() => {
 			</div>
 
 			<div class="btns">
+				<span @click="onClear" class="clear-filter">
+					<Icons name="ClearFilter"></Icons>
+					清空筛选条件
+				</span>
+				<span class="flx"></span>
 				<el-button @click="onClose">取消</el-button>
 				<el-button type="primary" @click="onConfirm">确定</el-button>
 			</div>
@@ -582,6 +615,13 @@ onMounted(() => {
 		padding: 8px;
 		display: flex;
 		justify-content: flex-end;
+
+		.clear-filter {
+			align-items: center;
+			cursor: pointer;
+			color: var(--z-font-color);
+			display: flex;
+		}
 	}
 }
 </style>

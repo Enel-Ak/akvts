@@ -1459,6 +1459,11 @@ export const useTools = () => {
 	const freezeCol = ref(1)
 	const setFreeze = (r, c) => {}
 
+	// 筛选
+	const setFilter = () => {
+		sheet.state.filter = !sheet.state.filter
+	}
+
 	const clearAll = () => {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
@@ -1970,6 +1975,7 @@ export const useTools = () => {
 			freezeRow,
 			freezeCol,
 			setFreeze,
+			setFilter,
 
 			addRowCount,
 			addRow,

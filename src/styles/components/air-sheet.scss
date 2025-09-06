@@ -612,6 +612,14 @@
 			> i {
 				transform: rotate(90deg);
 			}
+
+			&.has-filter {
+				background: var(--z-main);
+				color: var(--z-nav-font-color);
+				> i {
+					transform: rotate(0deg);
+				}
+			}
 		}
 	}
 
