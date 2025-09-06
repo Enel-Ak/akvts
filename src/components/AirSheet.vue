@@ -1261,20 +1261,21 @@ const onFull = async () => {
 }
 
 const onFilter = async (e, alphabet) => {
-	console.log('AirSheet - 筛选面板打开:', {
-		列信息: alphabet,
-		列索引: alphabet.c,
-		当前筛选状态: sheet?.config?.filtered || [],
-	})
+	// console.log('AirSheet - 筛选面板打开:', {
+	// 	列信息: alphabet,
+	// 	列索引: alphabet.c,
+	// 	当前筛选状态: sheet?.config?.filtered || [],
+	// })
 
 	filterEl.value = e.target.closest('.touch-filter')
+	filterCol.value.length = 0
 	filterCol.value = await sheet.hooks.toolsHook.filterCol(alphabet)
 	filterColIndex.value = alphabet.c
 
-	console.log('AirSheet - 筛选数据获取完成:', {
-		列索引: filterColIndex.value,
-		筛选数据数量: filterCol.value?.length || 0,
-	})
+	// console.log('AirSheet - 筛选数据获取完成:', {
+	// 	列索引: filterColIndex.value,
+	// 	筛选数据数量: filterCol.value?.length || 0,
+	// })
 }
 
 watch(

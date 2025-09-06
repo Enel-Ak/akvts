@@ -195,12 +195,12 @@ const initializeVisibleRange = () => {
 	scrollVelocity.value = 0
 	lastScrollTime.value = 0
 
-	console.log('虚拟滚动 - 初始化:', {
-		containerHeight: containerH,
-		itemHeight: itemH,
-		initialVisibleCount,
-		endIndex: endIndex.value,
-	})
+	// console.log('虚拟滚动 - 初始化:', {
+	// 	containerHeight: containerH,
+	// 	itemHeight: itemH,
+	// 	initialVisibleCount,
+	// 	endIndex: endIndex.value,
+	// })
 }
 
 // 防抖函数
@@ -391,11 +391,11 @@ watch(
 	(newVal) => {
 		// 调试信息：筛选数据更新
 		if (newVal?.length > 0) {
-			console.log('AirSheetFilter - 筛选数据更新:', {
-				列索引: props.colIndex,
-				数据数量: newVal.length,
-				数据样本: newVal.slice(0, 3),
-			})
+			// console.log('AirSheetFilter - 筛选数据更新:', {
+			// 	列索引: props.colIndex,
+			// 	数据数量: newVal.length,
+			// 	数据样本: newVal.slice(0, 3),
+			// })
 		}
 		filterList.value = newVal
 	}
@@ -405,15 +405,15 @@ watch(
 watch(
 	[() => props.colIndex, () => props.currentFiltered],
 	([newColIndex, newCurrentFiltered]) => {
-		console.log('AirSheetFilter - 列索引同步:', {
-			列索引: newColIndex,
-			当前筛选条件数量: newCurrentFiltered?.length || 0,
-			筛选数据数量: props.filterCol.length,
-		})
+		// console.log('AirSheetFilter - 列索引同步:', {
+		// 	列索引: newColIndex,
+		// 	当前筛选条件数量: newCurrentFiltered?.length || 0,
+		// 	筛选数据数量: props.filterCol.length,
+		// })
 
 		// 确保colIndex是有效的数字
 		if (newColIndex === -1 || newColIndex === undefined || newColIndex === null) {
-			console.log('AirSheetFilter - 列索引无效，清空选中项')
+			// console.log('AirSheetFilter - 列索引无效，清空选中项')
 			checked.value = []
 			return
 		}
@@ -424,10 +424,10 @@ watch(
 			return filter && typeof filter.c === 'number' && filter.c === newColIndex
 		})
 
-		console.log('AirSheetFilter - 当前列筛选条件:', {
-			列索引: newColIndex,
-			匹配的筛选条件: currentColFilters,
-		})
+		// console.log('AirSheetFilter - 当前列筛选条件:', {
+		// 	列索引: newColIndex,
+		// 	匹配的筛选条件: currentColFilters,
+		// })
 
 		// 只更新当前列的选中项
 		if (currentColFilters.length > 0) {
@@ -439,7 +439,7 @@ watch(
 			checked.value = []
 		}
 
-		console.log('AirSheetFilter - 选中项已更新:', checked.value)
+		// console.log('AirSheetFilter - 选中项已更新:', checked.value)
 	},
 	{immediate: true, deep: true}
 )
@@ -451,7 +451,7 @@ watch(searchValue, handleSearchChange)
 watch(
 	filterList,
 	() => {
-		console.log('虚拟滚动 - 筛选数据变化，重新初始化')
+		// console.log('虚拟滚动 - 筛选数据变化，重新初始化')
 		clearVisibleItemsCache()
 		initializeVisibleRange()
 	},
@@ -460,7 +460,7 @@ watch(
 
 // 组件挂载后初始化
 onMounted(() => {
-	console.log('虚拟滚动 - 组件挂载，初始化虚拟滚动')
+	// console.log('虚拟滚动 - 组件挂载，初始化虚拟滚动')
 	initializeVisibleRange()
 })
 </script>

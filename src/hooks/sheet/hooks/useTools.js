@@ -998,13 +998,13 @@ export const useTools = () => {
 
 	// 筛选, 先把当前列所有数据取出来
 	const filterCol = async (alphabet) => {
-		console.log('useTools - 获取列筛选数据:', {
-			列信息: alphabet,
-			列索引: alphabet.c,
-			使用筛选后数据: sheet.filterCellData.size > 0,
-			原始数据行数: sheet.celldata.size,
-			行映射数量: sheet.rowMapping?.length || 0,
-		})
+		// console.log('useTools - 获取列筛选数据:', {
+		// 	列信息: alphabet,
+		// 	列索引: alphabet.c,
+		// 	使用筛选后数据: sheet.filterCellData.size > 0,
+		// 	原始数据行数: sheet.celldata.size,
+		// 	行映射数量: sheet.rowMapping?.length || 0,
+		// })
 
 		const data = []
 		const org = sheet.filterCellData.size ? sheet.filterCellData : sheet.celldata
