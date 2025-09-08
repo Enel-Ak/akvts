@@ -1507,6 +1507,11 @@ export const useTools = () => {
 		sheet.state.filter = !sheet.state.filter
 	}
 
+	// 查找
+	const setSearch = () => {
+		sheet.state.search = !sheet.state.search
+	}
+
 	const clearAll = () => {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
@@ -2019,6 +2024,7 @@ export const useTools = () => {
 			freezeCol,
 			setFreeze,
 			setFilter,
+			setSearch,
 
 			addRowCount,
 			addRow,

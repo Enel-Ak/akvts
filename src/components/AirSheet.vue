@@ -20,6 +20,7 @@ import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {useSleep} from '@/hooks/useSleep'
 import {useDebounce} from '@/hooks/useDebounce'
 import AirSheetFilter from './AirSheetFilter.vue'
+import AirSheetSearch from './AirSheetSearch.vue'
 
 const stateType = {
 	normal: 0,
@@ -1879,7 +1880,11 @@ defineExpose({
 						<Icons name="Filter"></Icons>
 						<span>筛选</span>
 					</div>
-					<div class="item">
+					<div
+						class="item"
+						:class="{active: sheet.state.search}"
+						@click="sheet.hooks.toolsHook.setSearch"
+					>
 						<Icons name="Search"></Icons>
 						<span>查找</span>
 					</div>
@@ -2538,16 +2543,21 @@ defineExpose({
 				<Icons name="Rotate" size="58px" color="#fff"></Icons>
 				<span>此操作需要横向屏幕</span>
 			</div>
-		</template>
 
-		<AirSheetFilter
-			v-model="filterEl"
-			:colIndex="filterColIndex"
-			:filterCol="filterCol"
-			:currentFiltered="Array.isArray(sheet?.config?.filtered) ? sheet.config.filtered : []"
-			@confirm="onFilterConfirm"
-			@confirmOnly="onFilterConfirm"
-		/>
+			<AirSheetFilter
+				v-model="filterEl"
+				v-model:show="sheet.state.filter"
+				:colIndex="filterColIndex"
+				:filterCol="filterCol"
+				:currentFiltered="
+					Array.isArray(sheet?.config?.filtered) ? sheet.config.filtered : []
+				"
+				@confirm="onFilterConfirm"
+				@confirmOnly="onFilterConfirm"
+			/>
+
+			<AirSheetSearch v-model:show="sheet.state.search" @search-all="" />
+		</template>
 	</div>
 </template>
 <style scoped lang="scss">

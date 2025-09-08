@@ -21,6 +21,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	show: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 const mask = ref(false)
@@ -486,6 +490,15 @@ watch(
 	{immediate: true}
 )
 
+watch(
+	() => props.show,
+	(newVal) => {
+		if (!newVal) {
+			onClose()
+		}
+	}
+)
+
 // 组件挂载后初始化
 onMounted(() => {
 	// console.log('虚拟滚动 - 组件挂载，初始化虚拟滚动')
@@ -493,7 +506,7 @@ onMounted(() => {
 })
 </script>
 <template>
-	<div v-show="mask" class="filter-layout" @click="onClose">
+	<div v-show="mask" class="air-sheet-filter" @click="onClose">
 		<div
 			class="box shadow-12"
 			:style="{left: position.left + 'px', top: position.top + 'px'}"
@@ -549,7 +562,7 @@ onMounted(() => {
 	</div>
 </template>
 <style scoped lang="scss">
-.filter-layout {
+.air-sheet-filter {
 	height: calc(100% - 105px);
 	left: 0;
 	position: absolute;
@@ -563,8 +576,13 @@ onMounted(() => {
 
 		position: absolute;
 		// transform: translateX(-67.5%);
+		transition: box-shadow 0.2s ease;
 		max-height: 450px;
 		width: 300px;
+
+		&:hover {
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		}
 	}
 
 	.search {

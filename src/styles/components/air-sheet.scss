@@ -71,6 +71,10 @@
 				z-index: 1;
 				white-space: nowrap;
 
+				&:hover {
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+				}
+
 				&::after {
 					content: '';
 					position: absolute;
