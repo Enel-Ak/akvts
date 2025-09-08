@@ -4,6 +4,12 @@ import {ElMessage} from 'element-plus'
 import {useAirSheetStore} from '../store/useAirSheet'
 import {useProcessMapInBatches} from './useProcessMapInBatches'
 import {useDebounce} from '@/hooks/useDebounce'
+import {
+	useBufferToMap,
+	useMapToBuffer,
+	useStringArrayToBuffer,
+	useBufferToStringArray,
+} from './useBuffer'
 
 export const useTools = () => {
 	const sheetStore = useAirSheetStore()
@@ -585,7 +591,6 @@ export const useTools = () => {
 
 		const deleteCount = rr - r + 1
 		const deletedRows = new Map()
-		const newMap = new Map()
 
 		try {
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
@@ -595,7 +600,10 @@ export const useTools = () => {
 					} else if (rowIndex > rr) {
 						sheet.celldata.set(rowIndex - deleteCount, rowData)
 					} else {
-						deletedRows.set(`${rowIndex}`, {rowData, deleteCount})
+						deletedRows.set(`${rowIndex}`, {
+							rowData: useStringArrayToBuffer(rowData),
+							deleteCount,
+						})
 					}
 				}
 			})
@@ -654,6 +662,18 @@ export const useTools = () => {
 				await filterByCheckedSilent(currentFiltered)
 				ElMessage.success(`删除了 ${deleteCount} 行，筛选数据已更新`)
 			}
+
+			// 优化：删除操作后清理相关缓存，提高后续操作性能
+			if (sheet.hooks?.selectionRangeHook?.clearCache) {
+				sheet.hooks.selectionRangeHook.clearCache()
+			}
+
+			// 优化：延迟触发选区重新计算，避免立即卡顿
+			setTimeout(() => {
+				if (sheet.hooks?.selectionRangeHook?.refreshSelection) {
+					sheet.hooks.selectionRangeHook.refreshSelection()
+				}
+			}, 100)
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
@@ -808,32 +828,51 @@ export const useTools = () => {
 		}
 
 		const deleteCount = cc - c + 1
-		const deletedCols = new Map()
+
+		// 优化：使用更紧凑的历史存储结构，类似删除行的方式
+		const deletedColsData = {
+			startCol: c,
+			endCol: cc,
+			deleteCount: deleteCount,
+			// 只保存有数据的行，而不是为每行都创建条目
+			rowsData: new Map(), // Map<rowIndex, Array> - 直接保存被删除的列数据
+		}
 
 		try {
+			// 完全重新设计：借鉴删除行的高效实现，使用批处理但简化逻辑
+			// 关键思路：让批处理只做简单的数组操作，避免复杂的逻辑
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
-					const newRowData = []
-					rowData.forEach((val, colIndex) => {
-						if (colIndex < c) {
-							newRowData[colIndex] = val
-						} else if (colIndex > cc) {
-							newRowData[colIndex - deleteCount] = val
-						} else {
-							const row = deletedCols.get(rowIndex)
-							if (row) {
-								row.push({r: rowIndex, c: colIndex, v: val})
-							} else {
-								deletedCols.set(rowIndex, [{r: rowIndex, c: colIndex, v: val}])
-							}
+					// 优化：只保存被删除列的数据，使用更紧凑的格式
+					if (rowData.length > c) {
+						// 提取被删除的列数据
+						const deletedRowCols = rowData.slice(c, cc + 1)
+
+						// 只有当有非空数据时才保存
+						const hasData = deletedRowCols.some(
+							(val) => val !== undefined && val !== null && val !== ''
+						)
+						if (hasData) {
+							deletedColsData.rowsData.set(rowIndex, deletedRowCols)
 						}
-					})
-					sheet.celldata.set(rowIndex, newRowData)
+
+						// 借鉴删除行的简洁逻辑：只做最简单的数组操作
+						// 使用 splice 直接修改原数组，避免创建新数组
+						rowData.splice(c, deleteCount)
+						// 注意：这里直接修改了 rowData，它已经是 sheet.celldata 中的引用
+						// 所以不需要再调用 sheet.celldata.set()
+					}
 				}
 			})
 
-			// 保存历史
-			sheet.hooks.historyHook.save(deletedCols, 'removeCol')
+			// 保存历史 - 优化：使用新的紧凑存储结构和异步保存
+			setTimeout(() => {
+				try {
+					sheet.hooks.historyHook.save(deletedColsData, 'removeCol')
+				} catch (error) {
+					console.error('保存删除列历史失败:', error)
+				}
+			}, 0)
 
 			// 更新合并单元格的位置
 			const mc = sheet.hooks.mergeHook.getMergedCells()
@@ -903,22 +942,26 @@ export const useTools = () => {
 				// 如果还有筛选条件，重新执行筛选
 				if (updatedFiltered.length > 0) {
 					await filterByCheckedSilent(updatedFiltered)
-					// 强制触发界面更新
-					sheet.state.loading = true
-					await nextTick()
-					sheet.state.loading = false
 					ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已更新`)
 				} else {
 					// 如果没有筛选条件了，清除筛选状态
 					sheet.config.filtered = []
 					sheet.filterCellData.clear()
 					sheet.rowMapping = []
-					// 强制触发界面更新
-					sheet.state.loading = true
-					await nextTick()
-					sheet.state.loading = false
 					ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已清除`)
 				}
+
+				// 优化：删除操作后清理相关缓存，提高后续操作性能
+				if (sheet.hooks?.selectionRangeHook?.clearCache) {
+					sheet.hooks.selectionRangeHook.clearCache()
+				}
+
+				// 优化：延迟触发选区重新计算，避免立即卡顿
+				setTimeout(() => {
+					if (sheet.hooks?.selectionRangeHook?.refreshSelection) {
+						sheet.hooks.selectionRangeHook.refreshSelection()
+					}
+				}, 100)
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)

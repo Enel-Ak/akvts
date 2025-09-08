@@ -2520,7 +2520,7 @@ defineExpose({
 				}"
 			>
 				<div>
-					<Icons name="Loading" class="loading-animation"></Icons>
+					<Icons name="Loading2" class="loading-animation"></Icons>
 					<span>
 						{{ isLoading ? sheet.state.msg : stateText }}
 					</span>

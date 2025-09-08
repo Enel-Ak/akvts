@@ -1,5 +1,6 @@
 import {useProcessMapInBatches} from './useProcessMapInBatches'
 import {useAirSheetStore} from '../store/useAirSheet'
+import {useBufferToMap, useMapToBuffer, useBufferToStringArray} from './useBuffer'
 
 export const useHistory = () => {
 	const sheetStore = useAirSheetStore()
@@ -10,27 +11,63 @@ export const useHistory = () => {
 
 	// 准备修改前保存当前状态
 	const save = (data = null, type = 'edit') => {
-		// 保存完整的 sheet 状态，包括筛选状态
+		// 优化：根据操作类型选择性保存状态，避免不必要的深拷贝
 		const state = {
-			config: JSON.parse(JSON.stringify(sheet.config)),
+			config: null, // 延迟初始化
 			celldata: new Map(),
 			addRow: null,
 			addCol: null,
 			removeRow: new Map(),
 			removeCol: new Map(),
-			// 保存筛选相关状态
-			filterState: {
+			filterState: null, // 延迟初始化
+			creationTime: Date.now(),
+		}
+
+		// 优化：只在需要时才进行深拷贝
+		const needsConfigCopy = ['addRow', 'addCol', 'removeRow', 'removeCol'].includes(type)
+		if (needsConfigCopy) {
+			// 使用更高效的拷贝方式
+			state.config = {
+				...sheet.config,
+				// 只拷贝必要的属性，避免深拷贝大对象
 				filtered:
 					sheet.config.filtered && Array.isArray(sheet.config.filtered)
-						? JSON.parse(JSON.stringify(sheet.config.filtered))
+						? [...sheet.config.filtered]
+						: [],
+				styled: sheet.config.styled ? {...sheet.config.styled} : {},
+				merged: sheet.config.merged ? {...sheet.config.merged} : {},
+				locked: sheet.config.locked ? {...sheet.config.locked} : {},
+			}
+
+			// 只在有筛选状态时才保存筛选相关数据
+			if (
+				sheet.config.filtered &&
+				Array.isArray(sheet.config.filtered) &&
+				sheet.config.filtered.length > 0
+			) {
+				state.filterState = {
+					filtered: [...sheet.config.filtered],
+					filterCellData: new Map(sheet.filterCellData || new Map()),
+					rowMapping:
+						sheet.rowMapping && Array.isArray(sheet.rowMapping)
+							? [...sheet.rowMapping]
+							: [],
+				}
+			}
+		} else {
+			// 对于简单操作，使用原来的深拷贝
+			state.config = JSON.parse(JSON.stringify(sheet.config))
+			state.filterState = {
+				filtered:
+					sheet.config.filtered && Array.isArray(sheet.config.filtered)
+						? [...sheet.config.filtered]
 						: [],
 				filterCellData: new Map(sheet.filterCellData || new Map()),
 				rowMapping:
 					sheet.rowMapping && Array.isArray(sheet.rowMapping)
-						? JSON.parse(JSON.stringify(sheet.rowMapping))
+						? [...sheet.rowMapping]
 						: [],
-			},
-			creationTime: Date.now(),
+			}
 		}
 
 		if (data) {
@@ -54,6 +91,7 @@ export const useHistory = () => {
 					state.removeRow = data
 					break
 				case 'removeCol':
+					data.rowsData = useMapToBuffer(data.rowsData)
 					state.removeCol = data
 					break
 				case 'filter':
@@ -224,9 +262,18 @@ export const useHistory = () => {
 				}
 
 				// 撤销删除行
-				if (state.removeRow.size > 0) {
+				if (state.removeRow) {
 					// 创建新的数据结构
 					try {
+						// state.removeRow = useBufferToMap(state.removeRow)
+						console.log(111, state.removeRow)
+						state.removeRow.forEach((value, key) => {
+							state.removeRow.set(key, {
+								rowData: useBufferToStringArray(value.rowData),
+								deleteCount: value.deleteCount,
+							})
+						})
+
 						let count = 0
 						await useProcessMapInBatches(
 							sheet.id,
@@ -242,47 +289,50 @@ export const useHistory = () => {
 						)
 
 						// 更新 sheet.celldata
-						state.removeRow.clear()
+						// state.removeRow.clear()
 
 						// 筛选状态已经在前面恢复，不需要重新筛选
+
+						// 优化：撤销删除行后清理缓存，提高后续操作性能
+						if (sheet.hooks?.selectionRangeHook?.clearCache) {
+							sheet.hooks.selectionRangeHook.clearCache()
+						}
 					} catch (error) {
 						console.error('撤销删除行失败:', error)
 					}
 				}
 
 				// 撤销删除列
-				if (state.removeCol.size > 0) {
+				if (state.removeCol && state.removeCol.rowsData) {
 					try {
-						// 恢复删除的列
+						state.removeCol.rowsData = useBufferToMap(state.removeCol.rowsData, true)
+						const {startCol, deleteCount, rowsData} = state.removeCol
+
+						// 恢复删除的列数据
 						await useProcessMapInBatches(
 							sheet.id,
-							state.removeCol,
-							(rowIndex, rowData) => {
-								// 获取当前行的数据并转换为数组
-								let currentRowData = Array.from(sheet.celldata.get(rowIndex) || [])
+							rowsData,
+							(rowIndex, deletedRowCols) => {
+								if (typeof rowIndex === 'number' && Array.isArray(deletedRowCols)) {
+									// 获取当前行数据
+									let rowData = sheet.celldata.get(rowIndex) || []
 
-								// 按列索引排序，从小到大恢复
-								const sortedData = rowData.sort((a, b) => a.c - b.c)
+									// 在指定位置插入删除的列数据
+									// 使用 splice 在 startCol 位置插入 deletedRowCols
+									rowData.splice(startCol, 0, ...deletedRowCols)
 
-								// 一次性扩展数组长度
-								const maxColIndex = sortedData[sortedData.length - 1].c
-								if (currentRowData.length < maxColIndex) {
-									currentRowData.length = maxColIndex + 1
-									currentRowData.fill(null, currentRowData.length)
+									// 更新行数据
+									sheet.celldata.set(rowIndex, rowData)
 								}
-
-								// 一次性插入所有值
-								sortedData.forEach(({c, v}) => {
-									currentRowData.splice(c, 0, v)
-								})
-
-								// 更新到 sheet.celldata
-								sheet.celldata.set(rowIndex, currentRowData)
 							}
 						)
-						state.removeCol.clear()
 
 						// 筛选状态已经在前面恢复，不需要重新筛选
+
+						// 优化：撤销删除列后清理缓存，提高后续操作性能
+						if (sheet.hooks?.selectionRangeHook?.clearCache) {
+							sheet.hooks.selectionRangeHook.clearCache()
+						}
 					} catch (error) {
 						console.error('撤销删除列失败:', error)
 					}

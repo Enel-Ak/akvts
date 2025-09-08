@@ -3,16 +3,6 @@ import ExcelJS from 'exceljs'
 import {useAirSheetStore} from '../store/useAirSheet'
 
 export const useExcel = () => {
-	// const {
-	// 	sheet,
-	// 	loading,
-	// 	loadingText,
-	// 	loadingProgress,
-	// 	useEditHook,
-	// 	useResizeHook,
-	// 	useMergedCellsHook,
-	// 	useSelectionRangeHook,
-	// } = config
 	const sheetStore = useAirSheetStore()
 	let sheetKey = ''
 	let sheet = null

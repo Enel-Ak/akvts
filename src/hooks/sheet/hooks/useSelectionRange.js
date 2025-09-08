@@ -1,4 +1,4 @@
-import {computed, ref, shallowRef, watch} from 'vue'
+import {computed, ref, shallowRef, watch, nextTick} from 'vue'
 import {useAirSheetStore} from '../store/useAirSheet'
 
 const workerCode = `
@@ -1056,6 +1056,24 @@ export const useSelectionRange = () => {
 		colResizeVersion = 0
 	}
 
+	// 刷新选区计算，用于删除操作后的性能优化
+	const refreshSelection = () => {
+		// 清理缓存
+		clearCache()
+
+		// 如果当前有选区，重新计算选区样式
+		if (ranged.value && ranged.value.r !== -1) {
+			// 触发选区样式重新计算
+			const currentRange = {...ranged.value}
+			ranged.value = {r: -1, c: -1, rr: -1, cc: -1}
+
+			// 使用 nextTick 确保 DOM 更新后再恢复选区
+			nextTick(() => {
+				ranged.value = currentRange
+			})
+		}
+	}
+
 	const destroy = () => {
 		clear()
 
@@ -1166,6 +1184,7 @@ export const useSelectionRange = () => {
 			drag: handleDragStart,
 			clear,
 			clearCache,
+			refreshSelection,
 			destroy,
 		}
 	}
