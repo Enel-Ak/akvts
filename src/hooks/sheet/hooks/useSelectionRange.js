@@ -416,11 +416,10 @@ export const useSelectionRange = () => {
 			} else {
 				// 选择的行在筛选结果中不可见，返回空样式
 				return {
-					top: '0px',
-					left: '0px',
 					height: '0px',
 					width: '0px',
 					display: 'none',
+					transform: `translateY(0px) translateX(0px)`,
 				}
 			}
 		} else {
@@ -471,10 +470,11 @@ export const useSelectionRange = () => {
 		const zoom = sheet.config.zoom || 1
 
 		return {
-			top: `${totalOffsetTop * zoom}px`,
-			left: `${totaloffsetLeft * zoom}px`,
 			height: `${totleHeight * zoom}px`,
 			width: `${totleWidth * zoom}px`,
+			transform: `translateY(${totalOffsetTop * zoom}px) translateX(${
+				totaloffsetLeft * zoom
+			}px)`,
 		}
 	}
 
