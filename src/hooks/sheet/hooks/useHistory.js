@@ -265,8 +265,6 @@ export const useHistory = () => {
 				if (state.removeRow) {
 					// 创建新的数据结构
 					try {
-						// state.removeRow = useBufferToMap(state.removeRow)
-						console.log(111, state.removeRow)
 						state.removeRow.forEach((value, key) => {
 							state.removeRow.set(key, {
 								rowData: useBufferToStringArray(value.rowData),
@@ -327,7 +325,38 @@ export const useHistory = () => {
 							}
 						)
 
-						// 筛选状态已经在前面恢复，不需要重新筛选
+						// 更新列数量
+						sheet.config.colCount += deleteCount
+
+						// 特殊处理：对于删除列的撤销，需要重新恢复筛选状态
+						// 因为删除列时筛选条件的列索引被修改了，撤销时需要恢复原始的列索引
+						if (
+							state.filterState &&
+							state.filterState.filtered &&
+							state.filterState.filtered.length > 0
+						) {
+							// 重新设置筛选状态（覆盖之前在通用恢复中设置的状态）
+							sheet.config.filtered = [...state.filterState.filtered]
+
+							// 清空并重新设置筛选数据
+							sheet.filterCellData.clear()
+							if (state.filterState.filterCellData) {
+								state.filterState.filterCellData.forEach((value, key) => {
+									sheet.filterCellData.set(key, value)
+								})
+							}
+
+							sheet.rowMapping = Array.isArray(state.filterState.rowMapping)
+								? [...state.filterState.rowMapping]
+								: []
+
+							// 重新执行筛选，因为列数据结构发生了变化
+							await sheet.hooks.toolsHook.filterByCheckedSilent(sheet.config.filtered)
+							console.log(
+								'撤销删除列后重新执行筛选，筛选条件数量:',
+								sheet.config.filtered.length
+							)
+						}
 
 						// 优化：撤销删除列后清理缓存，提高后续操作性能
 						if (sheet.hooks?.selectionRangeHook?.clearCache) {
