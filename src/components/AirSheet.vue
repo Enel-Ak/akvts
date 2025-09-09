@@ -91,6 +91,9 @@ const filterEl = ref(null)
 const filterCol = ref([])
 const filterColIndex = ref(-1)
 
+// 搜索状态管理
+const searchList = ref([])
+
 // 筛选状态管理
 const isFiltered = computed(() => {
 	return sheet.config?.filtered && sheet.config.filtered.length > 0
@@ -1317,6 +1320,46 @@ const onFilter = async (e, alphabet) => {
 	// 	列索引: filterColIndex.value,
 	// 	筛选数据数量: filterCol.value?.length || 0,
 	// })
+}
+
+// 搜索事件处理
+const onSearchAll = async (keyword) => {
+	try {
+		// 检查搜索关键字
+		if (!keyword || typeof keyword !== 'string' || !keyword.trim()) {
+			ElMessage.warning('请输入搜索关键字')
+			searchList.value = []
+			return
+		}
+
+		const results = await sheet.hooks.toolsHook.searchAll(keyword.trim())
+		searchList.value = results || []
+
+		if (searchList.value.length === 0) {
+			ElMessage.info('没有找到匹配的结果')
+		} else {
+			ElMessage.success(`找到 ${searchList.value.length} 个匹配项`)
+		}
+
+		console.log('搜索完成，找到结果:', searchList.value.length, '个')
+	} catch (error) {
+		console.error('搜索失败:', error)
+		ElMessage.error('搜索失败，请重试')
+		searchList.value = []
+	}
+}
+
+// 跳转到指定单元格
+const onJumpToCell = async (row, col) => {
+	try {
+		if (sheet.hooks?.toolsHook?.scrollToCellAndSelect) {
+			await sheet.hooks.toolsHook.scrollToCellAndSelect(row, col)
+		} else {
+			console.warn('scrollToCellAndSelect方法不可用')
+		}
+	} catch (error) {
+		console.error('跳转到单元格失败:', error)
+	}
 }
 
 watch(
@@ -2556,7 +2599,14 @@ defineExpose({
 				@confirmOnly="onFilterConfirm"
 			/>
 
-			<AirSheetSearch v-model:show="sheet.state.search" @search-all="" />
+			<AirSheetSearch
+				v-model:show="sheet.state.search"
+				:searchList="searchList"
+				@search-all="onSearchAll"
+				@search-previous="sheet.hooks.toolsHook.searchPrevious"
+				@search-next="sheet.hooks.toolsHook.searchNext"
+				@jump-to-cell="onJumpToCell"
+			/>
 		</template>
 	</div>
 </template>

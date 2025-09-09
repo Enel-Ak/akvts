@@ -1,15 +1,71 @@
 <script setup>
-import {ref, reactive, onUnmounted} from 'vue'
+import {ref, reactive, onUnmounted, computed} from 'vue'
 import {useContainerBounds} from '@/hooks/sheet/hooks/useContainerBounds'
 
-const emits = defineEmits(['searchAll', 'searchPrevious', 'searchNext'])
+const emits = defineEmits([
+	'searchAll',
+	'searchPrevious',
+	'searchNext',
+	'update:show',
+	'jumpToCell',
+])
 const props = defineProps({
 	show: {
 		type: Boolean,
 		default: false,
 	},
+	searchList: {
+		type: Array,
+		default: () => [],
+	},
 })
-const searchValue = ref('')
+const searchValue = ref({keyword: ''})
+
+// 跳转到指定单元格
+const jumpToCell = (item) => {
+	emits('jumpToCell', item.r, item.c)
+}
+
+// 处理回车键搜索
+const onKeyPress = (event) => {
+	if (event.key === 'Enter') {
+		emits('searchAll', searchValue.value.keyword)
+	}
+}
+
+// 虚拟滚动配置
+const ITEM_HEIGHT = 36 // 每个搜索结果项的高度
+const VISIBLE_COUNT = 8 // 可见的搜索结果数量
+const BUFFER_SIZE = 2 // 缓冲区大小
+
+// 虚拟滚动状态
+const scrollTop = ref(0)
+const containerHeight = VISIBLE_COUNT * ITEM_HEIGHT
+
+// 计算可见范围
+const visibleRange = computed(() => {
+	const start = Math.floor(scrollTop.value / ITEM_HEIGHT)
+	const end = Math.min(start + VISIBLE_COUNT + BUFFER_SIZE * 2, props.searchList.length)
+	return {
+		start: Math.max(0, start - BUFFER_SIZE),
+		end,
+		offsetY: Math.max(0, start - BUFFER_SIZE) * ITEM_HEIGHT,
+	}
+})
+
+// 可见的搜索结果
+const visibleItems = computed(() => {
+	const {start, end} = visibleRange.value
+	return props.searchList.slice(start, end).map((item, index) => ({
+		...item,
+		index: start + index,
+	}))
+})
+
+// 处理滚动事件
+const onScroll = (event) => {
+	scrollTop.value = event.target.scrollTop
+}
 
 // 拖拽状态管理
 const isDragging = ref(false)
@@ -47,7 +103,10 @@ const onDragstart = (e) => {
 	containerBounds.value = useContainerBounds(searchElement.value?.closest('.air-sheet-component'))
 
 	dragStart.elementX = rect.left - 15
-	dragStart.elementY = containerBounds.value.rect.top > 0 ? rect.top - rect.height + 25 : rect.top
+	dragStart.elementY =
+		containerBounds.value.rect.top > 0
+			? rect.top - rect.height + 25 + (props.searchList.length ? containerHeight + 50 : 0)
+			: rect.top
 
 	// 添加全局事件监听器
 	document.addEventListener('mousemove', onDragMove)
@@ -124,6 +183,16 @@ const onDragend = () => {
 	document.body.classList.remove('dragging')
 }
 
+const numberToLetters = (num) => {
+	let result = ''
+	while (num > 0) {
+		let mod = (num - 1) % 26
+		result = String.fromCharCode(65 + mod) + result
+		num = Math.floor((num - 1) / 26)
+	}
+	return result
+}
+
 // 组件卸载时清理事件监听器
 onUnmounted(() => {
 	// 取消可能存在的动画帧
@@ -153,13 +222,14 @@ onUnmounted(() => {
 					? 'translate(-50%, -50%)'
 					: 'none',
 		}"
+		@keydown.stop
 	>
 		<div class="title df aic" @mousedown="onDragstart">
 			<Icons name="Search" class="mg-right-5" />
 			查找
 		</div>
 		<FormItem
-			v-model="searchValue"
+			v-model="searchValue.keyword"
 			:items="[
 				{
 					prop: 'keyword',
@@ -167,15 +237,45 @@ onUnmounted(() => {
 					type: 'text',
 					labelWidth: 0,
 					placeholder: '请输入搜索内容',
+					attrs: {
+						onKeypress: onKeyPress,
+					},
 				},
 			]"
 		></FormItem>
-		<div class="all"></div>
+		<div v-show="searchList.length" class="all">
+			<div class="search-header">找到 {{ searchList.length }} 个匹配项</div>
+			<div class="virtual-list" :style="{height: `${containerHeight}px`}" @scroll="onScroll">
+				<div
+					class="virtual-list-phantom"
+					:style="{height: `${searchList.length * ITEM_HEIGHT}px`}"
+				></div>
+				<div
+					class="virtual-list-content"
+					:style="{transform: `translateY(${visibleRange.offsetY}px)`}"
+				>
+					<div
+						v-for="item in visibleItems"
+						:key="`${item.r}-${item.c}`"
+						class="item"
+						:style="{height: `${ITEM_HEIGHT}px`}"
+					>
+						<span class="position">
+							{{ numberToLetters(item.c + 1) }}{{ item.r + 1 }}
+						</span>
+						<span class="content" :title="item.v">{{ item.v }}</span>
+						<el-link @click="jumpToCell(item)" type="primary"> 跳转 </el-link>
+					</div>
+				</div>
+			</div>
+		</div>
 		<div class="btns">
-			<el-button @click="emits('searchAll')">查找全部</el-button>
-			<el-button @click="emits('searchPrevious')">上一个</el-button>
-			<el-button @click="emits('searchNext')" type="primary">下一个</el-button>
-			<el-button @click="emits('close')">关闭</el-button>
+			<el-button @click="emits('searchAll', searchValue.keyword)">查找全部</el-button>
+			<el-button @click="emits('searchPrevious', searchValue.keyword)">上一个</el-button>
+			<el-button @click="emits('searchNext', searchValue.keyword)" type="primary"
+				>下一个</el-button
+			>
+			<el-button @click="emits('update:show', false)">关闭</el-button>
 		</div>
 	</div>
 </template>
@@ -207,6 +307,78 @@ onUnmounted(() => {
 
 		&:active {
 			opacity: 0.6;
+		}
+	}
+
+	.all {
+		border: 1px solid var(--z-line);
+		border-radius: 5px;
+		margin: -10px 0 10px 0;
+		padding: 10px 10px 0 10px;
+
+		.search-header {
+			font-size: 12px;
+			color: var(--z-text-secondary);
+			margin-bottom: 8px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid var(--z-line);
+		}
+
+		.virtual-list {
+			position: relative;
+			overflow-y: auto;
+			border: 1px solid var(--z-line);
+			border-radius: 3px;
+			background: var(--z-theme);
+			margin-bottom: 10px;
+		}
+
+		.virtual-list-phantom {
+			position: absolute;
+			left: 0;
+			top: 0;
+			right: 0;
+			z-index: -1;
+		}
+
+		.virtual-list-content {
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 0;
+		}
+
+		.item {
+			align-items: center;
+			display: flex;
+			padding: 8px 12px;
+			border-bottom: 1px solid var(--z-line);
+			transition: background-color 0.2s;
+			box-sizing: border-box;
+
+			&:hover {
+				background-color: var(--z-hover);
+			}
+
+			&:last-child {
+				border-bottom: none;
+			}
+		}
+
+		.position {
+			font-size: 13px;
+			color: var(--z-text-secondary);
+			min-width: 40px;
+			flex-shrink: 0;
+		}
+
+		.content {
+			flex: 1;
+			padding: 0 10px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			font-size: 13px;
 		}
 	}
 }

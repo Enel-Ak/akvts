@@ -1512,6 +1512,392 @@ export const useTools = () => {
 		sheet.state.search = !sheet.state.search
 	}
 
+	// 搜索状态管理
+	let searchResults = []
+	let currentSearchIndex = -1
+	let lastSearchKeyword = ''
+
+	// 导航搜索的独立状态管理
+	let navigationKeyword = ''
+	let currentNavigationPosition = {r: 0, c: 0}
+	let lastNavigationResult = null
+
+	// 搜索所有匹配的单元格
+	const searchAll = async (keyword) => {
+		if (!keyword || typeof keyword !== 'string') {
+			searchResults = []
+			currentSearchIndex = -1
+			lastSearchKeyword = ''
+			return []
+		}
+
+		// 如果关键字相同且有缓存结果，直接返回
+		if (keyword === lastSearchKeyword && searchResults.length > 0) {
+			return searchResults
+		}
+
+		// 重置搜索状态
+		searchResults = []
+		currentSearchIndex = -1
+		lastSearchKeyword = keyword
+
+		// 确定数据源：优先使用筛选数据，否则使用原始数据
+		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
+		const dataSource =
+			isFiltered && sheet.filterCellData.size > 0 ? sheet.filterCellData : sheet.celldata
+
+		if (!dataSource || dataSource.size === 0) {
+			return []
+		}
+
+		// 搜索关键字转换为小写以支持不区分大小写搜索
+		const searchKeyword = keyword.toLowerCase()
+
+		try {
+			// 使用批处理遍历数据
+			await useProcessMapInBatches(sheet.id, dataSource, (rowIndex, rowData) => {
+				if (!Array.isArray(rowData)) return
+
+				// 遍历行中的每个单元格
+				rowData.forEach((cellValue, colIndex) => {
+					if (cellValue === undefined || cellValue === null || cellValue === '') {
+						return
+					}
+
+					// 将单元格值转换为字符串并转为小写进行匹配
+					const cellStr = String(cellValue).toLowerCase()
+					if (cellStr.includes(searchKeyword)) {
+						// 确定实际的行索引
+						let actualRowIndex = rowIndex
+
+						// 如果是筛选状态，需要转换为原始行索引
+						if (isFiltered && sheet.rowMapping && sheet.rowMapping[rowIndex]) {
+							actualRowIndex = sheet.rowMapping[rowIndex].originalIndex
+						}
+
+						searchResults.push({
+							r: actualRowIndex,
+							c: colIndex,
+							v: cellValue,
+						})
+					}
+				})
+			})
+
+			// 按行列顺序排序搜索结果
+			searchResults.sort((a, b) => {
+				if (a.r !== b.r) {
+					return a.r - b.r
+				}
+				return a.c - b.c
+			})
+
+			console.log(
+				`搜索完成: 关键字"${keyword}"，找到 ${searchResults.length} 个匹配项`,
+				searchResults
+			)
+			return searchResults
+		} catch (error) {
+			console.error('搜索过程中发生错误:', error)
+			searchResults = []
+			return []
+		}
+	}
+
+	// 搜索上一个匹配项（独立搜索，不依赖searchAll）
+	const searchPrevious = async (keyword) => {
+		// 如果没有关键字，返回错误
+		if (!keyword || typeof keyword !== 'string') {
+			ElMessage.warning('需要提供搜索关键字')
+			return null
+		}
+
+		const keywordLower = keyword.toLowerCase()
+
+		// 如果关键字变化了，重置导航位置
+		if (keyword !== navigationKeyword) {
+			navigationKeyword = keyword
+			// 从当前选区位置开始，如果没有选区则从末尾开始
+			const currentRange = sheet.hooks.selectionRangeHook.getRanged()
+			if (currentRange && currentRange.r !== undefined && currentRange.c !== undefined) {
+				currentNavigationPosition = {r: currentRange.r, c: currentRange.c}
+			} else {
+				// 获取数据的最大行列，从末尾开始搜索
+				const dataSource =
+					sheet.config.filtered && sheet.filterCellData.size > 0
+						? sheet.filterCellData
+						: sheet.celldata
+
+				let maxRow = 0,
+					maxCol = 0
+				dataSource.forEach((rowData, rowIndex) => {
+					maxRow = Math.max(maxRow, rowIndex)
+					if (Array.isArray(rowData)) {
+						maxCol = Math.max(maxCol, rowData.length - 1)
+					}
+				})
+				currentNavigationPosition = {r: maxRow, c: maxCol}
+			}
+		}
+
+		// 确定数据源
+		const isFiltered = sheet.config.filtered && sheet.filterCellData.size > 0
+		const dataSource = isFiltered ? sheet.filterCellData : sheet.celldata
+
+		if (!dataSource || dataSource.size === 0) {
+			ElMessage.warning('没有可搜索的数据')
+			return null
+		}
+
+		// 首先找到所有匹配项
+		let allMatches = []
+		dataSource.forEach((rowData, rowIndex) => {
+			if (Array.isArray(rowData)) {
+				rowData.forEach((cellValue, colIndex) => {
+					if (cellValue && String(cellValue).toLowerCase().includes(keywordLower)) {
+						let actualRow = rowIndex
+						// 如果是筛选状态，需要映射回原始行索引
+						if (isFiltered && sheet.rowMapping) {
+							const mapping = sheet.rowMapping.find(
+								(m) => m.filteredIndex === rowIndex
+							)
+							if (mapping) {
+								actualRow = mapping.originalIndex
+							}
+						}
+						allMatches.push({
+							r: actualRow,
+							c: colIndex,
+							v: cellValue,
+							originalR: rowIndex, // 保存原始行索引用于位置比较
+						})
+					}
+				})
+			}
+		})
+
+		if (allMatches.length === 0) {
+			ElMessage.warning('没有找到匹配的搜索结果')
+			return null
+		}
+
+		// 如果只有一个匹配项，直接返回它
+		if (allMatches.length === 1) {
+			const found = allMatches[0]
+			currentNavigationPosition = {r: found.originalR, c: found.c}
+			lastNavigationResult = found
+			console.log('导航到唯一的搜索结果:', found)
+			await scrollToCellAndSelect(found.r, found.c)
+			return found
+		}
+
+		// 多个匹配项时，找到当前位置之前的上一个
+		// 按行列顺序排序
+		allMatches.sort((a, b) => {
+			if (a.originalR !== b.originalR) return a.originalR - b.originalR
+			return a.c - b.c
+		})
+
+		// 找到当前位置之前的最后一个匹配项
+		let prevMatch = null
+		for (let i = allMatches.length - 1; i >= 0; i--) {
+			const match = allMatches[i]
+			if (
+				match.originalR < currentNavigationPosition.r ||
+				(match.originalR === currentNavigationPosition.r &&
+					match.c < currentNavigationPosition.c)
+			) {
+				prevMatch = match
+				break
+			}
+		}
+
+		// 如果没找到，提示没有找到匹配数据
+		if (!prevMatch) {
+			ElMessage.warning('没有找到匹配的搜索结果')
+			return null
+		}
+
+		currentNavigationPosition = {r: prevMatch.originalR, c: prevMatch.c}
+		lastNavigationResult = prevMatch
+		console.log('导航到上一个搜索结果:', prevMatch)
+		await scrollToCellAndSelect(prevMatch.r, prevMatch.c)
+		return prevMatch
+	}
+
+	// 搜索下一个匹配项（独立搜索，不依赖searchAll）
+	const searchNext = async (keyword) => {
+		// 如果没有关键字，返回错误
+		if (!keyword || typeof keyword !== 'string') {
+			ElMessage.warning('需要提供搜索关键字')
+			return null
+		}
+
+		const keywordLower = keyword.toLowerCase()
+
+		// 如果关键字变化了，重置导航位置
+		if (keyword !== navigationKeyword) {
+			navigationKeyword = keyword
+			// 从当前选区位置开始，如果没有选区则从开头开始
+			const currentRange = sheet.hooks.selectionRangeHook.getRanged()
+			if (currentRange && currentRange.r !== undefined && currentRange.c !== undefined) {
+				currentNavigationPosition = {r: currentRange.r, c: currentRange.c}
+			} else {
+				// 从开头开始搜索
+				currentNavigationPosition = {r: 0, c: 0}
+			}
+		}
+
+		// 确定数据源
+		const isFiltered = sheet.config.filtered && sheet.filterCellData.size > 0
+		const dataSource = isFiltered ? sheet.filterCellData : sheet.celldata
+
+		if (!dataSource || dataSource.size === 0) {
+			ElMessage.warning('没有可搜索的数据')
+			return null
+		}
+
+		// 首先找到所有匹配项
+		let allMatches = []
+		dataSource.forEach((rowData, rowIndex) => {
+			if (Array.isArray(rowData)) {
+				rowData.forEach((cellValue, colIndex) => {
+					if (cellValue && String(cellValue).toLowerCase().includes(keywordLower)) {
+						let actualRow = rowIndex
+						// 如果是筛选状态，需要映射回原始行索引
+						if (isFiltered && sheet.rowMapping) {
+							const mapping = sheet.rowMapping.find(
+								(m) => m.filteredIndex === rowIndex
+							)
+							if (mapping) {
+								actualRow = mapping.originalIndex
+							}
+						}
+						allMatches.push({
+							r: actualRow,
+							c: colIndex,
+							v: cellValue,
+							originalR: rowIndex, // 保存原始行索引用于位置比较
+						})
+					}
+				})
+			}
+		})
+
+		if (allMatches.length === 0) {
+			ElMessage.warning('没有找到匹配的搜索结果')
+			return null
+		}
+
+		// 如果只有一个匹配项，直接返回它
+		if (allMatches.length === 1) {
+			const found = allMatches[0]
+			currentNavigationPosition = {r: found.originalR, c: found.c}
+			lastNavigationResult = found
+			console.log('导航到唯一的搜索结果:', found)
+			await scrollToCellAndSelect(found.r, found.c)
+			return found
+		}
+
+		// 多个匹配项时，找到当前位置之后的下一个
+		// 按行列顺序排序
+		allMatches.sort((a, b) => {
+			if (a.originalR !== b.originalR) return a.originalR - b.originalR
+			return a.c - b.c
+		})
+
+		// 找到当前位置之后的第一个匹配项
+		let nextMatch = null
+		for (let match of allMatches) {
+			if (
+				match.originalR > currentNavigationPosition.r ||
+				(match.originalR === currentNavigationPosition.r &&
+					match.c > currentNavigationPosition.c)
+			) {
+				nextMatch = match
+				break
+			}
+		}
+
+		// 如果没找到，提示没有找到匹配数据
+		if (!nextMatch) {
+			ElMessage.warning('没有找到匹配的搜索结果')
+			return null
+		}
+
+		currentNavigationPosition = {r: nextMatch.originalR, c: nextMatch.c}
+		lastNavigationResult = nextMatch
+		console.log('导航到下一个搜索结果:', nextMatch)
+		await scrollToCellAndSelect(nextMatch.r, nextMatch.c)
+		return nextMatch
+	}
+
+	// 滚动到指定单元格并设置选区
+	const scrollToCellAndSelect = async (targetRow, targetCol) => {
+		try {
+			// 获取容器引用
+			const container = document.querySelector(`#${sheetKey}`)
+			if (!container) {
+				console.error('找不到表格容器')
+				return
+			}
+
+			// 计算目标单元格的绝对位置
+			let targetTop = 0
+			let targetLeft = 0
+
+			// 计算行位置（考虑行高调整）
+			for (let r = 0; r < targetRow; r++) {
+				targetTop += sheet.hooks.resizeHook.getRowHeight(r)
+			}
+
+			// 计算列位置（考虑列宽调整）
+			for (let c = 0; c < targetCol; c++) {
+				targetLeft += sheet.hooks.resizeHook.getColWidth(c)
+			}
+
+			// 获取当前单元格的尺寸
+			const cellHeight = sheet.hooks.resizeHook.getRowHeight(targetRow)
+			const cellWidth = sheet.hooks.resizeHook.getColWidth(targetCol)
+
+			// 获取容器的可视区域尺寸
+			const containerWidth = container.clientWidth
+			const containerHeight = container.clientHeight
+
+			// 计算居中滚动位置
+			const centerScrollLeft = Math.max(0, targetLeft - containerWidth / 2 + cellWidth / 2)
+			const centerScrollTop = Math.max(0, targetTop - containerHeight / 2 + cellHeight / 2)
+
+			// 设置滚动位置
+			container.scrollLeft = centerScrollLeft
+			container.scrollTop = centerScrollTop
+
+			// 等待滚动完成后设置选区
+			await new Promise((resolve) => {
+				// 使用 requestAnimationFrame 确保滚动完成
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						// 设置选区到目标单元格
+						sheet.hooks.selectionRangeHook.setRange(
+							targetRow,
+							targetCol,
+							targetRow,
+							targetCol,
+							true
+						)
+						resolve()
+					})
+				})
+			})
+
+			console.log(
+				`已滚动到单元格 (${targetRow}, ${targetCol})，位置: (${targetLeft}, ${targetTop})，滚动位置: (${centerScrollLeft}, ${centerScrollTop})`
+			)
+		} catch (error) {
+			console.error('滚动到单元格时发生错误:', error)
+		}
+	}
+
 	const clearAll = () => {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
@@ -2025,6 +2411,10 @@ export const useTools = () => {
 			setFreeze,
 			setFilter,
 			setSearch,
+			searchAll,
+			searchPrevious,
+			searchNext,
+			scrollToCellAndSelect,
 
 			addRowCount,
 			addRow,
