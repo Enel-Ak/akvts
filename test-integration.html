@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索功能集成测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .code {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #007acc;
+            color: white;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        .mock-search-ui {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .search-input {
+            width: 200px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-results {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        .result-header {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:hover {
+            background-color: #f0f8ff;
+        }
+        .result-position {
+            min-width: 80px;
+            font-size: 12px;
+            color: #666;
+        }
+        .result-content {
+            flex: 1;
+            padding: 0 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .result-jump {
+            color: #007acc;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>搜索功能集成测试</h1>
+        
+        <div class="test-section">
+            <h3>测试1: 基本搜索功能</h3>
+            <p>测试searchAll方法是否能正确返回搜索结果</p>
+            <button onclick="testBasicSearch()">运行测试</button>
+            <div id="test1Result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试2: 筛选状态下的搜索</h3>
+            <p>测试在有筛选条件时，搜索是否能正确处理行号映射</p>
+            <button onclick="testFilteredSearch()">运行测试</button>
+            <div id="test2Result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试3: 边界情况处理</h3>
+            <p>测试空关键字、无结果等边界情况</p>
+            <button onclick="testEdgeCases()">运行测试</button>
+            <div id="test3Result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试4: UI集成模拟</h3>
+            <p>模拟AirSheetSearch组件的UI交互</p>
+            <div class="mock-search-ui">
+                <input type="text" id="mockSearchInput" class="search-input" placeholder="输入搜索关键字" value="test">
+                <button onclick="mockSearchAll()">查找全部</button>
+                <button onclick="clearMockResults()">清空</button>
+                
+                <div id="mockSearchResults" class="search-results" style="display: none;">
+                    <div class="result-header">
+                        找到 <span id="mockResultCount">0</span> 个匹配项
+                    </div>
+                    <div id="mockResultsList"></div>
+                </div>
+            </div>
+            <div id="test4Result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>实现代码预览</h3>
+            <div class="code" id="implementationCode">
+// AirSheet.vue 中的搜索事件处理
+const onSearchAll = async (keyword) => {
+    try {
+        // 检查搜索关键字
+        if (!keyword || typeof keyword !== 'string' || !keyword.trim()) {
+            ElMessage.warning('请输入搜索关键字')
+            searchList.value = []
+            return
+        }
+
+        const results = await sheet.hooks.toolsHook.searchAll(keyword.trim())
+        searchList.value = results || []
+        
+        if (searchList.value.length === 0) {
+            ElMessage.info('没有找到匹配的结果')
+        } else {
+            ElMessage.success(`找到 ${searchList.value.length} 个匹配项`)
+        }
+        
+        console.log('搜索完成，找到结果:', searchList.value.length, '个')
+    } catch (error) {
+        console.error('搜索失败:', error)
+        ElMessage.error('搜索失败，请重试')
+        searchList.value = []
+    }
+}
+
+// AirSheetSearch.vue 中的跳转处理
+const jumpToCell = (item) => {
+    emits('jumpToCell', item.r, item.c)
+}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const mockData = new Map([
+            [0, ['Name', 'Age', 'City', 'test1', 'Email']],
+            [1, ['John', 25, 'New York', 'test data', 'john@test.com']],
+            [2, ['Jane', 30, 'Los Angeles', 'sample', 'jane@example.com']],
+            [3, ['Bob', 35, 'Chicago', 'test case', 'bob@test.org']],
+            [4, ['Alice', 28, 'Houston', 'demo', 'alice@test.net']],
+            [5, ['Charlie', 32, 'Phoenix', 'test example', 'charlie@demo.com']],
+        ]);
+
+        // 模拟筛选数据
+        const mockFilteredData = new Map([
+            [0, ['John', 25, 'New York', 'test data', 'john@test.com']],
+            [1, ['Bob', 35, 'Chicago', 'test case', 'bob@test.org']],
+            [2, ['Charlie', 32, 'Phoenix', 'test example', 'charlie@demo.com']],
+        ]);
+
+        const mockRowMapping = [
+            { filteredIndex: 0, originalIndex: 1 },
+            { filteredIndex: 1, originalIndex: 3 },
+            { filteredIndex: 2, originalIndex: 5 },
+        ];
+
+        // 模拟searchAll方法
+        async function mockSearchAll(keyword, isFiltered = false) {
+            if (!keyword || typeof keyword !== 'string') {
+                return [];
+            }
+
+            const searchResults = [];
+            const searchKeyword = keyword.toLowerCase();
+            const dataSource = isFiltered ? mockFilteredData : mockData;
+            const rowMapping = isFiltered ? mockRowMapping : null;
+
+            for (const [rowIndex, rowData] of dataSource) {
+                if (!Array.isArray(rowData)) continue;
+
+                rowData.forEach((cellValue, colIndex) => {
+                    if (cellValue === undefined || cellValue === null || cellValue === '') {
+                        return;
+                    }
+
+                    const cellStr = String(cellValue).toLowerCase();
+                    if (cellStr.includes(searchKeyword)) {
+                        let actualRowIndex = rowIndex;
+
+                        // 如果是筛选状态，需要转换为原始行索引
+                        if (isFiltered && rowMapping && rowMapping[rowIndex]) {
+                            actualRowIndex = rowMapping[rowIndex].originalIndex;
+                        }
+
+                        searchResults.push({
+                            r: actualRowIndex,
+                            c: colIndex,
+                            v: cellValue,
+                        });
+                    }
+                });
+            }
+
+            // 按行列顺序排序
+            searchResults.sort((a, b) => {
+                if (a.r !== b.r) {
+                    return a.r - b.r;
+                }
+                return a.c - b.c;
+            });
+
+            return searchResults;
+        }
+
+        // 测试函数
+        async function testBasicSearch() {
+            const resultDiv = document.getElementById('test1Result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const results = await mockSearchAll('test');
+                
+                if (results.length > 0) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `
+                        <strong>✓ 测试通过</strong><br>
+                        找到 ${results.length} 个匹配项:<br>
+                        ${results.map(r => `行${r.r + 1}-列${r.c + 1}: ${r.v}`).join('<br>')}
+                    `;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = '<strong>✗ 测试失败</strong><br>未找到预期的搜索结果';
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `<strong>✗ 测试失败</strong><br>错误: ${error.message}`;
+            }
+        }
+
+        async function testFilteredSearch() {
+            const resultDiv = document.getElementById('test2Result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const results = await mockSearchAll('test', true);
+                
+                if (results.length > 0) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `
+                        <strong>✓ 测试通过</strong><br>
+                        筛选状态下找到 ${results.length} 个匹配项:<br>
+                        ${results.map(r => `原始行${r.r + 1}-列${r.c + 1}: ${r.v}`).join('<br>')}<br>
+                        <em>注意：行号已正确映射到原始行号</em>
+                    `;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = '<strong>✗ 测试失败</strong><br>筛选状态下未找到预期的搜索结果';
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `<strong>✗ 测试失败</strong><br>错误: ${error.message}`;
+            }
+        }
+
+        async function testEdgeCases() {
+            const resultDiv = document.getElementById('test3Result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const tests = [
+                    { keyword: '', expected: 0, desc: '空关键字' },
+                    { keyword: '   ', expected: 0, desc: '空白关键字' },
+                    { keyword: 'nonexistent', expected: 0, desc: '不存在的关键字' },
+                    { keyword: null, expected: 0, desc: 'null关键字' },
+                ];
+                
+                let allPassed = true;
+                let results = [];
+                
+                for (const test of tests) {
+                    const result = await mockSearchAll(test.keyword);
+                    const passed = result.length === test.expected;
+                    allPassed = allPassed && passed;
+                    results.push(`${passed ? '✓' : '✗'} ${test.desc}: ${result.length} 个结果`);
+                }
+                
+                if (allPassed) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `<strong>✓ 所有边界情况测试通过</strong><br>${results.join('<br>')}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `<strong>✗ 部分边界情况测试失败</strong><br>${results.join('<br>')}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `<strong>✗ 测试失败</strong><br>错误: ${error.message}`;
+            }
+        }
+
+        async function mockSearchAll() {
+            const keyword = document.getElementById('mockSearchInput').value;
+            const resultsDiv = document.getElementById('mockSearchResults');
+            const resultsList = document.getElementById('mockResultsList');
+            const resultCount = document.getElementById('mockResultCount');
+            const testResultDiv = document.getElementById('test4Result');
+            
+            testResultDiv.style.display = 'block';
+            
+            try {
+                if (!keyword.trim()) {
+                    testResultDiv.className = 'test-result error';
+                    testResultDiv.innerHTML = '<strong>请输入搜索关键字</strong>';
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const results = await mockSearchAll(keyword);
+                
+                if (results.length === 0) {
+                    testResultDiv.className = 'test-result info';
+                    testResultDiv.innerHTML = '<strong>没有找到匹配的结果</strong>';
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                // 显示搜索结果
+                testResultDiv.className = 'test-result success';
+                testResultDiv.innerHTML = `<strong>找到 ${results.length} 个匹配项</strong>`;
+                resultCount.textContent = results.length;
+                
+                // 渲染结果列表
+                resultsList.innerHTML = '';
+                results.forEach(item => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.innerHTML = `
+                        <span class="result-position">${item.r + 1}行-${item.c + 1}列</span>
+                        <span class="result-content" title="${item.v}">${item.v}</span>
+                        <span class="result-jump" onclick="mockJumpToCell(${item.r}, ${item.c})">跳转</span>
+                    `;
+                    resultsList.appendChild(resultItem);
+                });
+                
+                resultsDiv.style.display = 'block';
+                
+            } catch (error) {
+                testResultDiv.className = 'test-result error';
+                testResultDiv.innerHTML = `<strong>搜索失败:</strong> ${error.message}`;
+            }
+        }
+
+        function mockJumpToCell(row, col) {
+            alert(`模拟跳转到单元格: 行${row + 1}-列${col + 1}`);
+            console.log(`跳转到单元格: (${row}, ${col})`);
+        }
+
+        function clearMockResults() {
+            document.getElementById('mockSearchResults').style.display = 'none';
+            document.getElementById('test4Result').style.display = 'none';
+        }
+
+        // 支持回车键搜索
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('mockSearchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    mockSearchAll();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>搜索功能测试</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 20px;
+				background-color: #f5f5f5;
+			}
+
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+
+			h1 {
+				color: #333;
+				text-align: center;
+				margin-bottom: 30px;
+			}
+
+			.test-section {
+				margin-bottom: 30px;
+				padding: 20px;
+				border: 1px solid #ddd;
+				border-radius: 5px;
+				background-color: #fafafa;
+			}
+
+			.test-section h2 {
+				color: #555;
+				margin-top: 0;
+				border-bottom: 2px solid #007acc;
+				padding-bottom: 10px;
+			}
+
+			.controls {
+				margin-bottom: 20px;
+			}
+
+			.controls input,
+			.controls button {
+				margin: 5px;
+				padding: 8px 12px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+			}
+
+			.controls button {
+				background: #007acc;
+				color: white;
+				cursor: pointer;
+				border: none;
+			}
+
+			.controls button:hover {
+				background: #005a9e;
+			}
+
+			.controls button:disabled {
+				background: #ccc;
+				cursor: not-allowed;
+			}
+
+			.results {
+				background: white;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				padding: 15px;
+				min-height: 100px;
+				font-family: monospace;
+				white-space: pre-wrap;
+				overflow-y: auto;
+				max-height: 300px;
+			}
+
+			.status {
+				margin-top: 10px;
+				padding: 10px;
+				border-radius: 4px;
+				font-weight: bold;
+			}
+
+			.status.success {
+				background: #d4edda;
+				color: #155724;
+				border: 1px solid #c3e6cb;
+			}
+
+			.status.error {
+				background: #f8d7da;
+				color: #721c24;
+				border: 1px solid #f5c6cb;
+			}
+
+			.status.info {
+				background: #d1ecf1;
+				color: #0c5460;
+				border: 1px solid #bee5eb;
+			}
+
+			.mock-data {
+				display: grid;
+				grid-template-columns: repeat(5, 1fr);
+				gap: 2px;
+				margin: 10px 0;
+				font-size: 12px;
+			}
+
+			.mock-cell {
+				padding: 5px;
+				background: #f0f0f0;
+				border: 1px solid #ddd;
+				text-align: center;
+			}
+
+			.mock-cell.header {
+				background: #007acc;
+				color: white;
+				font-weight: bold;
+			}
+
+			.mock-cell.found {
+				background: #ffeb3b;
+				font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>🔍 Sheet 搜索功能测试</h1>
+
+			<div class="test-section">
+				<h2>测试说明</h2>
+				<p>这个页面用于测试 useTools.js 中实现的搜索功能，包括：</p>
+				<ul>
+					<li><strong>searchAll(keyword)</strong> - 搜索所有匹配的单元格</li>
+					<li><strong>searchPrevious()</strong> - 导航到上一个搜索结果</li>
+					<li><strong>searchNext()</strong> - 导航到下一个搜索结果</li>
+				</ul>
+				<p>由于这是一个独立的测试页面，我们将模拟 sheet 数据结构来验证搜索逻辑。</p>
+			</div>
+
+			<div class="test-section">
+				<h2>模拟数据</h2>
+				<div class="mock-data" id="mockData">
+					<!-- 将通过 JavaScript 生成 -->
+				</div>
+			</div>
+
+			<div class="test-section">
+				<h2>搜索测试</h2>
+				<div class="controls">
+					<input
+						type="text"
+						id="searchInput"
+						placeholder="输入搜索关键字..."
+						value="test"
+					/>
+					<button onclick="testSearchAll()">搜索所有</button>
+					<button onclick="testSearchPrevious()" id="prevBtn" disabled>上一个</button>
+					<button onclick="testSearchNext()" id="nextBtn" disabled>下一个</button>
+					<button onclick="clearSearch()">清除搜索</button>
+				</div>
+				<div class="results" id="searchResults">等待搜索...</div>
+				<div class="status" id="searchStatus"></div>
+			</div>
+
+			<div class="test-section">
+				<h2>筛选状态测试</h2>
+				<div class="controls">
+					<button onclick="toggleFilter()" id="filterBtn">启用筛选模式</button>
+					<button onclick="testFilteredSearch()" id="filteredSearchBtn" disabled>
+						筛选状态搜索
+					</button>
+				</div>
+				<div class="results" id="filterResults">筛选功能测试结果...</div>
+				<div class="status" id="filterStatus"></div>
+			</div>
+		</div>
+
+		<script>
+			// 模拟 sheet 数据结构
+			const mockSheet = {
+				id: 'test-sheet',
+				celldata: new Map(),
+				filterCellData: new Map(),
+				rowMapping: [],
+				config: {
+					filtered: [],
+					rowCount: 10,
+					colCount: 5,
+				},
+				hooks: {
+					resizeHook: {
+						getRowHeight: (row) => 25,
+						getColWidth: (col) => 100,
+					},
+					selectionRangeHook: {
+						setRange: (r, c, rr, cc, force) => {
+							console.log(`设置选区: (${r}, ${c}) 到 (${rr}, ${cc})`)
+							updateMockDisplay(r, c)
+						},
+					},
+				},
+			}
+
+			// 模拟 useProcessMapInBatches 函数
+			const mockUseProcessMapInBatches = async (sheetId, dataMap, callback) => {
+				for (const [key, value] of dataMap) {
+					callback(key, value)
+				}
+			}
+
+			// 生成模拟数据
+			function generateMockData() {
+				const data = [
+					['Name', 'Age', 'City', 'Job', 'Status'],
+					['Alice', '25', 'New York', 'Engineer', 'Active'],
+					['Bob', '30', 'Los Angeles', 'Designer', 'Active'],
+					['Charlie', '35', 'Chicago', 'Manager', 'Inactive'],
+					['Diana', '28', 'Houston', 'Developer', 'Active'],
+					['Eve', '32', 'Phoenix', 'Tester', 'Active'],
+					['Frank', '29', 'Philadelphia', 'Analyst', 'Inactive'],
+					['Grace', '27', 'San Antonio', 'Engineer', 'Active'],
+					['Henry', '31', 'San Diego', 'Designer', 'Active'],
+					['Ivy', '26', 'Dallas', 'Developer', 'Active'],
+				]
+
+				// 填充到 mockSheet.celldata
+				data.forEach((row, rowIndex) => {
+					mockSheet.celldata.set(rowIndex, row)
+				})
+
+				// 显示模拟数据
+				const mockDataDiv = document.getElementById('mockData')
+				mockDataDiv.innerHTML = ''
+
+				data.forEach((row, rowIndex) => {
+					row.forEach((cell, colIndex) => {
+						const cellDiv = document.createElement('div')
+						cellDiv.className = `mock-cell ${rowIndex === 0 ? 'header' : ''}`
+						cellDiv.textContent = cell
+						cellDiv.id = `cell-${rowIndex}-${colIndex}`
+						mockDataDiv.appendChild(cellDiv)
+					})
+				})
+			}
+
+			// 更新模拟显示
+			function updateMockDisplay(selectedRow = -1, selectedCol = -1) {
+				// 清除之前的高亮
+				document.querySelectorAll('.mock-cell').forEach((cell) => {
+					cell.classList.remove('found')
+				})
+
+				// 高亮搜索结果
+				if (window.mockSearchResults) {
+					window.mockSearchResults.forEach((result) => {
+						const cellElement = document.getElementById(`cell-${result.r}-${result.c}`)
+						if (cellElement) {
+							cellElement.classList.add('found')
+						}
+					})
+				}
+
+				// 高亮当前选中的单元格
+				if (selectedRow >= 0 && selectedCol >= 0) {
+					const selectedCell = document.getElementById(
+						`cell-${selectedRow}-${selectedCol}`
+					)
+					if (selectedCell) {
+						selectedCell.style.border = '3px solid red'
+						setTimeout(() => {
+							selectedCell.style.border = ''
+						}, 2000)
+					}
+				}
+			}
+
+			// 搜索状态管理（模拟 useTools.js 中的变量）
+			let searchResults = []
+			let currentSearchIndex = -1
+			let lastSearchKeyword = ''
+			let isFilterMode = false
+
+			// 导航搜索的独立状态管理
+			let navigationKeyword = ''
+			let currentNavigationPosition = {r: 0, c: 0}
+			let lastNavigationResult = null
+
+			// 模拟搜索所有匹配的单元格（基于 useTools.js 的实现）
+			async function mockSearchAll(keyword) {
+				if (!keyword || typeof keyword !== 'string') {
+					searchResults = []
+					currentSearchIndex = -1
+					lastSearchKeyword = ''
+					return []
+				}
+
+				// 如果关键字相同且有缓存结果，直接返回
+				if (keyword === lastSearchKeyword && searchResults.length > 0) {
+					return searchResults
+				}
+
+				// 重置搜索状态
+				searchResults = []
+				currentSearchIndex = -1
+				lastSearchKeyword = keyword
+
+				// 确定数据源
+				const isFiltered = isFilterMode && mockSheet.filterCellData.size > 0
+				const dataSource = isFiltered ? mockSheet.filterCellData : mockSheet.celldata
+
+				if (!dataSource || dataSource.size === 0) {
+					return []
+				}
+
+				// 搜索关键字转换为小写
+				const searchKeyword = keyword.toLowerCase()
+
+				try {
+					// 使用模拟的批处理遍历数据
+					await mockUseProcessMapInBatches(
+						mockSheet.id,
+						dataSource,
+						(rowIndex, rowData) => {
+							if (!Array.isArray(rowData)) return
+
+							// 遍历行中的每个单元格
+							rowData.forEach((cellValue, colIndex) => {
+								if (
+									cellValue === undefined ||
+									cellValue === null ||
+									cellValue === ''
+								) {
+									return
+								}
+
+								// 将单元格值转换为字符串并转为小写进行匹配
+								const cellStr = String(cellValue).toLowerCase()
+								if (cellStr.includes(searchKeyword)) {
+									// 确定实际的行索引
+									let actualRowIndex = rowIndex
+
+									// 如果是筛选状态，需要转换为原始行索引
+									if (
+										isFiltered &&
+										mockSheet.rowMapping &&
+										mockSheet.rowMapping[rowIndex]
+									) {
+										actualRowIndex =
+											mockSheet.rowMapping[rowIndex].originalIndex
+									}
+
+									searchResults.push({
+										r: actualRowIndex,
+										c: colIndex,
+										v: cellValue,
+									})
+								}
+							})
+						}
+					)
+
+					// 按行列顺序排序搜索结果
+					searchResults.sort((a, b) => {
+						if (a.r !== b.r) {
+							return a.r - b.r
+						}
+						return a.c - b.c
+					})
+
+					console.log(
+						`搜索完成: 关键字"${keyword}"，找到 ${searchResults.length} 个匹配项`,
+						searchResults
+					)
+					return searchResults
+				} catch (error) {
+					console.error('搜索过程中发生错误:', error)
+					searchResults = []
+					return []
+				}
+			}
+
+			// 模拟搜索上一个匹配项（独立搜索，不依赖searchAll）
+			async function mockSearchPrevious(keyword) {
+				// 如果没有关键字，返回错误
+				if (!keyword || typeof keyword !== 'string') {
+					console.warn('searchPrevious: 需要提供搜索关键字')
+					return null
+				}
+
+				const keywordLower = keyword.toLowerCase()
+
+				// 如果关键字变化了，重置导航位置
+				if (keyword !== navigationKeyword) {
+					navigationKeyword = keyword
+					// 从末尾开始搜索
+					currentNavigationPosition = {r: 9, c: 4} // 模拟数据的末尾位置
+				}
+
+				// 简化的向前搜索逻辑（用于测试）
+				const dataSource = isFilterMode ? mockSheet.filterCellData : mockSheet.celldata
+				let found = null
+
+				// 从当前位置向前搜索
+				for (let r = currentNavigationPosition.r; r >= 0; r--) {
+					const rowData = dataSource.get(r)
+					if (!rowData) continue
+
+					let startCol =
+						r === currentNavigationPosition.r
+							? currentNavigationPosition.c - 1
+							: rowData.length - 1
+					for (let c = startCol; c >= 0; c--) {
+						if (rowData[c] && String(rowData[c]).toLowerCase().includes(keywordLower)) {
+							let actualRow = r
+							// 如果是筛选状态，映射回原始行索引
+							if (isFilterMode && mockSheet.rowMapping) {
+								const mapping = mockSheet.rowMapping.find(
+									(m) => m.filteredIndex === r
+								)
+								if (mapping) actualRow = mapping.originalIndex
+							}
+
+							found = {r: actualRow, c: c, v: rowData[c]}
+							currentNavigationPosition = {r: r, c: c}
+							lastNavigationResult = found
+							break
+						}
+					}
+					if (found) break
+				}
+
+				if (!found) {
+					console.warn('没有找到匹配的搜索结果')
+					return null
+				}
+
+				console.log('导航到上一个搜索结果:', found)
+
+				// 模拟滚动到目标单元格并设置选区
+				mockSheet.hooks.selectionRangeHook.setRange(
+					found.r,
+					found.c,
+					found.r,
+					found.c,
+					true
+				)
+
+				return found
+			}
+
+			// 模拟搜索下一个匹配项（独立搜索，不依赖searchAll）
+			async function mockSearchNext(keyword) {
+				// 如果没有关键字，返回错误
+				if (!keyword || typeof keyword !== 'string') {
+					console.warn('searchNext: 需要提供搜索关键字')
+					return null
+				}
+
+				const keywordLower = keyword.toLowerCase()
+
+				// 如果关键字变化了，重置导航位置
+				if (keyword !== navigationKeyword) {
+					navigationKeyword = keyword
+					// 从开头开始搜索
+					currentNavigationPosition = {r: 0, c: 0}
+				}
+
+				// 简化的向后搜索逻辑（用于测试）
+				const dataSource = isFilterMode ? mockSheet.filterCellData : mockSheet.celldata
+				let found = null
+
+				// 从当前位置向后搜索
+				for (let r = currentNavigationPosition.r; r < 10; r++) {
+					// 假设最多10行
+					const rowData = dataSource.get(r)
+					if (!rowData) continue
+
+					let startCol =
+						r === currentNavigationPosition.r ? currentNavigationPosition.c + 1 : 0
+					for (let c = startCol; c < rowData.length; c++) {
+						if (rowData[c] && String(rowData[c]).toLowerCase().includes(keywordLower)) {
+							let actualRow = r
+							// 如果是筛选状态，映射回原始行索引
+							if (isFilterMode && mockSheet.rowMapping) {
+								const mapping = mockSheet.rowMapping.find(
+									(m) => m.filteredIndex === r
+								)
+								if (mapping) actualRow = mapping.originalIndex
+							}
+
+							found = {r: actualRow, c: c, v: rowData[c]}
+							currentNavigationPosition = {r: r, c: c}
+							lastNavigationResult = found
+							break
+						}
+					}
+					if (found) break
+				}
+
+				if (!found) {
+					console.warn('没有找到匹配的搜索结果')
+					return null
+				}
+
+				console.log('导航到下一个搜索结果:', found)
+
+				// 模拟滚动到目标单元格并设置选区
+				mockSheet.hooks.selectionRangeHook.setRange(
+					found.r,
+					found.c,
+					found.r,
+					found.c,
+					true
+				)
+
+				return found
+			}
+
+			// 测试函数实现
+			async function testSearchAll() {
+				const keyword = document.getElementById('searchInput').value
+				const resultsDiv = document.getElementById('searchResults')
+				const statusDiv = document.getElementById('searchStatus')
+
+				if (!keyword.trim()) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = '请输入搜索关键字'
+					return
+				}
+
+				try {
+					statusDiv.className = 'status info'
+					statusDiv.textContent = '搜索中...'
+
+					const results = await mockSearchAll(keyword)
+					window.mockSearchResults = results // 保存到全局变量用于显示
+
+					let resultText = `搜索关键字: "${keyword}"\n`
+					resultText += `找到 ${results.length} 个匹配项:\n\n`
+
+					results.forEach((result, index) => {
+						resultText += `${index + 1}. 位置: (${result.r}, ${result.c}) 值: "${
+							result.v
+						}"\n`
+					})
+
+					resultsDiv.textContent = resultText
+					updateMockDisplay()
+
+					// 启用导航按钮
+					document.getElementById('prevBtn').disabled = results.length === 0
+					document.getElementById('nextBtn').disabled = results.length === 0
+
+					statusDiv.className = 'status success'
+					statusDiv.textContent = `搜索完成，找到 ${results.length} 个匹配项`
+				} catch (error) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = `搜索失败: ${error.message}`
+					console.error('搜索测试失败:', error)
+				}
+			}
+
+			async function testSearchPrevious() {
+				const keyword = document.getElementById('searchInput').value
+				const resultsDiv = document.getElementById('searchResults')
+				const statusDiv = document.getElementById('searchStatus')
+
+				if (!keyword.trim()) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = '请输入搜索关键字'
+					return
+				}
+
+				try {
+					const result = await mockSearchPrevious(keyword)
+
+					if (result) {
+						let resultText = resultsDiv.textContent
+						resultText += `\n>>> 导航到上一个: 位置: (${result.r}, ${result.c}) 值: "${result.v}"`
+						resultsDiv.textContent = resultText
+
+						statusDiv.className = 'status success'
+						statusDiv.textContent = `已导航到搜索结果`
+					} else {
+						statusDiv.className = 'status error'
+						statusDiv.textContent = '没有搜索结果'
+					}
+				} catch (error) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = `导航失败: ${error.message}`
+					console.error('导航测试失败:', error)
+				}
+			}
+
+			async function testSearchNext() {
+				const keyword = document.getElementById('searchInput').value
+				const resultsDiv = document.getElementById('searchResults')
+				const statusDiv = document.getElementById('searchStatus')
+
+				if (!keyword.trim()) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = '请输入搜索关键字'
+					return
+				}
+
+				try {
+					const result = await mockSearchNext(keyword)
+
+					if (result) {
+						let resultText = resultsDiv.textContent
+						resultText += `\n>>> 导航到下一个: 位置: (${result.r}, ${result.c}) 值: "${result.v}"`
+						resultsDiv.textContent = resultText
+
+						statusDiv.className = 'status success'
+						statusDiv.textContent = `已导航到搜索结果`
+					} else {
+						statusDiv.className = 'status error'
+						statusDiv.textContent = '没有搜索结果'
+					}
+				} catch (error) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = `导航失败: ${error.message}`
+					console.error('导航测试失败:', error)
+				}
+			}
+
+			function clearSearch() {
+				searchResults = []
+				currentSearchIndex = -1
+				lastSearchKeyword = ''
+				window.mockSearchResults = []
+
+				document.getElementById('searchResults').textContent = '等待搜索...'
+				document.getElementById('searchStatus').textContent = ''
+				document.getElementById('searchStatus').className = 'status'
+				document.getElementById('prevBtn').disabled = true
+				document.getElementById('nextBtn').disabled = true
+
+				updateMockDisplay()
+			}
+
+			function toggleFilter() {
+				isFilterMode = !isFilterMode
+				const filterBtn = document.getElementById('filterBtn')
+				const filteredSearchBtn = document.getElementById('filteredSearchBtn')
+				const filterStatus = document.getElementById('filterStatus')
+
+				if (isFilterMode) {
+					// 创建筛选数据（只包含 Active 状态的行）
+					mockSheet.filterCellData.clear()
+					mockSheet.rowMapping = []
+
+					let filteredIndex = 0
+					mockSheet.celldata.forEach((rowData, originalIndex) => {
+						if (
+							originalIndex === 0 ||
+							(rowData[4] && rowData[4].toLowerCase() === 'active')
+						) {
+							mockSheet.filterCellData.set(filteredIndex, rowData)
+							mockSheet.rowMapping.push({
+								filteredIndex: filteredIndex,
+								originalIndex: originalIndex,
+							})
+							filteredIndex++
+						}
+					})
+
+					filterBtn.textContent = '禁用筛选模式'
+					filteredSearchBtn.disabled = false
+					filterStatus.className = 'status info'
+					filterStatus.textContent = `筛选模式已启用，筛选后数据: ${mockSheet.filterCellData.size} 行`
+				} else {
+					mockSheet.filterCellData.clear()
+					mockSheet.rowMapping = []
+
+					filterBtn.textContent = '启用筛选模式'
+					filteredSearchBtn.disabled = true
+					filterStatus.className = 'status'
+					filterStatus.textContent = '筛选模式已禁用'
+				}
+			}
+
+			async function testFilteredSearch() {
+				const filterResults = document.getElementById('filterResults')
+				const filterStatus = document.getElementById('filterStatus')
+
+				try {
+					const keyword = 'Active'
+					const results = await mockSearchAll(keyword)
+
+					let resultText = `筛选状态下搜索关键字: "${keyword}"\n`
+					resultText += `筛选后数据行数: ${mockSheet.filterCellData.size}\n`
+					resultText += `找到 ${results.length} 个匹配项:\n\n`
+
+					results.forEach((result, index) => {
+						resultText += `${index + 1}. 原始位置: (${result.r}, ${result.c}) 值: "${
+							result.v
+						}"\n`
+					})
+
+					filterResults.textContent = resultText
+
+					filterStatus.className = 'status success'
+					filterStatus.textContent = `筛选状态搜索完成，找到 ${results.length} 个匹配项`
+				} catch (error) {
+					filterStatus.className = 'status error'
+					filterStatus.textContent = `筛选搜索失败: ${error.message}`
+					console.error('筛选搜索测试失败:', error)
+				}
+			}
+
+			// 初始化页面
+			generateMockData()
+
+			console.log('模拟数据已生成:', mockSheet.celldata)
+		</script>
+	</body>
+</html>

@@ -128,9 +128,9 @@ export const useSelectionRange = () => {
 				const mergedCell = sheet.hooks.mergeHook.findMergedCell(row, col)
 				if (mergedCell) {
 					finalStartRow = Math.min(finalStartRow, mergedCell.r)
-					finalEndRow = Math.max(finalEndRow, mergedCell.r + mergedCell.rs)
+					finalEndRow = Math.max(finalEndRow, mergedCell.r + mergedCell.rs - 1)
 					finalStartCol = Math.min(finalStartCol, mergedCell.c)
-					finalEndCol = Math.max(finalEndCol, mergedCell.c + mergedCell.cs)
+					finalEndCol = Math.max(finalEndCol, mergedCell.c + mergedCell.cs - 1)
 					return true
 				}
 				return false
@@ -821,8 +821,8 @@ export const useSelectionRange = () => {
 			ranged.value = {
 				r: mc.r,
 				c: mc.c,
-				rr: mc.r + mc.rowspan - 1,
-				cc: mc.c + mc.colspan - 1,
+				rr: mc.r + mc.rs - 1,
+				cc: mc.c + mc.cs - 1,
 			}
 		} else {
 			ranged.value = {
@@ -857,8 +857,8 @@ export const useSelectionRange = () => {
 		const mergedCell = sheet.hooks.mergeHook.findMergedCell?.(r, c)
 		if (mergedCell) {
 			return {
-				r: mergedCell.row,
-				c: mergedCell.col,
+				r: mergedCell.r,
+				c: mergedCell.c,
 				mergedCell,
 			}
 		}
@@ -871,15 +871,15 @@ export const useSelectionRange = () => {
 
 		const {rr, cc} = ranged.value
 		// 检查是否在合并单元格内
-		const mergedCell = sheet.hooks.mergedCellsHook.findMergedCell?.(rr, cc)
+		const mergedCell = sheet.hooks.mergeHook.findMergedCell?.(rr, cc)
 		if (mergedCell) {
 			return {
-				row: mergedCell.row + mergedCell.rowspan - 1,
-				col: mergedCell.col + mergedCell.colspan - 1,
+				row: mergedCell.r + mergedCell.rs - 1,
+				col: mergedCell.c + mergedCell.cs - 1,
 				mergedCell,
 			}
 		}
-		return end
+		return {r: rr, c: cc}
 	}
 
 	// 快速获取选区数据

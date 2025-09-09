@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>选区框位置计算调试</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 20px;
+				background: #f5f5f5;
+			}
+
+			.container {
+				width: 600px;
+				height: 400px;
+				border: 2px solid #333;
+				position: relative;
+				overflow: auto;
+				background: white;
+			}
+
+			.virtual-phantom {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 2000px;
+				height: 2000px;
+				background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+					linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+					linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+					linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+				background-size: 20px 20px;
+				z-index: -1;
+			}
+
+			.virtual-content {
+				position: absolute;
+				left: 0;
+				top: 0;
+				z-index: 2;
+			}
+
+			.cell {
+				position: absolute;
+				width: 100px;
+				height: 25px;
+				border: 1px solid #ddd;
+				background: #fff;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 12px;
+			}
+
+			.selection-box {
+				position: absolute;
+				border: 2px solid #007acc;
+				background: rgba(0, 122, 204, 0.1);
+				pointer-events: none;
+				z-index: 10;
+			}
+
+			.debug-info {
+				position: fixed;
+				top: 10px;
+				right: 10px;
+				background: rgba(0, 0, 0, 0.8);
+				color: white;
+				padding: 10px;
+				border-radius: 5px;
+				font-family: monospace;
+				font-size: 11px;
+				max-width: 400px;
+				max-height: 80vh;
+				overflow-y: auto;
+			}
+
+			.controls {
+				margin-bottom: 20px;
+			}
+
+			button {
+				margin: 5px;
+				padding: 8px 16px;
+				background: #007acc;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			button:hover {
+				background: #005a9e;
+			}
+
+			.method-selector {
+				margin: 10px 0;
+			}
+
+			select {
+				padding: 5px;
+				margin-left: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>选区框位置计算调试工具</h1>
+
+		<div class="controls">
+			<button onclick="selectCell(5, 3)">选择 R5C3</button>
+			<button onclick="selectCell(10, 8)">选择 R10C8</button>
+			<button onclick="selectCell(20, 15)">选择 R20C15</button>
+			<button onclick="selectCell(30, 5)">选择 R30C5</button>
+			<br />
+			<button onclick="scrollToPosition(500, 300)">滚动到 (500, 300)</button>
+			<button onclick="scrollToPosition(1000, 800)">滚动到 (1000, 800)</button>
+			<button onclick="scrollToPosition(1500, 1200)">滚动到 (1500, 1200)</button>
+			<button onclick="resetScroll()">重置滚动</button>
+
+			<div class="method-selector">
+				<label>计算方法：</label>
+				<select id="methodSelector" onchange="updateSelectionBox()">
+					<option value="1">方法1: 基础位置 + 虚拟偏移</option>
+					<option value="2">方法2: 基础位置 - 虚拟偏移</option>
+					<option value="3">方法3: 基础位置 - 虚拟偏移 + 滚动位置</option>
+					<option value="4">方法4: 基础位置（无偏移）</option>
+					<option value="5">方法5: 基础位置 - 滚动位置</option>
+					<option value="6" selected>
+						方法6: 基础位置 - 虚拟偏移 (选区框在virtual-content内)
+					</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="container" id="container">
+			<div class="virtual-phantom"></div>
+			<div class="virtual-content" id="virtualContent">
+				<!-- 动态生成单元格 -->
+				<div class="selection-box" id="selectionBox" style="display: none"></div>
+			</div>
+		</div>
+
+		<div class="debug-info" id="debugInfo">调试信息将显示在这里...</div>
+
+		<script>
+			const container = document.getElementById('container')
+			const virtualContent = document.getElementById('virtualContent')
+			const selectionBox = document.getElementById('selectionBox')
+			const debugInfo = document.getElementById('debugInfo')
+			const methodSelector = document.getElementById('methodSelector')
+
+			const CELL_WIDTH = 100
+			const CELL_HEIGHT = 25
+			const ROWS = 80
+			const COLS = 20
+
+			let currentSelection = null
+			let virtualOffset = {top: 0, left: 0}
+
+			// 生成虚拟单元格（模拟AirSheet的虚拟滚动）
+			function generateCells() {
+				virtualContent.innerHTML = ''
+
+				// 计算可视区域
+				const scrollTop = container.scrollTop
+				const scrollLeft = container.scrollLeft
+				const containerHeight = container.clientHeight
+				const containerWidth = container.clientWidth
+
+				// 计算虚拟偏移（模拟AirSheet的offsetTop/offsetLeft计算）
+				const startRow = Math.floor(scrollTop / CELL_HEIGHT)
+				const startCol = Math.floor(scrollLeft / CELL_WIDTH)
+
+				virtualOffset.top = startRow * CELL_HEIGHT
+				virtualOffset.left = startCol * CELL_WIDTH
+
+				// 应用transform（模拟AirSheet的virtual-content）
+				virtualContent.style.transform = `translate(${virtualOffset.left}px, ${virtualOffset.top}px)`
+
+				// 只生成可视区域的单元格
+				const visibleStartRow = Math.max(0, startRow - 2)
+				const visibleEndRow = Math.min(
+					ROWS,
+					startRow + Math.ceil(containerHeight / CELL_HEIGHT) + 2
+				)
+				const visibleStartCol = Math.max(0, startCol - 2)
+				const visibleEndCol = Math.min(
+					COLS,
+					startCol + Math.ceil(containerWidth / CELL_WIDTH) + 2
+				)
+
+				for (let r = visibleStartRow; r < visibleEndRow; r++) {
+					for (let c = visibleStartCol; c < visibleEndCol; c++) {
+						const cell = document.createElement('div')
+						cell.className = 'cell'
+						// 注意：这里的位置是相对于virtual-content的
+						cell.style.top = `${(r - startRow) * CELL_HEIGHT}px`
+						cell.style.left = `${(c - startCol) * CELL_WIDTH}px`
+						cell.textContent = `R${r}C${c}`
+						cell.onclick = () => selectCell(r, c)
+						virtualContent.appendChild(cell)
+					}
+				}
+
+				updateDebugInfo()
+			}
+
+			// 选择单元格
+			function selectCell(row, col) {
+				currentSelection = {row, col}
+				updateSelectionBox()
+			}
+
+			// 更新选区框位置
+			function updateSelectionBox() {
+				if (!currentSelection) return
+
+				const {row, col} = currentSelection
+				const method = methodSelector.value
+
+				// 计算基础位置（单元格在整个虚拟空间中的绝对位置）
+				const baseTop = row * CELL_HEIGHT
+				const baseLeft = col * CELL_WIDTH
+
+				const scrollTop = container.scrollTop
+				const scrollLeft = container.scrollLeft
+
+				let finalTop, finalLeft
+
+				switch (method) {
+					case '1': // 基础位置 + 虚拟偏移
+						finalTop = baseTop + virtualOffset.top
+						finalLeft = baseLeft + virtualOffset.left
+						break
+					case '2': // 基础位置 - 虚拟偏移
+						finalTop = baseTop - virtualOffset.top
+						finalLeft = baseLeft - virtualOffset.left
+						break
+					case '3': // 基础位置 - 虚拟偏移 + 滚动位置
+						finalTop = baseTop - virtualOffset.top + scrollTop
+						finalLeft = baseLeft - virtualOffset.left + scrollLeft
+						break
+					case '4': // 基础位置（无偏移）
+						finalTop = baseTop
+						finalLeft = baseLeft
+						break
+					case '5': // 基础位置 - 滚动位置
+						finalTop = baseTop - scrollTop
+						finalLeft = baseLeft - scrollLeft
+						break
+					case '6': // 基础位置 - 虚拟偏移 (选区框在virtual-content内)
+						finalTop = baseTop - virtualOffset.top
+						finalLeft = baseLeft - virtualOffset.left
+						break
+				}
+
+				selectionBox.style.top = `${finalTop}px`
+				selectionBox.style.left = `${finalLeft}px`
+				selectionBox.style.width = `${CELL_WIDTH}px`
+				selectionBox.style.height = `${CELL_HEIGHT}px`
+				selectionBox.style.display = 'block'
+
+				updateDebugInfo()
+			}
+
+			// 更新调试信息
+			function updateDebugInfo() {
+				const scrollTop = container.scrollTop
+				const scrollLeft = container.scrollLeft
+
+				let info = `=== 容器状态 ===\n`
+				info += `滚动位置: (${scrollLeft}, ${scrollTop})\n`
+				info += `虚拟偏移: (${virtualOffset.left}, ${virtualOffset.top})\n`
+				info += `Transform: translate(${virtualOffset.left}px, ${virtualOffset.top}px)\n\n`
+
+				if (currentSelection) {
+					const {row, col} = currentSelection
+					const baseTop = row * CELL_HEIGHT
+					const baseLeft = col * CELL_WIDTH
+					const method = methodSelector.value
+
+					info += `=== 选中单元格 ===\n`
+					info += `单元格: R${row}C${col}\n`
+					info += `基础位置: (${baseLeft}, ${baseTop})\n\n`
+
+					info += `=== 各种计算方法 ===\n`
+					info += `方法1 (基础+虚拟): (${baseLeft + virtualOffset.left}, ${
+						baseTop + virtualOffset.top
+					})\n`
+					info += `方法2 (基础-虚拟): (${baseLeft - virtualOffset.left}, ${
+						baseTop - virtualOffset.top
+					})\n`
+					info += `方法3 (基础-虚拟+滚动): (${
+						baseLeft - virtualOffset.left + scrollLeft
+					}, ${baseTop - virtualOffset.top + scrollTop})\n`
+					info += `方法4 (仅基础): (${baseLeft}, ${baseTop})\n`
+					info += `方法5 (基础-滚动): (${baseLeft - scrollLeft}, ${
+						baseTop - scrollTop
+					})\n`
+					info += `方法6 (基础-虚拟,在virtual-content内): (${
+						baseLeft - virtualOffset.left
+					}, ${baseTop - virtualOffset.top})\n\n`
+
+					info += `当前使用: 方法${method}\n`
+
+					// 显示当前选区框的实际位置
+					const boxTop = parseInt(selectionBox.style.top)
+					const boxLeft = parseInt(selectionBox.style.left)
+					info += `选区框位置: (${boxLeft}, ${boxTop})\n`
+				}
+
+				debugInfo.textContent = info
+			}
+
+			// 滚动到指定位置
+			function scrollToPosition(left, top) {
+				container.scrollLeft = left
+				container.scrollTop = top
+			}
+
+			// 重置滚动
+			function resetScroll() {
+				container.scrollLeft = 0
+				container.scrollTop = 0
+			}
+
+			// 滚动事件处理
+			container.addEventListener('scroll', () => {
+				generateCells()
+				updateSelectionBox()
+			})
+
+			// 初始化
+			generateCells()
+			selectCell(5, 3) // 默认选择一个单元格
+		</script>
+	</body>
+</html>

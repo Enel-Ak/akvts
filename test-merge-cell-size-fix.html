@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合并单元格尺寸修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .problem-description {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 15px;
+        }
+        .problem-description h4 {
+            margin: 0 0 8px 0;
+            color: #856404;
+        }
+        .fix-description {
+            background: #d1ecf1;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #17a2b8;
+            margin-bottom: 15px;
+        }
+        .fix-description h4 {
+            margin: 0 0 8px 0;
+            color: #0c5460;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .grid-demo {
+            display: grid;
+            grid-template-columns: repeat(6, 60px);
+            grid-template-rows: repeat(6, 40px);
+            gap: 1px;
+            background: #ddd;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .cell {
+            background: white;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .merged-wrong {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+        .merged-correct {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            grid-column: span 3;
+            grid-row: span 3;
+        }
+        .comparison {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison > div {
+            flex: 1;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>合并单元格尺寸修复测试</h1>
+        
+        <div class="problem-description">
+            <h4>🐛 问题描述</h4>
+            <p>合并单元格显示的宽和高少了一行一列，rs和cs的问题。比如合并了3x3的单元格，实际合并的单元格显示只有2x2，但是点击选中的时候还是3x3。</p>
+        </div>
+
+        <div class="fix-description">
+            <h4>🔧 修复方案</h4>
+            <p>修复了多个文件中的尺寸计算错误：</p>
+            <ul>
+                <li><strong>useMerge.js</strong>：修复了 getCellStyle 中的循环边界条件</li>
+                <li><strong>useTools.js</strong>：修复了 setMerge 调用时的参数计算</li>
+                <li><strong>useExcel.js</strong>：修复了 Excel 导入时的合并单元格尺寸计算</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>问题根因分析</h3>
+            
+            <h4>1. getCellStyle 中的循环边界错误</h4>
+            <div class="code-block">
+// 修复前（错误）：
+for (let i = cell.r; i <= cell.r + rs; i++) {  // ❌ 多计算了一行
+    rh += sheet.hooks.resizeHook.getRowHeight(i)
+}
+for (let i = cell.c; i <= cell.c + cs; i++) {  // ❌ 多计算了一列
+    cw += sheet.hooks.resizeHook.getColWidth(i)
+}
+
+// 修复后（正确）：
+for (let i = cell.r; i < cell.r + rs; i++) {   // ✅ 正确的范围
+    rh += sheet.hooks.resizeHook.getRowHeight(i)
+}
+for (let i = cell.c; i < cell.c + cs; i++) {   // ✅ 正确的范围
+    cw += sheet.hooks.resizeHook.getColWidth(i)
+}
+            </div>
+
+            <h4>2. setMerge 参数计算错误</h4>
+            <div class="code-block">
+// 修复前（错误）：
+sheet.hooks.mergeHook.setMerge(r, c, rr - r, cc - c)  // ❌ 少了1
+
+// 修复后（正确）：
+sheet.hooks.mergeHook.setMerge(r, c, rr - r + 1, cc - c + 1)  // ✅ 正确的跨度
+            </div>
+
+            <h4>3. Excel 导入时的尺寸计算错误</h4>
+            <div class="code-block">
+// 修复前（错误）：
+const rowspan = merge.bottom - merge.top      // ❌ 少了1
+const colspan = merge.right - merge.left     // ❌ 少了1
+
+// 修复后（正确）：
+const rowspan = merge.bottom - merge.top + 1  // ✅ 正确的跨度
+const colspan = merge.right - merge.left + 1  // ✅ 正确的跨度
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试场景对比</h3>
+            
+            <div class="comparison">
+                <div>
+                    <h4>修复前（错误显示）</h4>
+                    <p>选择3x3区域合并，但显示只有2x2大小</p>
+                    <div class="grid-demo">
+                        <div class="cell">A1</div>
+                        <div class="cell">B1</div>
+                        <div class="cell">C1</div>
+                        <div class="cell">D1</div>
+                        <div class="cell">E1</div>
+                        <div class="cell">F1</div>
+                        <div class="merged-wrong">错误：2x2显示</div>
+                        <div class="cell">C2</div>
+                        <div class="cell">D2</div>
+                        <div class="cell">E2</div>
+                        <div class="cell">F2</div>
+                        <div class="cell">A3</div>
+                        <div class="cell">B3</div>
+                        <div class="cell">C3</div>
+                        <div class="cell">D3</div>
+                        <div class="cell">E3</div>
+                        <div class="cell">F3</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>修复后（正确显示）</h4>
+                    <p>选择3x3区域合并，正确显示3x3大小</p>
+                    <div class="grid-demo">
+                        <div class="merged-correct">正确：3x3显示</div>
+                        <div class="cell">D1</div>
+                        <div class="cell">E1</div>
+                        <div class="cell">F1</div>
+                        <div class="cell">D2</div>
+                        <div class="cell">E2</div>
+                        <div class="cell">F2</div>
+                        <div class="cell">D3</div>
+                        <div class="cell">E3</div>
+                        <div class="cell">F3</div>
+                        <div class="cell">A4</div>
+                        <div class="cell">B4</div>
+                        <div class="cell">C4</div>
+                        <div class="cell">D4</div>
+                        <div class="cell">E4</div>
+                        <div class="cell">F4</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤</h3>
+            <ol>
+                <li><strong>基本合并测试</strong>：
+                    <ul>
+                        <li>选择一个2x2区域（如A1:B2）并合并</li>
+                        <li>验证合并单元格的显示尺寸是否正确覆盖2x2区域</li>
+                        <li>点击合并单元格，确认选中范围也是2x2</li>
+                    </ul>
+                </li>
+                <li><strong>大区域合并测试</strong>：
+                    <ul>
+                        <li>选择一个4x3区域（如A1:D3）并合并</li>
+                        <li>验证合并单元格的显示尺寸是否正确覆盖4x3区域</li>
+                        <li>确认没有遗漏边界单元格</li>
+                    </ul>
+                </li>
+                <li><strong>Excel导入测试</strong>：
+                    <ul>
+                        <li>导入包含合并单元格的Excel文件</li>
+                        <li>验证导入后的合并单元格尺寸是否正确</li>
+                        <li>确认合并区域与原Excel文件一致</li>
+                    </ul>
+                </li>
+                <li><strong>边界情况测试</strong>：
+                    <ul>
+                        <li>测试1x1"合并"（应该不产生合并效果）</li>
+                        <li>测试单行多列合并（如A1:E1）</li>
+                        <li>测试单列多行合并（如A1:A5）</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>验证要点</h3>
+            <ul>
+                <li><strong>视觉一致性</strong>：合并单元格的显示尺寸与选择范围完全一致</li>
+                <li><strong>边界准确性</strong>：合并单元格的边界精确覆盖所选区域</li>
+                <li><strong>交互一致性</strong>：点击合并单元格时的选中范围与显示范围一致</li>
+                <li><strong>导入导出一致性</strong>：Excel导入导出的合并单元格尺寸保持一致</li>
+                <li><strong>编辑功能正常</strong>：合并单元格的内容编辑功能正常工作</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>技术细节</h3>
+            
+            <h4>合并单元格的坐标系统</h4>
+            <div class="code-block">
+// 合并单元格的定义：
+// - 起始位置：(r, c)
+// - 跨越行数：rs (row span)
+// - 跨越列数：cs (column span)
+// - 覆盖范围：行 [r, r+rs)，列 [c, c+cs)
+
+// 示例：从(1,1)开始的3x2合并单元格
+// - 起始位置：(1, 1)
+// - rs = 3, cs = 2
+// - 覆盖行：1, 2, 3
+// - 覆盖列：1, 2
+// - 覆盖单元格：(1,1), (1,2), (2,1), (2,2), (3,1), (3,2)
+            </div>
+
+            <h4>尺寸计算公式</h4>
+            <div class="code-block">
+// 正确的尺寸计算：
+let totalHeight = 0
+for (let i = startRow; i < startRow + rowSpan; i++) {
+    totalHeight += getRowHeight(i)
+}
+
+let totalWidth = 0  
+for (let i = startCol; i < startCol + colSpan; i++) {
+    totalWidth += getColWidth(i)
+}
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>注意事项</h3>
+            <ul>
+                <li>测试时注意观察合并单元格的边框是否完整覆盖选择区域</li>
+                <li>验证合并单元格内容的对齐和显示是否正常</li>
+                <li>确认取消合并后各单元格都能正常编辑</li>
+                <li>测试不同尺寸的合并单元格（1x多列、多行x1、多行x多列）</li>
+                <li>验证合并单元格在滚动时的显示是否正确</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

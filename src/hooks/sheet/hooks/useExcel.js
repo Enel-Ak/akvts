@@ -187,8 +187,8 @@ export const useExcel = () => {
 
 					const row = merge.top - 1 + startRow
 					const col = merge.left - 1 + startCol
-					const rowspan = merge.bottom - merge.top
-					const colspan = merge.right - merge.left
+					const rowspan = merge.bottom - merge.top + 1
+					const colspan = merge.right - merge.left + 1
 
 					sheet.hooks.mergeHook.setMerge(row, col, rowspan, colspan)
 				})
@@ -196,6 +196,24 @@ export const useExcel = () => {
 
 			// 分批处理数据
 			await processBatch(worksheet, rowCount, colCount, startRow, startCol)
+
+			// 更新表格的行列数配置
+			sheet.config.rowCount = Math.max(sheet.config.rowCount, rowCount)
+			sheet.config.colCount = Math.max(sheet.config.colCount, colCount)
+
+			// 清理缓存，确保渲染系统知道配置已更新
+			if (sheet.hooks?.selectionRangeHook?.clearCache) {
+				sheet.hooks.selectionRangeHook.clearCache()
+			}
+
+			// 强制更新可视区域渲染
+			if (sheet.hooks?.renderHook?.getRenderResult) {
+				// 延迟一帧确保配置更新完成
+				await new Promise((resolve) => requestAnimationFrame(resolve))
+				// 触发重新渲染
+				const event = new CustomEvent('forceUpdateVisibleRange')
+				document.dispatchEvent(event)
+			}
 
 			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
 

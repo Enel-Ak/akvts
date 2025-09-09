@@ -314,7 +314,7 @@ export function useCopy() {
 			})
 
 			pasteData.merges.forEach((merge) => {
-				sheet.hooks.mergeHook.setMergeCell(merge.r, merge.c, merge.rs, merge.cs)
+				sheet.hooks.mergeHook.setMerge(merge.r, merge.c, merge.rs, merge.cs)
 			})
 
 			setTimeout(() => {

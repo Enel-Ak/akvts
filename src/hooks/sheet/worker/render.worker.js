@@ -145,18 +145,18 @@ export const workerCode = `
 		// 检查所有合并单元格
 		for (const key in mergedCells) {
 			const [row, col] = key.split('-').map(Number)
-			const { rowspan, colspan } = mergedCells[key]
-			
+			const { rs, cs } = mergedCells[key]
+
 			// 如果合并单元格的行在可见范围内
 			if (row >= startRow && row < endRow) {
 				// 检查合并单元格是否跨越了左边界
-				if (col < startCol && col + colspan > startCol) {
+				if (col < startCol && col + cs > startCol) {
 					expandedStartCol = Math.min(expandedStartCol, col)
 				}
-				
+
 				// 检查合并单元格是否跨越了右边界
-				if (col < endCol && col + colspan > endCol) {
-					expandedEndCol = Math.max(expandedEndCol, col + colspan)
+				if (col < endCol && col + cs > endCol) {
+					expandedEndCol = Math.max(expandedEndCol, col + cs)
 				}
 			}
 		}

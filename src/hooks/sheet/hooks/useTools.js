@@ -344,7 +344,7 @@ export const useTools = () => {
 		if (r === null || r === undefined) return
 		sheet.hooks.historyHook.save()
 
-		sheet.hooks.mergeHook.setMerge(r, c, rr - r, cc - c)
+		sheet.hooks.mergeHook.setMerge(r, c, rr - r + 1, cc - c + 1)
 	}
 
 	// 边框

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>单个搜索结果Bug测试</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 20px;
+				background-color: #f5f5f5;
+			}
+			.container {
+				max-width: 800px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+			.test-section {
+				margin-bottom: 30px;
+				padding: 15px;
+				border: 1px solid #ddd;
+				border-radius: 5px;
+			}
+			.test-section h3 {
+				margin-top: 0;
+				color: #333;
+			}
+			.controls {
+				margin: 10px 0;
+			}
+			.controls button {
+				margin: 5px;
+				padding: 8px 16px;
+				background: #007bff;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.controls button:hover {
+				background: #0056b3;
+			}
+			.controls button:disabled {
+				background: #ccc;
+				cursor: not-allowed;
+			}
+			.results {
+				margin: 10px 0;
+				padding: 10px;
+				background: #f8f9fa;
+				border-radius: 4px;
+				min-height: 100px;
+				white-space: pre-wrap;
+				font-family: monospace;
+			}
+			.status {
+				padding: 8px;
+				border-radius: 4px;
+				margin: 5px 0;
+			}
+			.status.success {
+				background: #d4edda;
+				color: #155724;
+			}
+			.status.error {
+				background: #f8d7da;
+				color: #721c24;
+			}
+			.status.info {
+				background: #d1ecf1;
+				color: #0c5460;
+			}
+			input[type='text'] {
+				padding: 8px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				width: 200px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>单个搜索结果Bug测试</h1>
+			<p>这个测试用于验证当只有一个搜索结果时，重复点击搜索按钮是否能正确定位的问题。</p>
+
+			<div class="test-section">
+				<h3>测试步骤</h3>
+				<ol>
+					<li>在下面的输入框中输入 "R20-C20"（这是唯一的搜索结果）</li>
+					<li>点击"搜索下一个"按钮，应该定位到该单元格</li>
+					<li>再次点击"搜索下一个"按钮，应该提示"没有找到匹配的搜索结果"</li>
+					<li>点击"搜索上一个"按钮，应该提示"没有找到匹配的搜索结果"</li>
+					<li>测试多个搜索结果：输入"R"，验证上一个/下一个按钮的方向性导航</li>
+				</ol>
+			</div>
+
+			<div class="test-section">
+				<h3>搜索测试</h3>
+				<div class="controls">
+					<input
+						type="text"
+						id="searchInput"
+						placeholder="输入搜索关键字"
+						value="R20-C20"
+					/>
+					<button onclick="testSearchNext()">搜索下一个</button>
+					<button onclick="testSearchPrevious()">搜索上一个</button>
+					<button onclick="clearResults()">清除结果</button>
+				</div>
+				<div id="searchStatus" class="status"></div>
+				<div id="searchResults" class="results">等待搜索...</div>
+			</div>
+
+			<div class="test-section">
+				<h3>模拟数据表格</h3>
+				<div id="mockTable" style="height: 300px; overflow: auto; border: 1px solid #ccc">
+					<div id="tableContent"></div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// 模拟数据和搜索功能
+			let mockData = new Map()
+			let navigationKeyword = ''
+			let currentNavigationPosition = {r: 0, c: 0}
+			let lastNavigationResult = null
+
+			// 生成模拟数据
+			function generateMockData() {
+				for (let r = 0; r < 25; r++) {
+					let rowData = []
+					for (let c = 0; c < 10; c++) {
+						if (r === 20 && c === 5) {
+							rowData[c] = 'R20-C20' // 唯一的搜索目标
+						} else {
+							rowData[c] = `R${r}-C${c}`
+						}
+					}
+					mockData.set(r, rowData)
+				}
+			}
+
+			// 渲染模拟表格
+			function renderMockTable() {
+				const tableContent = document.getElementById('tableContent')
+				let html = '<table style="border-collapse: collapse; width: 100%;">'
+
+				for (let r = 0; r < 25; r++) {
+					html += '<tr>'
+					const rowData = mockData.get(r)
+					for (let c = 0; c < 10; c++) {
+						const cellId = `cell-${r}-${c}`
+						const isTarget = r === 20 && c === 5
+						const style = isTarget ? 'background: yellow; font-weight: bold;' : ''
+						html += `<td id="${cellId}" style="border: 1px solid #ccc; padding: 5px; ${style}">${rowData[c]}</td>`
+					}
+					html += '</tr>'
+				}
+				html += '</table>'
+				tableContent.innerHTML = html
+			}
+
+			// 模拟搜索下一个功能（使用新的简化逻辑）
+			async function mockSearchNext(keyword) {
+				const keywordLower = keyword.toLowerCase()
+
+				// 如果关键字变化了，重置导航位置
+				if (keyword !== navigationKeyword) {
+					navigationKeyword = keyword
+					currentNavigationPosition = {r: 0, c: 0}
+				}
+
+				// 首先找到所有匹配项
+				let allMatches = []
+				mockData.forEach((rowData, rowIndex) => {
+					if (Array.isArray(rowData)) {
+						rowData.forEach((cellValue, colIndex) => {
+							if (
+								cellValue &&
+								String(cellValue).toLowerCase().includes(keywordLower)
+							) {
+								allMatches.push({
+									r: rowIndex,
+									c: colIndex,
+									v: cellValue,
+								})
+							}
+						})
+					}
+				})
+
+				if (allMatches.length === 0) {
+					console.warn('没有找到匹配的搜索结果')
+					return null
+				}
+
+				// 如果只有一个匹配项，直接返回它
+				if (allMatches.length === 1) {
+					const found = allMatches[0]
+					currentNavigationPosition = {r: found.r, c: found.c}
+					lastNavigationResult = found
+					console.log('导航到唯一的搜索结果:', found)
+
+					// 模拟滚动到目标单元格
+					const targetCell = document.getElementById(`cell-${found.r}-${found.c}`)
+					if (targetCell) {
+						targetCell.scrollIntoView({behavior: 'smooth', block: 'center'})
+						// 高亮显示
+						document
+							.querySelectorAll('td')
+							.forEach((td) => (td.style.border = '1px solid #ccc'))
+						targetCell.style.border = '3px solid red'
+					}
+					return found
+				}
+
+				// 多个匹配项时，找到当前位置之后的下一个
+				// 按行列顺序排序
+				allMatches.sort((a, b) => {
+					if (a.r !== b.r) return a.r - b.r
+					return a.c - b.c
+				})
+
+				// 找到当前位置之后的第一个匹配项
+				let nextMatch = null
+				for (let match of allMatches) {
+					if (
+						match.r > currentNavigationPosition.r ||
+						(match.r === currentNavigationPosition.r &&
+							match.c > currentNavigationPosition.c)
+					) {
+						nextMatch = match
+						break
+					}
+				}
+
+				// 如果没找到，提示没有找到匹配数据
+				if (!nextMatch) {
+					console.warn('没有找到匹配的搜索结果')
+					return null
+				}
+
+				currentNavigationPosition = {r: nextMatch.r, c: nextMatch.c}
+				lastNavigationResult = nextMatch
+				console.log('导航到下一个搜索结果:', nextMatch)
+
+				// 模拟滚动到目标单元格
+				const targetCell = document.getElementById(`cell-${nextMatch.r}-${nextMatch.c}`)
+				if (targetCell) {
+					targetCell.scrollIntoView({behavior: 'smooth', block: 'center'})
+					// 高亮显示
+					document
+						.querySelectorAll('td')
+						.forEach((td) => (td.style.border = '1px solid #ccc'))
+					targetCell.style.border = '3px solid red'
+				}
+				return nextMatch
+			}
+
+			// 模拟搜索上一个功能
+			async function mockSearchPrevious(keyword) {
+				const keywordLower = keyword.toLowerCase()
+
+				// 如果关键字变化了，重置导航位置
+				if (keyword !== navigationKeyword) {
+					navigationKeyword = keyword
+					currentNavigationPosition = {r: 0, c: 0}
+				}
+
+				// 首先找到所有匹配项
+				let allMatches = []
+				mockData.forEach((rowData, rowIndex) => {
+					if (Array.isArray(rowData)) {
+						rowData.forEach((cellValue, colIndex) => {
+							if (
+								cellValue &&
+								String(cellValue).toLowerCase().includes(keywordLower)
+							) {
+								allMatches.push({
+									r: rowIndex,
+									c: colIndex,
+									v: cellValue,
+								})
+							}
+						})
+					}
+				})
+
+				if (allMatches.length === 0) {
+					console.warn('没有找到匹配的搜索结果')
+					return null
+				}
+
+				// 如果只有一个匹配项，直接返回它
+				if (allMatches.length === 1) {
+					const found = allMatches[0]
+					currentNavigationPosition = {r: found.r, c: found.c}
+					lastNavigationResult = found
+					console.log('导航到唯一的搜索结果:', found)
+
+					// 模拟滚动到目标单元格
+					const targetCell = document.getElementById(`cell-${found.r}-${found.c}`)
+					if (targetCell) {
+						targetCell.scrollIntoView({behavior: 'smooth', block: 'center'})
+						// 高亮显示
+						document
+							.querySelectorAll('td')
+							.forEach((td) => (td.style.border = '1px solid #ccc'))
+						targetCell.style.border = '3px solid red'
+					}
+					return found
+				}
+
+				// 多个匹配项时，找到当前位置之前的上一个
+				// 按行列顺序排序
+				allMatches.sort((a, b) => {
+					if (a.r !== b.r) return a.r - b.r
+					return a.c - b.c
+				})
+
+				// 找到当前位置之前的最后一个匹配项
+				let prevMatch = null
+				for (let i = allMatches.length - 1; i >= 0; i--) {
+					const match = allMatches[i]
+					if (
+						match.r < currentNavigationPosition.r ||
+						(match.r === currentNavigationPosition.r &&
+							match.c < currentNavigationPosition.c)
+					) {
+						prevMatch = match
+						break
+					}
+				}
+
+				// 如果没找到，提示没有找到匹配数据
+				if (!prevMatch) {
+					console.warn('没有找到匹配的搜索结果')
+					return null
+				}
+
+				currentNavigationPosition = {r: prevMatch.r, c: prevMatch.c}
+				lastNavigationResult = prevMatch
+				console.log('导航到上一个搜索结果:', prevMatch)
+
+				// 模拟滚动到目标单元格
+				const targetCell = document.getElementById(`cell-${prevMatch.r}-${prevMatch.c}`)
+				if (targetCell) {
+					targetCell.scrollIntoView({behavior: 'smooth', block: 'center'})
+					// 高亮显示
+					document
+						.querySelectorAll('td')
+						.forEach((td) => (td.style.border = '1px solid #ccc'))
+					targetCell.style.border = '3px solid red'
+				}
+				return prevMatch
+			}
+
+			// 测试函数
+			async function testSearchNext() {
+				const keyword = document.getElementById('searchInput').value
+				const resultsDiv = document.getElementById('searchResults')
+				const statusDiv = document.getElementById('searchStatus')
+
+				if (!keyword.trim()) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = '请输入搜索关键字'
+					return
+				}
+
+				try {
+					statusDiv.className = 'status info'
+					statusDiv.textContent = '搜索中...'
+
+					const result = await mockSearchNext(keyword)
+
+					if (result) {
+						let resultText = resultsDiv.textContent
+						if (resultText === '等待搜索...') resultText = ''
+						resultText += `\n>>> 搜索下一个: 位置: (${result.r}, ${result.c}) 值: "${result.v}"`
+						resultsDiv.textContent = resultText
+
+						statusDiv.className = 'status success'
+						statusDiv.textContent = `已定位到搜索结果 (${result.r}, ${result.c})`
+					} else {
+						statusDiv.className = 'status error'
+						statusDiv.textContent = '没有找到搜索结果'
+					}
+				} catch (error) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = `搜索失败: ${error.message}`
+					console.error('搜索测试失败:', error)
+				}
+			}
+
+			async function testSearchPrevious() {
+				const keyword = document.getElementById('searchInput').value
+				const resultsDiv = document.getElementById('searchResults')
+				const statusDiv = document.getElementById('searchStatus')
+
+				if (!keyword.trim()) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = '请输入搜索关键字'
+					return
+				}
+
+				try {
+					statusDiv.className = 'status info'
+					statusDiv.textContent = '搜索中...'
+
+					const result = await mockSearchPrevious(keyword)
+
+					if (result) {
+						let resultText = resultsDiv.textContent
+						if (resultText === '等待搜索...') resultText = ''
+						resultText += `\n>>> 搜索上一个: 位置: (${result.r}, ${result.c}) 值: "${result.v}"`
+						resultsDiv.textContent = resultText
+
+						statusDiv.className = 'status success'
+						statusDiv.textContent = `已定位到搜索结果 (${result.r}, ${result.c})`
+					} else {
+						statusDiv.className = 'status error'
+						statusDiv.textContent = '没有找到搜索结果'
+					}
+				} catch (error) {
+					statusDiv.className = 'status error'
+					statusDiv.textContent = `搜索失败: ${error.message}`
+					console.error('搜索测试失败:', error)
+				}
+			}
+
+			function clearResults() {
+				document.getElementById('searchResults').textContent = '等待搜索...'
+				document.getElementById('searchStatus').textContent = ''
+				document.getElementById('searchStatus').className = 'status'
+
+				// 清除高亮
+				document
+					.querySelectorAll('td')
+					.forEach((td) => (td.style.border = '1px solid #ccc'))
+
+				// 重置搜索状态
+				navigationKeyword = ''
+				currentNavigationPosition = {r: 0, c: 0}
+				lastNavigationResult = null
+			}
+
+			// 初始化
+			generateMockData()
+			renderMockTable()
+
+			console.log('单个搜索结果Bug测试页面已加载')
+			console.log('目标单元格位置: (20, 5), 值: "R20-C20"')
+		</script>
+	</body>
+</html>

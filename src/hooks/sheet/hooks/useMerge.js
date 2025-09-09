@@ -27,33 +27,49 @@ export const useMerge = () => {
 			if (existingMerge.rs === rs && existingMerge.cs === cs && force) {
 				// 相同位置且相同大小，则取消合并
 				mergedCells.delete(currentKey)
+				sheet.config.merged = getMergedCells()
+				return
 			} else {
-				// 相同位置但大小不同，删除旧合并并创建新合并
+				// 相同位置但大小不同，删除旧合并
 				mergedCells.delete(currentKey)
-				// 检查新区域是否有其他合并单元格
-				for (let i = r; i < r + rs; i++) {
-					for (let j = c; j < c + cs; j++) {
-						if (i === r && j === c) continue
-						const otherMerge = findMergedCell(i, j)
-						if (otherMerge) {
-							mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
-						}
-					}
-				}
-				// 创建新合并
-				mergedCells.set(currentKey, {rs, cs})
 			}
-		} else {
-			// 如果是新位置，检查新区域内是否有已存在的合并单元格
-			for (let i = r; i < r + rs; i++) {
-				for (let j = c; j < c + cs; j++) {
-					const otherMerge = findMergedCell(i, j)
-					if (otherMerge) {
-						mergedCells.delete(`${otherMerge.row}-${otherMerge.col}`)
-					}
+		}
+
+		// 清理所有与新合并区域有冲突的现有合并单元格
+		const conflictingMerges = new Set()
+
+		// 检查新区域内的每个单元格
+		for (let i = r; i < r + rs; i++) {
+			for (let j = c; j < c + cs; j++) {
+				const otherMerge = findMergedCell(i, j)
+				if (otherMerge) {
+					// 记录冲突的合并单元格
+					conflictingMerges.add(`${otherMerge.r}-${otherMerge.c}`)
 				}
 			}
-			// 创建新合并
+		}
+
+		// 同时检查是否有其他合并单元格与新区域有交集
+		for (const [mergeKey, mergeValue] of mergedCells.entries()) {
+			const [mergeR, mergeC] = mergeKey.split('-').map(Number)
+			const mergeEndR = mergeR + mergeValue.rs
+			const mergeEndC = mergeC + mergeValue.cs
+			const newEndR = r + rs
+			const newEndC = c + cs
+
+			// 检查是否有交集
+			if (!(mergeEndR <= r || mergeR >= newEndR || mergeEndC <= c || mergeC >= newEndC)) {
+				conflictingMerges.add(mergeKey)
+			}
+		}
+
+		// 删除所有冲突的合并单元格
+		conflictingMerges.forEach((key) => {
+			mergedCells.delete(key)
+		})
+
+		// 创建新合并（如果rs和cs都大于0）
+		if (rs > 0 && cs > 0) {
 			mergedCells.set(currentKey, {rs, cs})
 		}
 
@@ -83,11 +99,11 @@ export const useMerge = () => {
 
 			const {rs, cs} = merged
 
-			for (let i = cell.r; i <= cell.r + rs; i++) {
+			for (let i = cell.r; i < cell.r + rs; i++) {
 				rh += sheet.hooks.resizeHook.getRowHeight(i)
 			}
 
-			for (let i = cell.c; i <= cell.c + cs; i++) {
+			for (let i = cell.c; i < cell.c + cs; i++) {
 				cw += sheet.hooks.resizeHook.getColWidth(i)
 			}
 
@@ -157,9 +173,9 @@ export const useMerge = () => {
 
 			if (
 				r >= mergedRow &&
-				r <= mergedRow + value.rs &&
+				r < mergedRow + value.rs &&
 				c >= mergedCol &&
-				c <= mergedCol + value.cs
+				c < mergedCol + value.cs
 			) {
 				return {
 					r: mergedRow,

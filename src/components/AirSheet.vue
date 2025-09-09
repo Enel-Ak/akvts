@@ -1125,6 +1125,14 @@ const init = () => {
 
 		restoreScrollPosition()
 		window.addEventListener('resize', updateViewportSize)
+
+		// 监听强制更新可视区域事件（用于Excel导入后的渲染更新）
+		forceUpdateHandler = () => {
+			console.log('AirSheet - 接收到强制更新可视区域事件')
+			updateVisibleRange()
+		}
+		document.addEventListener('forceUpdateVisibleRange', forceUpdateHandler)
+
 		observeView()
 		initialized.value = true
 
@@ -1146,8 +1154,14 @@ const init = () => {
 	})
 }
 
+// 强制更新可视区域事件处理函数
+let forceUpdateHandler = null
+
 const destroy = () => {
 	window.removeEventListener('resize', updateViewportSize)
+	if (forceUpdateHandler) {
+		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
+	}
 }
 
 // 判断是否为移动设备

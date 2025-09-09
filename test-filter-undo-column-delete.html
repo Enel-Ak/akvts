@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>筛选状态下删除列撤销测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-steps {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .test-steps h4 {
+            margin-top: 0;
+            color: #007acc;
+        }
+        .test-steps ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        .expected-result {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+            margin-top: 10px;
+        }
+        .expected-result h5 {
+            margin: 0 0 8px 0;
+            color: #155724;
+        }
+        .problem-description {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 15px;
+        }
+        .problem-description h4 {
+            margin: 0 0 8px 0;
+            color: #856404;
+        }
+        .fix-description {
+            background: #d1ecf1;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #17a2b8;
+            margin-bottom: 15px;
+        }
+        .fix-description h4 {
+            margin: 0 0 8px 0;
+            color: #0c5460;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>筛选状态下删除列撤销测试</h1>
+        
+        <div class="problem-description">
+            <h4>🐛 问题描述</h4>
+            <p>在筛选状态下删除列之后再撤销，数据会变成没有筛选过的数据，并且筛选列表的勾选状态不正确。</p>
+        </div>
+
+        <div class="fix-description">
+            <h4>🔧 修复方案</h4>
+            <p>修改了 <code>useHistory.js</code> 中撤销删除列的逻辑：</p>
+            <ul>
+                <li>在恢复列数据后，重新设置筛选状态</li>
+                <li>使用原始的筛选条件（包含正确的列索引）</li>
+                <li>重新执行筛选操作以确保数据正确显示</li>
+                <li>确保筛选UI状态与实际筛选条件同步</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试场景 1：基本筛选状态撤销</h3>
+            <div class="test-steps">
+                <h4>测试步骤：</h4>
+                <ol>
+                    <li>创建一个包含多列数据的表格（如：姓名、年龄、部门、薪资）</li>
+                    <li>对某一列进行筛选（如：筛选部门为"技术部"的数据）</li>
+                    <li>确认筛选生效，只显示符合条件的行</li>
+                    <li>选择一个列（如：年龄列）并删除</li>
+                    <li>确认删除成功，筛选状态仍然保持</li>
+                    <li><span class="highlight">执行撤销操作（Ctrl+Z）</span></li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <h5>✅ 期望结果：</h5>
+                <ul>
+                    <li>删除的列被恢复到原来的位置</li>
+                    <li>筛选状态保持不变（仍然只显示"技术部"的数据）</li>
+                    <li>筛选列表中的勾选状态正确反映当前筛选条件</li>
+                    <li>数据显示正确，没有出现未筛选的数据</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试场景 2：多列筛选状态撤销</h3>
+            <div class="test-steps">
+                <h4>测试步骤：</h4>
+                <ol>
+                    <li>创建包含多列的表格数据</li>
+                    <li>对多个列进行筛选（如：部门="技术部" AND 薪资>8000）</li>
+                    <li>确认多条件筛选生效</li>
+                    <li>删除其中一个非筛选列（如：删除"备注"列）</li>
+                    <li>确认删除成功，多条件筛选仍然有效</li>
+                    <li><span class="highlight">执行撤销操作</span></li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <h5>✅ 期望结果：</h5>
+                <ul>
+                    <li>删除的列被恢复</li>
+                    <li>多条件筛选状态完全保持</li>
+                    <li>所有筛选列的勾选状态都正确</li>
+                    <li>只显示同时满足多个条件的数据行</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试场景 3：删除筛选列后撤销</h3>
+            <div class="test-steps">
+                <h4>测试步骤：</h4>
+                <ol>
+                    <li>创建表格并对某列进行筛选（如：筛选"状态"列）</li>
+                    <li>确认筛选生效</li>
+                    <li><span class="highlight">删除正在筛选的列（"状态"列）</span></li>
+                    <li>确认删除成功，筛选条件被自动清除</li>
+                    <li>执行撤销操作</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <h5>✅ 期望结果：</h5>
+                <ul>
+                    <li>删除的筛选列被恢复</li>
+                    <li>原来的筛选条件被恢复</li>
+                    <li>筛选状态重新生效</li>
+                    <li>筛选列表中的勾选状态正确</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>关键修复点</h3>
+            <div class="code-block">
+// 修复前的问题代码：
+// 筛选状态已经在前面恢复，不需要重新筛选 ❌
+
+// 修复后的正确逻辑：
+if (state.filterState && state.filterState.filtered && state.filterState.filtered.length > 0) {
+    // 重新设置筛选状态（覆盖之前设置的状态）
+    sheet.config.filtered = [...state.filterState.filtered]
+    
+    // 清空并重新设置筛选数据
+    sheet.filterCellData.clear()
+    if (state.filterState.filterCellData) {
+        state.filterState.filterCellData.forEach((value, key) => {
+            sheet.filterCellData.set(key, value)
+        })
+    }
+    
+    // 重新执行筛选，因为列数据结构发生了变化
+    await sheet.hooks.toolsHook.filterByCheckedSilent(sheet.config.filtered)
+}
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>验证要点</h3>
+            <ul>
+                <li><strong>数据完整性</strong>：撤销后数据结构完全恢复</li>
+                <li><strong>筛选状态</strong>：筛选条件和筛选结果正确恢复</li>
+                <li><strong>UI同步</strong>：筛选列表的勾选状态与实际筛选条件一致</li>
+                <li><strong>列索引</strong>：筛选条件中的列索引正确对应恢复后的列</li>
+                <li><strong>性能</strong>：撤销操作流畅，无明显卡顿</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试注意事项</h3>
+            <ul>
+                <li>测试时注意观察筛选图标的状态变化</li>
+                <li>检查筛选下拉列表中的勾选项是否正确</li>
+                <li>验证行号映射是否正确（筛选后的行号应该连续）</li>
+                <li>确认撤销操作不会影响其他列的筛选状态</li>
+                <li>测试多次撤销/重做操作的稳定性</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
