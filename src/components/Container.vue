@@ -32,6 +32,10 @@ const props = defineProps({
 		type: Array,
 		default: () => ['header', 'aside', 'default', 'footer'],
 	},
+	asideWidth: {
+		type: [Number, String],
+		default: '170px',
+	},
 })
 
 const offset = computed(() => {
@@ -42,6 +46,13 @@ const offset = computed(() => {
 		(typeof props.offsetTop === 'string' && props.offsetTop.indexOf('px') === -1)
 		? `${props.offsetTop}px`
 		: props.offsetTop
+})
+
+const bodyWidth = computed(() => {
+	return typeof props.asideWidth === 'number' ||
+		(typeof props.asideWidth === 'string' && props.asideWidth.indexOf('px') === -1)
+		? `calc(100% - ${props.asideWidth}px)`
+		: `calc(100% - ${props.asideWidth})`
 })
 
 const bodyHeight = computed(
@@ -183,8 +194,6 @@ onUnmounted(() => {
 	</div>
 </template>
 <style scoped lang="scss">
-$szie170: 170px;
-
 .container-component {
 	display: flex;
 	flex-wrap: wrap;
@@ -224,7 +233,7 @@ $szie170: 170px;
 		background: var(--z-main);
 		overflow: auto;
 		overflow-x: hidden;
-		width: torem($szie170);
+		width: v-bind(asideWidth);
 	}
 
 	.container-body {
@@ -259,10 +268,10 @@ $szie170: 170px;
 		background: var(--z-bg-secondary);
 		display: flex;
 		height: torem(40px);
-		left: torem($szie170);
+		left: v-bind(asideWidth);
 		position: fixed;
 		padding: 0 torem(20px);
-		width: calc(100% - torem($szie170));
+		width: v-bind(bodyWidth);
 		z-index: 1;
 
 		&.no-aside {
@@ -282,14 +291,14 @@ $szie170: 170px;
 
 		.container-body {
 			margin-top: calc(v-bind(offset) + 30px);
-			width: calc(100% - torem($szie170));
+			width: v-bind(bodyWidth);
 		}
 	}
 
 	&.ahbf {
 		.container-header {
-			left: torem($szie170);
-			width: calc(100% - torem($szie170));
+			left: v-bind(asideWidth);
+			width: v-bind(bodyWidth);
 		}
 
 		.container-aside {
@@ -298,7 +307,7 @@ $szie170: 170px;
 
 		.container-body {
 			margin-top: calc(v-bind(offset) + 30px);
-			width: calc(100% - torem($szie170));
+			width: v-bind(bodyWidth);
 		}
 	}
 

@@ -51,6 +51,10 @@ const props = defineProps({
 		type: Number,
 		default: 10,
 	},
+	asideWidth: {
+		type: [Number, String],
+		default: '170px',
+	},
 })
 
 const route = useRoute()
@@ -65,6 +69,12 @@ const flat = computed(() => {
 		}
 		return pre
 	}, [])
+})
+const width = computed(() => {
+	return typeof props.asideWidth === 'number' ||
+		(typeof props.asideWidth === 'string' && props.asideWidth.indexOf('px') === -1)
+		? `${props.asideWidth}px`
+		: props.asideWidth
 })
 const active = ref(props.defaultActive)
 const activeIndex = ref(0)
@@ -414,7 +424,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
 	<el-aside
-		:width="direction === 'horizontal' ? '100%' : '170px'"
+		:width="direction === 'horizontal' ? '100%' : width"
 		class="aside"
 		:class="{collapse: isCollapse, horizontal: direction === 'horizontal'}"
 	>

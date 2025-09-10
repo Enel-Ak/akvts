@@ -91,7 +91,7 @@ onMounted(() => {
 	// }, 5000)
 })
 
-const containerModel = ref('hbf') // habf, ahbf, hbf
+const containerModel = ref('habf') // habf, ahbf, hbf
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
