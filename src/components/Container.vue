@@ -48,6 +48,13 @@ const offset = computed(() => {
 		: props.offsetTop
 })
 
+const _asideWidth = computed(() => {
+	return typeof props.asideWidth === 'number' ||
+		(typeof props.asideWidth === 'string' && props.asideWidth.indexOf('px') === -1)
+		? `${props.asideWidth}px`
+		: props.asideWidth
+})
+
 const bodyWidth = computed(() => {
 	return typeof props.asideWidth === 'number' ||
 		(typeof props.asideWidth === 'string' && props.asideWidth.indexOf('px') === -1)
@@ -233,7 +240,7 @@ onUnmounted(() => {
 		background: var(--z-main);
 		overflow: auto;
 		overflow-x: hidden;
-		width: v-bind(asideWidth);
+		width: v-bind(_asideWidth);
 	}
 
 	.container-body {
@@ -268,7 +275,7 @@ onUnmounted(() => {
 		background: var(--z-bg-secondary);
 		display: flex;
 		height: torem(40px);
-		left: v-bind(asideWidth);
+		left: v-bind(_asideWidth);
 		position: fixed;
 		padding: 0 torem(20px);
 		width: v-bind(bodyWidth);
@@ -297,7 +304,7 @@ onUnmounted(() => {
 
 	&.ahbf {
 		.container-header {
-			left: v-bind(asideWidth);
+			left: v-bind(_asideWidth);
 			width: v-bind(bodyWidth);
 		}
 

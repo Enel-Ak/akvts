@@ -91,7 +91,8 @@ onMounted(() => {
 	// }, 5000)
 })
 
-const containerModel = ref('habf') // habf, ahbf, hbf
+const containerModel = ref('hbf') // habf, ahbf, hbf
+const asideWidth = ref(170)
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -100,6 +101,7 @@ const containerModel = ref('habf') // habf, ahbf, hbf
 	<Container
 		:model="containerModel"
 		:frame="['header', 'default', 'footer', 'aside']"
+		:asideWidth="asideWidth"
 		@collapse="($event) => (containerExpand = $event)"
 	>
 		<template #header>
@@ -119,6 +121,7 @@ const containerModel = ref('habf') // habf, ahbf, hbf
 				:collapse="!containerExpand"
 				:items="nav"
 				:badges="{首页: 99}"
+				:asideWidth="asideWidth"
 			/>
 		</template>
 		<template #top>
