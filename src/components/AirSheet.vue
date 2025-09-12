@@ -72,6 +72,10 @@ const props = defineProps({
 
 	// 配置顶部菜单
 	toolbarTabs: {type: String, default: 'start'}, // formula
+
+	// 协同相关配置
+	api: {type: String, default: ''},
+	token: {type: String, default: ''},
 })
 
 // 容器
@@ -1505,7 +1509,7 @@ onMounted(() => {
 	sheetStore.init(sheetId.value, containerId, props, () => {
 		init()
 		if (sheet.config.synergy) {
-			sheet.hooks.synergyHook.connection()
+			sheet.hooks.synergyHook.connection(props.api, props.token)
 		}
 	})
 })

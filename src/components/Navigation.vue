@@ -153,7 +153,7 @@ const showMultiLevelMenu = (menuId, level = 1) => {
 		() => {
 			activeMultiLevelMenus.value.set(menuId, {level, visible: true})
 		},
-		64,
+		256,
 		'showMultiLevelMenu'
 	)()
 }

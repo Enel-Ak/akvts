@@ -4,14 +4,15 @@ import {useSignalr, useSignalrStop} from '@/hooks/useSignalr'
 export const useSynergy = () => {
 	let sheetKey = null
 	let sheet = null
+	let singnalr = null
 
-	const connection = async ({key, path, token} = {}) => {
-		if (!key || !path || !token) {
+	const connection = async (api, token) => {
+		if (!api || !token) {
 			console.error('链接失败')
 			return
 		}
-		console.log(123)
-		useSignalr(key, path, token)
+		const key = `air-sheet-ws-${Math.random().toString(36).slice(2)}`
+		singnalr = useSignalr(key, api, token)
 	}
 
 	const init = (key) => {
