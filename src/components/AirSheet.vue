@@ -69,6 +69,9 @@ const props = defineProps({
 	stateText: {type: String, default: '数据加载中...'},
 
 	limit: {type: Number, default: 30000},
+
+	// 配置顶部菜单
+	toolbarTabs: {type: String, default: 'start,formula'},
 })
 
 // 容器
@@ -87,6 +90,8 @@ const isLoading = computed(() => {
 	)
 })
 
+const toolbarTabActive = ref('')
+const isExpandToolbar = ref(true)
 const fns = ref(props.modelValue?.fns || [])
 
 const filterEl = ref(null)
@@ -1407,6 +1412,18 @@ const onChangeSheet = async (id) => {
 	sheet.state.changeSheet = true
 }
 
+const onDbClickSheet = (e, id) => {
+	e.target.setAttribute('contenteditable', true)
+	e.target.focus()
+	const blur = () => {
+		sheetStore.setSheetName(id, e.target.textContent)
+		e.target.setAttribute('contenteditable', false)
+		e.target.removeEventListener('blur', blur)
+	}
+
+	e.target.addEventListener('blur', blur)
+}
+
 watch(
 	() => sheetStore.getSheet(sheetId.value),
 	(newVal) => {
@@ -1475,6 +1492,7 @@ onBeforeMount(() => {})
 onMounted(() => {
 	sheetStore.init(sheetId.value, containerId, props, () => {
 		init()
+		toolbarTabActive.value = sheet.config.toolbarTabs?.[0].name
 		if (sheet.config.synergy) {
 			sheet.hooks.synergyHook.connection()
 		}
@@ -1536,6 +1554,27 @@ defineExpose({
 		}"
 	>
 		<template v-if="sheet?.state?.completed">
+			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
+				<span class="flx"></span>
+				<span
+					v-for="item of sheet.config.toolbarTabs"
+					:key="item.name"
+					:class="[item.name === toolbarTabActive ? 'active shadow-12' : '']"
+					class="item"
+					@click="toolbarTabActive = item.name"
+				>
+					{{ item.label }}
+				</span>
+				<span class="flx"></span>
+				<Icons
+					name="Back"
+					size="12"
+					color="var(--z-font-color)"
+					class="expand-toolbar"
+					:class="{expand: isExpandToolbar}"
+					@click="isExpandToolbar = !isExpandToolbar"
+				/>
+			</div>
 			<!-- 工具栏 -->
 			<div
 				v-if="
@@ -1545,202 +1584,263 @@ defineExpose({
 						!sheet.config.showHorizontalScreen)
 				"
 				class="toolbar"
-				:class="{mobile: isMobile()}"
+				:class="{mobile: isMobile(), expand: isExpandToolbar}"
 				:style="{}"
 			>
-				<div v-if="sheet.config.font" class="group font-layout h-full">
-					<div class="item font">
-						<div>
-							<!-- 字体 -->
+				<!-- 开始 -->
+				<template v-if="toolbarTabActive === 'start'">
+					<div v-if="sheet.config.font" class="group font-layout h-full">
+						<div class="item font">
+							<div>
+								<!-- 字体 -->
+								<select
+									:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
+									@change="sheet.hooks.toolsHook.setFont($event)"
+								>
+									<option
+										v-for="[key, value] of Object.entries(fonts)"
+										:key="value"
+										:value="value"
+									>
+										{{ key }}
+									</option>
+								</select>
+								<!-- 字号 -->
+								<select
+									:value="setActiveTool('fs').value || 13"
+									@change="
+										sheet.hooks.toolsHook.setFontSize($event, containerRef)
+									"
+								>
+									<option v-for="size in fontSize" :key="size" :value="size">
+										{{ size }}
+									</option>
+								</select>
+							</div>
+							<!-- 格式 -->
 							<select
-								:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
-								@change="sheet.hooks.toolsHook.setFont($event)"
+								:value="setActiveTool('fmt').value || formatMap.Normal"
+								@change.stop="
+									($event) => {
+										sheet.hooks.toolsHook.setFormat($event, containerRef)
+									}
+								"
 							>
 								<option
-									v-for="[key, value] of Object.entries(fonts)"
-									:key="value"
+									v-for="[key, value] of Object.entries(formatMap)"
+									:key="key"
 									:value="value"
 								>
-									{{ key }}
-								</option>
-							</select>
-							<!-- 字号 -->
-							<select
-								:value="setActiveTool('fs').value || 13"
-								@change="sheet.hooks.toolsHook.setFontSize($event, containerRef)"
-							>
-								<option v-for="size in fontSize" :key="size" :value="size">
-									{{ size }}
+									{{ value }}
 								</option>
 							</select>
 						</div>
-						<!-- 格式 -->
-						<select
-							:value="setActiveTool('fmt').value || formatMap.Normal"
-							@change.stop="
-								($event) => {
-									sheet.hooks.toolsHook.setFormat($event, containerRef)
-								}
-							"
+					</div>
+
+					<div v-if="sheet.config.color || sheet.config.fill" class="group">
+						<div
+							v-if="sheet.config.color"
+							class="item color"
+							:class="{active: setActiveTool('fc').active}"
 						>
-							<option
-								v-for="[key, value] of Object.entries(formatMap)"
-								:key="key"
-								:value="value"
-							>
-								{{ value }}
-							</option>
-						</select>
+							<Icons name="Font"></Icons>
+							<span>颜色</span>
+							<input
+								type="color"
+								@input="sheet.hooks.toolsHook.setFontColor($event)"
+								@change="sheet.hooks.toolsHook.fontColorChanged($event)"
+							/>
+						</div>
+						<div
+							v-if="sheet.config.fill"
+							class="item color"
+							:class="{active: setActiveTool('bg').active}"
+						>
+							<Icons name="FillColor"></Icons>
+							<span class="fill-color">填充</span>
+							<input
+								type="color"
+								@input="sheet.hooks.toolsHook.setFillColor($event)"
+								@change="sheet.hooks.toolsHook.fillColorChanged($event)"
+							/>
+						</div>
 					</div>
-				</div>
 
-				<div v-if="sheet.config.color || sheet.config.fill" class="group">
 					<div
-						v-if="sheet.config.color"
-						class="item color"
-						:class="{active: setActiveTool('fc').active}"
+						class="group"
+						v-if="
+							sheet.config.bold ||
+							sheet.config.italic ||
+							sheet.config.underline ||
+							sheet.config.strikethrough
+						"
 					>
-						<Icons name="Font"></Icons>
-						<span>颜色</span>
-						<input
-							type="color"
-							@input="sheet.hooks.toolsHook.setFontColor($event)"
-							@change="sheet.hooks.toolsHook.fontColorChanged($event)"
-						/>
+						<div
+							v-if="sheet.config.bold"
+							class="item"
+							:class="{active: setActiveTool('bold').active}"
+							@click="sheet.hooks.toolsHook.setBold"
+						>
+							<Icons name="Bold"></Icons>
+							<span>加粗</span>
+						</div>
+						<div
+							v-if="sheet.config.italic"
+							class="item"
+							:class="{active: setActiveTool('it').active}"
+							@click="sheet.hooks.toolsHook.setItalic"
+						>
+							<Icons name="Italic"></Icons>
+							<span>倾斜</span>
+						</div>
+						<div
+							v-if="sheet.config.underline"
+							class="item"
+							:class="{active: setActiveTool('un').active}"
+							@click="sheet.hooks.toolsHook.setUnderline"
+						>
+							<Icons name="Underline"></Icons>
+							<span>下划线</span>
+						</div>
+						<div
+							v-if="sheet.config.strikethrough"
+							class="item"
+							:class="{active: setActiveTool('st').active}"
+							@click="sheet.hooks.toolsHook.setStrikethrough"
+						>
+							<Icons name="Strikethrough"></Icons>
+							<span>删除线</span>
+						</div>
 					</div>
-					<div
-						v-if="sheet.config.fill"
-						class="item color"
-						:class="{active: setActiveTool('bg').active}"
-					>
-						<Icons name="FillColor"></Icons>
-						<span class="fill-color">填充</span>
-						<input
-							type="color"
-							@input="sheet.hooks.toolsHook.setFillColor($event)"
-							@change="sheet.hooks.toolsHook.fillColorChanged($event)"
-						/>
-					</div>
-				</div>
 
-				<div
-					class="group"
-					v-if="
-						sheet.config.bold ||
-						sheet.config.italic ||
-						sheet.config.underline ||
-						sheet.config.strikethrough
-					"
-				>
-					<div
-						v-if="sheet.config.bold"
-						class="item"
-						:class="{active: setActiveTool('bold').active}"
-						@click="sheet.hooks.toolsHook.setBold"
-					>
-						<Icons name="Bold"></Icons>
-						<span>加粗</span>
-					</div>
-					<div
-						v-if="sheet.config.italic"
-						class="item"
-						:class="{active: setActiveTool('it').active}"
-						@click="sheet.hooks.toolsHook.setItalic"
-					>
-						<Icons name="Italic"></Icons>
-						<span>倾斜</span>
-					</div>
-					<div
-						v-if="sheet.config.underline"
-						class="item"
-						:class="{active: setActiveTool('un').active}"
-						@click="sheet.hooks.toolsHook.setUnderline"
-					>
-						<Icons name="Underline"></Icons>
-						<span>下划线</span>
-					</div>
-					<div
-						v-if="sheet.config.strikethrough"
-						class="item"
-						:class="{active: setActiveTool('st').active}"
-						@click="sheet.hooks.toolsHook.setStrikethrough"
-					>
-						<Icons name="Strikethrough"></Icons>
-						<span>删除线</span>
-					</div>
-				</div>
-
-				<div class="group" v-if="sheet.config.align">
-					<div
-						class="item"
-						:class="{active: setActiveTool('align').value === 'left'}"
-						@click="sheet.hooks.toolsHook.setAlign('left')"
-					>
-						<Icons name="AlignLeft"></Icons>
-						<span>左对齐</span>
-					</div>
-					<div
-						class="item"
-						:class="{active: setActiveTool('align').value === 'center'}"
-						@click="sheet.hooks.toolsHook.setAlign('center')"
-					>
-						<Icons name="AlignCenter"></Icons>
-						<span>居中</span>
-					</div>
-					<div
-						class="item"
-						:class="{active: setActiveTool('align').value === 'right'}"
-						@click="sheet.hooks.toolsHook.setAlign('right')"
-					>
-						<Icons name="AlignRight"></Icons>
-						<span>右对齐</span>
-					</div>
-				</div>
-
-				<div class="group" v-if="sheet.config.merged">
-					<div class="item" @click="sheet.hooks.toolsHook.setMerge()">
-						<Icons name="Merge"></Icons>
-						<span>合并</span>
-					</div>
-				</div>
-
-				<!-- 边框 -->
-				<template v-if="!isMobile()">
-					<div class="group group-merge" v-if="sheet.config.border">
+					<div class="group" v-if="sheet.config.align">
 						<div
 							class="item"
-							:class="{
-								active:
-									setActiveTool('bl').active ||
-									setActiveTool('bt').active ||
-									setActiveTool('br').active ||
-									setActiveTool('bb').active,
-							}"
-							@click="sheet.hooks.toolsHook.setBorder()"
+							:class="{active: setActiveTool('align').value === 'left'}"
+							@click="sheet.hooks.toolsHook.setAlign('left')"
 						>
-							<Icons name="Border"></Icons>
-							<span>边框</span>
+							<Icons name="AlignLeft"></Icons>
+							<span>左对齐</span>
 						</div>
-						<div class="merge border-merge shadow-12">
+						<div
+							class="item"
+							:class="{active: setActiveTool('align').value === 'center'}"
+							@click="sheet.hooks.toolsHook.setAlign('center')"
+						>
+							<Icons name="AlignCenter"></Icons>
+							<span>居中</span>
+						</div>
+						<div
+							class="item"
+							:class="{active: setActiveTool('align').value === 'right'}"
+							@click="sheet.hooks.toolsHook.setAlign('right')"
+						>
+							<Icons name="AlignRight"></Icons>
+							<span>右对齐</span>
+						</div>
+					</div>
+
+					<div class="group" v-if="sheet.config.merged">
+						<div class="item" @click="sheet.hooks.toolsHook.setMerge()">
+							<Icons name="Merge"></Icons>
+							<span>合并</span>
+						</div>
+					</div>
+
+					<!-- 边框 -->
+					<template v-if="!isMobile()">
+						<div class="group group-merge" v-if="sheet.config.border">
+							<div
+								class="item"
+								:class="{
+									active:
+										setActiveTool('bl').active ||
+										setActiveTool('bt').active ||
+										setActiveTool('br').active ||
+										setActiveTool('bb').active,
+								}"
+								@click="sheet.hooks.toolsHook.setBorder()"
+							>
+								<Icons name="Border"></Icons>
+								<span>边框</span>
+							</div>
+							<div class="merge border-merge shadow-12">
+								<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
+									<Icons name="UnBorder"></Icons>
+									<span>无边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('bt').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'top')"
+								>
+									<Icons name="BorderTop"></Icons>
+									<span>上边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('bb').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'bottom')"
+								>
+									<Icons name="BorderBottom"></Icons>
+									<span>下边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('bl').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'left')"
+								>
+									<Icons name="BorderLeft"></Icons>
+									<span>左边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('br').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'right')"
+								>
+									<Icons name="BorderRight"></Icons>
+									<span>右边框</span>
+								</div>
+								<div
+									class="item border-color"
+									@click="sheet.hooks.toolsHook.setBorderColor"
+								>
+									<Icons name="BorderColor"></Icons>
+									<span>颜色</span>
+									<input
+										type="color"
+										@input="sheet.hooks.toolsHook.setBorderColor($event)"
+										@change="sheet.hooks.toolsHook.borderColorChanged"
+									/>
+								</div>
+							</div>
+						</div>
+					</template>
+					<template v-else>
+						<div class="group" v-if="sheet.config.border">
+							<div class="item" @click="sheet.hooks.toolsHook.setBorder()">
+								<Icons name="Border"></Icons>
+								<span>边框</span>
+							</div>
+
 							<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
 								<Icons name="UnBorder"></Icons>
 								<span>无边框</span>
 							</div>
-							<div
-								class="item"
-								:class="{
-									active: setActiveTool('bt').active,
-								}"
-								@click="sheet.hooks.toolsHook.setBorder(null, 'top')"
-							>
+							<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'top')">
 								<Icons name="BorderTop"></Icons>
 								<span>上边框</span>
 							</div>
 							<div
 								class="item"
-								:class="{
-									active: setActiveTool('bb').active,
-								}"
 								@click="sheet.hooks.toolsHook.setBorder(null, 'bottom')"
 							>
 								<Icons name="BorderBottom"></Icons>
@@ -1748,9 +1848,6 @@ defineExpose({
 							</div>
 							<div
 								class="item"
-								:class="{
-									active: setActiveTool('bl').active,
-								}"
 								@click="sheet.hooks.toolsHook.setBorder(null, 'left')"
 							>
 								<Icons name="BorderLeft"></Icons>
@@ -1758,9 +1855,6 @@ defineExpose({
 							</div>
 							<div
 								class="item"
-								:class="{
-									active: setActiveTool('br').active,
-								}"
 								@click="sheet.hooks.toolsHook.setBorder(null, 'right')"
 							>
 								<Icons name="BorderRight"></Icons>
@@ -1779,270 +1873,243 @@ defineExpose({
 								/>
 							</div>
 						</div>
-					</div>
-				</template>
-				<template v-else>
-					<div class="group" v-if="sheet.config.border">
-						<div class="item" @click="sheet.hooks.toolsHook.setBorder()">
-							<Icons name="Border"></Icons>
-							<span>边框</span>
+					</template>
+
+					<div
+						v-if="sheet.config.addRow"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" @click="sheet.hooks.toolsHook.addRow($event, false)">
+							<Icons name="AddRow"></Icons>
+							<span>添加行</span>
 						</div>
 
-						<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
-							<Icons name="UnBorder"></Icons>
-							<span>无边框</span>
-						</div>
-						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'top')">
-							<Icons name="BorderTop"></Icons>
-							<span>上边框</span>
-						</div>
-						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'bottom')">
-							<Icons name="BorderBottom"></Icons>
-							<span>下边框</span>
-						</div>
-						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'left')">
-							<Icons name="BorderLeft"></Icons>
-							<span>左边框</span>
-						</div>
-						<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'right')">
-							<Icons name="BorderRight"></Icons>
-							<span>右边框</span>
-						</div>
-						<div
-							class="item border-color"
-							@click="sheet.hooks.toolsHook.setBorderColor"
-						>
-							<Icons name="BorderColor"></Icons>
-							<span>颜色</span>
+						<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
 							<input
-								type="color"
-								@input="sheet.hooks.toolsHook.setBorderColor($event)"
-								@change="sheet.hooks.toolsHook.borderColorChanged"
+								v-model.number="sheet.hooks.toolsHook.addRowCount"
+								type="number"
+								min="1"
+								value="1"
 							/>
 						</div>
 					</div>
-				</template>
 
-				<div v-if="sheet.config.addRow" class="group" :class="{'group-merge': !isMobile()}">
-					<div class="item" @click="sheet.hooks.toolsHook.addRow($event, false)">
-						<Icons name="AddRow"></Icons>
-						<span>添加行</span>
-					</div>
-
-					<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
-						<input
-							v-model.number="sheet.hooks.toolsHook.addRowCount"
-							type="number"
-							min="1"
-							value="1"
-						/>
-					</div>
-				</div>
-
-				<div
-					v-if="sheet.config.addColumn"
-					class="group"
-					:class="{'group-merge': !isMobile()}"
-				>
 					<div
 						v-if="sheet.config.addColumn"
-						class="item"
-						@click="sheet.hooks.toolsHook.addColumn($event, false)"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
 					>
-						<Icons name="AddColumn"></Icons>
-						<span>添加列</span>
+						<div
+							v-if="sheet.config.addColumn"
+							class="item"
+							@click="sheet.hooks.toolsHook.addColumn($event, false)"
+						>
+							<Icons name="AddColumn"></Icons>
+							<span>添加列</span>
+						</div>
+						<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
+							<input
+								v-model.number="sheet.hooks.toolsHook.addColumnCount"
+								type="number"
+								min="1"
+								value="1"
+							/>
+						</div>
 					</div>
-					<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
-						<input
-							v-model.number="sheet.hooks.toolsHook.addColumnCount"
-							type="number"
-							min="1"
-							value="1"
-						/>
-					</div>
-				</div>
 
-				<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
-					<div
-						v-if="sheet.config.removeRow"
-						class="item"
-						@click="sheet.hooks.toolsHook.removeRow"
-					>
-						<Icons name="RemoveRow"></Icons>
-						<span>删除行</span>
+					<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
+						<div
+							v-if="sheet.config.removeRow"
+							class="item"
+							@click="sheet.hooks.toolsHook.removeRow"
+						>
+							<Icons name="RemoveRow"></Icons>
+							<span>删除行</span>
+						</div>
+						<div
+							v-if="sheet.config.removeColumn"
+							class="item"
+							@click="sheet.hooks.toolsHook.removeColumn"
+						>
+							<Icons name="RemoveColumn"></Icons>
+							<span>删除列</span>
+						</div>
 					</div>
-					<div
-						v-if="sheet.config.removeColumn"
-						class="item"
-						@click="sheet.hooks.toolsHook.removeColumn"
-					>
-						<Icons name="RemoveColumn"></Icons>
-						<span>删除列</span>
-					</div>
-				</div>
 
-				<div class="group" v-if="sheet.config.import || sheet.config.export">
-					<div v-if="sheet.config.import" class="item import">
-						<Icons name="Import"></Icons>
-						<span>导入</span>
-						<input type="file" @change="sheet.hooks.toolsHook.importExcel" />
+					<div class="group" v-if="sheet.config.import || sheet.config.export">
+						<div v-if="sheet.config.import" class="item import">
+							<Icons name="Import"></Icons>
+							<span>导入</span>
+							<input type="file" @change="sheet.hooks.toolsHook.importExcel" />
+						</div>
+						<div
+							v-if="sheet.config.export"
+							class="item"
+							@click="sheet.hooks.toolsHook.exportExcel"
+						>
+							<Icons name="Export"></Icons>
+							<span>导出</span>
+						</div>
 					</div>
-					<div
-						v-if="sheet.config.export"
-						class="item"
-						@click="sheet.hooks.toolsHook.exportExcel"
-					>
-						<Icons name="Export"></Icons>
-						<span>导出</span>
-					</div>
-				</div>
 
-				<!-- 锁定解锁 -->
-				<div class="group" v-if="sheet.config.locked || sheet.config.unlock">
-					<div
-						v-if="sheet.config.locked"
-						class="item"
-						:class="{active: setActiveTool('lock').lock}"
-						@click="sheet.hooks.toolsHook.setLocked"
-					>
-						<Icons name="lock"></Icons>
-						<span>锁定</span>
+					<!-- 锁定解锁 -->
+					<div class="group" v-if="sheet.config.locked || sheet.config.unlock">
+						<div
+							v-if="sheet.config.locked"
+							class="item"
+							:class="{active: setActiveTool('lock').lock}"
+							@click="sheet.hooks.toolsHook.setLocked"
+						>
+							<Icons name="lock"></Icons>
+							<span>锁定</span>
+						</div>
+						<div
+							v-if="sheet.config.unlock"
+							class="item"
+							@click="sheet.hooks.toolsHook.setUnlocked"
+						>
+							<Icons name="CellUnlock"></Icons>
+							<span>解锁</span>
+						</div>
 					</div>
-					<div
-						v-if="sheet.config.unlock"
-						class="item"
-						@click="sheet.hooks.toolsHook.setUnlocked"
-					>
-						<Icons name="CellUnlock"></Icons>
-						<span>解锁</span>
-					</div>
-				</div>
 
-				<!-- 公式 -->
-				<div
-					class="group"
-					v-if="sheet.config.formulaed"
-					:class="{'group-merge': !isMobile()}"
-				>
-					<div class="item" :class="{active: setActiveTool('formula').fx}">
-						<Icons name="Sum"></Icons>
-						<span>公式</span>
+					<!-- 公式 -->
+					<div
+						class="group"
+						v-if="sheet.config.formulaed"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" :class="{active: setActiveTool('formula').fx}">
+							<Icons name="Sum"></Icons>
+							<span>公式</span>
+						</div>
+						<div v-if="!isMobile()" class="merge formula-merge shadow-12">
+							<div
+								class="item"
+								:class="{active: setActiveTool('formula').fxVal?.includes('SUM')}"
+								@click="sheet.hooks.editHook.setCellFormula('SUM')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>求和</span>
+							</div>
+							<div
+								class="item"
+								:class="{
+									active: setActiveTool('formula').fxVal?.includes('AVERAGE'),
+								}"
+								@click="sheet.hooks.editHook.setCellFormula('AVERAGE')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>平均值</span>
+							</div>
+							<div
+								class="item"
+								:class="{active: setActiveTool('formula').fxVal?.includes('MAX')}"
+								@click="sheet.hooks.editHook.setCellFormula('MAX')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>最大值</span>
+							</div>
+							<div
+								class="item"
+								:class="{active: setActiveTool('formula').fxVal?.includes('MIN')}"
+								@click="sheet.hooks.editHook.setCellFormula('MIN')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>最小值</span>
+							</div>
+						</div>
 					</div>
-					<div v-if="!isMobile()" class="merge formula-merge shadow-12">
+
+					<!-- 筛选、查找 -->
+					<div class="group" v-if="sheet.config.filter || sheet.config.find">
 						<div
 							class="item"
-							:class="{active: setActiveTool('formula').fxVal?.includes('SUM')}"
-							@click="sheet.hooks.editHook.setCellFormula('SUM')"
+							:class="{active: sheet.state.filter}"
+							@click="sheet.hooks.toolsHook.setFilter"
 						>
-							<Icons name="Fx"></Icons>
-							<span>求和</span>
+							<Icons name="Filter"></Icons>
+							<span>筛选</span>
 						</div>
 						<div
 							class="item"
-							:class="{
-								active: setActiveTool('formula').fxVal?.includes('AVERAGE'),
+							:class="{active: sheet.state.search}"
+							@click="sheet.hooks.toolsHook.setSearch"
+						>
+							<Icons name="Search"></Icons>
+							<span>查找</span>
+						</div>
+					</div>
+
+					<!-- 全屏 -->
+					<div
+						v-if="sheet.config.full"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" @click="onFull">
+							<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
+							<span>{{ full ? '退出' : '全屏' }}</span>
+						</div>
+					</div>
+
+					<!-- 冻结 -->
+					<div
+						v-if="sheet.config.freeze"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" @click="sheet.hooks.toolsHook.setFreeze">
+							<Icons name="Freeze"></Icons>
+							<span>冻结</span>
+						</div>
+						<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
+							<span>行</span>
+							<input
+								type="number"
+								v-model.number="sheet.hooks.toolsHook.freezeRow.value"
+							/>
+							&nbsp;
+							<span>列</span>
+							<input
+								type="number"
+								v-model.number="sheet.hooks.toolsHook.freezeCol.value"
+							/>
+						</div>
+					</div>
+
+					<div class="group">
+						<div class="item" @click="sheet.hooks.toolsHook.clearAll">
+							<Icons name="Clear3"></Icons>
+							<span>清除</span>
+						</div>
+					</div>
+
+					<div class="group">
+						<div
+							class="item"
+							@click="
+								() => {
+									sheet.hooks.historyHook.undo(() => {
+										sheet.hooks.editHook.setFormulaValue()
+									})
+								}
+							"
+							:style="{
+								opacity: !sheet.hooks.historyHook.canUndo() ? 0.3 : 1,
+								cursor: !sheet.hooks.historyHook.canUndo()
+									? 'not-allowed'
+									: 'pointer',
 							}"
-							@click="sheet.hooks.editHook.setCellFormula('AVERAGE')"
 						>
-							<Icons name="Fx"></Icons>
-							<span>平均值</span>
-						</div>
-						<div
-							class="item"
-							:class="{active: setActiveTool('formula').fxVal?.includes('MAX')}"
-							@click="sheet.hooks.editHook.setCellFormula('MAX')"
-						>
-							<Icons name="Fx"></Icons>
-							<span>最大值</span>
-						</div>
-						<div
-							class="item"
-							:class="{active: setActiveTool('formula').fxVal?.includes('MIN')}"
-							@click="sheet.hooks.editHook.setCellFormula('MIN')"
-						>
-							<Icons name="Fx"></Icons>
-							<span>最小值</span>
+							<Icons name="Undo"></Icons>
+							<span>撤销</span>
 						</div>
 					</div>
-				</div>
 
-				<!-- 筛选、查找 -->
-				<div class="group" v-if="sheet.config.filter || sheet.config.find">
-					<div
-						class="item"
-						:class="{active: sheet.state.filter}"
-						@click="sheet.hooks.toolsHook.setFilter"
-					>
-						<Icons name="Filter"></Icons>
-						<span>筛选</span>
-					</div>
-					<div
-						class="item"
-						:class="{active: sheet.state.search}"
-						@click="sheet.hooks.toolsHook.setSearch"
-					>
-						<Icons name="Search"></Icons>
-						<span>查找</span>
-					</div>
-				</div>
-
-				<!-- 全屏 -->
-				<div v-if="sheet.config.full" class="group" :class="{'group-merge': !isMobile()}">
-					<div class="item" @click="onFull">
-						<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
-						<span>{{ full ? '退出' : '全屏' }}</span>
-					</div>
-				</div>
-
-				<!-- 冻结 -->
-				<div v-if="sheet.config.freeze" class="group" :class="{'group-merge': !isMobile()}">
-					<div class="item" @click="sheet.hooks.toolsHook.setFreeze">
-						<Icons name="Freeze"></Icons>
-						<span>冻结</span>
-					</div>
-					<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
-						<span>行</span>
-						<input
-							type="number"
-							v-model.number="sheet.hooks.toolsHook.freezeRow.value"
-						/>
-						&nbsp;
-						<span>列</span>
-						<input
-							type="number"
-							v-model.number="sheet.hooks.toolsHook.freezeCol.value"
-						/>
-					</div>
-				</div>
-
-				<div class="group">
-					<div class="item" @click="sheet.hooks.toolsHook.clearAll">
-						<Icons name="Clear3"></Icons>
-						<span>清除</span>
-					</div>
-				</div>
-
-				<div class="group">
-					<div
-						class="item"
-						@click="
-							() => {
-								sheet.hooks.historyHook.undo(() => {
-									sheet.hooks.editHook.setFormulaValue()
-								})
-							}
-						"
-						:style="{
-							opacity: !sheet.hooks.historyHook.canUndo() ? 0.3 : 1,
-							cursor: !sheet.hooks.historyHook.canUndo() ? 'not-allowed' : 'pointer',
-						}"
-					>
-						<Icons name="Undo"></Icons>
-						<span>撤销</span>
-					</div>
-				</div>
-
-				<div class="group flx brn"></div>
+					<div class="group flx brn"></div>
+				</template>
 			</div>
 
 			<div v-if="sheet.config.edit" class="inputbar">
@@ -2310,7 +2377,7 @@ defineExpose({
 							sheet.hooks?.selectionRangeHook?.selecting ||
 							sheet.hooks?.selectionRangeHook?.ranged
 						"
-						class="selection-box"
+						class="selection-box shadow-6"
 						:class="sheet.hooks?.selectionRangeHook?.rangeClass"
 						:style="sheet.hooks?.selectionRangeHook?.rangeStyle"
 					>
@@ -2564,7 +2631,11 @@ defineExpose({
 							active: sheetItem[1].id === sheetId,
 							'shadow-12': sheetItem[1].id === sheetId,
 						}"
+						@keydown.stop
+						@keyup.stop
+						@keypress.stop
 						@click="onChangeSheet(sheetItem[1].id)"
+						@dblclick="onDbClickSheet($event, sheetItem[1].id)"
 					>
 						{{ sheetItem[1].name }}
 					</span>
