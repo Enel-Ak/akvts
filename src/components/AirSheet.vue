@@ -71,7 +71,7 @@ const props = defineProps({
 	limit: {type: Number, default: 30000},
 
 	// 配置顶部菜单
-	toolbarTabs: {type: String, default: 'start,formula'},
+	toolbarTabs: {type: String, default: 'start'}, // formula
 })
 
 // 容器
@@ -1429,6 +1429,13 @@ const onDbClickSheet = (e, id) => {
 	e.target.addEventListener('blur', blur)
 }
 
+const onDeleteSheet = (id) => {
+	sheetStore.deleteSheet(id)
+	setTimeout(() => {
+		onChangeSheet(sheetStore.getLastSheet?.id)
+	}, 16)
+}
+
 watch(
 	() => sheetStore.getSheet(sheetId.value),
 	(newVal) => {
@@ -2627,7 +2634,7 @@ defineExpose({
 
 			<!-- sheet栏 -->
 			<div class="sheetbar">
-				<template v-for="sheetItem of sheets">
+				<template v-for="(sheetItem, idx) of sheets">
 					<span
 						class="sheet-item"
 						:data-id="sheetItem[1].id"
@@ -2642,6 +2649,15 @@ defineExpose({
 						@dblclick="onDbClickSheet($event, sheetItem[1].id)"
 					>
 						{{ sheetItem[1].name }}
+						<el-popconfirm
+							v-if="idx > 0"
+							title="确定删除吗？"
+							@confirm="onDeleteSheet(sheetItem[1].id)"
+						>
+							<template #reference>
+								<Icons name="Clear2" size="14" class="close-sheet" />
+							</template>
+						</el-popconfirm>
 					</span>
 				</template>
 				<span class="new-sheet" @click="onAddSheet">

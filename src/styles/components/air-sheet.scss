@@ -34,6 +34,7 @@
 		cursor: pointer;
 		opacity: 0.7;
 		padding: 5px 10px;
+		margin: 0 5px;
 		transition: all 0.15s linear;
 
 		&:hover {
@@ -315,11 +316,14 @@
 	user-select: none;
 
 	.sheet-item {
+		align-items: center;
 		border-radius: 3px;
 		color: var(--z-font-color);
 		cursor: pointer;
+		display: flex;
 		opacity: 0.7;
 		padding: 5px 10px;
+		margin-right: 5px;
 
 		transition: all 0.15s linear;
 		&:hover {
@@ -332,6 +336,10 @@
 			&:hover {
 				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 			}
+		}
+
+		.close-sheet {
+			margin-left: 10px;
 		}
 	}
 

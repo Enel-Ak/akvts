@@ -176,5 +176,9 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			if (!this.sheets.has(key)) return
 			this.sheets.get(key).name = name
 		},
+		deleteSheet: function (key) {
+			if (!this.sheets.has(key)) return
+			this.sheets.delete(key)
+		},
 	},
 })
