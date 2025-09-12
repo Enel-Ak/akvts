@@ -89,9 +89,14 @@ const isLoading = computed(() => {
 		props.state === stateType.loading
 	)
 })
-
-const toolbarTabActive = ref('')
+const Tabs = [
+	{name: 'start', label: '开始'},
+	{name: 'formula', label: '公式'},
+]
+const toolbarTabActive = ref(Tabs[0].name)
+const tollbarTabList = computed(() => Tabs.filter((item) => props.toolbarTabs.includes(item.name)))
 const isExpandToolbar = ref(true)
+
 const fns = ref(props.modelValue?.fns || [])
 
 const filterEl = ref(null)
@@ -1492,7 +1497,6 @@ onBeforeMount(() => {})
 onMounted(() => {
 	sheetStore.init(sheetId.value, containerId, props, () => {
 		init()
-		toolbarTabActive.value = sheet.config.toolbarTabs?.[0].name
 		if (sheet.config.synergy) {
 			sheet.hooks.synergyHook.connection()
 		}
@@ -1557,7 +1561,7 @@ defineExpose({
 			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
 				<span class="flx"></span>
 				<span
-					v-for="item of sheet.config.toolbarTabs"
+					v-for="item of tollbarTabList"
 					:key="item.name"
 					:class="[item.name === toolbarTabActive ? 'active shadow-12' : '']"
 					class="item"

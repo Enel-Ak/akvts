@@ -58,10 +58,6 @@ const defaultSheet = {
 		rResize: {}, // 有调整大小的行
 		cResize: {}, // 有调整大小的列
 		keys: [], //  配置单元格的 Key
-		toolbarTabs: [
-			{name: 'start', label: '开始'},
-			{name: 'formula', label: '公式'},
-		], // 工具栏标签
 
 		freezeCount: {
 			r: 0,
