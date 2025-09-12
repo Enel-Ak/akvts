@@ -391,6 +391,10 @@ export const useHistory = () => {
 		sheet.history.clear()
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
 	const init = (key) => {
 		sheet = sheetStore.getSheet(key)
 		sheetKey = key
@@ -400,6 +404,7 @@ export const useHistory = () => {
 			save,
 			undo,
 			canUndo,
+			refreshSheet,
 		}
 	}
 

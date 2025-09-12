@@ -1,57 +1,52 @@
 import * as Signalr from '@microsoft/signalr'
 
-let signalr = {}
-let signalrPath = {}
+const signalr = {}
 let signalrTimer = null
 
-const useSignalrStop = (key) => {
+export const useSignalrStop = (key) => {
 	if (
 		signalr.hasOwnProperty(key) &&
 		signalr[key]?.state !== Signalr.HubConnectionState.Disconnected
 	) {
-		signalr[key]?.stop()
+		signalr[key].hubConnection?.stop()
 		signalr[key] = null
-		signalrPath[key] = null
 	} else {
 		Object.keys(signalr).forEach((key) => {
 			if (signalr[key]?.state !== Signalr.HubConnectionState.Disconnected) {
-				signalr[key]?.stop()
+				signalr[key].hubConnection?.stop()
 				signalr[key] = null
-				signalrPath[key] = null
 			}
 		})
 	}
 	clearTimeout(signalrTimer)
 }
 
-const useSignalr = (key, path) => {
-	// console.log('useSignalr', key, path, signalr[key])
-
+export const useSignalr = (key, path, token) => {
 	if (
 		!signalr.hasOwnProperty(key) ||
 		!signalr[key] ||
 		signalr[key]?.state === Signalr.HubConnectionState.Disconnected
 	) {
 		if (path) {
-			signalr[key] = new Signalr.HubConnectionBuilder()
-				.withUrl(`http://23.99.9.226:83/v2${path}`, {
+			signalr[key].token = token
+			signalr[key].hubConnection = new Signalr.HubConnectionBuilder()
+				.withUrl(`${path}`, {
 					transport: Signalr.HttpTransportType.WebSockets,
 					accessTokenFactory() {
-						return localStorage.getItem('access_token')
+						return signalr[key].token
 					},
 				})
 				.build()
 
-			signalr[key]
+			signalr[key].hubConnection
 				?.start()
 				.then(() => {
-					console.log('Signalr connection started', key)
-					signalrPath[key] = path
+					signalr[key].path = path
 				})
 				.catch((err) => {
-					// console.error('Signalr connection failed', err)
-					signalr[key] = null
-					signalrPath[key] = null
+					signalr[key].hubConnection = null
+					signalr[key].token = null
+					console.error('Signalr connection failed')
 				})
 		}
 	} else {
@@ -59,11 +54,14 @@ const useSignalr = (key, path) => {
 	}
 	clearTimeout(signalrTimer)
 	signalrTimer = setTimeout(
-		() => Object.keys(signalr).forEach((key) => useSignalr(key, signalrPath[key])),
+		() =>
+			Object.keys(signalr).forEach((key) =>
+				useSignalr(key, signalr[key].path, signalr[key].token)
+			),
 		10000
 	)
 
-	return signalr[key]
+	return signalr[key].hubConnection
 }
 
-export {useSignalr, useSignalrStop}
+export default {useSignalr, useSignalrStop}

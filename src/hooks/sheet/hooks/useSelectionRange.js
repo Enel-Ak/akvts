@@ -1125,8 +1125,13 @@ export const useSelectionRange = () => {
 		}
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+		setRange(0, 0, 0, 0)
+	}
+
 	// 初始化
-	const init = (key) => {
+	const init = (key, containerId) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 
@@ -1134,9 +1139,9 @@ export const useSelectionRange = () => {
 		watchConfigChanges()
 
 		setTimeout(() => {
-			container = document.querySelector(`#${sheetKey}`)
+			container = document.querySelector(`#${containerId}`)
 			if (!container) {
-				console.error('请检查是否存在id为' + sheetKey + '的容器')
+				console.error('请检查是否存在id为' + containerId + '的容器')
 				return
 			}
 
@@ -1186,6 +1191,8 @@ export const useSelectionRange = () => {
 			clearCache,
 			refreshSelection,
 			destroy,
+
+			refreshSheet,
 		}
 	}
 

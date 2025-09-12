@@ -72,8 +72,10 @@ const props = defineProps({
 })
 
 // 容器
-const id = `air-sheet-${Math.random().toString(16).slice(2)}`
+const containerId = `air-sheet-${Math.random().toString(16).slice(2)}`
 const sheetStore = useAirSheetStore()
+const sheetId = ref(containerId)
+const sheets = computed(() => sheetStore.getAllSheet)
 const sheet = reactive({})
 const isLoading = computed(() => {
 	return (
@@ -267,8 +269,16 @@ const initialData = () => {
 		sheet.config.colCount = Math.min(props.colCount, 240)
 	}
 
-	const celldata = props.modelValue.celldata
-	const total = celldata.length
+	let celldata = []
+	if (sheet.state.changeSheet) {
+		for (const v of sheet.celldata.values()) {
+			celldata.push(v)
+		}
+	} else {
+		celldata = props.modelValue.celldata
+	}
+
+	const total = celldata.length || sheet.config.rowCount
 
 	let processed = 0
 	const batchSize = 3000
@@ -297,11 +307,11 @@ const initialData = () => {
 		} else {
 			sheet.state.progress = 100
 			sheetStore.$patch((state) => {
-				state.sheets.get(id).celldata = markRaw(cellMap)
-				// sheet.hooks.historyHook.save(cellMap)
+				state.sheets.get(sheet.id).celldata = markRaw(cellMap)
 			})
 			useSleep(250).then(() => {
 				sheet.state.loading = false
+				sheet.state.changeSheet = false
 			})
 		}
 	}
@@ -427,7 +437,6 @@ const visibleRows = computed(() => {
 		// 需要获取对应的原始行号来获取正确的行高
 		const originalRowIndex =
 			isFiltered.value && hasFilteredData.value ? getOriginalRowIndex(i) : i
-
 		let row = {
 			r: originalRowIndex, // 显示原始行号，不是筛选后的行号
 			filteredR: i, // 筛选后的行索引，用于数据获取
@@ -461,9 +470,10 @@ const visibleCells = (row) => {
 
 	// 获取行数据
 	const rowData = dataSource.get(dataRowIndex)
-	if (!rowData) {
-		return cells
-	}
+
+	// if (!rowData) {
+	// 	return cells
+	// }
 
 	for (let i = start; i < end; i++) {
 		// 在筛选状态下，需要使用原始行号来检查合并单元格
@@ -477,7 +487,7 @@ const visibleCells = (row) => {
 			// 由于后端筛选逻辑已确保合并单元格完整性，这里可以简化处理
 			if (mergedCell.r === checkRowIndex && mergedCell.c === i) {
 				// 合并单元格起始位置，显示数据
-				value = rowData[i] || ''
+				value = rowData?.[i] || ''
 			} else {
 				// 合并单元格内部，不显示数据但保持合并状态
 				value = ''
@@ -485,7 +495,7 @@ const visibleCells = (row) => {
 			}
 		} else {
 			// 普通单元格，从行数据中取值
-			value = rowData[i] || ''
+			value = rowData?.[i] || ''
 		}
 
 		cells.push({
@@ -620,7 +630,7 @@ const getCellStyle = computed(() => {
 
 // 计算自定义列偏移量（与内容完全对齐）
 const getOffsetStyle = (cell) => {
-	const style = sheetStore.sheets.get(id)?.hooks?.mergeHook?.getCellStyle(cell, {
+	const style = sheetStore.sheets.get(sheetId.value)?.hooks?.mergeHook?.getCellStyle(cell, {
 		offsetLeft: offsetLeft.value,
 		offsetTop: offsetTop.value,
 	})
@@ -1376,11 +1386,31 @@ const onJumpToCell = async (row, col) => {
 	}
 }
 
+const onAddSheet = () => {
+	sheet.hooks.toolsHook.addSheet(props)
+	setTimeout(() => {
+		onChangeSheet(sheetStore.getLastSheet?.id)
+	}, 16)
+}
+
+const onChangeSheet = async (id) => {
+	sheetId.value = id
+
+	Object.values(sheet.hooks).forEach((hook) => {
+		hook?.refreshSheet?.(id)
+	})
+	for (const key in sheet) {
+		delete sheet[key]
+	}
+	Object.assign(sheet, sheetStore.getSheet(id))
+
+	sheet.state.changeSheet = true
+}
+
 watch(
-	() => sheetStore.getSheet(id),
+	() => sheetStore.getSheet(sheetId.value),
 	(newVal) => {
 		if (sheet.hooks?.resizeHook?.isResizing) return
-
 		Object.assign(sheet, newVal)
 		useDebounce(
 			() => {
@@ -1443,7 +1473,12 @@ onBeforeMount(() => {})
 
 // 初始化
 onMounted(() => {
-	sheetStore.init(id, props, () => init())
+	sheetStore.init(sheetId.value, containerId, props, () => {
+		init()
+		if (sheet.config.synergy) {
+			sheet.hooks.synergyHook.connection()
+		}
+	})
 })
 
 onActivated(() => {})
@@ -1494,7 +1529,11 @@ defineExpose({
 	<div
 		class="air-sheet-component"
 		:style="{height: containerHeight}"
-		:class="{mobile: isMobile(), full: full, btn: !sheetStore.getSheet(id)?.config.showToolBar}"
+		:class="{
+			mobile: isMobile(),
+			full: full,
+			btn: !sheetStore.getSheet(sheetId)?.config.showToolBar,
+		}"
 	>
 		<template v-if="sheet?.state?.completed">
 			<!-- 工具栏 -->
@@ -2181,7 +2220,7 @@ defineExpose({
 				<!-- 主体 -->
 				<div
 					ref="containerRef"
-					:id="id"
+					:id="containerId"
 					data-air-sheet-cell
 					class="virtual-sheet sheet-main brn"
 					@scroll="onScroll"
@@ -2513,6 +2552,26 @@ defineExpose({
 						@change="setSelectionRange"
 					/>
 				</div>
+			</div>
+
+			<!-- sheet栏 -->
+			<div class="sheetbar">
+				<template v-for="sheetItem of sheets">
+					<span
+						class="sheet-item"
+						:data-id="sheetItem[1].id"
+						:class="{
+							active: sheetItem[1].id === sheetId,
+							'shadow-12': sheetItem[1].id === sheetId,
+						}"
+						@click="onChangeSheet(sheetItem[1].id)"
+					>
+						{{ sheetItem[1].name }}
+					</span>
+				</template>
+				<span class="new-sheet" @click="onAddSheet">
+					<Icons name="Add"></Icons>
+				</span>
 			</div>
 
 			<!-- 状态栏 -->

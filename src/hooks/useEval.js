@@ -7,4 +7,4 @@ const useEvalHook = (str, ...argument) => {
 	}
 }
 
-export {useEvalHook}
+export default useEvalHook

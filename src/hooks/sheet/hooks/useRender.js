@@ -50,6 +50,10 @@ export const useRender = () => {
 		renderRequests.clear()
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -88,6 +92,7 @@ export const useRender = () => {
 		return {
 			destroy,
 			getRenderResult,
+			refreshSheet,
 		}
 	}
 

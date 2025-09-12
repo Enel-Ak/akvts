@@ -79,6 +79,10 @@ export const useContextMenu = () => {
 		}
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -96,8 +100,11 @@ export const useContextMenu = () => {
 			destroy,
 			contextMenuVisible,
 			contextMenuStyle,
+
+			refreshSheet,
 		}
 	}
+
 	return {
 		init,
 	}

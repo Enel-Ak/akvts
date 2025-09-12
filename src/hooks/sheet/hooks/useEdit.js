@@ -177,6 +177,9 @@ export const useEdit = () => {
 		}
 
 		const blur = () => {
+			if (!sheet.celldata.get(cell.r)) {
+				sheet.celldata.set(cell.r, [])
+			}
 			sheet.celldata.get(cell.r)[cell.c] = setCellFormat(
 				cellEl.innerText,
 				cell.r,
@@ -724,14 +727,18 @@ export const useEdit = () => {
 		container = null
 	}
 
-	const init = (key) => {
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
+	const init = (key, containerId) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(sheetKey)
 
 		setTimeout(() => {
-			if (initialized) return
+			if (initialized || !containerId) return
 			initialized = true
-			container = document.querySelector(`#${sheetKey}`)
+			container = document.querySelector(`#${containerId}`)
 
 			container.addEventListener('mouseenter', enterContainer)
 			container.addEventListener('mouseleave', leaveContainer)
@@ -768,6 +775,8 @@ export const useEdit = () => {
 			setCellFormat,
 			setRowHeight,
 			getCellValue,
+
+			refreshSheet,
 		}
 	}
 

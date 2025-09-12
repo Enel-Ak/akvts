@@ -2381,6 +2381,14 @@ export const useTools = () => {
 		})
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
+	const addSheet = (props, callback = () => {}) => {
+		sheetStore.addSheet(props, callback)
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -2438,6 +2446,9 @@ export const useTools = () => {
 			airToLucky,
 
 			clearAll,
+			addSheet,
+
+			refreshSheet,
 		}
 	}
 

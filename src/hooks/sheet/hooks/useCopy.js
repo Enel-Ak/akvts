@@ -473,6 +473,10 @@ export function useCopy() {
 		processClipboardData({text, isHtml: false})
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -488,6 +492,8 @@ export function useCopy() {
 			cutSelectedCells,
 			copySelectedCells,
 			destroy,
+
+			refreshSheet,
 		}
 	}
 

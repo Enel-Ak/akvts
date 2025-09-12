@@ -42,3 +42,5 @@ useDebounce.cancelAll = () => {
 	}
 	debounceMap.clear()
 }
+
+export default useDebounce

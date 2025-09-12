@@ -222,6 +222,10 @@ export const useResize = () => {
 		renderRequests.clear()
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -265,6 +269,8 @@ export const useResize = () => {
 			setColWidth,
 			clear,
 			destroy,
+
+			refreshSheet,
 		}
 	}
 

@@ -384,6 +384,10 @@ export const useExcel = () => {
 		}
 	}
 
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -393,6 +397,8 @@ export const useExcel = () => {
 			exporting,
 			readExcelFile,
 			exportExcel,
+
+			refreshSheet,
 		}
 	}
 

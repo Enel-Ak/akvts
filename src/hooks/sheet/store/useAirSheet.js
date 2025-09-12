@@ -11,6 +11,7 @@ import {useRender} from '../hooks/useRender'
 import {useContextMenu} from '../hooks/useContextMenu'
 import {useSelectionRange} from '../hooks/useSelectionRange'
 import {useExcel} from '../hooks/useExcel'
+import {useSynergy} from '../hooks/useSynergy'
 
 const defaultSheet = {
 	props: {},
@@ -46,6 +47,7 @@ const defaultSheet = {
 		full: true, // 全屏
 		filter: true, // 筛选
 		find: true, // 查找
+		synergy: true, // 协同
 
 		online: [], // 协同高亮在线的
 		merged: {}, // 已合并单元格
@@ -62,16 +64,13 @@ const defaultSheet = {
 			c: 0,
 		},
 
-		rowCount: 0,
-		colCount: 0,
+		rowCount: 40,
+		colCount: 20,
 	},
-	selectedCell: null, // 单个单元格选中
-	selectedRange: null, // 范围单元格选中
-	selectedRows: null, // 点击行号选中
-	selectedColumns: null, // 点击列号选中
 	history: null, // 历史记录
 	hooks: {}, // 扩展对象
 	state: {
+		changeSheet: false, // 是否正在切换sheet
 		render: false, // 是否正在渲染
 		loading: false, // 是否正在加载
 		importing: false, // 是否正在导入
@@ -83,6 +82,9 @@ const defaultSheet = {
 		msg: '正在加载数据...',
 		progress: -1,
 	},
+	name: 'Sheet',
+	id: '',
+	_temp: {},
 }
 
 export const useAirSheetStore = defineStore('AirSheet', {
@@ -93,18 +95,33 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		}
 	},
 	getters: {
+		getMapSheets: (state) => {
+			return state.sheets
+		},
+		getAllSheet: (state) => {
+			return [...state.sheets]
+		},
 		getSheet: (state) => (key) => state.sheets?.get(key),
 		getLoading: (state) => (key) => state.sheets?.get(key)?.loading,
 		getCompleted: (state) => (key) => state.sheets?.get(key)?.completed,
+		getTempAttr: (state) => (key, attr) => state.sheets?.get(key)?._temp[attr],
+		getLastSheet: (state) => {
+			let lastValue = null
+			for (const [key, value] of state.sheets) {
+				lastValue = value
+			}
+			return lastValue
+		},
 	},
 	actions: {
-		init: async function (key, componentProps, callback) {
+		init: async function (key, containerId, componentProps, callback) {
 			if (!this.sheets) {
 				this.sheets = new Map()
 			}
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
 				clone.id = key
+				clone.name = `Sheet${this.sheets.size + 1}`
 				clone.history = shallowReactive(new Map()) // 同一个引用
 				clone.celldata = shallowReactive(new Map()) // 同一个引用
 				clone.filterCellData = shallowReactive(new Map()) // 同一个引用
@@ -120,26 +137,40 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				this.sheets.set(key, clone)
 
 				const re = this.sheets.get(key)
-				re.hooks = {
-					renderHook: useRender().init(key),
-					styleHook: useStyle().init(key),
-					resizeHook: useResize().init(key),
-					mergeHook: useMerge().init(key),
-					copyHook: useCopy().init(key),
-					toolsHook: useTools().init(key),
-					historyHook: useHistory().init(key),
-					editHook: useEdit().init(key),
-					selectionRangeHook: useSelectionRange().init(key),
-					contextMenuHook: useContextMenu().init(key),
-					excelHook: useExcel().init(key),
-				}
-				re.fn = {
-					render: () => this.render(key),
+				if (containerId) {
+					re.hooks = {
+						renderHook: useRender().init(key),
+						styleHook: useStyle().init(key),
+						resizeHook: useResize().init(key),
+						mergeHook: useMerge().init(key),
+						copyHook: useCopy().init(key),
+						toolsHook: useTools().init(key),
+						historyHook: useHistory().init(key),
+						editHook: useEdit().init(key, containerId),
+						selectionRangeHook: useSelectionRange().init(key, containerId),
+						contextMenuHook: useContextMenu().init(key),
+						excelHook: useExcel().init(key),
+						synergyHook: useSynergy().init(key),
+					}
+				} else {
+					re.hooks = this.sheets.values().next().value.hooks
 				}
 				re.state.completed = true
 			}
 			setTimeout(() => callback && callback(), 0)
 			console.log('inited AirSheet', this.sheets.get(key))
+		},
+		addSheet: async function (componentProps, callback) {
+			const key = `air-sheet-${Math.random().toString(16).slice(2)}`
+			this.init(key, null, componentProps, callback)
+		},
+		setTempAttr: function (key, attr, value) {
+			if (!this.sheets.has(key)) return
+			this.sheets.get(key)._temp[attr] = value
+		},
+		deleteTempAttr: function (key, attr) {
+			if (!this.sheets.has(key)) return
+			delete this.sheets.get(key)._temp[attr]
 		},
 	},
 })

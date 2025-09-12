@@ -5,3 +5,5 @@ export const useSleep = (ms = 1000) => {
 		}, ms)
 	)
 }
+
+export default useSleep

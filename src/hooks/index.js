@@ -16,5 +16,4 @@ export {
 	useDebounce,
 	useEval,
 	useSleep,
-	useBuffer,
 }
