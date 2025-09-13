@@ -317,7 +317,12 @@ export const useHistory = () => {
 
 									// 在指定位置插入删除的列数据
 									// 使用 splice 在 startCol 位置插入 deletedRowCols
-									rowData.splice(startCol, 0, ...deletedRowCols)
+									deletedRowCols[0]
+										.split(',')
+										.reverse()
+										.forEach((col) => {
+											rowData.splice(startCol, 0, col)
+										})
 
 									// 更新行数据
 									sheet.celldata.set(rowIndex, rowData)

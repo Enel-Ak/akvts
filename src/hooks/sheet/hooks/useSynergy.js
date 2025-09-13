@@ -4,7 +4,7 @@ import {useSignalr, useSignalrStop} from '@/hooks/useSignalr'
 export const useSynergy = () => {
 	let sheetKey = null
 	let sheet = null
-	let singnalr = null
+	let signalr = null
 
 	const connection = async (api, token) => {
 		if (!api || !token) {
@@ -12,7 +12,8 @@ export const useSynergy = () => {
 			return
 		}
 		const key = `air-sheet-ws-${Math.random().toString(36).slice(2)}`
-		singnalr = useSignalr(key, api, token)
+
+		signalr = useSignalr(key, api, token)
 	}
 
 	const init = (key) => {

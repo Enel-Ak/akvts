@@ -28,6 +28,7 @@ export const useSignalr = (key, path, token) => {
 		signalr[key]?.state === Signalr.HubConnectionState.Disconnected
 	) {
 		if (path) {
+			signalr[key] = {}
 			signalr[key].token = token
 			signalr[key].hubConnection = new Signalr.HubConnectionBuilder()
 				.withUrl(`${path}`, {

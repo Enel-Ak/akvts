@@ -21,13 +21,13 @@ const config = ref({
 			// {id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
 		],
 	},
-	celldata: Array.from({length: 51200}, (_, r) => {
-		return Array.from({length: 20}, (_, c) => {
-			return `R${r + 1}-C${c + 1}`
-			// return undefined
-		})
-	}),
-	// celldata: [],
+	// celldata: Array.from({length: 51200}, (_, r) => {
+	// 	return Array.from({length: 20}, (_, c) => {
+	// 		return `R${r + 1}-C${c + 1}`
+	// 		// return undefined
+	// 	})
+	// }),
+	celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',
@@ -1164,11 +1164,14 @@ onActivated(() => {
 })
 
 const onClick = () => {}
+const api = 'http://10.110.10.124:9527/signalr-hubs/onlinetable'
+const token =
+	'eyJhbGciOiJSUzI1NiIsImtpZCI6IkU1NERENUY0NUVCQzNENTRENjQwNzhCQjBDQjUzOTBCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTc3Mjc5NDUsImV4cCI6MTc1Nzg5OTk0NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMS92MiIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1NzcyNzk0MSwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkzIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzA4MDcxODI5NTA0Iiwicm9sZSI6WyJsZWRnZXItc3VwZXItYWRtaW4iLCLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5pWw5o2u5a-85Ye6Iiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLljLrljr_lj7DotKbov5Dnu7TlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjItZDMyZC1iYTNiLTYyYzhkODI4ODMxMyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjItYmRlMy1lNjRlLTYxYTFmM2FlYzk5MCIsImlhdCI6MTc1NzcyNzk0NSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.K4twwcxWVYF5QijslYH4qhBSds9fdAgEnkqmwpwyK5yEQYJ5LgC2BFnt0jJy-d_Khq-63zg0AzXPM37X8M4wgk812LJqB7lBg5bNV1g2cOcQD8BWRMWK5sRV7MOwkSfnt2heij5ExIo84xkUUXU4yIYX1SdE9dlsGtr_pZ8Aa47vFzG-M-jJt8plaV39kA4qG8qAbNjLulhB5GMarOtDo0aXoXuEkrt2eOpZ4Yk3qY9mjo6zUHTCAQpatrvD78PM0_kP0g6fISiT1D7VMJmlGL1aLcygbUhblFCT3F3KJPWwpwFNS_gp9fOefFoxKonME7y51recJpa-hLlu9i9wqQ'
 </script>
 <template>
 	<div style="height: 100%" class="df">
 		<!-- <button @click="onClick">获取数据</button> -->
-		<AirSheet ref="sheetRef" v-model="config" :fns="fns"></AirSheet>
+		<AirSheet ref="sheetRef" v-model="config" :fns="fns" :api="api" :token="token"></AirSheet>
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>
 </template>

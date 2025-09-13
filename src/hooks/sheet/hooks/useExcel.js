@@ -198,8 +198,6 @@ export const useExcel = () => {
 			await processBatch(worksheet, rowCount, colCount, startRow, startCol)
 
 			// 更新表格的行列数配置
-			// sheet.config.rowCount = Math.max(sheet.config.rowCount, rowCount)
-			// sheet.config.colCount = Math.max(sheet.config.colCount, colCount)
 			sheet.config.rowCount = rowCount < 40 ? 40 : rowCount
 			sheet.config.colCount = colCount < 20 ? 20 : colCount
 

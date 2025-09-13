@@ -19,6 +19,7 @@ import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {useSleep} from '@/hooks/useSleep'
 import {useDebounce} from '@/hooks/useDebounce'
+import {useMapToBuffer, useBufferToMap} from '@/hooks/sheet/hooks/useBuffer'
 import AirSheetFilter from './AirSheetFilter.vue'
 import AirSheetSearch from './AirSheetSearch.vue'
 
@@ -1175,6 +1176,10 @@ const init = () => {
 		// 加入拖拽到单元格的监听
 		containerRef.value.addEventListener('cellDragOver', onCellcellDragOver)
 		containerRef.value.addEventListener('drop', onCellDrop)
+
+		if (sheet.config.synergy) {
+			sheet.hooks.synergyHook.connection(props.api, props.token)
+		}
 	})
 }
 
@@ -1409,13 +1414,14 @@ const onAddSheet = () => {
 
 const onChangeSheet = async (id) => {
 	sheetId.value = id
-
 	Object.values(sheet.hooks).forEach((hook) => {
 		hook?.refreshSheet?.(id)
 	})
+
 	for (const key in sheet) {
 		delete sheet[key]
 	}
+
 	Object.assign(sheet, sheetStore.getSheet(id))
 
 	sheet.state.changeSheet = true
@@ -1508,9 +1514,6 @@ onBeforeMount(() => {})
 onMounted(() => {
 	sheetStore.init(sheetId.value, containerId, props, () => {
 		init()
-		if (sheet.config.synergy) {
-			sheet.hooks.synergyHook.connection(props.api, props.token)
-		}
 	})
 })
 
