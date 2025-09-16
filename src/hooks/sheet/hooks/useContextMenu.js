@@ -83,12 +83,12 @@ export const useContextMenu = () => {
 		sheet = sheetStore.getSheet(id)
 	}
 
-	const init = (key) => {
+	const init = (key, containerId) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 
 		setTimeout(() => {
-			container = document.querySelector(`#${key}`)
+			container = document.querySelector(`#${containerId}`)
 			if (!container) {
 				return
 			}

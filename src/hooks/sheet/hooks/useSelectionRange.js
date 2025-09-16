@@ -1,5 +1,6 @@
 import {computed, ref, shallowRef, watch, nextTick} from 'vue'
 import {useAirSheetStore} from '../store/useAirSheet'
+import {useDebounce} from '@/hooks/useDebounce'
 
 const workerCode = `
 	self.onmessage = (event) => {
@@ -596,6 +597,14 @@ export const useSelectionRange = () => {
 
 		// 点击单元格
 		ranged.value = {...selection}
+
+		useDebounce(
+			() => {
+				sheet.emits?.('synergySelecteCell', ranged.value)
+			},
+			32,
+			'synergySelecteCell'
+		)()
 	}
 
 	// 防抖优化的鼠标移动处理
@@ -619,6 +628,14 @@ export const useSelectionRange = () => {
 
 		lastMouseMoveTime = now
 		handleMouseMoveInternal(e)
+
+		useDebounce(
+			() => {
+				sheet.emits?.('synergySelecteCell', ranged.value)
+			},
+			32,
+			'synergySelecteCell'
+		)()
 	}
 
 	const handleMouseMoveInternal = (e) => {

@@ -181,38 +181,6 @@ export const useResize = () => {
 	let renderRequestId = 0
 	const renderRequests = new Map()
 
-	// const getRenderResult = (data, type = 'render_request') => {
-	// 	if (!worker) return
-	// 	return new Promise((resolve, reject) => {
-	// 		const requestId = ++renderRequestId
-
-	// 		// 存储请求
-	// 		renderRequests.set(requestId, {resolve, reject})
-
-	// 		if (type === 'render_request') {
-	// 			worker.postMessage({
-	// 				type: 'render_request',
-	// 				requestId,
-	// 				data: {
-	// 					...data,
-	// 					rowHeight: sheet.props.rowHeight,
-	// 					rowHeights: JSON.parse(JSON.stringify(sheet.config.rResize)),
-	// 					colWidth: sheet.props.colWidth,
-	// 					colWidths: JSON.parse(JSON.stringify(sheet.config.resize)),
-	// 				},
-	// 			})
-	// 		}
-
-	// 		// 设置超时处理
-	// 		setTimeout(() => {
-	// 			if (renderRequests.has(requestId)) {
-	// 				renderRequests.delete(requestId)
-	// 				reject(new Error('渲染请求超时'))
-	// 			}
-	// 		}, 5000) // 5秒超时
-	// 	})
-	// }
-
 	const clear = () => {
 		renderRequests.clear()
 	}

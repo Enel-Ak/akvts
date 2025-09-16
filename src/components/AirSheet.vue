@@ -35,6 +35,11 @@ const emits = defineEmits([
 	'cellBlur',
 	'cellDragOver',
 	'cellDrop',
+
+	'addSheet',
+
+	// 协同相关
+	'synergySelecteCell',
 ])
 
 // 核心配置参数
@@ -60,8 +65,8 @@ const props = defineProps({
 	// 操作列
 	enableFn: {type: Boolean, default: true},
 	// 操作列宽度
-	fnWidth: {type: Number, default: 120},
-	// fns: {type: Array, default: () => []},
+	operateWidth: {type: Number, default: 120},
+	operate: {type: Array, default: () => []},
 
 	height: {type: [Number, String], default: 0},
 
@@ -77,6 +82,7 @@ const props = defineProps({
 	// 协同相关配置
 	api: {type: String, default: ''},
 	token: {type: String, default: ''},
+	synergyData: {type: Array, default: () => []},
 })
 
 // 容器
@@ -101,8 +107,6 @@ const Tabs = [
 const toolbarTabActive = ref(Tabs[0].name)
 const tollbarTabList = computed(() => Tabs.filter((item) => props.toolbarTabs.includes(item.name)))
 const isExpandToolbar = ref(true)
-
-const fns = ref(props.modelValue?.fns || [])
 
 const filterEl = ref(null)
 const filterCol = ref([])
@@ -249,9 +253,6 @@ const containerHeight = computed(() => {
 	}
 })
 const initialized = ref(false)
-const loading = ref(false)
-const loadingText = ref('正在处理数据...')
-const loadingProgress = ref(-1)
 const containerRef = ref()
 const alphabetRef = ref()
 const numberRef = ref()
@@ -645,7 +646,7 @@ const getCellStyle = computed(() => {
 
 // 计算自定义列偏移量（与内容完全对齐）
 const getOffsetStyle = (cell) => {
-	const style = sheetStore.sheets.get(sheetId.value)?.hooks?.mergeHook?.getCellStyle(cell, {
+	const style = sheet.hooks?.mergeHook?.getCellStyle(cell, {
 		offsetLeft: offsetLeft.value,
 		offsetTop: offsetTop.value,
 	})
@@ -1098,7 +1099,11 @@ const onInput = (e) => {
 	for (let i = r; i <= rr; i++) {
 		for (let j = c; j <= cc; j++) {
 			if (!inputCache.has(`${i}-${j}`)) {
+				if (!sheet.celldata.get(i)) {
+					sheet.celldata.set(i, [])
+				}
 				const v = sheet.celldata.get(i)[j]
+
 				inputCache.set(`${i}-${j}`, v)
 				inputCacheCell.push({
 					c: j,
@@ -1176,10 +1181,6 @@ const init = () => {
 		// 加入拖拽到单元格的监听
 		containerRef.value.addEventListener('cellDragOver', onCellcellDragOver)
 		containerRef.value.addEventListener('drop', onCellDrop)
-
-		if (sheet.config.synergy) {
-			sheet.hooks.synergyHook.connection(props.api, props.token)
-		}
 	})
 }
 
@@ -1406,7 +1407,9 @@ const onJumpToCell = async (row, col) => {
 }
 
 const onAddSheet = () => {
-	sheet.hooks.toolsHook.addSheet(props)
+	const key = `air-sheet-${Math.random().toString(16).slice(2)}`
+	sheet.hooks.toolsHook.addSheet(key, props, emits)
+	emits('addSheet')
 	setTimeout(() => {
 		onChangeSheet(sheetStore.getLastSheet?.id)
 	}, 16)
@@ -1449,7 +1452,7 @@ const onDeleteSheet = (id) => {
 watch(
 	() => sheetStore.getSheet(sheetId.value),
 	(newVal) => {
-		if (sheet.hooks?.resizeHook?.isResizing) return
+		if (sheet.hooks?.resizeHook?.isResizing || !newVal) return
 		Object.assign(sheet, newVal)
 		useDebounce(
 			() => {
@@ -1479,41 +1482,30 @@ watch(
 	}
 )
 
-// 数据变化处理
+// 协同数据变化
 watch(
-	() => props.modelValue?.celldata,
+	() => props.synergyData,
 	(newVal) => {
-		// sheet.celldata = new Map(newVal)
-		// initialData()
-	}
-)
+		if ((!newVal && !newVal.length) || !props.modelValue?.config.synergy) {
+			return
+		}
 
-// watch(
-// 	() => sheet.hooks.selectionRangeHook?.ranged,
-// 	(newVal) => {
-// 		if (newVal) {
-// 			const {start, end} = newVal
-// 			selectionSize.value = {
-// 				w: sheet.hooks.resizeHook.getColWidth(start.col),
-// 				h: sheet.hooks.resizeHook.getRowHeight(start.row),
-// 			}
-// 			selectionRange.value = {
-// 				r: start.row + 1,
-// 				rr: end.row + 1,
-// 				c: start.col + 1,
-// 				cc: end.col + 1,
-// 			}
-// 		}
-// 	},
-// 	{deep: true}
-// )
+		sheetStore?.initSynergySheets(newVal, containerId, props).then(() => {
+			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+		})
+	},
+	{deep: true}
+)
 
 onBeforeMount(() => {})
 
 // 初始化
 onMounted(() => {
-	sheetStore.init(sheetId.value, containerId, props, () => {
+	sheetStore.init(sheetId.value, containerId, props, emits, () => {
 		init()
+		if (props.modelValue?.config.synergy) {
+			sheet.hooks.synergyHook.connection(props.api, props.token)
+		}
 	})
 })
 
@@ -1540,6 +1532,7 @@ defineExpose({
 	setCellValue: (...arg) => sheet.hooks.editHook.setCellValue(...arg),
 	setLocked: (...arg) => sheet.hooks.toolsHook.setLocked(...arg),
 	setUnlocked: (...arg) => sheet.hooks.toolsHook.setUnlocked(...arg),
+
 	importExcel: (...arg) => sheet.hooks.toolsHook.readExcelFile(...arg),
 	exportExcel: (...arg) => sheet.hooks.toolsHook.exportExcel(...arg),
 
@@ -1559,6 +1552,10 @@ defineExpose({
 
 	luckyToAir: async (config, data) => await sheet.hooks?.toolsHook?.luckyToAir(config, data),
 	airToLucky: async () => await sheet.hooks?.toolsHook?.airToLucky(sheet),
+
+	// 协同相关
+	joinSheet: (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
+	clickCell: (...args) => sheet.hooks.synergyHook.clickCell(...args), // 点击单元格
 })
 </script>
 <template>
@@ -2156,7 +2153,7 @@ defineExpose({
 					ref="alphabetRef"
 					class="virtual-sheet custom alphabet brn"
 					:style="{
-						width: `calc(100% - ${enableFn && fns?.length ? fnWidth : 0}px - ${
+						width: `calc(100% - ${enableFn && operate?.length ? operateWidth : 0}px - ${
 							enableNumber ? numberWidth : 0
 						}px - ${scrollbarWidth}px)`,
 					}"
@@ -2239,12 +2236,13 @@ defineExpose({
 					</div>
 				</div>
 				<div
-					class="alphabet-placeholder bln bbn"
+					class="alphabet-placeholder bbn"
 					:style="{
 						width:
-							enableFn && fns?.length
-								? fnWidth + scrollbarWidth + 'px'
+							enableFn && operate?.length
+								? operateWidth + scrollbarWidth + 'px'
 								: scrollbarWidth + 'px',
+						borderLeft: operate.length ? '1px solid var(--z-line)' : 0,
 					}"
 				></div>
 
@@ -2512,9 +2510,9 @@ defineExpose({
 				<div
 					ref="fnRef"
 					class="virtual-sheet custom bln"
-					v-if="enableFn && fns?.length"
+					v-if="enableFn && operate?.length"
 					:style="{
-						width: fnWidth + 'px',
+						width: operateWidth + 'px',
 					}"
 				>
 					<div
@@ -2525,13 +2523,13 @@ defineExpose({
 						class="virtual-content"
 						:style="{
 							transform: `translate(0, ${offsetTop}px)`,
-							width: `${fnWidth}px`,
+							width: `${operateWidth}px`,
 						}"
 					>
 						<template v-for="row of visibleRows" :key="row.r">
 							<slot name="fn" :row="row">
 								<div
-									class="fns"
+									class="operate"
 									:class="{
 										selection:
 											sheet.hooks.selectionRangeHook.setSelectionClass(row),
@@ -2539,7 +2537,7 @@ defineExpose({
 									:style="{height: `${row.h}px`}"
 								>
 									<span
-										v-for="fn in fns"
+										v-for="fn in operate"
 										@click="
 											() =>
 												fn.click(
@@ -2667,6 +2665,7 @@ defineExpose({
 						</el-popconfirm>
 					</span>
 				</template>
+
 				<span class="new-sheet" @click="onAddSheet">
 					<Icons name="Add"></Icons>
 				</span>

@@ -47,7 +47,7 @@ const defaultSheet = {
 		full: true, // 全屏
 		filter: true, // 筛选
 		find: true, // 查找
-		synergy: true, // 协同
+		synergy: false, // 协同
 
 		online: [], // 协同高亮在线的
 		merged: {}, // 已合并单元格
@@ -99,7 +99,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			return state.sheets
 		},
 		getAllSheet: (state) => {
-			return [...state.sheets]
+			return [...state?.sheets]
 		},
 		getSheet: (state) => (key) => state.sheets?.get(key),
 		getLoading: (state) => (key) => state.sheets?.get(key)?.loading,
@@ -114,14 +114,22 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		},
 	},
 	actions: {
-		init: async function (key, containerId, componentProps, callback) {
+		init: async function (sheet, containerId, componentProps, emits, callback) {
 			if (!this.sheets) {
 				this.sheets = new Map()
 			}
+
+			let key = sheet
+			let name = ''
+			if (typeof sheet === 'object') {
+				key = sheet.id
+				name = sheet.name
+			}
+
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
 				clone.id = key
-				clone.name = `Sheet${this.sheets.size + 1}`
+				clone.name = name || `Sheet${this.sheets.size + 1}`
 				clone.history = shallowReactive(new Map()) // 同一个引用
 				clone.celldata = shallowReactive(new Map()) // 同一个引用
 				clone.filterCellData = shallowReactive(new Map()) // 同一个引用
@@ -137,7 +145,8 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				this.sheets.set(key, clone)
 
 				const re = this.sheets.get(key)
-				if (containerId) {
+				if (containerId && this.sheets.size === 1) {
+					re.emits = emits
 					re.hooks = {
 						renderHook: useRender().init(key),
 						styleHook: useStyle().init(key),
@@ -148,11 +157,12 @@ export const useAirSheetStore = defineStore('AirSheet', {
 						historyHook: useHistory().init(key),
 						editHook: useEdit().init(key, containerId),
 						selectionRangeHook: useSelectionRange().init(key, containerId),
-						contextMenuHook: useContextMenu().init(key),
+						contextMenuHook: useContextMenu().init(key, containerId),
 						excelHook: useExcel().init(key),
 						synergyHook: useSynergy().init(key),
 					}
 				} else {
+					re.emits = this.sheets.values().next().value.emits
 					re.hooks = this.sheets.values().next().value.hooks
 				}
 				re.state.completed = true
@@ -160,9 +170,19 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			setTimeout(() => callback && callback(), 0)
 			console.log('inited AirSheet', this.sheets.get(key))
 		},
-		addSheet: async function (componentProps, callback) {
-			const key = `air-sheet-${Math.random().toString(16).slice(2)}`
-			this.init(key, null, componentProps, callback)
+
+		initSynergySheets: async function (sheets, containerId, componentProps) {
+			let count = 0
+			for (const [key, value] of this.sheets) {
+				console.log(key, value, sheets)
+				value._temp.originalSheetId = sheets[count].id
+				value.name = sheets[count].name
+				count++
+			}
+		},
+
+		addSheet: async function (key, componentProps, emits, callback) {
+			this.init(key, null, componentProps, emits, callback)
 		},
 		setTempAttr: function (key, attr, value) {
 			if (!this.sheets.has(key)) return

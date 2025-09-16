@@ -197,6 +197,7 @@ export const useEdit = () => {
 			setTimeout(() => {
 				formulaStyle.value = {}
 				isFormula.value = false
+				// const ranged = sheet.hooks.selectionRangeHook.getRanged()
 				setRowHeight(cell.r, cell.c)
 			}, 150)
 		}
@@ -699,7 +700,7 @@ export const useEdit = () => {
 		// 处理格式
 		const fmt = sheet.config.styled[`${r}-${c}`]?.fmt
 		if (fmt) {
-			sheet.celldata.get(r)[c] = setCellFormat(sheet.celldata.get(r)[c], r, c, true)
+			sheet.celldata.get(r)[c] = setCellFormat(value, r, c, true)
 		}
 	}
 
@@ -727,7 +728,7 @@ export const useEdit = () => {
 		container = null
 	}
 
-	const refreshSheet = (id) => {
+	const refreshSheet = async (id) => {
 		sheet = sheetStore.getSheet(id)
 	}
 
