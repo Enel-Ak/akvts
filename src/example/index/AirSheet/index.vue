@@ -9,19 +9,19 @@ const config = ref({
 		showHorizontalScreen: false,
 		// showToolbar: false,
 		// edit: true,
-		freezeCount: {
-			row: 1,
-			col: 1,
-		},
-		keys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
-		online: [
-			{id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
-			// {id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
-			// {id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
-			// {id: 4, name: '测试4', r: 3, c: 3, rr: 3, cc: 3, value: '测试内容4', state: 1},
-			// {id: 5, name: '测试5', r: 4, c: 4, rr: 4, cc: 4, value: '测试内容5', state: 1},
-			// {id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
-		],
+		// freezeCount: {
+		// 	row: 1,
+		// 	col: 1,
+		// },
+		// keys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
+		// online: [
+		// {id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
+		// {id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
+		// {id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
+		// {id: 4, name: '测试4', r: 3, c: 3, rr: 3, cc: 3, value: '测试内容4', state: 1},
+		// {id: 5, name: '测试5', r: 4, c: 4, rr: 4, cc: 4, value: '测试内容5', state: 1},
+		// {id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
+		// ],
 	},
 	// celldata: Array.from({length: 51200}, (_, r) => {
 	// 	return Array.from({length: 20}, (_, c) => {
@@ -29,7 +29,7 @@ const config = ref({
 	// 		// return undefined
 	// 	})
 	// }),
-	celldata: [],
+	// celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',
@@ -1206,11 +1206,10 @@ onMounted(() => {
 					_raw: JSON.parse(JSON.stringify(sheet)),
 				})
 			})
-			synergyData.value = arr
-
+			// synergyData.value = arr
 			reportTaskTableId.value = arr[0]._raw.reportTaskTableId
 			sheetId.value = arr[0]._raw.id
-			sheetRef.value.joinSheet(reportTaskTableId.value, sheetId.value)
+			// sheetRef.value.joinSheet(reportTaskTableId.value, sheetId.value)
 		})
 })
 </script>

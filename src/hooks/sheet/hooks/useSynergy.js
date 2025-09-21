@@ -7,16 +7,23 @@ export const useSynergy = () => {
 	let signalr = null
 
 	const connection = async (api, token) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!api || !token) {
 			console.error('链接失败')
 			return
 		}
 		const key = `air-sheet-ws-${Math.random().toString(36).slice(2)}`
-		signalr = useSignalr(key, api, token)
+		signalr = useSignalr(key, api, token, (state) => {
+			if (state === 'error') {
+				signalr = null
+			}
+		})
 	}
 
 	const joinSheet = (...args) => {
-		signalr?.invoke('join-sheet-group', ...args).then(() => {
+		signalr.invoke('join-sheet-group', ...args).then(() => {
 			console.log('join-sheet-group')
 			clickCell(...args)
 		})

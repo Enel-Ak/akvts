@@ -578,6 +578,22 @@ export const useSelectionRange = () => {
 		if (!pos) return
 		if (pos.r > sheet.config.rowCount - 1 || pos.c > sheet.config.colCount - 1) return
 
+		// 如何在设置公式不更新ranged
+		if (sheet.state.formula) {
+			console.log('当前设置公式点击位置', pos)
+			if (!sheet.config.formulaMap[`${ranged.value.r}-${ranged.value.c}`]) {
+				sheet.config.formulaMap[`${ranged.value.r}-${ranged.value.c}`] = []
+			}
+			const range = sheet.hooks.toolsHook.parseCellRange(`${pos.r}-${pos.c}`)
+			sheet.config.formulaMap[`${ranged.value.r}-${ranged.value.c}`].push({
+				r: pos.r,
+				c: pos.c,
+				range,
+			})
+			sheet.hooks.editHook.setFormulaSelectionCell(range)
+			return
+		}
+
 		selecting.value = true
 		dragging.value = false
 
@@ -598,13 +614,15 @@ export const useSelectionRange = () => {
 		// 点击单元格
 		ranged.value = {...selection}
 
-		useDebounce(
-			() => {
-				sheet.emits?.('synergySelecteCell', ranged.value)
-			},
-			32,
-			'synergySelecteCell'
-		)()
+		if (sheet.config.synergy) {
+			useDebounce(
+				() => {
+					sheet.emits?.('synergySelecteCell', ranged.value)
+				},
+				300,
+				'synergySelecteCell'
+			)()
+		}
 	}
 
 	// 防抖优化的鼠标移动处理
@@ -691,12 +709,18 @@ export const useSelectionRange = () => {
 		if (!ranged.value) return // 如果没有选区，不进行拖拽
 
 		e.preventDefault()
-		dragging.value = true
-		selecting.value = false
 
 		// 获取拖拽起始位置的单元格
 		const pos = limitRange(getCellPosition(e))
 		if (!pos || pos.r > sheet.config.rowCount - 1 || pos.c > sheet.config.colCount - 1) return
+
+		// 如何在设置公式不更新ranged
+		if (sheet.state.formula) {
+			return
+		}
+
+		dragging.value = true
+		selecting.value = false
 
 		// 保存当前选区作为起始点
 		selection = {...ranged.value, rr: pos.r, cc: pos.c}
@@ -1142,6 +1166,12 @@ export const useSelectionRange = () => {
 		}
 	}
 
+	const setFormulaHighlightRange = (range) => {
+		console.log(range)
+		const style = {}
+		return style
+	}
+
 	const refreshSheet = (id) => {
 		sheet = sheetStore.getSheet(id)
 		setRange(0, 0, 0, 0)
@@ -1195,7 +1225,6 @@ export const useSelectionRange = () => {
 			statistics,
 
 			//方法
-
 			getStartCell,
 			getEndCell,
 			getRangeByMouse,
@@ -1203,6 +1232,7 @@ export const useSelectionRange = () => {
 			setRange,
 			setSelectionClass,
 			setHighlightRange,
+			setFormulaHighlightRange,
 			drag: handleDragStart,
 			clear,
 			clearCache,

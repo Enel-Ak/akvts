@@ -21,7 +21,7 @@ export const useSignalrStop = (key) => {
 	clearTimeout(signalrTimer)
 }
 
-export const useSignalr = (key, path, token) => {
+export const useSignalr = (key, path, token, callback) => {
 	if (
 		!signalr.hasOwnProperty(key) ||
 		!signalr[key] ||
@@ -43,11 +43,13 @@ export const useSignalr = (key, path, token) => {
 				?.start()
 				.then(() => {
 					signalr[key].path = path
+					typeof callback === 'function' ? callback('success') : null
 				})
 				.catch((err) => {
 					signalr[key].hubConnection = null
 					signalr[key].token = null
 					console.error('Signalr connection failed')
+					typeof callback === 'function' ? callback('error') : null
 				})
 		}
 	} else {

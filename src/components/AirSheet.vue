@@ -1503,6 +1503,7 @@ onBeforeMount(() => {})
 onMounted(() => {
 	sheetStore.init(sheetId.value, containerId, props, emits, () => {
 		init()
+		sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
 		if (props.modelValue?.config.synergy) {
 			sheet.hooks.synergyHook.connection(props.api, props.token)
 		}
@@ -2387,6 +2388,17 @@ defineExpose({
 						</template>
 					</div>
 
+					<!-- 高亮当前单元格的公式选中的单元格 -->
+					<div class="selection-box">
+						<div
+							v-for="item of sheet.config.formulaMap[
+								`${sheet.hooks.selectionRangeHook.ranged.r}-${sheet.hooks.selectionRangeHook.ranged.c}`
+							]"
+							:key="`${item.r}-${item.c}`"
+							:style="sheet.hooks?.selectionRangeHook?.setFormulaHighlightRange(item)"
+						></div>
+					</div>
+
 					<!-- 选区框、选区背景 -->
 					<div
 						v-if="
@@ -2416,7 +2428,7 @@ defineExpose({
 					<!-- 高亮在线 -->
 					<div
 						:key="`${updateTimer + index}`"
-						v-for="(item, index) of sheet.config?.onlineCell"
+						v-for="(item, index) of sheet.config?.online"
 						class="highlight"
 						:style="sheet.hooks?.selectionRangeHook?.setHighlightRange(item)"
 					>

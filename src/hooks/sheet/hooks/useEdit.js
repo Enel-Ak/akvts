@@ -16,7 +16,7 @@ export const useEdit = () => {
 	const isFormula = ref(false)
 	const formulaStyle = ref({})
 
-	const enterContainer = () => {
+	const enterContainer = (e) => {
 		enter = true
 	}
 
@@ -92,73 +92,7 @@ export const useEdit = () => {
 	}
 
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
-		if (!enter || !cell) return
-
-		if (cell.mergedCell) {
-			cell.r = cell.mergedCell.r
-			cell.c = cell.mergedCell.c
-		}
-
-		// 不允许编辑
-		if (!sheet.config.edit) {
-			ElMessage.warning('当前表格不支持编辑')
-			return
-		}
-
-		// 检查是否有组合键按下
-		if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
-			return
-		}
-
-		// 允许的特殊按键：退格键、删除键、方向键等
-		const allowedKeys = ['Backspace', 'Delete']
-
-		// 如果是功能键，不执行编辑
-		if (e.key && e.key.startsWith('F') && /^\d+$/.test(e.key.slice(1))) {
-			return
-		}
-
-		// 如果不是字母、数字、特殊字符或允许的特殊按键，不执行编辑
-		if (e.key && e.key.length > 1 && !allowedKeys.includes(e.key)) {
-			return
-		}
-
-		// 不允许编辑锁定的单元格
-		if (sheet.config.locked[`${cell.r}-${cell.c}`]) {
-			ElMessage.warning(`单元格已锁定`)
-			return
-		}
-
 		const cellEl = document.querySelector(`[data-cell="${cell.r}-${cell.c}"]`)
-
-		if (!cellEl || cellEl.getAttribute('contenteditable')) {
-			return
-		}
-
-		cellEl.setAttribute('contenteditable', 'true')
-
-		// 优化体验而已
-		if (cellEl.innerText === '') {
-			cellEl.style.lineHeight = sheet.hooks.resizeHook.getRowHeight(cell.r) - 1 + 'px'
-		}
-
-		// 未双击, 直接输入清空所有内容
-		if (cell.r === undefined) {
-			cellEl.innerText = ''
-		}
-
-		cellEl.innerText = setCellFormat(cellEl.innerText, cell.r, cell.c)
-
-		cellEl.focus()
-		editing.value = true
-
-		// 将光标移到文本末尾
-		const range = document.createRange()
-		const selection = window.getSelection()
-		range.selectNodeContents(cellEl)
-		range.collapse(false)
-		selection.removeAllRanges()
-		selection.addRange(range)
 
 		const setFormula = () => {
 			isFormula.value = true
@@ -174,12 +108,24 @@ export const useEdit = () => {
 				top: cellRect.bottom - containerRect.top + scrollTop + 'px',
 				width: cellRect.width + 'px',
 			}
+
+			sheet.state.formula = true
 		}
 
 		const blur = () => {
+			if (sheet.state.formula) {
+				cellEl.focus()
+				setTimeout(() => {
+					formulaStyle.value = {}
+					isFormula.value = false
+				}, 150)
+				return
+			}
+
 			if (!sheet.celldata.get(cell.r)) {
 				sheet.celldata.set(cell.r, [])
 			}
+
 			sheet.celldata.get(cell.r)[cell.c] = setCellFormat(
 				cellEl.innerText,
 				cell.r,
@@ -214,6 +160,82 @@ export const useEdit = () => {
 			inputValue.value = cellEl.innerText
 		}
 
+		if (!enter || !cell) return
+
+		if (cell.mergedCell) {
+			cell.r = cell.mergedCell.r
+			cell.c = cell.mergedCell.c
+		}
+
+		// 不允许编辑
+		if (!sheet.config.edit) {
+			ElMessage.warning('当前表格不支持编辑')
+			return
+		}
+
+		// 不允许编辑锁定的单元格
+		if (sheet.config.locked[`${cell.r}-${cell.c}`]) {
+			ElMessage.warning(`单元格已锁定`)
+			return
+		}
+
+		// 检查是否有组合键按下
+		if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+			return
+		}
+
+		// 公式选择模式下
+		if (sheet.state.formula && (e.key === 'Enter' || e.key === 'Escape')) {
+			console.log('结束公式设置')
+			e.stopPropagation()
+			e.preventDefault()
+			sheet.state.formula = false
+			blur()
+			return
+		}
+
+		// 允许的特殊按键：退格键、删除键、方向键等
+		const allowedKeys = ['Backspace', 'Delete']
+
+		// 如果是功能键，不执行编辑
+		if (e.key && e.key.startsWith('F') && /^\d+$/.test(e.key.slice(1))) {
+			return
+		}
+
+		// 如果不是字母、数字、特殊字符或允许的特殊按键，不执行编辑
+		if (e.key && e.key.length > 1 && !allowedKeys.includes(e.key)) {
+			return
+		}
+
+		if (!cellEl || cellEl.getAttribute('contenteditable')) {
+			return
+		}
+
+		cellEl.setAttribute('contenteditable', 'true')
+
+		// 优化体验而已
+		if (cellEl.innerText === '') {
+			cellEl.style.lineHeight = sheet.hooks.resizeHook.getRowHeight(cell.r) - 1 + 'px'
+		}
+
+		// 未双击, 直接输入清空所有内容
+		if (cell.r === undefined) {
+			cellEl.innerText = ''
+		}
+
+		cellEl.innerText = setCellFormat(cellEl.innerText, cell.r, cell.c)
+
+		cellEl.focus()
+		editing.value = true
+
+		// 将光标移到文本末尾
+		const range = document.createRange()
+		const selection = window.getSelection()
+		range.selectNodeContents(cellEl)
+		range.collapse(false)
+		selection.removeAllRanges()
+		selection.addRange(range)
+
 		// 检查是否是公式
 		if (e.key === '=') {
 			cellEl.innerText = ''
@@ -221,10 +243,15 @@ export const useEdit = () => {
 			setFormula()
 		}
 
+		if (cellEl.innerText.startsWith('=')) {
+			sheet.state.formula = true
+		}
+
 		cellEl.addEventListener('input', input)
 		cellEl.addEventListener('blur', blur)
 	}
 
+	// 单元格格式
 	const setCellFormat = (text, rowIndex, colIndex, format = false, el = null) => {
 		const fmt = sheet.config.styled[`${rowIndex}-${colIndex}`]?.fmt // 单元格格式
 		const formula = sheet.config.formulaed[`${rowIndex}-${colIndex}`] // 单元格公式
@@ -400,9 +427,16 @@ export const useEdit = () => {
 		return output
 	}
 
+	// 设置单元格公式
 	const setCellFormula = (key, _) => {
+		sheet.state.formula = true
+
 		const cell = sheet.hooks.selectionRangeHook.getRanged()
 		const {r, c, rr, cc} = cell
+
+		if (!sheet.celldata.get(r)) {
+			sheet.celldata.set(r, [])
+		}
 
 		if (!_) {
 			const v = sheet.celldata.get(r)[c] || ''
@@ -428,12 +462,23 @@ export const useEdit = () => {
 				} else {
 					sheet.config.formulaed[`${row}-${col}`] = `=${key}()`
 				}
+
+				if (sheet.state.formula) {
+					if (!sheet.celldata.get(row)) {
+						sheet.celldata.set(row, [])
+					}
+					sheet.celldata.get(row)[col] = `=${key}()`
+				}
+
 				inputValue.value = sheet.config.formulaed[`${row}-${col}`]
 			}
 		}
-		setFormulaValue(container.querySelector(`[data-cell="${r}-${c}"]`))
+		if (!sheet.state.formula) {
+			setFormulaValue(container.querySelector(`[data-cell="${r}-${c}"]`))
+		}
 	}
 
+	// 根据公式计算结果
 	const setFormulaValue = (el = null) => {
 		try {
 			const formulas = sheet.config.formulaed
@@ -537,8 +582,9 @@ export const useEdit = () => {
 						}
 						// 确保 0 值也能正确显示
 						sheet.celldata.get(rowIndex)[colIndex] = result === 0 ? '0' : result
-						if (el) {
-							el.innerText = result === 0 ? '0' : result
+						const cur = container.querySelector(`[data-cell="${rowIndex}-${colIndex}"]`)
+						if (cur) {
+							cur.innerText = result === 0 ? '0' : result
 						}
 					}
 				}
@@ -720,10 +766,55 @@ export const useEdit = () => {
 		return ''
 	}
 
+	let formulaSelectionCell = null
+	const parseFormula = (str) => {
+		// ^= 表示以等号开头
+		// ([A-Z]+) 捕获函数名（大写字母，如果可能有小写就用 [A-Za-z]+）
+		// \((.*?)\) 捕获括号里的内容
+		let match = str.match(/^=([A-Za-z]+)\((.*?)\)$/)
+		if (match) {
+			return {
+				func: match[1], // 函数名，如 "SUM"
+				args: match[2], // 参数字符串，如 "A1,A10"
+			}
+		}
+		return null
+	}
+	const setFormulaSelectionCell = (range) => {
+		console.log('setFormulaSelectionCell', range)
+		const {start, end, format, sqref} = range
+		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (start.row === r && start.col === c) {
+			return
+		}
+		formulaSelectionCell = container.querySelector(`[data-cell="${r}-${c}"]`)
+		if (formulaSelectionCell) {
+			for (let i = r; i <= rr; i++) {
+				for (let j = c; j <= cc; j++) {
+					if (!sheet.celldata.get(i)) {
+						sheet.celldata.set(i, [])
+					}
+					const sqref = range.sqref.split(':')
+					const formula = parseFormula(formulaSelectionCell.innerText)
+					if (!formula.args) {
+						formula.args = sqref[0]
+					} else {
+						formula.args += `,${sqref[0]}`
+					}
+					const result = `=${formula.func}(${Array.from(
+						new Set(formula.args.split(','))
+					).join(',')})`
+					sheet.celldata.get(i)[j] = result
+					inputValue.value = result
+				}
+			}
+		}
+	}
+
 	const destroy = () => {
 		initialized = false
-		container.removeEventListener('mouseenter', enterContainer)
-		container.removeEventListener('mouseleave', leaveContainer)
+		container.removeEventListener('mousemove', enterContainer)
+		container.removeEventListener('mouseout', leaveContainer)
 		document.removeEventListener('keydown', startEdit)
 		container = null
 	}
@@ -741,8 +832,8 @@ export const useEdit = () => {
 			initialized = true
 			container = document.querySelector(`#${containerId}`)
 
-			container.addEventListener('mouseenter', enterContainer)
-			container.addEventListener('mouseleave', leaveContainer)
+			container.addEventListener('mousemove', enterContainer)
+			container.addEventListener('mouseout', leaveContainer)
 			document.addEventListener('keydown', startEdit)
 			console.log('installed useEdit')
 
@@ -776,6 +867,7 @@ export const useEdit = () => {
 			setCellFormat,
 			setRowHeight,
 			getCellValue,
+			setFormulaSelectionCell,
 
 			refreshSheet,
 		}

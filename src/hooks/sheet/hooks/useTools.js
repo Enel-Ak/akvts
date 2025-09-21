@@ -2449,6 +2449,7 @@ export const useTools = () => {
 			addSheet,
 
 			refreshSheet,
+			parseCellRange,
 		}
 	}
 

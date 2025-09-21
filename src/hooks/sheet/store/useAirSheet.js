@@ -54,6 +54,7 @@ const defaultSheet = {
 		locked: {}, // 锁定单元格
 		styled: {}, // 有样式的单元格
 		formulaed: {}, // 有公式的单元格
+		formulaMap: {}, // 被公式引用的单元格
 		filtered: {}, // 有筛选的单元格
 		rResize: {}, // 有调整大小的行
 		cResize: {}, // 有调整大小的列
@@ -79,6 +80,7 @@ const defaultSheet = {
 		completed: false, // 是否初始化完成
 		filter: false, // 是否开启筛选
 		search: false, // 是否开启查找
+		formula: false, // 是否进去公式状态
 		msg: '正在加载数据...',
 		progress: -1,
 	},
@@ -174,7 +176,6 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		initSynergySheets: async function (sheets, containerId, componentProps) {
 			let count = 0
 			for (const [key, value] of this.sheets) {
-				console.log(key, value, sheets)
 				value._temp.originalSheetId = sheets[count].id
 				value.name = sheets[count].name
 				count++
