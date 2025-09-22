@@ -20,9 +20,13 @@ const props = defineProps({
 	},
 })
 const searchValue = ref({keyword: ''})
+const activeRow = ref(-1)
+const activeCol = ref(-1)
 
 // 跳转到指定单元格
 const jumpToCell = (item) => {
+	activeRow.value = item.r
+	activeCol.value = item.c
 	emits('jumpToCell', item.r, item.c)
 }
 
@@ -244,7 +248,11 @@ onUnmounted(() => {
 			]"
 		></FormItem>
 		<div v-show="searchList.length" class="all">
-			<div class="search-header">找到 {{ searchList.length }} 个匹配项</div>
+			<div class="header">
+				<span>单元格</span>
+				<span>内容</span>
+				<div class="search-header">找到 {{ searchList.length }} 个匹配项</div>
+			</div>
 			<div class="virtual-list" :style="{height: `${containerHeight}px`}" @scroll="onScroll">
 				<div
 					class="virtual-list-phantom"
@@ -258,13 +266,14 @@ onUnmounted(() => {
 						v-for="item in visibleItems"
 						:key="`${item.r}-${item.c}`"
 						class="item"
+						:class="{active: item.r === activeRow && item.c === activeCol}"
 						:style="{height: `${ITEM_HEIGHT}px`}"
+						@click="jumpToCell(item)"
 					>
 						<span class="position">
 							{{ numberToLetters(item.c + 1) }}{{ item.r + 1 }}
 						</span>
 						<span class="content" :title="item.v">{{ item.v }}</span>
-						<el-link @click="jumpToCell(item)" type="primary"> 跳转 </el-link>
 					</div>
 				</div>
 			</div>
@@ -288,6 +297,7 @@ onUnmounted(() => {
 	padding: 10px;
 	position: absolute;
 	transition: box-shadow 0.2s ease;
+	user-select: none;
 	z-index: 10;
 
 	&:hover {
@@ -316,12 +326,27 @@ onUnmounted(() => {
 		margin: -10px 0 10px 0;
 		padding: 10px 10px 0 10px;
 
-		.search-header {
-			font-size: 12px;
-			color: var(--z-text-secondary);
-			margin-bottom: 8px;
-			padding-bottom: 5px;
+		.header {
+			align-items: center;
+			border-radius: 2px;
 			border-bottom: 1px solid var(--z-line);
+			background-color: rgba(var(--z-bg-secondary-rgb), 0.5);
+			display: flex;
+			font-weight: 500;
+
+			margin-bottom: 8px;
+			padding: 8px 5px;
+			span:nth-child(1) {
+				width: 98px;
+			}
+			span:nth-child(2) {
+				flex: 1;
+			}
+		}
+
+		.search-header {
+			font-size: 13px;
+			color: rgba(var(--z-font-color-rgb), 0.7);
 		}
 
 		.virtual-list {
@@ -350,14 +375,19 @@ onUnmounted(() => {
 
 		.item {
 			align-items: center;
+			cursor: pointer;
 			display: flex;
 			padding: 8px 12px;
 			border-bottom: 1px solid var(--z-line);
 			transition: background-color 0.2s;
 			box-sizing: border-box;
 
+			&.active {
+				background-color: rgba(var(--z-bg-secondary-rgb), 1);
+			}
+
 			&:hover {
-				background-color: var(--z-hover);
+				background-color: rgba(var(--z-bg-secondary-rgb), 0.5);
 			}
 
 			&:last-child {
@@ -367,9 +397,10 @@ onUnmounted(() => {
 
 		.position {
 			font-size: 13px;
-			color: var(--z-text-secondary);
+			color: rgba(var(--z-font-color-rgb), 0.5);
 			min-width: 40px;
 			flex-shrink: 0;
+			width: 80px;
 		}
 
 		.content {
@@ -379,6 +410,7 @@ onUnmounted(() => {
 			text-overflow: ellipsis;
 			white-space: nowrap;
 			font-size: 13px;
+			line-height: 1.5;
 		}
 	}
 }

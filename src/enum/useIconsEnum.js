@@ -135,6 +135,7 @@ const Icons = {
 	Filter: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M11 19v-6.346L4.95 5h14.1L13 12.654V19zm1-6.7L16.95 6h-9.9zm0 0"/></svg>',
 	ClearFilter:
 		'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m14.089 11.264l-.714-.714L16.95 6H8.825l-1-1h10.156q.317 0 .467.28t-.052.55zM13 14.42v3.81q0 .328-.22.549t-.55.22h-.46q-.33 0-.55-.22t-.22-.55V12.42l-7.9-7.9q-.14-.14-.15-.341t.15-.366q.165-.166.357-.166t.356.166l16.38 16.378q.145.147.152.345t-.158.363q-.166.16-.354.163t-.354-.163zm.375-3.871"/></svg>',
+	Jump: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M11.423 12.577v-3h1v2h2v1zm6.577 0v-1h2v-2h1v3zM11.423 6V3h3v1h-2v2zM20 6V4h-2V3h3v3zM3.708 21L3 20.292l6.715-6.715H4v-1h7.423V20h-1v-5.715z"/></svg>',
 }
 
 export default Icons
