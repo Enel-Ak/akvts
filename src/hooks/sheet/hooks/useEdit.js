@@ -139,17 +139,12 @@ export const useEdit = () => {
 			editing.value = false
 
 			// 使用延时处理，给公式菜单点击事件留出执行时间
-			nextTick(() => setFormulaValue(cellEl))
+			nextTick(() => {
+				setFormulaValue(cellEl)
+			})
 			setTimeout(() => {
 				formulaStyle.value = {}
 				isFormula.value = false
-
-				// 清除公式映射，避免高亮累积
-				const formulaKey = `${cell.r}-${cell.c}`
-				if (sheet.hooks.selectionRangeHook.clearFormulaMap) {
-					sheet.hooks.selectionRangeHook.clearFormulaMap(formulaKey)
-				}
-
 				setRowHeight(cell.r, cell.c)
 			}, 150)
 		}
@@ -196,14 +191,6 @@ export const useEdit = () => {
 			e.stopPropagation()
 			e.preventDefault()
 			sheet.state.formula = false
-
-			// 清除公式映射，避免高亮累积
-			const currentCell = sheet.hooks.selectionRangeHook.getRanged()
-			if (currentCell && currentCell.r !== undefined && currentCell.c !== undefined) {
-				const formulaKey = `${currentCell.r}-${currentCell.c}`
-				sheet.hooks.selectionRangeHook.clearFormulaMap(formulaKey)
-			}
-
 			blur()
 			return
 		}

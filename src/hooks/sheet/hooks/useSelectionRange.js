@@ -859,6 +859,64 @@ export const useSelectionRange = () => {
 		selection = {...ranged.value}
 	}
 
+	// 解析公式中的单元格引用并重建 formulaMap
+	const rebuildFormulaMap = (cellKey, formula) => {
+		try {
+			// 解析公式，提取参数
+			const parseFormula = (str) => {
+				const match = str.match(/^=([A-Za-z]+)\((.*?)\)$/)
+				if (match) {
+					return {
+						func: match[1], // 函数名，如 "SUM"
+						args: match[2], // 参数字符串，如 "A1:B2,C1"
+					}
+				}
+				return null
+			}
+
+			const parsedFormula = parseFormula(formula)
+			if (!parsedFormula || !parsedFormula.args) {
+				return
+			}
+
+			// 清空当前单元格的 formulaMap
+			sheet.config.formulaMap[cellKey] = []
+
+			// 解析参数中的单元格引用
+			const args = parsedFormula.args.split(',').map((arg) => arg.trim())
+
+			for (const arg of args) {
+				// 处理单个单元格引用（如 A1）
+				if (/^[A-Z]+\d+$/.test(arg)) {
+					const range = sheet.hooks.toolsHook.parseCellRange(arg)
+					sheet.config.formulaMap[cellKey].push({
+						r: range.start.row,
+						c: range.start.col,
+						range,
+					})
+				}
+				// 处理范围引用（如 A1:B2）
+				else if (/^[A-Z]+\d+:[A-Z]+\d+$/.test(arg)) {
+					const range = sheet.hooks.toolsHook.parseCellRange(arg)
+					// 展开范围内的所有单元格
+					for (let row = range.start.row; row <= range.end.row; row++) {
+						for (let col = range.start.col; col <= range.end.col; col++) {
+							sheet.config.formulaMap[cellKey].push({
+								r: row,
+								c: col,
+								range: sheet.hooks.toolsHook.parseCellRange(`${row}-${col}`),
+							})
+						}
+					}
+				}
+			}
+
+			console.log('重建 formulaMap:', cellKey, sheet.config.formulaMap[cellKey])
+		} catch (error) {
+			console.error('解析公式失败:', error, formula)
+		}
+	}
+
 	// 设置选区范围
 	const setRange = async (
 		r,
@@ -885,6 +943,14 @@ export const useSelectionRange = () => {
 				rr,
 				cc,
 			}
+		}
+
+		// 检查当前选中的单元格是否有公式，如果有则重建 formulaMap
+		const cellKey = `${ranged.value.r}-${ranged.value.c}`
+		const formula = sheet.config.formulaed[cellKey]
+		if (formula && !sheet.state.formula) {
+			// 只在非公式编辑模式下重建，避免与编辑模式冲突
+			rebuildFormulaMap(cellKey, formula)
 		}
 
 		setTimeout(() => {
@@ -1272,11 +1338,6 @@ export const useSelectionRange = () => {
 
 			// 处理行高调整（与 rangeStyle 保持一致）
 			const rowCache = modifiedRowsCache()
-			console.log('行调整缓存:', {
-				缓存大小: rowCache.map.size,
-				rResize配置: sheet.config.rResize,
-				缓存版本: rowResizeVersion,
-			})
 
 			if (rowCache.map.size > 0) {
 				let modifiedBefore = 0
