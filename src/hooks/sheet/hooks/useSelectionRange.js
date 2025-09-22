@@ -581,15 +581,28 @@ export const useSelectionRange = () => {
 		// 如何在设置公式不更新ranged
 		if (sheet.state.formula) {
 			console.log('当前设置公式点击位置', pos)
-			if (!sheet.config.formulaMap[`${ranged.value.r}-${ranged.value.c}`]) {
-				sheet.config.formulaMap[`${ranged.value.r}-${ranged.value.c}`] = []
+			const formulaKey = `${ranged.value.r}-${ranged.value.c}`
+
+			// 初始化或清空当前单元格的公式映射（避免累积）
+			if (!sheet.config.formulaMap[formulaKey]) {
+				sheet.config.formulaMap[formulaKey] = []
 			}
+
 			const range = sheet.hooks.toolsHook.parseCellRange(`${pos.r}-${pos.c}`)
-			sheet.config.formulaMap[`${ranged.value.r}-${ranged.value.c}`].push({
-				r: pos.r,
-				c: pos.c,
-				range,
-			})
+
+			// 检查是否已经存在相同的引用，避免重复添加
+			const existingRef = sheet.config.formulaMap[formulaKey].find(
+				(item) => item.r === pos.r && item.c === pos.c
+			)
+
+			if (!existingRef) {
+				sheet.config.formulaMap[formulaKey].push({
+					r: pos.r,
+					c: pos.c,
+					range,
+				})
+			}
+
 			sheet.hooks.editHook.setFormulaSelectionCell(range)
 			return
 		}
@@ -1166,10 +1179,183 @@ export const useSelectionRange = () => {
 		}
 	}
 
+	// 颜色映射缓存 - 用于颜色复用
+	const colorCache = new Map()
 	const setFormulaHighlightRange = (range) => {
-		console.log(range)
-		const style = {}
-		return style
+		// range 目标单元格信息
+		if (!range || typeof range.r === 'undefined' || typeof range.c === 'undefined') {
+			return {}
+		}
+
+		// 生成随机颜色
+		const generateRandomColor = () => {
+			const colors = [
+				'#FF6B6B',
+				'#4ECDC4',
+				'#45B7D1',
+				'#96CEB4',
+				'#FFEAA7',
+				'#DDA0DD',
+				'#98D8C8',
+				'#F7DC6F',
+				'#BB8FCE',
+				'#85C1E9',
+			]
+			return colors[Math.floor(Math.random() * colors.length)]
+		}
+
+		// 确定范围边界
+		const r = range.r
+		const c = range.c
+		const rr = range.rr !== undefined ? range.range.end.row : range.r
+		const cc = range.cc !== undefined ? range.range.end.col : range.c
+
+		// 创建范围键用于颜色缓存
+		const rangeKey = `${r}-${c}-${rr}-${cc}`
+
+		// 获取或生成颜色（实现颜色复用）
+		let highlightColor = colorCache.get(rangeKey)
+		if (!highlightColor) {
+			highlightColor = generateRandomColor()
+			colorCache.set(rangeKey, highlightColor)
+		}
+
+		// 修复位置计算 - 使用与 getCellPosition 一致的逻辑
+		// 检查是否处于筛选状态
+		const isFiltered = sheet.config?.filtered && sheet.config.filtered.length > 0
+		const hasFilteredData = sheet.filterCellData && sheet.filterCellData.size > 0
+
+		let totalOffsetTop = 0
+		let totleHeight = 0
+
+		if (isFiltered && hasFilteredData) {
+			// 筛选状态下的行位置计算
+			let filteredStartRow = -1
+			let filteredEndRow = -1
+
+			if (sheet.rowMapping) {
+				sheet.rowMapping.forEach((mapping, filteredIndex) => {
+					const originalIndex = mapping.originalIndex
+					if (originalIndex >= r && originalIndex <= rr) {
+						if (filteredStartRow === -1) {
+							filteredStartRow = filteredIndex
+						}
+						filteredEndRow = filteredIndex
+					}
+				})
+			}
+
+			if (filteredStartRow !== -1) {
+				// 计算筛选视图中的位置
+				for (let i = 0; i < filteredStartRow; i++) {
+					const originalRowIndex = sheet.rowMapping[i]?.originalIndex ?? i
+					totalOffsetTop += sheet.hooks.resizeHook.getRowHeight(originalRowIndex)
+				}
+
+				// 计算高度
+				for (let i = filteredStartRow; i <= filteredEndRow; i++) {
+					const originalRowIndex = sheet.rowMapping[i]?.originalIndex ?? i
+					totleHeight += sheet.hooks.resizeHook.getRowHeight(originalRowIndex)
+				}
+			} else {
+				return {
+					height: '0px',
+					width: '0px',
+					display: 'none',
+					transform: `translateY(0px) translateX(0px)`,
+				}
+			}
+		} else {
+			// 正常状态下的计算（与 rangeStyle 保持一致）
+			totalOffsetTop = r * sheet.props.rowHeight
+			totleHeight = (rr - r + 1) * sheet.props.rowHeight
+
+			// 处理行高调整（与 rangeStyle 保持一致）
+			const rowCache = modifiedRowsCache()
+			console.log('行调整缓存:', {
+				缓存大小: rowCache.map.size,
+				rResize配置: sheet.config.rResize,
+				缓存版本: rowResizeVersion,
+			})
+
+			if (rowCache.map.size > 0) {
+				let modifiedBefore = 0
+				let modifiedInRange = 0
+
+				rowCache.map.forEach((diff, row) => {
+					if (row < r) {
+						modifiedBefore += diff
+					} else if (row >= r && row <= rr) {
+						modifiedInRange += diff
+					}
+				})
+
+				totalOffsetTop += modifiedBefore
+				totleHeight += modifiedInRange
+			}
+		}
+
+		// 列位置计算 - 使用与 rangeStyle 相同的逻辑
+		let totaloffsetLeft = c * sheet.props.colWidth
+		let totleWidth = (cc - c + 1) * sheet.props.colWidth
+
+		// 处理列宽调整（与 rangeStyle 保持一致）
+		const colCache = modifiedColsCache()
+		if (colCache.map.size > 0) {
+			let modifiedColBefore = 0
+			let modifiedColInRange = 0
+
+			colCache.map.forEach((diff, col) => {
+				if (col < c) {
+					modifiedColBefore += diff
+				} else if (col >= c && col <= cc) {
+					modifiedColInRange += diff
+				}
+			})
+
+			totaloffsetLeft += modifiedColBefore
+			totleWidth += modifiedColInRange
+		}
+
+		const zoom = sheet.config.zoom || 1
+
+		// 获取虚拟滚动偏移量 - 这是关键修复！
+		// 高亮元素需要与单元格内容的 transform 偏移保持一致
+		// 直接使用 AirSheet 组件计算好的偏移量
+		const virtualOffsetTop = 0
+		const virtualOffsetLeft = 0
+
+		// 最终位置 = 绝对位置 + 虚拟滚动偏移（与单元格内容保持一致）
+		const finalOffsetTop = (totalOffsetTop + virtualOffsetTop) * zoom
+		const finalOffsetLeft = (totaloffsetLeft + virtualOffsetLeft) * zoom
+
+		// 返回高亮样式（加上虚拟滚动偏移）
+		return {
+			height: `${totleHeight * zoom}px`,
+			width: `${totleWidth * zoom}px`,
+			transform: `translateY(${finalOffsetTop}px) translateX(${finalOffsetLeft}px)`,
+			border: `2px dashed ${highlightColor}`,
+			backgroundColor: `${highlightColor}20`, // 20% 透明度
+			boxShadow: `0 0 8px ${highlightColor}40`, // 40% 透明度的阴影
+			zIndex: 10, // 确保高亮效果在上层
+			pointerEvents: 'none', // 不阻止鼠标事件
+		}
+	}
+
+	// 清除公式高亮颜色缓存
+	const clearFormulaHighlightColors = () => {
+		colorCache.clear()
+	}
+
+	// 清除公式映射
+	const clearFormulaMap = (cellKey = null) => {
+		if (cellKey) {
+			// 清除指定单元格的公式映射
+			delete sheet.config.formulaMap[cellKey]
+		} else {
+			// 清除所有公式映射
+			sheet.config.formulaMap = {}
+		}
 	}
 
 	const refreshSheet = (id) => {
@@ -1233,6 +1419,8 @@ export const useSelectionRange = () => {
 			setSelectionClass,
 			setHighlightRange,
 			setFormulaHighlightRange,
+			clearFormulaHighlightColors,
+			clearFormulaMap,
 			drag: handleDragStart,
 			clear,
 			clearCache,

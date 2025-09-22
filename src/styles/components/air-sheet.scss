@@ -782,6 +782,12 @@
 		background-color: rgba(var(--z-bg-secondary-rgb), 0.7);
 		z-index: 1;
 	}
+
+	.selection-formula-item {
+		position: absolute;
+		pointer-events: none;
+		z-index: 4;
+	}
 }
 
 .btn {

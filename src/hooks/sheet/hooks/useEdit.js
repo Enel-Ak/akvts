@@ -143,7 +143,13 @@ export const useEdit = () => {
 			setTimeout(() => {
 				formulaStyle.value = {}
 				isFormula.value = false
-				// const ranged = sheet.hooks.selectionRangeHook.getRanged()
+
+				// 清除公式映射，避免高亮累积
+				const formulaKey = `${cell.r}-${cell.c}`
+				if (sheet.hooks.selectionRangeHook.clearFormulaMap) {
+					sheet.hooks.selectionRangeHook.clearFormulaMap(formulaKey)
+				}
+
 				setRowHeight(cell.r, cell.c)
 			}, 150)
 		}
@@ -190,6 +196,14 @@ export const useEdit = () => {
 			e.stopPropagation()
 			e.preventDefault()
 			sheet.state.formula = false
+
+			// 清除公式映射，避免高亮累积
+			const currentCell = sheet.hooks.selectionRangeHook.getRanged()
+			if (currentCell && currentCell.r !== undefined && currentCell.c !== undefined) {
+				const formulaKey = `${currentCell.r}-${currentCell.c}`
+				sheet.hooks.selectionRangeHook.clearFormulaMap(formulaKey)
+			}
+
 			blur()
 			return
 		}

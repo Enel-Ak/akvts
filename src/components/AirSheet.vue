@@ -2396,6 +2396,7 @@ defineExpose({
 							]"
 							:key="`${item.r}-${item.c}`"
 							:style="sheet.hooks?.selectionRangeHook?.setFormulaHighlightRange(item)"
+							class="selection-formula-item"
 						></div>
 					</div>
 
