@@ -859,6 +859,19 @@ export const useSelectionRange = () => {
 		selection = {...ranged.value}
 	}
 
+	// 防抖函数 - 用于优化实时同步性能
+	const debounce = (func, wait) => {
+		let timeout
+		return function executedFunction(...args) {
+			const later = () => {
+				clearTimeout(timeout)
+				func(...args)
+			}
+			clearTimeout(timeout)
+			timeout = setTimeout(later, wait)
+		}
+	}
+
 	// 解析公式中的单元格引用并重建 formulaMap
 	const rebuildFormulaMap = (cellKey, formula) => {
 		try {
@@ -876,6 +889,8 @@ export const useSelectionRange = () => {
 
 			const parsedFormula = parseFormula(formula)
 			if (!parsedFormula || !parsedFormula.args) {
+				// 如果解析失败或没有参数，清空formulaMap
+				sheet.config.formulaMap[cellKey] = []
 				return
 			}
 
@@ -914,8 +929,30 @@ export const useSelectionRange = () => {
 			console.log('重建 formulaMap:', cellKey, sheet.config.formulaMap[cellKey])
 		} catch (error) {
 			console.error('解析公式失败:', error, formula)
+			// 解析失败时清空formulaMap
+			sheet.config.formulaMap[cellKey] = []
 		}
 	}
+
+	// 实时同步公式引用 - 监听公式内容变化并同步formulaMap
+	const syncFormulaMapRealtime = debounce((cellKey, currentFormula) => {
+		try {
+			console.log('实时同步 formulaMap:', cellKey, currentFormula)
+
+			// 如果不是公式，清空formulaMap
+			if (!currentFormula || !currentFormula.startsWith('=')) {
+				if (sheet.config.formulaMap[cellKey]) {
+					sheet.config.formulaMap[cellKey] = []
+				}
+				return
+			}
+
+			// 重新解析并构建formulaMap
+			rebuildFormulaMap(cellKey, currentFormula)
+		} catch (error) {
+			console.error('实时同步公式映射失败:', error)
+		}
+	}, 300) // 300ms防抖延迟
 
 	// 设置选区范围
 	const setRange = async (
@@ -1482,6 +1519,7 @@ export const useSelectionRange = () => {
 			setFormulaHighlightRange,
 			clearFormulaHighlightColors,
 			clearFormulaMap,
+			syncFormulaMapRealtime,
 			drag: handleDragStart,
 			clear,
 			clearCache,

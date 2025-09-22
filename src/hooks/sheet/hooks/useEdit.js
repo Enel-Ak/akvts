@@ -16,6 +16,107 @@ export const useEdit = () => {
 	const isFormula = ref(false)
 	const formulaStyle = ref({})
 
+	// 公式编辑撤销功能 - 保存原始状态
+	let originalFormulaState = null
+	let isRestoring = false // 标记是否正在还原状态
+
+	// 保存公式编辑前的原始状态
+	const saveOriginalFormulaState = (cell) => {
+		// 避免重复保存
+		if (originalFormulaState) return
+
+		const cellKey = `${cell.r}-${cell.c}`
+		const cellEl = document.querySelector(`[data-cell="${cellKey}"]`)
+
+		// 获取单元格的实际数据内容
+		const cellData = sheet.celldata.get(cell.r)?.[cell.c] || ''
+
+		originalFormulaState = {
+			cellKey,
+			cell: {r: cell.r, c: cell.c},
+			originalContent: cellEl ? cellEl.innerText : '',
+			originalCellData: cellData, // 保存实际的单元格数据
+			originalFormula: sheet.config.formulaed[cellKey] || null,
+			originalFormulaMap: sheet.config.formulaMap[cellKey]
+				? JSON.parse(JSON.stringify(sheet.config.formulaMap[cellKey]))
+				: null,
+		}
+
+		console.log('保存原始公式状态:', originalFormulaState)
+	}
+
+	// 还原公式编辑前的原始状态
+	const restoreOriginalFormulaState = () => {
+		if (!originalFormulaState) {
+			console.log('没有保存的原始状态，无法还原')
+			return
+		}
+
+		// 设置还原状态标记，防止实时同步干扰
+		isRestoring = true
+
+		const {
+			cellKey,
+			cell,
+			originalContent,
+			originalCellData,
+			originalFormula,
+			originalFormulaMap,
+		} = originalFormulaState
+
+		const cellEl = document.querySelector(`[data-cell="${cellKey}"]`)
+		const {r, c} = cell
+
+		console.log('开始还原原始公式状态:', originalFormulaState)
+
+		// 还原单元格显示内容
+		if (cellEl) {
+			cellEl.innerText = originalContent
+			// 移除编辑状态
+			cellEl.removeAttribute('contenteditable')
+		}
+
+		// 还原单元格数据
+		if (!sheet.celldata.get(r)) {
+			sheet.celldata.set(r, [])
+		}
+		sheet.celldata.get(r)[c] = originalCellData
+
+		// 还原公式配置
+		if (originalFormula) {
+			sheet.config.formulaed[cellKey] = originalFormula
+		} else {
+			delete sheet.config.formulaed[cellKey]
+		}
+
+		// 还原公式映射
+		if (originalFormulaMap && originalFormulaMap.length > 0) {
+			sheet.config.formulaMap[cellKey] = JSON.parse(JSON.stringify(originalFormulaMap))
+		} else {
+			delete sheet.config.formulaMap[cellKey]
+		}
+
+		// 重新计算公式值（如果有公式的话）
+		if (originalFormula) {
+			nextTick(() => {
+				setFormulaValue()
+			})
+		}
+
+		console.log('完成还原原始公式状态')
+		originalFormulaState = null
+
+		// 清除还原状态标记
+		setTimeout(() => {
+			isRestoring = false
+		}, 100)
+	}
+
+	// 清除保存的原始状态（确认编辑时调用）
+	const clearOriginalFormulaState = () => {
+		originalFormulaState = null
+	}
+
 	const enterContainer = (e) => {
 		enter = true
 	}
@@ -94,6 +195,14 @@ export const useEdit = () => {
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
 		const cellEl = document.querySelector(`[data-cell="${cell.r}-${cell.c}"]`)
 
+		// 检查是否是公式单元格，如果是则保存原始状态
+		const cellKey = `${cell.r}-${cell.c}`
+		const hasFormula =
+			sheet.config.formulaed[cellKey] || (cellEl && cellEl.innerText.startsWith('='))
+		if (hasFormula) {
+			saveOriginalFormulaState(cell)
+		}
+
 		const setFormula = () => {
 			isFormula.value = true
 			const cellRect = cellEl.getBoundingClientRect()
@@ -107,6 +216,11 @@ export const useEdit = () => {
 				left: cellRect.left - containerRect.left + scrollLeft + 'px',
 				top: cellRect.bottom - containerRect.top + scrollTop + 'px',
 				width: cellRect.width + 'px',
+			}
+
+			// 进入公式编辑模式时保存原始状态
+			if (!originalFormulaState) {
+				saveOriginalFormulaState(cell)
 			}
 
 			sheet.state.formula = true
@@ -145,6 +259,8 @@ export const useEdit = () => {
 			setTimeout(() => {
 				formulaStyle.value = {}
 				isFormula.value = false
+				// 编辑完成，清除原始状态
+				clearOriginalFormulaState()
 				setRowHeight(cell.r, cell.c)
 			}, 150)
 		}
@@ -159,6 +275,17 @@ export const useEdit = () => {
 			}
 
 			inputValue.value = cellEl.innerText
+
+			// 实时同步公式引用 - 监听公式内容变化并同步formulaMap
+			// 但不要在还原过程中进行同步，避免干扰撤销功能
+			if (
+				sheet.state.formula &&
+				sheet.hooks.selectionRangeHook.syncFormulaMapRealtime &&
+				!isRestoring
+			) {
+				const cellKey = `${cell.r}-${cell.c}`
+				sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(cellKey, cellEl.innerText)
+			}
 		}
 
 		if (!enter || !cell) return
@@ -191,7 +318,23 @@ export const useEdit = () => {
 			e.stopPropagation()
 			e.preventDefault()
 			sheet.state.formula = false
+
+			// 标记是否需要还原（ESC键）
+			const shouldRestore = e.key === 'Escape'
+
+			// 先执行blur，然后根据需要还原或清除状态
 			blur()
+
+			if (shouldRestore) {
+				// ESC键：还原原始状态
+				setTimeout(() => {
+					restoreOriginalFormulaState()
+				}, 10) // 确保在blur完成后执行
+			} else if (e.key === 'Enter') {
+				// Enter键：清除原始状态（确认编辑）
+				clearOriginalFormulaState()
+			}
+
 			return
 		}
 
