@@ -545,7 +545,7 @@ onMounted(() => {
 					<div class="virtual-spacer" :style="{height: offsetBottom + 'px'}"></div>
 				</div>
 				<div v-else class="pd-20">
-					<LoadingTransition text="数据加载中" />
+					<el-empty description="没有数据" :image-size="130"></el-empty>
 				</div>
 			</div>
 
@@ -571,7 +571,8 @@ onMounted(() => {
 	z-index: 10;
 
 	.box {
-		background-color: var(--z-theme);
+		background-color: rgba(var(--z-theme-rgb), 0.5);
+		backdrop-filter: blur(8px);
 		border-radius: 5px;
 
 		position: absolute;

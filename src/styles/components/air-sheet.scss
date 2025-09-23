@@ -104,7 +104,9 @@
 			.merge {
 				// border: 1px solid var(--z-line);
 				border-radius: 3px;
-				background-color: rgba(var(--z-theme-rgb), 1);
+				// background-color: rgba(var(--z-theme-rgb), 1);
+				background-color: rgba(var(--z-theme-rgb), 0.5);
+				backdrop-filter: blur(8px);
 				display: flex;
 				height: 0;
 				left: 0;
@@ -784,6 +786,7 @@
 	}
 
 	.selection-formula-item {
+		border: 2px dashed var(--z-main);
 		position: absolute;
 		pointer-events: none;
 		z-index: 4;

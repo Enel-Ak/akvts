@@ -925,7 +925,6 @@ export const useEdit = () => {
 		return null
 	}
 	const setFormulaSelectionCell = (range) => {
-		console.log('setFormulaSelectionCell', range)
 		const {start, end, format, sqref} = range
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (start.row === r && start.col === c) {

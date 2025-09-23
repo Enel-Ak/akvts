@@ -291,7 +291,8 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .air-sheet-search {
 	border: 1px solid var(--z-line);
-	background-color: var(--z-theme);
+	background-color: rgba(var(--z-theme-rgb), 0.5);
+	backdrop-filter: blur(8px);
 	border-radius: 5px;
 	width: 342px;
 	padding: 10px;

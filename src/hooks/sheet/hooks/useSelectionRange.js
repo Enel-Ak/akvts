@@ -1432,11 +1432,9 @@ export const useSelectionRange = () => {
 			height: `${totleHeight * zoom}px`,
 			width: `${totleWidth * zoom}px`,
 			transform: `translateY(${finalOffsetTop}px) translateX(${finalOffsetLeft}px)`,
-			border: `2px dashed ${highlightColor}`,
+			borderColor: `${highlightColor}`,
 			backgroundColor: `${highlightColor}20`, // 20% 透明度
 			boxShadow: `0 0 8px ${highlightColor}40`, // 40% 透明度的阴影
-			zIndex: 10, // 确保高亮效果在上层
-			pointerEvents: 'none', // 不阻止鼠标事件
 		}
 	}
 
