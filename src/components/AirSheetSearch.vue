@@ -414,6 +414,12 @@ onUnmounted(() => {
 			line-height: 1.5;
 		}
 	}
+
+	.btns {
+		button {
+			font-size: 13px;
+		}
+	}
 }
 
 // 拖拽时的全局样式
