@@ -563,10 +563,10 @@ onMounted(() => {
 </template>
 <style scoped lang="scss">
 .air-sheet-filter {
-	height: calc(100% - 105px);
+	height: calc(100% - 131px);
 	left: 0;
 	position: absolute;
-	top: 105px;
+	top: 131px;
 	width: 100%;
 	z-index: 10;
 
