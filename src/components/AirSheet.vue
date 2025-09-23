@@ -1091,50 +1091,540 @@ const onZoomReset = async () => {
 	}, 200)
 }
 
+// 公式格式检测和验证
+const isFormulaFormat = (input) => {
+	if (!input || typeof input !== 'string') return false
+
+	// 检查是否以 = 开头
+	if (!input.startsWith('=')) return false
+
+	// 基本格式验证：=FUNCTION(args) 格式
+	const basicFormulaRegex = /^=([A-Za-z]+)\((.*?)\)$/
+	return basicFormulaRegex.test(input)
+}
+
+// 公式模式状态管理
+const manageFormulaState = (inputValue, cellKey) => {
+	if (inputValue && inputValue.startsWith('=')) {
+		if (isFormulaFormat(inputValue)) {
+			// 启用公式模式
+			if (!sheet.state.formula) {
+				sheet.state.formula = true
+				console.log('启用公式模式:', cellKey)
+			}
+			return true
+		} else {
+			// 输入以 = 开头但格式不正确，暂时保持公式模式但不处理
+			return false
+		}
+	} else {
+		// 不是公式输入，清除公式模式
+		if (sheet.state.formula) {
+			sheet.state.formula = false
+			// 清除当前单元格的公式映射
+			if (sheet.config.formulaMap[cellKey]) {
+				sheet.config.formulaMap[cellKey] = []
+			}
+			console.log('清除公式模式:', cellKey)
+		}
+		return false
+	}
+}
+
+// 确保状态一致性的检查函数
+const ensureStateConsistency = (cellKey, inputValue) => {
+	try {
+		// 检查 formulaed 和 formulaMap 的一致性
+		const hasFormulaed = !!sheet.config.formulaed[cellKey]
+		const hasFormulaMap = !!(
+			sheet.config.formulaMap[cellKey] && sheet.config.formulaMap[cellKey].length > 0
+		)
+		const isFormulaInput = inputValue && inputValue.startsWith('=')
+
+		// 如果输入是公式但没有 formulaed 配置，或者相反，需要同步
+		if (isFormulaInput && !hasFormulaed && isFormulaFormat(inputValue)) {
+			sheet.config.formulaed[cellKey] = inputValue
+		} else if (!isFormulaInput && hasFormulaed) {
+			delete sheet.config.formulaed[cellKey]
+		}
+
+		// 确保 formulaMap 与公式状态一致
+		if (!isFormulaInput && hasFormulaMap) {
+			sheet.config.formulaMap[cellKey] = []
+		}
+
+		// 确保 sheet.state.formula 与实际公式状态一致
+		const hasAnyFormula = Object.keys(sheet.config.formulaed).length > 0
+		if (!hasAnyFormula && sheet.state.formula) {
+			sheet.state.formula = false
+		}
+
+		return true
+	} catch (error) {
+		console.error('状态一致性检查失败:', error)
+		return false
+	}
+}
+
+// 验证公式中的单元格引用是否合法
+const validateCellReferences = (formula) => {
+	try {
+		// 基本安全检查：长度限制
+		if (!formula || formula.length > 1000) {
+			console.warn('公式长度超出限制')
+			return false
+		}
+
+		// 解析公式，提取参数
+		const match = formula.match(/^=([A-Za-z]+)\((.*?)\)$/)
+		if (!match) return false
+
+		const [, func, args] = match
+
+		// 检查函数名长度和字符
+		if (func.length > 20 || !/^[A-Za-z]+$/.test(func)) {
+			console.warn('函数名格式不正确')
+			return false
+		}
+
+		// 检查函数名是否支持
+		const supportedFunctions = ['SUM', 'AVERAGE', 'MAX', 'MIN']
+		if (!supportedFunctions.includes(func.toUpperCase())) {
+			console.warn('不支持的函数:', func)
+			return false
+		}
+
+		// 如果没有参数，返回true（允许空参数）
+		if (!args.trim()) return true
+
+		// 参数长度检查
+		if (args.length > 500) {
+			console.warn('参数长度超出限制')
+			return false
+		}
+
+		// 解析参数中的单元格引用
+		const argsList = args.split(',').map((arg) => arg.trim())
+
+		// 参数数量限制
+		if (argsList.length > 50) {
+			console.warn('参数数量超出限制')
+			return false
+		}
+
+		for (const arg of argsList) {
+			// 空参数检查
+			if (!arg) continue
+
+			// 参数长度检查
+			if (arg.length > 20) {
+				console.warn('单个参数长度超出限制:', arg)
+				return false
+			}
+
+			// 检查单个单元格引用（如 A1）
+			if (/^[A-Z]+\d+$/.test(arg)) {
+				// 验证列和行的合理范围
+				const colMatch = arg.match(/^([A-Z]+)/)
+				const rowMatch = arg.match(/(\d+)$/)
+				if (colMatch && rowMatch) {
+					const colStr = colMatch[1]
+					const rowNum = parseInt(rowMatch[1])
+					// 限制列数（最多到ZZ列，即701列）和行数（最多100万行）
+					if (colStr.length > 2 || rowNum > 1000000 || rowNum < 1) {
+						console.warn('单元格引用超出范围:', arg)
+						return false
+					}
+				}
+				continue
+			}
+
+			// 检查范围引用（如 A1:B2）
+			if (/^[A-Z]+\d+:[A-Z]+\d+$/.test(arg)) {
+				const [start, end] = arg.split(':')
+				// 递归验证范围的起始和结束单元格
+				if (
+					!validateCellReferences(`=SUM(${start})`) ||
+					!validateCellReferences(`=SUM(${end})`)
+				) {
+					return false
+				}
+				continue
+			}
+
+			// 检查数字（包括小数和负数）
+			if (/^-?\d+(\.\d+)?$/.test(arg)) {
+				const num = parseFloat(arg)
+				// 数字范围检查
+				if (!isFinite(num) || Math.abs(num) > 1e15) {
+					console.warn('数字超出范围:', arg)
+					return false
+				}
+				continue
+			}
+
+			// 如果都不匹配，说明有无效的引用
+			console.warn('无效的参数格式:', arg)
+			return false
+		}
+
+		return true
+	} catch (error) {
+		console.error('公式验证失败:', error)
+		return false
+	}
+}
+
 // 文本框输入
 const inputCache = new Map()
 const inputCacheCell = []
 const onInput = (e) => {
-	const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
-	for (let i = r; i <= rr; i++) {
-		for (let j = c; j <= cc; j++) {
-			if (!inputCache.has(`${i}-${j}`)) {
-				if (!sheet.celldata.get(i)) {
-					sheet.celldata.set(i, [])
-				}
-				const v = sheet.celldata.get(i)[j]
+	try {
+		// 边界情况检查
+		if (!e || !e.target) {
+			console.warn('onInput: 无效的事件对象')
+			return
+		}
 
-				inputCache.set(`${i}-${j}`, v)
-				inputCacheCell.push({
-					c: j,
-					r: i,
-					v,
-				})
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		if (!ranged || typeof ranged.r !== 'number' || typeof ranged.c !== 'number') {
+			console.warn('onInput: 无效的选区信息')
+			return
+		}
+
+		const {r, c, rr, cc} = ranged
+		const inputValue = e.target.value
+
+		// 输入长度限制
+		if (inputValue && inputValue.length > 10000) {
+			console.warn('输入内容过长，已截断')
+			e.target.value = inputValue.substring(0, 10000)
+			return
+		}
+
+		for (let i = r; i <= rr; i++) {
+			for (let j = c; j <= cc; j++) {
+				if (!inputCache.has(`${i}-${j}`)) {
+					if (!sheet.celldata.get(i)) {
+						sheet.celldata.set(i, [])
+					}
+					const v = sheet.celldata.get(i)[j]
+
+					inputCache.set(`${i}-${j}`, v)
+					inputCacheCell.push({
+						c: j,
+						r: i,
+						v,
+					})
+				}
+
+				// 安全地设置单元格值
+				try {
+					sheet.hooks.editHook.setCellValue(i, j, inputValue)
+				} catch (error) {
+					console.error('设置单元格值失败:', error, {r: i, c: j, value: inputValue})
+				}
 			}
-			sheet.hooks.editHook.setCellValue(i, j, e.target.value)
+		}
+
+		// 管理公式模式状态
+		const cellKey = `${r}-${c}`
+		let isValidFormula = false
+
+		try {
+			// 如果开始输入公式，保存原始状态
+			if (inputValue && inputValue.startsWith('=') && !sheet.state.formula) {
+				if (sheet.hooks.editHook.saveOriginalFormulaState) {
+					sheet.hooks.editHook.saveOriginalFormulaState({r, c})
+				}
+			}
+
+			isValidFormula = manageFormulaState(inputValue, cellKey)
+		} catch (error) {
+			console.error('公式状态管理失败:', error)
+			// 发生错误时清除公式状态
+			sheet.state.formula = false
+		}
+
+		// 如果是有效的公式，进行实时同步
+		if (isValidFormula && sheet.hooks.selectionRangeHook.syncFormulaMapRealtime) {
+			try {
+				sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(cellKey, inputValue)
+			} catch (error) {
+				console.error('实时同步公式映射失败:', error)
+			}
+		}
+
+		// 防抖处理公式计算和行高调整
+		useDebounce(
+			() => {
+				try {
+					// 只有在公式模式下或有公式配置时才重新计算公式
+					if (sheet.state.formula || Object.keys(sheet.config.formulaed).length > 0) {
+						sheet.hooks.editHook.setFormulaValue()
+					}
+					sheet.hooks.editHook.setRowHeight(null, null)
+				} catch (error) {
+					console.error('防抖处理失败:', error)
+				}
+			},
+			250,
+			'onInputTextarea'
+		)()
+	} catch (error) {
+		console.error('onInput 处理失败:', error)
+		// 发生严重错误时，尝试恢复到安全状态
+		try {
+			sheet.state.formula = false
+			inputCache.clear()
+			inputCacheCell.length = 0
+		} catch (recoveryError) {
+			console.error('错误恢复失败:', recoveryError)
 		}
 	}
-	useDebounce(
-		() => {
-			sheet.hooks.editHook.setFormulaValue()
-			sheet.hooks.editHook.setRowHeight(null, null)
-		},
-		250,
-		'onInputTextarea'
-	)()
+}
+
+// textarea 键盘事件处理
+const onTextareaKeydown = (e) => {
+	try {
+		// 方向键和其他编辑相关的键应该阻止冒泡，避免触发单元格切换
+		const editingKeys = [
+			'ArrowUp',
+			'ArrowDown',
+			'ArrowLeft',
+			'ArrowRight',
+			'Home',
+			'End',
+			'PageUp',
+			'PageDown',
+		]
+		if (editingKeys.includes(e.key)) {
+			e.stopPropagation() // 阻止冒泡，但允许默认行为（移动光标）
+		}
+
+		// 公式模式下的特殊键处理
+		if (sheet.state.formula && (e.key === 'Enter' || e.key === 'Escape')) {
+			e.preventDefault()
+			e.stopPropagation()
+
+			const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+			const cellKey = `${r}-${c}`
+			const inputValue = sheet.hooks.editHook.inputValue
+
+			console.log('公式模式键盘事件:', e.key, inputValue)
+
+			if (e.key === 'Escape') {
+				// ESC键：还原公式到原始状态
+				try {
+					if (sheet.hooks.editHook.restoreOriginalFormulaState) {
+						sheet.hooks.editHook.restoreOriginalFormulaState()
+					} else {
+						// 如果没有还原函数，手动清除公式状态
+						sheet.state.formula = false
+						if (sheet.config.formulaed[cellKey]) {
+							delete sheet.config.formulaed[cellKey]
+						}
+						if (sheet.config.formulaMap[cellKey]) {
+							sheet.config.formulaMap[cellKey] = []
+						}
+						// 清空输入框
+						sheet.hooks.editHook.inputValue = ''
+					}
+					console.log('ESC键：已还原公式状态')
+				} catch (error) {
+					console.error('还原公式状态失败:', error)
+					// 发生错误时至少清除公式模式
+					sheet.state.formula = false
+				}
+			} else if (e.key === 'Enter') {
+				// Enter键：确认公式并退出公式模式
+				try {
+					if (inputValue && inputValue.startsWith('=')) {
+						if (isFormulaFormat(inputValue) && validateCellReferences(inputValue)) {
+							// 保存公式
+							sheet.config.formulaed[cellKey] = inputValue
+
+							// 确保 formulaMap 已正确构建
+							if (sheet.hooks.selectionRangeHook.syncFormulaMapRealtime) {
+								sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(
+									cellKey,
+									inputValue
+								)
+							}
+
+							// 清除原始状态（确认编辑）
+							if (sheet.hooks.editHook.clearOriginalFormulaState) {
+								sheet.hooks.editHook.clearOriginalFormulaState()
+							}
+
+							console.log('Enter键：已确认公式', inputValue)
+						} else {
+							console.warn('Enter键：公式格式不正确，无法确认', inputValue)
+						}
+					}
+
+					// 退出公式模式
+					sheet.state.formula = false
+				} catch (error) {
+					console.error('确认公式失败:', error)
+					// 发生错误时至少清除公式模式
+					sheet.state.formula = false
+				}
+			}
+
+			// 让 textarea 失去焦点，触发 blur 事件完成编辑
+			const textarea = e.target
+			if (textarea && typeof textarea.blur === 'function') {
+				setTimeout(() => {
+					textarea.blur()
+				}, 10)
+			}
+		}
+		// 其他键盘事件允许正常处理
+	} catch (error) {
+		console.error('textarea 键盘事件处理失败:', error)
+		// 发生严重错误时清除公式状态
+		sheet.state.formula = false
+	}
 }
 
 const onInputBlur = () => {
-	sheet.hooks.historyHook.save(inputCacheCell.filter(Boolean))
-	inputCache.clear()
-	inputCacheCell.length = 0
+	try {
+		// 边界情况检查
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		if (!ranged || typeof ranged.r !== 'number' || typeof ranged.c !== 'number') {
+			console.warn('onInputBlur: 无效的选区信息')
+			return
+		}
+
+		const {r, c} = ranged
+		const inputValue = sheet.hooks.editHook.inputValue
+
+		// 输入值安全检查
+		if (inputValue && typeof inputValue !== 'string') {
+			console.warn('onInputBlur: 输入值类型不正确')
+			return
+		}
+
+		const cellKey = `${r}-${c}`
+
+		// 在失去焦点时最终确认公式模式
+		if (inputValue && inputValue.startsWith('=')) {
+			try {
+				if (isFormulaFormat(inputValue) && validateCellReferences(inputValue)) {
+					// 设置公式模式
+					sheet.state.formula = true
+
+					// 保存公式到 formulaed 配置
+					sheet.config.formulaed[cellKey] = inputValue
+
+					// 确保 formulaMap 已正确构建
+					if (sheet.hooks.selectionRangeHook.syncFormulaMapRealtime) {
+						try {
+							sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(
+								cellKey,
+								inputValue
+							)
+						} catch (syncError) {
+							console.error('同步公式映射失败:', syncError)
+						}
+					}
+
+					// 同步 inputValue 到 editHook，保持与现有逻辑一致
+					sheet.hooks.editHook.inputValue = inputValue
+				} else {
+					// 公式格式不正确，清除公式状态
+					sheet.state.formula = false
+					// 清除相关的公式配置
+					try {
+						if (sheet.config.formulaed[cellKey]) {
+							delete sheet.config.formulaed[cellKey]
+						}
+						if (sheet.config.formulaMap[cellKey]) {
+							sheet.config.formulaMap[cellKey] = []
+						}
+					} catch (cleanupError) {
+						console.error('清理公式配置失败:', cleanupError)
+					}
+					console.warn('公式格式不正确:', inputValue)
+				}
+			} catch (formulaError) {
+				console.error('公式处理失败:', formulaError)
+				// 发生错误时安全地清除公式状态
+				sheet.state.formula = false
+			}
+		} else {
+			// 不是公式，确保清除公式状态和相关配置
+			try {
+				sheet.state.formula = false
+				if (sheet.config.formulaed[cellKey]) {
+					delete sheet.config.formulaed[cellKey]
+				}
+				if (sheet.config.formulaMap[cellKey]) {
+					sheet.config.formulaMap[cellKey] = []
+				}
+			} catch (cleanupError) {
+				console.error('清理非公式状态失败:', cleanupError)
+			}
+		}
+
+		// 确保状态一致性
+		try {
+			ensureStateConsistency(cellKey, inputValue)
+		} catch (consistencyError) {
+			console.error('状态一致性检查失败:', consistencyError)
+		}
+
+		// 确保真正退出编辑模式和公式模式
+		try {
+			// 清除公式高亮
+			if (sheet.hooks.selectionRangeHook.setFormulaHighlightRange) {
+				sheet.hooks.selectionRangeHook.setFormulaHighlightRange([])
+			}
+
+			// 确保公式模式已关闭
+			sheet.state.formula = false
+
+			// 设置编辑状态为 false
+			if (sheet.hooks.editHook.editing) {
+				sheet.hooks.editHook.editing.value = false
+			}
+		} catch (exitError) {
+			console.error('退出编辑模式失败:', exitError)
+		}
+
+		// 原有的历史记录保存逻辑
+		try {
+			sheet.hooks.historyHook.save(inputCacheCell.filter(Boolean))
+		} catch (historyError) {
+			console.error('保存历史记录失败:', historyError)
+		}
+
+		// 清理缓存
+		try {
+			inputCache.clear()
+			inputCacheCell.length = 0
+		} catch (cacheError) {
+			console.error('清理缓存失败:', cacheError)
+		}
+	} catch (error) {
+		console.error('onInputBlur 处理失败:', error)
+		// 发生严重错误时，尝试恢复到安全状态
+		try {
+			sheet.state.formula = false
+			inputCache.clear()
+			inputCacheCell.length = 0
+		} catch (recoveryError) {
+			console.error('错误恢复失败:', recoveryError)
+		}
+	}
 }
 
 // 拖拽到单元格时
 let dropCell = null
 const onCellcellDragOver = (event) => {
 	event.preventDefault()
-	dropCell = useSelectionRangeHook.getRangeByMouse(event)
+	dropCell = sheet.hooks.selectionRangeHook.getRangeByMouse(event)
 	emits('cellDragOver', dropCell)
 }
 
@@ -2134,7 +2624,7 @@ defineExpose({
 					:disabled="setActiveTool('lock').lock"
 					@input="onInput"
 					@blur="onInputBlur"
-					@keydown.stop
+					@keydown="onTextareaKeydown"
 					@keyup.stop
 					@paste.stop
 				/>

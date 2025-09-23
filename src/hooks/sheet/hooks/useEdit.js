@@ -940,6 +940,13 @@ export const useEdit = () => {
 					}
 					const sqref = range.sqref.split(':')
 					const formula = parseFormula(formulaSelectionCell.innerText)
+
+					// 检查 formula 是否为 null，避免报错
+					if (!formula) {
+						console.warn('无法解析公式:', formulaSelectionCell.innerText)
+						continue
+					}
+
 					if (!formula.args) {
 						formula.args = sqref[0]
 					} else {
