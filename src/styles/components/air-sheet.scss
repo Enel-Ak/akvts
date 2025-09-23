@@ -850,6 +850,7 @@
 .mask {
 	align-items: center;
 	background-color: rgba(var(--z-theme-rgb), 0.8);
+	backdrop-filter: blur(3px);
 	display: flex;
 	justify-content: center;
 	position: absolute;
