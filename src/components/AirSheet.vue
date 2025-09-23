@@ -1384,6 +1384,57 @@ const onInput = (e) => {
 	}
 }
 
+// textarea 获取焦点事件处理
+const onTextareaFocus = (e) => {
+	try {
+		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+		const cellKey = `${r}-${c}`
+		const inputValue = sheet.hooks.editHook.inputValue
+
+		console.log('textarea 获取焦点，当前内容:', inputValue)
+
+		// 检查当前内容是否为公式，或者当前单元格是否已配置为公式
+		const hasFormulaConfig = !!sheet.config.formulaed[cellKey]
+		const isFormulaInput = inputValue && inputValue.startsWith('=')
+
+		if (isFormulaInput || hasFormulaConfig) {
+			// 保存原始状态（如果还没有保存的话）
+			if (sheet.hooks.editHook.saveOriginalFormulaState) {
+				sheet.hooks.editHook.saveOriginalFormulaState({r, c})
+			}
+
+			// 如果输入内容是公式格式，或者单元格已配置为公式
+			if ((isFormulaInput && isFormulaFormat(inputValue)) || hasFormulaConfig) {
+				// 开启公式模式
+				sheet.state.formula = true
+
+				// 使用输入内容或已配置的公式
+				const formulaToUse = isFormulaInput ? inputValue : sheet.config.formulaed[cellKey]
+				console.log('检测到公式内容，已开启公式模式:', formulaToUse)
+
+				// 重建 formulaMap 以显示高亮
+				if (sheet.hooks.selectionRangeHook.syncFormulaMapRealtime && formulaToUse) {
+					try {
+						sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(cellKey, formulaToUse)
+					} catch (error) {
+						console.error('重建公式映射失败:', error)
+					}
+				}
+			} else if (isFormulaInput) {
+				console.log('检测到不完整的公式，暂不开启公式模式:', inputValue)
+			}
+		} else {
+			// 不是公式内容，确保公式模式关闭
+			if (sheet.state.formula) {
+				sheet.state.formula = false
+				console.log('非公式内容，已关闭公式模式')
+			}
+		}
+	} catch (error) {
+		console.error('textarea focus 事件处理失败:', error)
+	}
+}
+
 // textarea 键盘事件处理
 const onTextareaKeydown = (e) => {
 	try {
@@ -2624,6 +2675,7 @@ defineExpose({
 					:disabled="setActiveTool('lock').lock"
 					@input="onInput"
 					@blur="onInputBlur"
+					@focus="onTextareaFocus"
 					@keydown="onTextareaKeydown"
 					@keyup.stop
 					@paste.stop
