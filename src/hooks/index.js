@@ -6,6 +6,7 @@ import useSignalr from './useSignalr'
 import useDebounce from './useDebounce'
 import useEval from './useEval'
 import useSleep from './useSleep'
+import useColor from './useColor'
 
 export {
 	useLayout,
@@ -16,4 +17,5 @@ export {
 	useDebounce,
 	useEval,
 	useSleep,
+	useColor,
 }

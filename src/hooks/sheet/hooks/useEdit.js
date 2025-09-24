@@ -2,6 +2,7 @@ import {ref, reactive, nextTick, watch, onMounted} from 'vue'
 import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
 import {useAirSheetStore} from '../store/useAirSheet'
+import {useDebounce} from '@/hooks'
 
 export const useEdit = () => {
 	const sheetStore = useAirSheetStore()
@@ -71,6 +72,7 @@ export const useEdit = () => {
 
 		// 还原单元格显示内容
 		if (cellEl) {
+			inputValue.value = originalFormula
 			cellEl.innerText = originalContent
 			// 移除编辑状态
 			cellEl.removeAttribute('contenteditable')
@@ -393,6 +395,18 @@ export const useEdit = () => {
 
 		cellEl.addEventListener('input', input)
 		cellEl.addEventListener('blur', blur)
+	}
+
+	const inputCell = (e, cell) => {
+		const value = cell.v || e.target.innerText
+		useDebounce(
+			() => {
+				console.log('inputCell', value)
+				sheet.emits?.('asyncInputCell', value, cell)
+			},
+			150,
+			'asyncInputCell'
+		)()
 	}
 
 	// 单元格格式
@@ -865,6 +879,10 @@ export const useEdit = () => {
 			c = Math.min(range.c, range.cc)
 		}
 
+		if (!sheet.celldata.get(r)) {
+			sheet.celldata.set(r, [])
+		}
+
 		if (sheet.celldata.get(r)) {
 			if (c > sheet.config.colCount) {
 				sheet.config.colCount = c + 1
@@ -1018,6 +1036,8 @@ export const useEdit = () => {
 			setRowHeight,
 			getCellValue,
 			setFormulaSelectionCell,
+
+			inputCell,
 
 			refreshSheet,
 		}

@@ -17,9 +17,8 @@ import {
 import {ElMessage} from 'element-plus'
 import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
-import {useSleep} from '@/hooks/useSleep'
-import {useDebounce} from '@/hooks/useDebounce'
 import {useMapToBuffer, useBufferToMap} from '@/hooks/sheet/hooks/useBuffer'
+import {useColor, useSleep, useDebounce} from '@/hooks'
 import AirSheetFilter from './AirSheetFilter.vue'
 import AirSheetSearch from './AirSheetSearch.vue'
 
@@ -31,6 +30,7 @@ const stateType = {
 
 const emits = defineEmits([
 	'update:modelValue',
+	'update:linked',
 	'cellClick',
 	'cellBlur',
 	'cellDragOver',
@@ -39,7 +39,10 @@ const emits = defineEmits([
 	'addSheet',
 
 	// 协同相关
-	'synergySelecteCell',
+	'asyncInputCell',
+	'asyncSelecteCell',
+	'asyncJoinSheet',
+	'asyncLeaveSheet',
 ])
 
 // 核心配置参数
@@ -1950,7 +1953,7 @@ const onJumpToCell = async (row, col) => {
 const onAddSheet = () => {
 	const key = `air-sheet-${Math.random().toString(16).slice(2)}`
 	sheet.hooks.toolsHook.addSheet(key, props, emits)
-	emits('addSheet')
+	emits('addSheet', sheet)
 	setTimeout(() => {
 		onChangeSheet(sheetStore.getLastSheet?.id)
 	}, 16)
@@ -1962,6 +1965,8 @@ const onChangeSheet = async (id) => {
 		hook?.refreshSheet?.(id)
 	})
 
+	emits('asyncLeaveSheet', sheet.original.sheetId)
+
 	for (const key in sheet) {
 		delete sheet[key]
 	}
@@ -1969,6 +1974,8 @@ const onChangeSheet = async (id) => {
 	Object.assign(sheet, sheetStore.getSheet(id))
 
 	sheet.state.changeSheet = true
+
+	emits('asyncJoinSheet', sheet.original.sheetId)
 }
 
 const onDbClickSheet = (e, id) => {
@@ -2032,7 +2039,11 @@ watch(
 		}
 
 		sheetStore?.initSynergySheets(newVal, containerId, props).then(() => {
-			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+			if (props.modelValue?.config.synergy) {
+				sheet.hooks.synergyHook.connection(props.api, props.token, () => {
+					sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+				})
+			}
 		})
 	},
 	{deep: true}
@@ -2044,9 +2055,8 @@ onBeforeMount(() => {})
 onMounted(() => {
 	sheetStore.init(sheetId.value, containerId, props, emits, () => {
 		init()
-		sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
-		if (props.modelValue?.config.synergy) {
-			sheet.hooks.synergyHook.connection(props.api, props.token)
+		if (!props.modelValue?.config.synergy) {
+			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
 		}
 	})
 })
@@ -2096,8 +2106,11 @@ defineExpose({
 	airToLucky: async () => await sheet.hooks?.toolsHook?.airToLucky(sheet),
 
 	// 协同相关
-	joinSheet: (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
-	clickCell: (...args) => sheet.hooks.synergyHook.clickCell(...args), // 点击单元格
+	asyncJoinSheet: (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
+	asyncLeaveSheet: (...args) => sheet.hooks.synergyHook.leaveSheet(...args), // 离开sheet
+	asyncCreateSheet: (...args) => sheet.hooks.synergyHook.createSheet(...args), // 创建sheet
+	asyncClickCell: (...args) => sheet.hooks.synergyHook.clickCell(...args), // 点击单元格
+	asyncInputCell: (...args) => sheet.hooks.synergyHook.changeCell(...args), // 单元格输入
 })
 </script>
 <template>
@@ -2112,7 +2125,22 @@ defineExpose({
 	>
 		<template v-if="sheet?.state?.completed">
 			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
-				<span class="flx"></span>
+				<!-- 在线用户 -->
+				<div v-if="sheet.config.synergy" class="flx df aic">
+					<Icons
+						v-if="sheet.config.online.length"
+						name="OnlineUser"
+						color="var(--z-main)"
+						class="mg-right-15"
+					/>
+					<span
+						class="online-user"
+						v-for="user of sheet.config.online"
+						:title="user.name"
+					>
+						{{ user.name.slice(0, 1) }}
+					</span>
+				</div>
 				<span
 					v-for="item of tollbarTabList"
 					:key="item.name"
@@ -2904,6 +2932,7 @@ defineExpose({
 												sheet.hooks.editHook.startEdit($event, cell)
 											"
 											@blur="onCellBlur($event, cell)"
+											@input="sheet.hooks.editHook.inputCell($event, cell)"
 										></div>
 									</div>
 									<div
@@ -2923,6 +2952,7 @@ defineExpose({
 											sheet.hooks.editHook.startEdit($event, cell)
 										"
 										@blur="onCellBlur($event, cell)"
+										@input="sheet.hooks.editHook.inputCell($event, cell)"
 										class="cell"
 									></div>
 								</template>
@@ -3194,6 +3224,12 @@ defineExpose({
 
 			<!-- sheet栏 -->
 			<div class="sheetbar">
+				<Icons
+					v-if="!props.synergyData.length && sheet.config.synergy"
+					name="Loading2"
+					size="14px"
+					class="loading-animation mg-right-10"
+				/>
 				<template v-for="(sheetItem, idx) of sheets">
 					<span
 						class="sheet-item"

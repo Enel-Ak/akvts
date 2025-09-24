@@ -136,6 +136,8 @@ const Icons = {
 	ClearFilter:
 		'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m14.089 11.264l-.714-.714L16.95 6H8.825l-1-1h10.156q.317 0 .467.28t-.052.55zM13 14.42v3.81q0 .328-.22.549t-.55.22h-.46q-.33 0-.55-.22t-.22-.55V12.42l-7.9-7.9q-.14-.14-.15-.341t.15-.366q.165-.166.357-.166t.356.166l16.38 16.378q.145.147.152.345t-.158.363q-.166.16-.354.163t-.354-.163zm.375-3.871"/></svg>',
 	Jump: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M11.423 12.577v-3h1v2h2v1zm6.577 0v-1h2v-2h1v3zM11.423 6V3h3v1h-2v2zM20 6V4h-2V3h3v3zM3.708 21L3 20.292l6.715-6.715H4v-1h7.423V20h-1v-5.715z"/></svg>',
+	OnlineUser:
+		'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M3 21v-5h1v4h4v1zM3 8V3h5v1H4v4zm13 13v-1h4v-4h1v5zm4-13V4h-4V3h5v5zm-8.002 3.885q-1.042 0-1.77-.728T9.5 9.387q0-1.022.728-1.762t1.77-.74q1.021 0 1.762.74q.74.74.74 1.762q0 1.042-.74 1.77t-1.762.728M6.5 17.115v-1.4q0-.402.206-.756t.557-.565q1.074-.636 2.278-.958q1.205-.32 2.459-.32t2.459.32t2.278.958q.352.21.558.565t.205.757v1.4z"/></svg>',
 }
 
 export default Icons

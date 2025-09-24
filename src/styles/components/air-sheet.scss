@@ -51,6 +51,29 @@
 			}
 		}
 	}
+
+	.online-user {
+		border-radius: 100%;
+		color: var(--z-nav-font-color);
+		font-size: 12px;
+		line-height: 1;
+		margin-left: -10px;
+		padding: 5px;
+		transform: scale(0.9);
+
+		@function random-color($i, $total) {
+			$hue: (360 / $total) * $i; // 色相均分
+			$saturation: 70%; // 饱和度固定在 70%
+			$lightness: 40%; // 亮度固定在 40%，保证不浅
+			@return hsl($hue, $saturation, $lightness);
+		}
+
+		@for $i from 1 through 10 {
+			&:nth-child(#{$i}) {
+				background-color: random-color($i, 10);
+			}
+		}
+	}
 }
 
 .toolbar {
@@ -318,7 +341,13 @@
 	border-bottom: 1px solid var(--z-line);
 	display: flex;
 	padding-left: 36px;
+	position: relative;
 	user-select: none;
+
+	.loading-animation {
+		position: absolute;
+		left: 11px;
+	}
 
 	.sheet-item {
 		align-items: center;

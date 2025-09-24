@@ -314,7 +314,7 @@ export const useSelectionRange = () => {
 			// 尝试生成不重复且不相似的颜色，最多尝试50次
 			let newColor
 			let attempts = 0
-			const maxAttempts = 50
+			const maxAttempts = 10
 
 			do {
 				newColor = generateWarmColor()
@@ -354,7 +354,6 @@ export const useSelectionRange = () => {
 			width: (totleWidth + modifiedColInRange + 1) * sheet.config.zoom + 'px',
 			'--z-highlight-color': color,
 		})
-
 		return highlightRanges.get(id)
 	}
 
@@ -630,10 +629,10 @@ export const useSelectionRange = () => {
 		if (sheet.config.synergy) {
 			useDebounce(
 				() => {
-					sheet.emits?.('synergySelecteCell', ranged.value)
+					sheet.emits?.('asyncSelecteCell', ranged.value)
 				},
 				300,
-				'synergySelecteCell'
+				'asyncSelecteCell'
 			)()
 		}
 	}
@@ -662,10 +661,10 @@ export const useSelectionRange = () => {
 
 		useDebounce(
 			() => {
-				sheet.emits?.('synergySelecteCell', ranged.value)
+				sheet.emits?.('asyncSelecteCell', ranged.value)
 			},
 			32,
-			'synergySelecteCell'
+			'asyncSelecteCell'
 		)()
 	}
 

@@ -1,7 +1,9 @@
 <script setup name="airsheet">
-import {onActivated, ref, onMounted} from 'vue'
+import {onActivated, ref, onMounted, watch} from 'vue'
+import {useRoute} from 'vue-router'
 import axios from 'axios'
 
+const route = useRoute()
 const sheetRef = ref()
 const config = ref({
 	config: {
@@ -1166,32 +1168,81 @@ onActivated(() => {
 })
 
 const onClick = () => {}
-const api = 'http://10.110.10.131:9527/signalr-hubs/onlinetable'
-const token =
-	'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg1OTY0ODYsImV4cCI6MTc1ODc2ODQ4NiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1ODU5NjQ4MCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwieWt6LWlkIjpbIjM1NDA5MyIsIjgzNTM5MyJdLCJ5a3otZW1wbG95ZWUtY29kZSI6IkdFXzE2MzUwODgzMDgwNzE4Mjk1MDQiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJyb2xlIjpbIuWIhueuoemihuWvvCIsIuWPsOi0puS4iuS4i-e6vyIsIuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCLlpKflsY_mn6XnnIsiLCLluILljLrpqb7pqbboiLEiLCLmlbDmja7pm4bnrqHnkIYiLCLmlbDmja7pooblr7wiXSwicGhvbmVfbnVtYmVyIjoiMTY2MjM2NjM2NzgiLCJwaG9uZV9udW1iZXJfdmVyaWZpZWQiOiJGYWxzZSIsImVtYWlsX3ZlcmlmaWVkIjoiRmFsc2UiLCJuYW1lIjoieWNzdGpzamdsZyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjEtMWNkMi1jMmNhLWEyZWYwMmZkYjI2YiIsImlhdCI6MTc1ODU5NjQ4Niwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.piaPLyDFp6ghiLFDZZncynk14AXDdWbc9igVRvMNH3hH44jdrp0GShdjNoQHz1r-7aJSIqxEXHOwxpZPED4910-fNgotTslKTEYVVvoysk-RrVcJ52BRuD634zLaW0H8id5d4ExLiv7Mmj0aD_utZejcW2Mq4rOznIC1w4HVN2Zo9qHBErvZw4Pccdq8aTLTwHTpaIRKniYDQJ1bR_lfwhwI7MjrgI8668pKWpzEkTrX4gDvtgTQJptL3ssEP8dtyfKsTPABUMnBiqcsviEYS3a7OnHpS2rLsOw-I5iKoxTivislzp6erj1bLIG9d2JeoeEmu8HOu1fj7kJqTmiqcA'
+const api = 'http://10.110.10.125:9527/signalr-hubs/onlinetable'
+const token = route.query.abc
+	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg2OTU3MDUsImV4cCI6MTc1ODg2NzcwNSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1ODY5NTcwMiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwieWt6LWlkIjpbIjM1NDA5MyIsIjgzNTM5MyJdLCJ5a3otZW1wbG95ZWUtY29kZSI6IkdFXzE2MzUwODgzMDgwNzE4Mjk1MDQiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJyb2xlIjpbIuWIhueuoemihuWvvCIsIuWPsOi0puS4iuS4i-e6vyIsIuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCLlpKflsY_mn6XnnIsiLCLluILljLrpqb7pqbboiLEiLCLmlbDmja7pm4bnrqHnkIYiLCLmlbDmja7pooblr7wiXSwicGhvbmVfbnVtYmVyIjoiMTY2MjM2NjM2NzgiLCJwaG9uZV9udW1iZXJfdmVyaWZpZWQiOiJGYWxzZSIsImVtYWlsX3ZlcmlmaWVkIjoiRmFsc2UiLCJuYW1lIjoieWNzdGpzamdsZyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjEtMWNkMi1jMmNhLWEyZWYwMmZkYjI2YiIsImlhdCI6MTc1ODY5NTcwNSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.HP29wYPWGugtThS9W-R-VcQv5aGoA8vQ5AkH6p6JKurz8HJ790L0dPeO44STJhsi00_vjOnNbz0LCD0QDsWTleiPm7sFtCT-fNWFKu9nOEKPwZVEXksffxS5myWA2jkbxV3uCQr63k-Jf8wOagjfPyX42lHoOe-Cut5r9wtN7nbv_gf14Bi4hODAhSNEtw7V_XuiEFYsxZZLkiSb14l4Sl_Nfmud-wqphjwZ4ox_t1bxPfy9NmtArgl9Jf-wd-2nu0JKDfMnwZmcItkXNH-mGRq4LhFGIPCL50Q46spIxoeamiCdX03ctZ73kEfbMbvx3RGJDR6tExyqGWQNz4hEGw'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg2NzY1ODYsImV4cCI6MTc1ODg0ODU4NiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1ODY3NjU4MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc1ODY3NjU4Niwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.awVzf_mh389SQWIviF2QMyYcJKJsi79xVPvNd29b5Nv0z_sSjQwZkPrwFvJe3Ww2L1m2EI5kWhyI9RJlTo7gfo8ZwuVIq1JMFKufFsOXfkHHY6e4nKiJ7mxNfpEa-1BwcWr4LpyIE1rPsneZPp8p6wQnmyNDH1TUoMhRJAWvU4O9bD5pAIqgMjrwnV4xBlCzgp5TxsYoStV4pccLX9WlPRDaCrw0Qjgi-6KcD5taCUq1xEN2vquj9V1fkBJf7tCUsRWYR3VON-tSU0i1PjRkFLlYC9mKRscXuhH66hmEsCyGt_6JhW_oKXUAtZCZTRkJsnxRfygHYd_kglgOleKICA'
 
 const synergyData = ref([])
-const reportTaskTableId = ref('')
+const tableId = ref('')
 const sheetId = ref('')
 
-const addSheet = () => {
-	console.log(111)
+const addSheet = (sheet) => {
+	console.log('AddSheet', sheet)
+	sheetRef.value.asyncCreateSheet({
+		tableId: tableId.value,
+		SheetName: sheet.name,
+		sheetConfig: null,
+	})
 }
 
 const onSynergySelecteCell = (range) => {
 	console.log('onSynergySelecteCell', range)
-	sheetRef.value.clickCell({
-		reportTaskTableId: reportTaskTableId.value,
+	sheetRef.value.asyncClickCell({
+		tableId: tableId.value,
 		sheetId: sheetId.value,
 		row: range.r,
 		col: range.c,
 	})
 }
 
+const synergyJoinSheet = (id) => {
+	sheetId.value = id
+	sheetRef.value.asyncJoinSheet(tableId.value, sheetId.value)
+	sheetRef.value.asyncClickCell({
+		tableId: tableId.value,
+		sheetId: sheetId.value,
+		row: 0,
+		col: 0,
+	})
+}
+
+const synergyLeaveSheet = (id) => {
+	sheetRef.value.asyncLeaveSheet(tableId.value, id)
+}
+
+const asyncInputCell = (value, cell) => {
+	sheetRef.value.asyncInputCell({
+		tableId: tableId.value,
+		sheetId: sheetId.value,
+		row: cell.r,
+		col: cell.c,
+		value,
+	})
+}
+
+const linked = ref(false)
+watch(
+	() => linked.value,
+	(value) => {
+		if (value) {
+			console.log('joinSheet')
+			sheetRef.value.asyncJoinSheet(tableId.value, sheetId.value)
+			sheetRef.value.asyncClickCell({
+				tableId: tableId.value,
+				sheetId: sheetId.value,
+				row: 0,
+				col: 0,
+			})
+		}
+	}
+)
+
 onMounted(() => {
+	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.112:9527/api/online-table/report-table-task/3a1c00d8-2d0c-fd94-5817-d19fa885eec2',
+			url: 'http://10.110.10.125:9527/api/online-table/table/3a1c8c8d-1190-c682-203d-b6e0217a8f4c?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1206,10 +1257,10 @@ onMounted(() => {
 					_raw: JSON.parse(JSON.stringify(sheet)),
 				})
 			})
-			// synergyData.value = arr
-			reportTaskTableId.value = arr[0]._raw.reportTaskTableId
+
+			synergyData.value = arr
+			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
-			// sheetRef.value.joinSheet(reportTaskTableId.value, sheetId.value)
 		})
 })
 </script>
@@ -1219,11 +1270,15 @@ onMounted(() => {
 		<AirSheet
 			ref="sheetRef"
 			v-model="config"
+			v-model:linked="linked"
 			:api="api"
 			:token="token"
 			:synergy-data="synergyData"
 			@add-sheet="addSheet"
-			@synergySelecteCell="onSynergySelecteCell"
+			@asyncInputCell="asyncInputCell"
+			@asyncSelecteCell="onSynergySelecteCell"
+			@asyncJoinSheet="synergyJoinSheet"
+			@asyncLeaveSheet="synergyLeaveSheet"
 		></AirSheet>
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>

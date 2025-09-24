@@ -80,12 +80,14 @@ const defaultSheet = {
 		completed: false, // 是否初始化完成
 		filter: false, // 是否开启筛选
 		search: false, // 是否开启查找
-		formula: false, // 是否进去公式状态
+		formula: false, // 是否进入公式状态
+
 		msg: '正在加载数据...',
 		progress: -1,
 	},
 	name: 'Sheet',
 	id: '',
+	original: {},
 	_temp: {},
 }
 
@@ -94,6 +96,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 	state: () => {
 		return {
 			sheets: null,
+			linked: false, // 是否协同链接成功
 		}
 	},
 	getters: {
@@ -114,6 +117,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			}
 			return lastValue
 		},
+		getLinked: (state) => state.linked,
 	},
 	actions: {
 		init: async function (sheet, containerId, componentProps, emits, callback) {
@@ -123,13 +127,16 @@ export const useAirSheetStore = defineStore('AirSheet', {
 
 			let key = sheet
 			let name = ''
-			if (typeof sheet === 'object') {
-				key = sheet.id
-				name = sheet.name
-			}
 
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
+
+				if (typeof sheet === 'object') {
+					key = sheet.id
+					name = sheet.name
+					clone.original = {sheetId: sheet.id}
+				}
+
 				clone.id = key
 				clone.name = name || `Sheet${this.sheets.size + 1}`
 				clone.history = shallowReactive(new Map()) // 同一个引用
@@ -176,7 +183,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		initSynergySheets: async function (sheets, containerId, componentProps) {
 			let count = 0
 			for (const [key, value] of this.sheets) {
-				value._temp.originalSheetId = sheets[count].id
+				value.original.sheetId = sheets[count].id
 				value.name = sheets[count].name
 				count++
 			}
@@ -205,6 +212,9 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		deleteSheet: function (key) {
 			if (!this.sheets.has(key)) return
 			this.sheets.delete(key)
+		},
+		setLinked: function (value) {
+			this.linked = value
 		},
 	},
 })
