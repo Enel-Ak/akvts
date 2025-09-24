@@ -398,7 +398,8 @@ export const useEdit = () => {
 	}
 
 	const inputCell = (e, cell) => {
-		const value = cell.v || e.target.innerText
+		// const value = cell.v || e.target.innerText
+		const value = e.target.innerText
 		useDebounce(
 			() => {
 				console.log('inputCell', value)
