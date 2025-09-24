@@ -602,8 +602,8 @@ export const useEdit = () => {
 		}
 
 		let lockTimer = null
-		for (let row = r; row <= rr; row++) {
-			for (let col = c; col <= cc; col++) {
+		for (let row = r; row <= r; row++) {
+			for (let col = c; col <= c; col++) {
 				if (sheet.config.locked[`${row}-${col}`]) {
 					clearTimeout(lockTimer)
 					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
@@ -950,8 +950,8 @@ export const useEdit = () => {
 		}
 		formulaSelectionCell = container.querySelector(`[data-cell="${r}-${c}"]`)
 		if (formulaSelectionCell) {
-			for (let i = r; i <= rr; i++) {
-				for (let j = c; j <= cc; j++) {
+			for (let i = r; i <= r; i++) {
+				for (let j = c; j <= c; j++) {
 					if (!sheet.celldata.get(i)) {
 						sheet.celldata.set(i, [])
 					}
