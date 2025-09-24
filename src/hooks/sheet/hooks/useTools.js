@@ -1914,6 +1914,7 @@ export const useTools = () => {
 				}
 				delete sheet.config.styled[`${row}-${col}`]
 				delete sheet.config.formulaed[`${row}-${col}`]
+				delete sheet.config.formulaMap[`${row}-${col}`]
 			}
 		}
 	}

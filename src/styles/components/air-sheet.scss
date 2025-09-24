@@ -295,10 +295,13 @@
 		line-height: 25px;
 		overflow: hidden;
 		padding: 0 10px;
+		transition: all 0.15s ease-in-out;
 		min-width: 100%;
 		max-width: 100%;
 
 		&:focus {
+			background-color: rgba(var(--z-theme-rgb), 0.5);
+			backdrop-filter: blur(8px);
 			position: absolute;
 			height: 75px;
 			max-height: 75px;

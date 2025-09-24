@@ -180,6 +180,11 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				value.name = sheets[count].name
 				count++
 			}
+			if (count < sheets.length) {
+				for (let i = count; i < sheets.length; i++) {
+					await this.init(sheets[i], containerId, componentProps)
+				}
+			}
 		},
 
 		addSheet: async function (key, componentProps, emits, callback) {
