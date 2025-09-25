@@ -918,12 +918,19 @@
 }
 
 .context-menu {
-	border: 1px solid var(--z-line);
-	background-color: var(--z-theme);
-	border-radius: 3px;
+	// border: 1px solid var(--z-line);
+	background-color: rgba(var(--z-theme-rgb), 0.5);
+	backdrop-filter: blur(8px);
+	border-radius: 5px;
 	min-width: 120px;
+	overflow: hidden;
 	position: absolute;
+	transition: all 0.15s linear;
 	z-index: 1000;
+
+	&:hover {
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
 
 	.menu-item {
 		align-items: center;
@@ -941,7 +948,7 @@
 		}
 
 		&:not(:last-child) {
-			border-bottom: 1px solid var(--z-line);
+			border-bottom: 1px solid rgba(var(--z-line-rgb), 0.5);
 		}
 
 		&:hover {

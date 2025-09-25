@@ -398,8 +398,7 @@ export const useEdit = () => {
 	}
 
 	const inputCell = (e, cell) => {
-		// const value = cell.v || e.target.innerText
-		const value = e.target.innerText
+		const value = cell.v || e.target.innerText
 		useDebounce(
 			() => {
 				console.log('inputCell', value)
@@ -632,6 +631,7 @@ export const useEdit = () => {
 				inputValue.value = sheet.config.formulaed[`${row}-${col}`]
 			}
 		}
+
 		if (!sheet.state.formula) {
 			setFormulaValue(container.querySelector(`[data-cell="${r}-${c}"]`))
 		}
@@ -880,10 +880,6 @@ export const useEdit = () => {
 			c = Math.min(range.c, range.cc)
 		}
 
-		if (!sheet.celldata.get(r)) {
-			sheet.celldata.set(r, [])
-		}
-
 		if (sheet.celldata.get(r)) {
 			if (c > sheet.config.colCount) {
 				sheet.config.colCount = c + 1
@@ -895,6 +891,8 @@ export const useEdit = () => {
 					sheet.config.rowCount = r + 1
 				}
 			}
+		} else if (!sheet.celldata.get(r)) {
+			sheet.celldata.set(r, [])
 		}
 
 		sheet.celldata.get(r)[c] = value

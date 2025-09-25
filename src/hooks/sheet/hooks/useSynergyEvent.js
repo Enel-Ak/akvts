@@ -1,5 +1,5 @@
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
-import {useGuid} from '@/hooks'
+import {useDebounce} from '@/hooks'
 
 const EventMap = {
 	CellClicked: 'OnCellClicked', // 接收到单元格点击
@@ -71,12 +71,21 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		useSynergyEvent.removeGroupUser(res.operatorUserId)
 	})
 
-	signalr.on(EventMap.CellDataChanged, (res) => {
+	signalr.on(EventMap.CellDataChanged, async (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log(444, res)
+		console.log('CellDataChanged', res)
+
+		const cellEl = document
+			.querySelector(`#${sheet.containerId}`)
+			.querySelector(`[data-cell="${res.row}-${res.col}"]`)
+		if (cellEl) {
+			cellEl.innerText = res.value
+		}
+
 		sheet.hooks.editHook.setCellValue(res.row, res.col, res.value)
+		sheet.hooks.editHook.setRowHeight(res.row, res.col, false)
 	})
 }
 

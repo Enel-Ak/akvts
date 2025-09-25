@@ -503,10 +503,7 @@ defineExpose({
 				v-bind="{...$attrs, ...item.formItemProps}"
 				:class="{
 					full: item.full,
-					flx:
-						index === items.length - 1 ||
-						items?.[index + 1]?.hasOwnProperty('children') ||
-						items?.[index + 1]?.full,
+					flx: items?.[index + 1]?.hasOwnProperty('children') || items?.[index + 1]?.full,
 					'is-grid': grid,
 					'row-edit': isRowEdit,
 					'last-item': onCheckIsLastItem(item, index),
@@ -1088,7 +1085,7 @@ defineExpose({
 }
 .full {
 	flex: none;
-	width: 100% !important;
+	width: calc(100% - v-bind(flexSize)) !important;
 }
 
 :deep(.el-form-item__content),
@@ -1209,6 +1206,10 @@ defineExpose({
 		align-items: flex-start;
 		margin-right: v-bind(flexSize);
 		width: calc(100% / v-bind(columnCount) - v-bind(flexSize));
+
+		&:last-child {
+			flex: none;
+		}
 	}
 
 	.mg-bottom-0 {

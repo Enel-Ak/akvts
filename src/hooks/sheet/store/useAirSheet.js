@@ -138,6 +138,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				}
 
 				clone.id = key
+				clone.containerId = containerId
 				clone.name = name || `Sheet${this.sheets.size + 1}`
 				clone.history = shallowReactive(new Map()) // 同一个引用
 				clone.celldata = shallowReactive(new Map()) // 同一个引用

@@ -338,7 +338,7 @@ onUnmounted(() => {
 			margin-bottom: 8px;
 			padding: 8px 5px;
 			span:nth-child(1) {
-				width: 98px;
+				width: 70px;
 			}
 			span:nth-child(2) {
 				flex: 1;
@@ -384,11 +384,11 @@ onUnmounted(() => {
 			box-sizing: border-box;
 
 			&.active {
-				background-color: rgba(var(--z-bg-secondary-rgb), 1);
+				background-color: var(--z-sheet-active);
 			}
 
 			&:hover {
-				background-color: rgba(var(--z-bg-secondary-rgb), 0.5);
+				background-color: rgba(var(--z-sheet-active-rgb), 0.5);
 			}
 
 			&:last-child {
@@ -401,7 +401,7 @@ onUnmounted(() => {
 			color: rgba(var(--z-font-color-rgb), 0.5);
 			min-width: 40px;
 			flex-shrink: 0;
-			width: 80px;
+			width: 51px;
 		}
 
 		.content {
