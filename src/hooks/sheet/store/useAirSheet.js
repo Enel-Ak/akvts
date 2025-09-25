@@ -49,7 +49,7 @@ const defaultSheet = {
 		find: true, // 查找
 		synergy: false, // 协同
 
-		online: [], // 协同高亮在线的
+		online: [], // 协同高亮在线的, 当前sheet的
 		merged: {}, // 已合并单元格
 		locked: {}, // 锁定单元格
 		styled: {}, // 有样式的单元格
@@ -96,6 +96,24 @@ export const useAirSheetStore = defineStore('AirSheet', {
 	state: () => {
 		return {
 			sheets: null,
+			online: [
+				{
+					id: 1,
+					name: '张三',
+				},
+				{
+					id: 2,
+					name: '李四',
+				},
+				{
+					id: 3,
+					name: '王五',
+				},
+				{
+					id: 4,
+					name: '赵六',
+				},
+			], // 整个表在线的用户
 			linked: false, // 是否协同链接成功
 		}
 	},
@@ -118,6 +136,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			return lastValue
 		},
 		getLinked: (state) => state.linked,
+		getOnline: (state) => state.online,
 	},
 	actions: {
 		init: async function (sheet, containerId, componentProps, emits, callback) {
@@ -216,6 +235,9 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		},
 		setLinked: function (value) {
 			this.linked = value
+		},
+		setOnline: function (arr) {
+			this.online = arr
 		},
 	},
 })

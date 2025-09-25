@@ -37,6 +37,11 @@ export const useSynergy = () => {
 		return false
 	}
 
+	const asyncConfig = (...args) => {
+		console.log('async config')
+		eventCell(...args)
+	}
+
 	const joinSheet = (...args) => {
 		if (!isLinked()) {
 			return
@@ -68,13 +73,13 @@ export const useSynergy = () => {
 		})
 	}
 
-	const clickCell = (...args) => {
+	const eventCell = (...args) => {
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
 		}
-		signalr.invoke('click-cell', ...args).then(() => {
-			console.log('invoke click-cell')
+		signalr.invoke('event-cell', ...args).then(() => {
+			console.log('invoke event-cell')
 		})
 	}
 
@@ -92,7 +97,6 @@ export const useSynergy = () => {
 		sheetKey = id
 		sheet = sheetStore.getSheet(id)
 		useSynergyEvent.refreshSheet(id)
-		// joinSheet()
 	}
 
 	const init = (key) => {
@@ -101,7 +105,16 @@ export const useSynergy = () => {
 		setTimeout(() => {
 			console.log('installed useSynergy')
 		}, 16)
-		return {connection, refreshSheet, joinSheet, leaveSheet, createSheet, clickCell, changeCell}
+		return {
+			connection,
+			refreshSheet,
+			asyncConfig,
+			joinSheet,
+			leaveSheet,
+			createSheet,
+			eventCell,
+			changeCell,
+		}
 	}
 
 	return {

@@ -40,9 +40,10 @@ const emits = defineEmits([
 
 	// 协同相关
 	'asyncInputCell',
-	'asyncSelecteCell',
+	'asyncEventCell',
 	'asyncJoinSheet',
 	'asyncLeaveSheet',
+	'asyncConfig',
 ])
 
 // 核心配置参数
@@ -350,7 +351,7 @@ const setActiveTool = computed(() => {
 			fxVal: '',
 		}
 
-		if (!r) {
+		if (r === undefined || r === null) {
 			return data
 		}
 
@@ -2109,8 +2110,9 @@ defineExpose({
 	asyncJoinSheet: (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
 	asyncLeaveSheet: (...args) => sheet.hooks.synergyHook.leaveSheet(...args), // 离开sheet
 	asyncCreateSheet: (...args) => sheet.hooks.synergyHook.createSheet(...args), // 创建sheet
-	asyncClickCell: (...args) => sheet.hooks.synergyHook.clickCell(...args), // 点击单元格
+	asyncEventCell: (...args) => sheet.hooks.synergyHook.eventCell(...args), // 点击单元格
 	asyncInputCell: (...args) => sheet.hooks.synergyHook.changeCell(...args), // 单元格输入
+	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
 })
 </script>
 <template>
@@ -2128,18 +2130,16 @@ defineExpose({
 				<!-- 在线用户 -->
 				<div v-if="sheet.config.synergy" class="flx df aic">
 					<Icons
-						v-if="sheet.config.online.length"
+						v-if="sheetStore.getOnline.length"
 						name="OnlineUser"
 						color="var(--z-main)"
-						class="mg-right-15"
+						class="mg-right-10"
 					/>
-					<span
-						class="online-user"
-						v-for="user of sheet.config.online"
-						:title="user.name"
-					>
-						{{ user.name.slice(0, 1) }}
-					</span>
+					<template v-for="(user, idx) of sheetStore.getOnline">
+						<span v-if="idx < 10" class="online-user" :title="user.name">
+							{{ user.name.slice(0, 1) }}
+						</span>
+					</template>
 				</div>
 				<span
 					v-for="item of tollbarTabList"

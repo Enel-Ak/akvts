@@ -629,10 +629,10 @@ export const useSelectionRange = () => {
 		if (sheet.config.synergy) {
 			useDebounce(
 				() => {
-					sheet.emits?.('asyncSelecteCell', ranged.value)
+					sheet.emits?.('asyncEventCell', ranged.value)
 				},
 				300,
-				'asyncSelecteCell'
+				'asyncEventCell'
 			)()
 		}
 	}
@@ -661,10 +661,10 @@ export const useSelectionRange = () => {
 
 		useDebounce(
 			() => {
-				sheet.emits?.('asyncSelecteCell', ranged.value)
+				sheet.emits?.('asyncEventCell', ranged.value)
 			},
 			32,
-			'asyncSelecteCell'
+			'asyncEventCell'
 		)()
 	}
 

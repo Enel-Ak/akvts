@@ -53,12 +53,14 @@
 	}
 
 	.online-user {
+		border: 1px solid var(--z-theme);
 		border-radius: 100%;
+		box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 		color: var(--z-nav-font-color);
 		font-size: 12px;
 		line-height: 1;
-		margin-left: -10px;
-		padding: 5px;
+		margin-left: -8px;
+		padding: 4px;
 		transform: scale(0.9);
 
 		@function random-color($i, $total) {
@@ -70,7 +72,9 @@
 
 		@for $i from 1 through 10 {
 			&:nth-child(#{$i}) {
+				backdrop-filter: blur(8px);
 				background-color: random-color($i, 10);
+				opacity: #{(11 - $i) / 10};
 			}
 		}
 	}
@@ -94,7 +98,8 @@
 	&.expand {
 		opacity: 1;
 		overflow: visible;
-		min-height: 50px;
+		// min-height: 50px;
+		height: auto;
 	}
 
 	.group {
@@ -1033,14 +1038,21 @@
 
 		&.mobile {
 			flex-wrap: nowrap;
-			height: 44px;
+			height: 0;
+			opacity: 0;
 			overflow: hidden;
 			overflow-x: auto;
 			min-width: 100%;
+			transition: all 0.15s linear;
 
 			.item.font {
 				flex-wrap: nowrap;
 			}
+		}
+
+		&.expand {
+			height: 44px;
+			opacity: 1;
 		}
 	}
 

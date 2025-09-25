@@ -182,6 +182,8 @@ export const useTools = () => {
 				}
 			}
 		}
+
+		synergyEvent({styled: sheet.config.styled})
 	}
 
 	// 设置单元格样式, 指定单元格
@@ -198,6 +200,7 @@ export const useTools = () => {
 				sheet.config.styled[`${i}-${j}`][type] = value
 			}
 		}
+		synergyEvent({styled: sheet.config.styled})
 	}
 
 	// 设置字体
@@ -2388,6 +2391,13 @@ export const useTools = () => {
 
 	const addSheet = (props, callback = () => {}) => {
 		sheetStore.addSheet(props, callback)
+	}
+
+	const synergyEvent = (json) => {
+		if (!sheet.config.synergy) {
+			return
+		}
+		sheet.emits?.('asyncConfig', json)
 	}
 
 	const init = (key) => {

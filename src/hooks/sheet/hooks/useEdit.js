@@ -397,10 +397,15 @@ export const useEdit = () => {
 		cellEl.addEventListener('blur', blur)
 	}
 
+	// 单元格输入的时候
 	const inputCell = (e, cell) => {
 		const value = cell.v || e.target.innerText
 		useDebounce(
 			() => {
+				if (sheet.state.formula) {
+					console.log('公式模式下不触发输入事件')
+					return
+				}
 				console.log('inputCell', value)
 				sheet.emits?.('asyncInputCell', value, cell)
 			},

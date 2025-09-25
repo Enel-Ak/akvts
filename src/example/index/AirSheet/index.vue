@@ -1168,7 +1168,7 @@ onActivated(() => {
 })
 
 const onClick = () => {}
-const api = 'http://10.110.10.102:9527/signalr-hubs/onlinetable'
+const api = ref('http://10.110.10.102:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg2OTU3MDUsImV4cCI6MTc1ODg2NzcwNSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1ODY5NTcwMiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwieWt6LWlkIjpbIjM1NDA5MyIsIjgzNTM5MyJdLCJ5a3otZW1wbG95ZWUtY29kZSI6IkdFXzE2MzUwODgzMDgwNzE4Mjk1MDQiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJyb2xlIjpbIuWIhueuoemihuWvvCIsIuWPsOi0puS4iuS4i-e6vyIsIuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCLlpKflsY_mn6XnnIsiLCLluILljLrpqb7pqbboiLEiLCLmlbDmja7pm4bnrqHnkIYiLCLmlbDmja7pooblr7wiXSwicGhvbmVfbnVtYmVyIjoiMTY2MjM2NjM2NzgiLCJwaG9uZV9udW1iZXJfdmVyaWZpZWQiOiJGYWxzZSIsImVtYWlsX3ZlcmlmaWVkIjoiRmFsc2UiLCJuYW1lIjoieWNzdGpzamdsZyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjEtMWNkMi1jMmNhLWEyZWYwMmZkYjI2YiIsImlhdCI6MTc1ODY5NTcwNSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.HP29wYPWGugtThS9W-R-VcQv5aGoA8vQ5AkH6p6JKurz8HJ790L0dPeO44STJhsi00_vjOnNbz0LCD0QDsWTleiPm7sFtCT-fNWFKu9nOEKPwZVEXksffxS5myWA2jkbxV3uCQr63k-Jf8wOagjfPyX42lHoOe-Cut5r9wtN7nbv_gf14Bi4hODAhSNEtw7V_XuiEFYsxZZLkiSb14l4Sl_Nfmud-wqphjwZ4ox_t1bxPfy9NmtArgl9Jf-wd-2nu0JKDfMnwZmcItkXNH-mGRq4LhFGIPCL50Q46spIxoeamiCdX03ctZ73kEfbMbvx3RGJDR6tExyqGWQNz4hEGw'
 	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg2NzY1ODYsImV4cCI6MTc1ODg0ODU4NiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1ODY3NjU4MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc1ODY3NjU4Niwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.awVzf_mh389SQWIviF2QMyYcJKJsi79xVPvNd29b5Nv0z_sSjQwZkPrwFvJe3Ww2L1m2EI5kWhyI9RJlTo7gfo8ZwuVIq1JMFKufFsOXfkHHY6e4nKiJ7mxNfpEa-1BwcWr4LpyIE1rPsneZPp8p6wQnmyNDH1TUoMhRJAWvU4O9bD5pAIqgMjrwnV4xBlCzgp5TxsYoStV4pccLX9WlPRDaCrw0Qjgi-6KcD5taCUq1xEN2vquj9V1fkBJf7tCUsRWYR3VON-tSU0i1PjRkFLlYC9mKRscXuhH66hmEsCyGt_6JhW_oKXUAtZCZTRkJsnxRfygHYd_kglgOleKICA'
@@ -1186,9 +1186,9 @@ const addSheet = (sheet) => {
 	})
 }
 
-const onSynergySelecteCell = (range) => {
-	console.log('onSynergySelecteCell', range)
-	sheetRef.value.asyncClickCell({
+const onAsyncEventCell = (range) => {
+	console.log('onAsyncEventCell', range)
+	sheetRef.value.asyncEventCell({
 		tableId: tableId.value,
 		sheetId: sheetId.value,
 		row: range.r,
@@ -1221,6 +1221,14 @@ const asyncInputCell = (value, cell) => {
 	})
 }
 
+const asyncConfig = (json) => {
+	sheetRef.value.asyncConfig({
+		tableId: tableId.value,
+		sheetId: sheetId.value,
+		config: json,
+	})
+}
+
 const linked = ref(false)
 watch(
 	() => linked.value,
@@ -1228,7 +1236,7 @@ watch(
 		if (value) {
 			console.log('joinSheet')
 			sheetRef.value.asyncJoinSheet(tableId.value, sheetId.value)
-			sheetRef.value.asyncClickCell({
+			sheetRef.value.asyncEventCell({
 				tableId: tableId.value,
 				sheetId: sheetId.value,
 				row: 0,
@@ -1257,7 +1265,7 @@ onMounted(() => {
 					_raw: JSON.parse(JSON.stringify(sheet)),
 				})
 			})
-
+			api.value += `?tableId=${arr[0]._raw.tableId}`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
@@ -1276,9 +1284,10 @@ onMounted(() => {
 			:synergy-data="synergyData"
 			@add-sheet="addSheet"
 			@asyncInputCell="asyncInputCell"
-			@asyncSelecteCell="onSynergySelecteCell"
+			@asyncEventCell="onAsyncEventCell"
 			@asyncJoinSheet="synergyJoinSheet"
 			@asyncLeaveSheet="synergyLeaveSheet"
+			@asyncConfig="asyncConfig"
 		></AirSheet>
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>

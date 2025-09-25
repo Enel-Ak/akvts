@@ -2,10 +2,11 @@ import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {useDebounce} from '@/hooks'
 
 const EventMap = {
-	CellClicked: 'OnCellClicked', // 接收到单元格点击
+	EventClicked: 'OnEventClicked', // 接收到单元格点击
 	JoinSheetGroup: 'OnJoinSheetGroup', // 加入sheet
 	LeaveSheetGroup: 'OnLeaveSheetGroup', // 离开sheet, 切换sheet
 	CellDataChanged: 'OnCellDataChanged', // 单元格数据变化
+	OnlineUsered: 'OnOnlineUsered', // 获取在线用户
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
@@ -51,10 +52,29 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	const isCurrentSheet = (sheetId) => sheet.original.sheetId !== sheetId
 
-	signalr.on(EventMap.CellClicked, (res) => {
+	signalr.on(EventMap.EventClicked, (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
+		console.log('EventClicked', res)
+		if (res.config) {
+			const configKeys = Object.keys(res.config)
+			configKeys.forEach((key) => {
+				Object.assign(sheet.config[key], res.config[key])
+			})
+
+			if (
+				res.hasOwnProperty('row') &&
+				res.hasOwnProperty('col') &&
+				res.row >= 0 &&
+				res.col >= 0
+			) {
+				useSynergyEvent.groupUsers(res)
+			}
+		} else {
+			useSynergyEvent.groupUsers(res)
+		}
+
 		useSynergyEvent.groupUsers(res)
 	})
 
@@ -71,7 +91,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		useSynergyEvent.removeGroupUser(res.operatorUserId)
 	})
 
-	signalr.on(EventMap.CellDataChanged, async (res) => {
+	signalr.on(EventMap.CellDataChanged, (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
@@ -86,6 +106,18 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 		sheet.hooks.editHook.setCellValue(res.row, res.col, res.value)
 		sheet.hooks.editHook.setRowHeight(res.row, res.col, false)
+	})
+
+	signalr.on(EventMap.OnlineUsered, (res) => {
+		console.log('OnlineUsered', res)
+		const arr = []
+		// res.forEach((item) => {
+		// 	arr.push({
+		// 		id: item.operatorUserId,
+		// 		name: item.operatorName || '用户',
+		// 	})
+		// })
+		sheetStore.setOnline(arr)
 	})
 }
 
