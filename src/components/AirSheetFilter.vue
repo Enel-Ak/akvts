@@ -620,6 +620,16 @@ onMounted(() => {
 			.only {
 				display: block;
 			}
+			:deep(.el-checkbox__label) {
+				font-weight: 500;
+				width: 150px;
+			}
+		}
+
+		:deep(.el-checkbox__label) {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			width: 240px;
 		}
 	}
 

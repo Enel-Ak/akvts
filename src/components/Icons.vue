@@ -71,7 +71,7 @@ const svgContent = computed(() => {
 })
 </script>
 <template>
-	<i :key="uniqueId" class="akvts-icons" v-html="svgContent"></i>
+	<i :key="uniqueId" class="akvts-icons" v-bind="$attrs" v-html="svgContent"></i>
 </template>
 <style scoped lang="scss">
 .akvts-icons {

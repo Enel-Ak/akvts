@@ -337,6 +337,14 @@ export const useEdit = () => {
 				clearOriginalFormulaState()
 			}
 
+			// 同步配置
+			if (sheet.config.formula) {
+				sheet.hooks.synergyHook.asyncConfig({
+					formulaed: sheet.config.formulaed,
+					formulaMap: sheet.config.formulaMap,
+				})
+			}
+
 			return
 		}
 
@@ -398,20 +406,17 @@ export const useEdit = () => {
 	}
 
 	// 单元格输入的时候
+	let prevText = ''
 	const inputCell = (e, cell) => {
 		const value = cell.v || e.target.innerText
-		useDebounce(
-			() => {
-				if (sheet.state.formula) {
-					console.log('公式模式下不触发输入事件')
-					return
-				}
-				console.log('inputCell', value)
-				sheet.emits?.('asyncInputCell', value, cell)
-			},
-			150,
-			'asyncInputCell'
-		)()
+
+		if (sheet.state.formula) {
+			console.log('公式模式下不触发输入事件')
+			return
+		}
+		console.log('inputCell', value)
+		sheet.emits?.('asyncInputCell', prevText, value, cell)
+		prevText = value
 	}
 
 	// 单元格格式
@@ -871,7 +876,7 @@ export const useEdit = () => {
 		return html
 	}
 
-	const setCellValue = (rowIndex, colIndex, value, create = false) => {
+	const setCellValue = async (rowIndex, colIndex, value, create = false) => {
 		let r = rowIndex
 		let c = colIndex
 		const range = sheet.hooks.selectionRangeHook.getRanged()

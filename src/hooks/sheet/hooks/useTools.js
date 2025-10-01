@@ -2389,8 +2389,9 @@ export const useTools = () => {
 		sheet = sheetStore.getSheet(id)
 	}
 
-	const addSheet = (props, callback = () => {}) => {
-		sheetStore.addSheet(props, callback)
+	// source: key or {}
+	const addSheet = async (sheet, props, emits, callback = () => {}) => {
+		await sheetStore.addSheet(sheet, props, emits, callback)
 	}
 
 	const synergyEvent = (json) => {

@@ -21,7 +21,7 @@ export const useSignalrStop = (key) => {
 	clearTimeout(signalrTimer)
 }
 
-export const useSignalr = (key, path, token, callback) => {
+export const useSignalr = (key, path, token, callback, errorCallback) => {
 	if (
 		!signalr.hasOwnProperty(key) ||
 		!signalr[key] ||
@@ -49,8 +49,12 @@ export const useSignalr = (key, path, token, callback) => {
 					signalr[key].hubConnection = null
 					signalr[key].token = null
 					console.error('Signalr connection failed')
-					typeof callback === 'function' ? callback('error') : null
+					typeof errorCallback === 'function' ? errorCallback('error') : null
 				})
+
+			signalr[key].hubConnection.onclose((error) => {
+				typeof errorCallback === 'function' ? errorCallback('error') : null
+			})
 		}
 	} else {
 		// console.log('Signalr connection is still alive: ', signalr[key]?.state)

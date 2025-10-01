@@ -3,10 +3,14 @@ import {useDebounce} from '@/hooks'
 
 const EventMap = {
 	EventClicked: 'OnEventClicked', // 接收到单元格点击
+	CreateSheet: 'OnSheetCreated', // 创建sheet
+	DeletedSheet: 'OnSheetDeleted', // 删除Sheet
 	JoinSheetGroup: 'OnJoinSheetGroup', // 加入sheet
 	LeaveSheetGroup: 'OnLeaveSheetGroup', // 离开sheet, 切换sheet
 	CellDataChanged: 'OnCellDataChanged', // 单元格数据变化
 	OnlineUsered: 'OnOnlineUsered', // 获取在线用户
+	UserLeaved: 'OnUserLeaved', //  用户离开
+	SheetUpdated: 'OnSheetUpdated', // sheet更新(名称)
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
@@ -52,6 +56,45 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	const isCurrentSheet = (sheetId) => sheet.original.sheetId !== sheetId
 
+	signalr.on(EventMap.SheetUpdated, (res) => {
+		console.log('onSheetUpdated', res)
+		sheetStore.setSheetName(res.sheetId, res.sheetName)
+	})
+
+	signalr.on(EventMap.CreateSheet, (res) => {
+		console.log('onCreateSheet', res)
+		const originalConfig = sheet.original.config
+		sheetStore.addSheet(
+			{id: res.sheetId, name: res.sheetName},
+			sheet.props,
+			sheet.emits,
+			(curSheet) => {
+				Object.assign(curSheet.config, originalConfig)
+				Object.assign(curSheet.original, {
+					config: originalConfig,
+				})
+			}
+		)
+	})
+
+	signalr.on(EventMap.DeletedSheet, (res) => {
+		console.log('onDeletedSheet', res)
+		sheetStore.deleteSheet(res.sheetId)
+	})
+
+	signalr.on(EventMap.JoinSheetGroup, (res) => {
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
+	})
+
+	signalr.on(EventMap.LeaveSheetGroup, (res) => {
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
+		useSynergyEvent.removeGroupUser(res.operatorUserId)
+	})
+
 	signalr.on(EventMap.EventClicked, (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
@@ -78,46 +121,51 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		useSynergyEvent.groupUsers(res)
 	})
 
-	signalr.on(EventMap.JoinSheetGroup, (res) => {
+	signalr.on(EventMap.CellDataChanged, async (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-	})
-
-	signalr.on(EventMap.LeaveSheetGroup, (res) => {
-		if (isCurrentSheet(res.sheetId)) {
-			return
-		}
-		useSynergyEvent.removeGroupUser(res.operatorUserId)
-	})
-
-	signalr.on(EventMap.CellDataChanged, (res) => {
-		if (isCurrentSheet(res.sheetId)) {
-			return
-		}
-		console.log('CellDataChanged', res)
 
 		const cellEl = document
 			.querySelector(`#${sheet.containerId}`)
 			.querySelector(`[data-cell="${res.row}-${res.col}"]`)
+
 		if (cellEl) {
 			cellEl.innerText = res.value
 		}
 
-		sheet.hooks.editHook.setCellValue(res.row, res.col, res.value)
-		sheet.hooks.editHook.setRowHeight(res.row, res.col, false)
+		if (!sheet.celldata.get(res.row)) {
+			sheet.celldata.set(res.row, [])
+		}
+
+		setTimeout(() => {
+			sheet.hooks.editHook.setCellValue(res.row, res.col, res.value)
+			sheet.hooks.editHook.setRowHeight(res.row, res.col, false)
+		}, 120)
 	})
 
 	signalr.on(EventMap.OnlineUsered, (res) => {
 		console.log('OnlineUsered', res)
+
 		const arr = []
-		// res.forEach((item) => {
-		// 	arr.push({
-		// 		id: item.operatorUserId,
-		// 		name: item.operatorName || '用户',
-		// 	})
-		// })
+		res.forEach((item) => {
+			arr.push({
+				id: item.userId,
+				name: item.userName || '用户',
+				bigDepartmentId: item.bigDepartmentId,
+				bigDepartmentName: item.bigDepartmentName,
+				departmentId: item.departmentId,
+				departmentName: item.departmentName,
+				isOnline: item.isOnline,
+			})
+		})
+
 		sheetStore.setOnline(arr)
+	})
+
+	signalr.on(EventMap.UserLeaved, (res) => {
+		console.log('OnUserLeaved', res)
+		sheetStore.removeOnlineUser(res.userId)
 	})
 }
 

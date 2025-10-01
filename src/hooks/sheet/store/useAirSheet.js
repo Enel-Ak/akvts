@@ -96,24 +96,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 	state: () => {
 		return {
 			sheets: null,
-			online: [
-				{
-					id: 1,
-					name: '张三',
-				},
-				{
-					id: 2,
-					name: '李四',
-				},
-				{
-					id: 3,
-					name: '王五',
-				},
-				{
-					id: 4,
-					name: '赵六',
-				},
-			], // 整个表在线的用户
+			online: [], // 整个表在线的用户
 			linked: false, // 是否协同链接成功
 		}
 	},
@@ -124,7 +107,15 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		getAllSheet: (state) => {
 			return [...state?.sheets]
 		},
-		getSheet: (state) => (key) => state.sheets?.get(key),
+		getSheet: (state) => (key) => {
+			if (!state.sheets) return null
+			for (const [_, sheet] of state.sheets) {
+				if (sheet.original.sheetId === key || sheet.id === key) {
+					return sheet
+				}
+			}
+			return null
+		},
 		getLoading: (state) => (key) => state.sheets?.get(key)?.loading,
 		getCompleted: (state) => (key) => state.sheets?.get(key)?.completed,
 		getTempAttr: (state) => (key, attr) => state.sheets?.get(key)?._temp[attr],
@@ -147,16 +138,16 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			let key = sheet
 			let name = ''
 
+			if (typeof sheet === 'object') {
+				key = sheet.id
+				name = sheet.name
+			}
+
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
 
-				if (typeof sheet === 'object') {
-					key = sheet.id
-					name = sheet.name
-					clone.original = {sheetId: sheet.id}
-				}
-
 				clone.id = key
+				clone.original = {sheetId: key}
 				clone.containerId = containerId
 				clone.name = name || `Sheet${this.sheets.size + 1}`
 				clone.history = shallowReactive(new Map()) // 同一个引用
@@ -164,10 +155,15 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				clone.filterCellData = shallowReactive(new Map()) // 同一个引用
 				clone.config = {
 					...clone.config,
-					...structuredClone(toRaw(componentProps.modelValue.config)),
+					...structuredClone(
+						toRaw(componentProps?.modelValue?.config || componentProps?.config)
+					),
 				}
 
 				const jsonProps = JSON.parse(JSON.stringify(componentProps))
+				if (jsonProps?.modelValue?.config) {
+					clone.original.config = jsonProps?.modelValue?.config // 原始配置
+				}
 				delete jsonProps.modelValue
 				clone.props = {...clone.props, ...jsonProps}
 
@@ -191,12 +187,13 @@ export const useAirSheetStore = defineStore('AirSheet', {
 						synergyHook: useSynergy().init(key),
 					}
 				} else {
+					re.containerId = this.sheets.values().next().value.containerId
 					re.emits = this.sheets.values().next().value.emits
 					re.hooks = this.sheets.values().next().value.hooks
 				}
 				re.state.completed = true
 			}
-			setTimeout(() => callback && callback(), 0)
+			setTimeout(() => callback && callback(this.sheets.get(key)), 0)
 			console.log('inited AirSheet', this.sheets.get(key))
 		},
 
@@ -214,8 +211,8 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			}
 		},
 
-		addSheet: async function (key, componentProps, emits, callback) {
-			this.init(key, null, componentProps, emits, callback)
+		addSheet: async function (sheet, componentProps, emits, callback) {
+			await this.init(sheet, null, componentProps, emits, callback)
 		},
 		setTempAttr: function (key, attr, value) {
 			if (!this.sheets.has(key)) return
@@ -226,18 +223,37 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			delete this.sheets.get(key)._temp[attr]
 		},
 		setSheetName: function (key, name) {
-			if (!this.sheets.has(key)) return
-			this.sheets.get(key).name = name
+			for (const [_, sheet] of this.sheets) {
+				if (sheet.original.sheetId === key || sheet.id === key) {
+					sheet.name = name
+					break
+				}
+			}
 		},
 		deleteSheet: function (key) {
-			if (!this.sheets.has(key)) return
-			this.sheets.delete(key)
+			let deleteId = ''
+
+			for (let [key, value] of this.sheets) {
+				if (value.id === key) {
+					deleteId = value.id
+				} else if (value.original.sheetId === key) {
+					deleteId = value.original.sheetId
+				}
+			}
+
+			if (deleteId) {
+				this.sheets.delete(deleteId)
+			}
 		},
 		setLinked: function (value) {
 			this.linked = value
 		},
 		setOnline: function (arr) {
 			this.online = arr
+		},
+
+		removeOnlineUser: function (userId) {
+			this.online = this.online.filter((item) => item.id !== userId)
 		},
 	},
 })

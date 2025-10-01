@@ -43,6 +43,7 @@ const emits = defineEmits([
 	'asyncEventCell',
 	'asyncJoinSheet',
 	'asyncLeaveSheet',
+	'asyncRemoveSheet',
 	'asyncConfig',
 ])
 
@@ -276,7 +277,7 @@ const viewportWidth = ref(0)
 const savedScrollPosition = ref({top: 0, left: 0})
 
 // 初始数据处理
-const initialData = () => {
+const initialData = (data = []) => {
 	if (!props.modelValue?.celldata) return
 
 	if (props.modelValue?.celldata) {
@@ -297,6 +298,12 @@ const initialData = () => {
 	} else {
 		celldata = props.modelValue.celldata
 	}
+
+	if (data.length) {
+		celldata = data
+	}
+
+	console.log(444, celldata)
 
 	const total = celldata.length || sheet.config.rowCount
 
@@ -1282,6 +1289,7 @@ const validateCellReferences = (formula) => {
 // 文本框输入
 const inputCache = new Map()
 const inputCacheCell = []
+let textareaHistory = ''
 const onInput = (e) => {
 	try {
 		// 边界情况检查
@@ -1300,14 +1308,14 @@ const onInput = (e) => {
 		const inputValue = e.target.value
 
 		// 输入长度限制
-		if (inputValue && inputValue.length > 10000) {
+		if (inputValue && inputValue.length > 1000) {
 			console.warn('输入内容过长，已截断')
-			e.target.value = inputValue.substring(0, 10000)
+			e.target.value = inputValue.substring(0, 1000)
 			return
 		}
 
-		for (let i = r; i <= rr; i++) {
-			for (let j = c; j <= cc; j++) {
+		for (let i = r; i <= r; i++) {
+			for (let j = c; j <= c; j++) {
 				if (!inputCache.has(`${i}-${j}`)) {
 					if (!sheet.celldata.get(i)) {
 						sheet.celldata.set(i, [])
@@ -1361,8 +1369,15 @@ const onInput = (e) => {
 
 		// 防抖处理公式计算和行高调整
 		useDebounce(
-			() => {
+			(row, col) => {
 				try {
+					emits('asyncInputCell', textareaHistory, inputValue, {
+						sheetId: sheet.original.sheetId,
+						row,
+						col,
+					})
+					textareaHistory = inputValue
+
 					// 只有在公式模式下或有公式配置时才重新计算公式
 					if (sheet.state.formula || Object.keys(sheet.config.formulaed).length > 0) {
 						sheet.hooks.editHook.setFormulaValue()
@@ -1372,9 +1387,9 @@ const onInput = (e) => {
 					console.error('防抖处理失败:', error)
 				}
 			},
-			250,
+			500,
 			'onInputTextarea'
-		)()
+		)(r, c)
 	} catch (error) {
 		console.error('onInput 处理失败:', error)
 		// 发生严重错误时，尝试恢复到安全状态
@@ -1395,6 +1410,7 @@ const onTextareaFocus = (e) => {
 		const cellKey = `${r}-${c}`
 		const inputValue = sheet.hooks.editHook.inputValue
 
+		textareaHistory = inputValue
 		console.log('textarea 获取焦点，当前内容:', inputValue)
 
 		// 检查当前内容是否为公式，或者当前单元格是否已配置为公式
@@ -1951,51 +1967,72 @@ const onJumpToCell = async (row, col) => {
 	}
 }
 
-const onAddSheet = () => {
+const onAddSheet = async () => {
 	const key = `air-sheet-${Math.random().toString(16).slice(2)}`
-	sheet.hooks.toolsHook.addSheet(key, props, emits)
-	emits('addSheet', sheet)
-	setTimeout(() => {
-		onChangeSheet(sheetStore.getLastSheet?.id)
-	}, 16)
+	await sheet.hooks.toolsHook.addSheet(key, props, emits)
+	emits('addSheet', sheetStore.getLastSheet)
 }
 
-const onChangeSheet = async (id) => {
-	sheetId.value = id
-	Object.values(sheet.hooks).forEach((hook) => {
-		hook?.refreshSheet?.(id)
-	})
+let dbTimer = null
+let isDbClickSheet = false
+const onChangeSheet = async (sheetItem, e) => {
+	clearTimeout(dbTimer)
+	dbTimer = setTimeout(() => {
+		if (
+			isDbClickSheet ||
+			e?.target.getAttribute('contenteditable') ||
+			sheet?.original?.sheetId === sheetItem[1]?.original?.sheetId
+		) {
+			isDbClickSheet = false
+			return
+		}
+		const id = sheetItem[1]?.original?.sheetId || sheetItem.id
+		sheetId.value = id
 
-	emits('asyncLeaveSheet', sheet.original.sheetId)
+		emits('asyncLeaveSheet', sheet.original.sheetId)
 
-	for (const key in sheet) {
-		delete sheet[key]
-	}
+		for (const key in sheet) {
+			delete sheet[key]
+		}
 
-	Object.assign(sheet, sheetStore.getSheet(id))
+		Object.assign(sheet, sheetStore.getSheet(id))
 
-	sheet.state.changeSheet = true
+		sheet.state.changeSheet = true
 
-	emits('asyncJoinSheet', sheet.original.sheetId)
+		emits('asyncJoinSheet', sheet.original.sheetId)
+
+		Object.values(sheet.hooks).forEach((hook) => {
+			hook?.refreshSheet?.(id)
+		})
+	}, 250)
 }
 
-const onDbClickSheet = (e, id) => {
+const onDbClickSheet = (e, sheetItem) => {
+	const id = sheetItem[1]?.original?.sheetId || sheetItem.id
 	e.target.setAttribute('contenteditable', true)
 	e.target.focus()
+	isDbClickSheet = true
 	const blur = () => {
+		if (sheet.config.synergy) {
+			sheet.hooks.synergyHook.changeSheetName(id, {
+				sheetName: e.target.textContent,
+			})
+		}
 		sheetStore.setSheetName(id, e.target.textContent)
-		e.target.setAttribute('contenteditable', false)
+		e.target.removeAttribute('contenteditable')
 		e.target.removeEventListener('blur', blur)
 	}
 
 	e.target.addEventListener('blur', blur)
 }
 
-const onDeleteSheet = (id) => {
-	sheetStore.deleteSheet(id)
-	setTimeout(() => {
+const onDeleteSheet = (sheetItem) => {
+	const id = sheetItem[1]?.original?.sheetId || sheetItem.id
+	if (!sheet.config.synergy) {
+		sheetStore.deleteSheet(id)
 		onChangeSheet(sheetStore.getLastSheet?.id)
-	}, 16)
+	}
+	emits('asyncRemoveSheet', id)
 }
 
 watch(
@@ -2028,6 +2065,13 @@ watch(
 				sheet.hooks.mergeHook.setMerge(r, c, rs, cs, false)
 			})
 		}
+	}
+)
+
+watch(
+	() => props.modelValue?.celldata,
+	(newVal) => {
+		initialData(newVal)
 	}
 )
 
@@ -2102,14 +2146,16 @@ defineExpose({
 
 	getSheet: () => sheet,
 	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+	addSheet: async (sheet) => await sheet.hooks.toolsHook.addSheet(sheet, props, emits),
 
 	luckyToAir: async (config, data) => await sheet.hooks?.toolsHook?.luckyToAir(config, data),
 	airToLucky: async () => await sheet.hooks?.toolsHook?.airToLucky(sheet),
 
 	// 协同相关
-	asyncJoinSheet: (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
+	asyncJoinSheet: async (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
 	asyncLeaveSheet: (...args) => sheet.hooks.synergyHook.leaveSheet(...args), // 离开sheet
 	asyncCreateSheet: (...args) => sheet.hooks.synergyHook.createSheet(...args), // 创建sheet
+	asyncRemoveSheet: (...args) => sheet.hooks.synergyHook.removeSheet(...args), // 删除sheet
 	asyncEventCell: (...args) => sheet.hooks.synergyHook.eventCell(...args), // 点击单元格
 	asyncInputCell: (...args) => sheet.hooks.synergyHook.changeCell(...args), // 单元格输入
 	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
@@ -2129,12 +2175,7 @@ defineExpose({
 			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
 				<!-- 在线用户 -->
 				<div v-if="sheet.config.synergy" class="flx df aic">
-					<Icons
-						v-if="sheetStore.getOnline.length"
-						name="OnlineUser"
-						color="var(--z-main)"
-						class="mg-right-10"
-					/>
+					<Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" />
 					<template v-for="(user, idx) of sheetStore.getOnline">
 						<span v-if="idx < 10" class="online-user" :title="user.name">
 							{{ user.name.slice(0, 1) }}
@@ -3235,23 +3276,27 @@ defineExpose({
 						class="sheet-item"
 						:data-id="sheetItem[1].id"
 						:class="{
-							active: sheetItem[1].id === sheetId,
-							'shadow-12': sheetItem[1].id === sheetId,
+							active:
+								sheetItem[1].id === sheetId ||
+								sheetItem[1].original.sheetId === sheetId,
+							'shadow-12':
+								sheetItem[1].id === sheetId ||
+								sheetItem[1].original.sheetId === sheetId,
 						}"
 						@keydown.stop
 						@keyup.stop
 						@keypress.stop
-						@click="onChangeSheet(sheetItem[1].id)"
-						@dblclick="onDbClickSheet($event, sheetItem[1].id)"
+						@click="onChangeSheet(sheetItem, $event)"
+						@dblclick="onDbClickSheet($event, sheetItem)"
 					>
 						{{ sheetItem[1].name }}
 						<el-popconfirm
 							v-if="idx > 0"
 							title="确定删除吗？"
-							@confirm="onDeleteSheet(sheetItem[1].id)"
+							@confirm="onDeleteSheet(sheetItem)"
 						>
 							<template #reference>
-								<Icons name="Clear2" size="14" class="close-sheet" />
+								<Icons name="Clear2" size="14" class="close-sheet" @click.stop />
 							</template>
 						</el-popconfirm>
 					</span>

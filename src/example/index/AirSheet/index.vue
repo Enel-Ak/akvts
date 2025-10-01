@@ -1167,11 +1167,12 @@ onActivated(() => {
 	// sheetRef.value.mergeCells(1, 3, 3, 3)
 })
 
+//21025
 const onClick = () => {}
-const api = ref('http://10.110.10.102:9527/signalr-hubs/onlinetable')
+const api = ref('http://10.110.10.111:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
-	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg2OTU3MDUsImV4cCI6MTc1ODg2NzcwNSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1ODY5NTcwMiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwieWt6LWlkIjpbIjM1NDA5MyIsIjgzNTM5MyJdLCJ5a3otZW1wbG95ZWUtY29kZSI6IkdFXzE2MzUwODgzMDgwNzE4Mjk1MDQiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJyb2xlIjpbIuWIhueuoemihuWvvCIsIuWPsOi0puS4iuS4i-e6vyIsIuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCLlpKflsY_mn6XnnIsiLCLluILljLrpqb7pqbboiLEiLCLmlbDmja7pm4bnrqHnkIYiLCLmlbDmja7pooblr7wiXSwicGhvbmVfbnVtYmVyIjoiMTY2MjM2NjM2NzgiLCJwaG9uZV9udW1iZXJfdmVyaWZpZWQiOiJGYWxzZSIsImVtYWlsX3ZlcmlmaWVkIjoiRmFsc2UiLCJuYW1lIjoieWNzdGpzamdsZyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjEtMWNkMi1jMmNhLWEyZWYwMmZkYjI2YiIsImlhdCI6MTc1ODY5NTcwNSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.HP29wYPWGugtThS9W-R-VcQv5aGoA8vQ5AkH6p6JKurz8HJ790L0dPeO44STJhsi00_vjOnNbz0LCD0QDsWTleiPm7sFtCT-fNWFKu9nOEKPwZVEXksffxS5myWA2jkbxV3uCQr63k-Jf8wOagjfPyX42lHoOe-Cut5r9wtN7nbv_gf14Bi4hODAhSNEtw7V_XuiEFYsxZZLkiSb14l4Sl_Nfmud-wqphjwZ4ox_t1bxPfy9NmtArgl9Jf-wd-2nu0JKDfMnwZmcItkXNH-mGRq4LhFGIPCL50Q46spIxoeamiCdX03ctZ73kEfbMbvx3RGJDR6tExyqGWQNz4hEGw'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTg2NzY1ODYsImV4cCI6MTc1ODg0ODU4NiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1ODY3NjU4MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc1ODY3NjU4Niwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.awVzf_mh389SQWIviF2QMyYcJKJsi79xVPvNd29b5Nv0z_sSjQwZkPrwFvJe3Ww2L1m2EI5kWhyI9RJlTo7gfo8ZwuVIq1JMFKufFsOXfkHHY6e4nKiJ7mxNfpEa-1BwcWr4LpyIE1rPsneZPp8p6wQnmyNDH1TUoMhRJAWvU4O9bD5pAIqgMjrwnV4xBlCzgp5TxsYoStV4pccLX9WlPRDaCrw0Qjgi-6KcD5taCUq1xEN2vquj9V1fkBJf7tCUsRWYR3VON-tSU0i1PjRkFLlYC9mKRscXuhH66hmEsCyGt_6JhW_oKXUAtZCZTRkJsnxRfygHYd_kglgOleKICA'
+	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTkyODIzMTgsImV4cCI6MTc1OTQ1NDMxOCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1OTI4MjMxNCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Iiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NTkyODIzMTgsInNjb3BlIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbInB3ZCJdfQ.qzghSXaNrFxVBxUGERYSBTJCjnTHQXzvPG94neAM6x09ebUsL6nAxCnE6ca_3NbN0nPy_Vr63_qkle4Fi00PWl_y8zhUVK7AlmLJbiAF8cfhpnmnjpxKAq0ZhLrNtOOsUHu83kAiQkl_1LA1pVsU3zgnDhREub2vM_6gczNHJralIeSz19L3whNkYSYxFHDeX34Zg9GwHKTXdT7ge5QavItTSsF-tETm1ZVKJb9IBE0HuL8HW96JBOKeMAWfsPAXCmHarsMj1hyHpOCjaiwoo9cjDYhWvqqUgawEVzxk2_ZDmvAabg7ZttMQpYjmLeDZI6C6rPreCtEP3Zou-WlQFw'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTkyODIyMTIsImV4cCI6MTc1OTQ1NDIxMiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1OTI4MjIxMiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc1OTI4MjIxMiwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.L8UKr_u7MAGWvg5qN2dc0kjjpcNFTsgkHEcZ7_37aknp9ksWs9Fyix6hqSsXKicAC5uY_SAWtkHIWRYBv_mYyBgEzWtX1GZUh9pwN_pkARvdN5iPneltHKzYI4HSmLKWyUyuitiXMWmf03VwBkBJfMm6jl2pqo1gh0YQ962BeczuaeX0Tn_5vO4EuzFEj8yvRUMKBa-JXim33nuWow6mIyUXXxjVtKZIoTshtAzUQnhv482ViE5sUndWutqia47uo2FrTbzLRiHv8rZxF2ZeFbc6KCxKtsASy0-HUZY28bONzAd7knBHLzX5ysXFFXpFTAkmkfBEBIvsqOvhAoPBdQ'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1180,7 +1181,6 @@ const sheetId = ref('')
 const addSheet = (sheet) => {
 	console.log('AddSheet', sheet)
 	sheetRef.value.asyncCreateSheet({
-		tableId: tableId.value,
 		SheetName: sheet.name,
 		sheetConfig: null,
 	})
@@ -1189,41 +1189,41 @@ const addSheet = (sheet) => {
 const onAsyncEventCell = (range) => {
 	console.log('onAsyncEventCell', range)
 	sheetRef.value.asyncEventCell({
-		tableId: tableId.value,
 		sheetId: sheetId.value,
 		row: range.r,
 		col: range.c,
 	})
 }
 
-const synergyJoinSheet = (id) => {
+const synergyJoinSheet = async (id) => {
 	sheetId.value = id
-	sheetRef.value.asyncJoinSheet(tableId.value, sheetId.value)
-	sheetRef.value.asyncClickCell({
-		tableId: tableId.value,
-		sheetId: sheetId.value,
-		row: 0,
-		col: 0,
-	})
+	await sheetRef.value.asyncJoinSheet(sheetId.value)
+	// config.value.celldata = [[1], [2]]
+	// console.log('config', config.value)
 }
 
 const synergyLeaveSheet = (id) => {
-	sheetRef.value.asyncLeaveSheet(tableId.value, id)
+	sheetRef.value.asyncLeaveSheet(id)
 }
 
-const asyncInputCell = (value, cell) => {
+const onAsyncRemoveSheet = (id) => {
+	console.log(33, id)
+
+	sheetRef.value.asyncRemoveSheet(id)
+}
+
+const asyncInputCell = (prev, value, cell) => {
 	sheetRef.value.asyncInputCell({
-		tableId: tableId.value,
 		sheetId: sheetId.value,
 		row: cell.r,
 		col: cell.c,
-		value,
+		before: prev,
+		after: value,
 	})
 }
 
 const asyncConfig = (json) => {
 	sheetRef.value.asyncConfig({
-		tableId: tableId.value,
 		sheetId: sheetId.value,
 		config: json,
 	})
@@ -1235,13 +1235,12 @@ watch(
 	(value) => {
 		if (value) {
 			console.log('joinSheet')
-			sheetRef.value.asyncJoinSheet(tableId.value, sheetId.value)
-			sheetRef.value.asyncEventCell({
-				tableId: tableId.value,
-				sheetId: sheetId.value,
-				row: 0,
-				col: 0,
-			})
+			sheetRef.value.asyncJoinSheet(sheetId.value)
+			// sheetRef.value.asyncEventCell({
+			// 	sheetId: sheetId.value,
+			// 	row: 0,
+			// 	col: 0,
+			// })
 		}
 	}
 )
@@ -1250,7 +1249,7 @@ onMounted(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.102:9527/api/online-table/table/3a1c90f1-dda3-1f5a-1f23-24cf8dc67a02?autoCreate=true',
+			url: 'http://10.110.10.111:9527/api/online-table/table/3a1c90f1-dda3-1f5a-1f23-24cf8dc67a02?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1270,6 +1269,15 @@ onMounted(() => {
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
 		})
+	// setTimeout(() => {
+	// 	console.log('config', config.value)
+	// 	config.value.celldata = Array.from({length: 51200}, (_, r) => {
+	// 		return Array.from({length: 20}, (_, c) => {
+	// 			return `R${r + 1}-C${c + 1}`
+	// 			// return undefined
+	// 		})
+	// 	})
+	// }, 5000)
 })
 </script>
 <template>
@@ -1285,6 +1293,7 @@ onMounted(() => {
 			@add-sheet="addSheet"
 			@asyncInputCell="asyncInputCell"
 			@asyncEventCell="onAsyncEventCell"
+			@asyncRemoveSheet="onAsyncRemoveSheet"
 			@asyncJoinSheet="synergyJoinSheet"
 			@asyncLeaveSheet="synergyLeaveSheet"
 			@asyncConfig="asyncConfig"

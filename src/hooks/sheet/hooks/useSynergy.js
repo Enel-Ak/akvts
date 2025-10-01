@@ -17,16 +17,30 @@ export const useSynergy = () => {
 			return
 		}
 		const key = `air-sheet-ws-${Math.random().toString(36).slice(2)}`
-		signalr = useSignalr(key, api, token, (state) => {
-			if (state === 'error') {
-				signalr = null
+		sheet.state.loading = true
+		sheet.state.msg = '正在连接中...'
+		signalr = useSignalr(
+			key,
+			api,
+			token,
+			(state) => {
+				if (state === 'error') {
+					signalr = null
+				}
+
+				console.log('synergy state', state)
+				sheet.state.loading = false
+				useSynergyEvent(sheetKey, signalr)
+				sheetStore.setLinked(state === 'success')
+				typeof callback === 'function' && callback(signalr)
+				sheet.emits('update:linked', state === 'success')
+			},
+			(error) => {
+				sheet.state.loading = true
+				sheet.state.msg = '连接已断开, 请刷新页面尝试重新连接'
 			}
-			console.log('synergy state', state)
-			useSynergyEvent(sheetKey, signalr)
-			sheetStore.setLinked(state === 'success')
-			typeof callback === 'function' && callback(signalr)
-			sheet.emits('update:linked', state === 'success')
-		})
+		)
+		return signalr
 	}
 
 	const isLinked = () => {
@@ -42,22 +56,24 @@ export const useSynergy = () => {
 		eventCell(...args)
 	}
 
-	const joinSheet = (...args) => {
+	const joinSheet = async (...args) => {
 		if (!isLinked()) {
 			return
 		}
-		signalr.invoke('join-sheet-group', ...args).then((res) => {
-			console.log('join-sheet-group', res)
+
+		await signalr.invoke('join-sheet-group', ...args).then((res) => {
+			console.log('join-sheet-group', ...args, res, sheetKey)
 			useSynergyEvent.refreshSheet(sheetKey)
 		})
 	}
 
-	const leaveSheet = (...args) => {
+	const leaveSheet = async (...args) => {
 		if (!isLinked()) {
 			return
 		}
-		signalr.invoke('leave-sheet-group', ...args).then((res) => {
-			console.log('leave-sheet-group', res)
+
+		await signalr.invoke('leave-sheet-group', ...args).then((res) => {
+			console.log('leave-sheet-group', ...args, res)
 		})
 	}
 
@@ -67,9 +83,31 @@ export const useSynergy = () => {
 		}
 		signalr.invoke('create-sheet', ...args).then((res) => {
 			console.log('create-sheet', res)
-			const {data} = res
-			sheet.original.sheetId = data.id
-			sheet.name = data.sheetName || sheet.name
+			const lastSheet = sheetStore.getLastSheet
+			if (lastSheet) {
+				const {data} = res
+				lastSheet.original.sheetId = data.id
+				lastSheet.name = lastSheet.name
+				console.log(sheetStore.getLastSheet)
+			}
+		})
+	}
+
+	const removeSheet = (...args) => {
+		if (!isLinked()) {
+			return
+		}
+		signalr.invoke('delete-sheet', ...args).then((res) => {
+			console.log('delete-sheet', res)
+		})
+	}
+
+	const changeSheetName = (...args) => {
+		if (!isLinked()) {
+			return
+		}
+		signalr.invoke('update-sheet', ...args).then((res) => {
+			console.log('update-sheet', res)
 		})
 	}
 
@@ -88,15 +126,22 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+
 		signalr.invoke('change-cell', ...args).then(() => {
 			console.log('invoke change-cell')
 		})
 	}
 
+	const addRow = (...args) => {}
+	const removeRow = (...args) => {}
+	const addColumn = (...args) => {}
+	const removeColumn = (...args) => {}
+	const undo = (...args) => {}
+
 	const refreshSheet = (id) => {
 		sheetKey = id
 		sheet = sheetStore.getSheet(id)
-		useSynergyEvent.refreshSheet(id)
+		useSynergyEvent?.refreshSheet(id)
 	}
 
 	const init = (key) => {
@@ -112,6 +157,8 @@ export const useSynergy = () => {
 			joinSheet,
 			leaveSheet,
 			createSheet,
+			removeSheet,
+			changeSheetName,
 			eventCell,
 			changeCell,
 		}
