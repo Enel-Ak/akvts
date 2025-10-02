@@ -142,9 +142,38 @@ export const useSynergy = () => {
 			console.log('invoke insert-row')
 		})
 	}
-	const removeRow = (...args) => {}
-	const addColumn = (...args) => {}
-	const removeColumn = (...args) => {}
+
+	const removeRow = (...args) => {
+		if (!isLinked()) {
+			console.error('链接失败')
+			return
+		}
+
+		signalr.invoke('delete-row', ...args).then(() => {
+			console.log('invoke delete-row')
+		})
+	}
+
+	const addColumn = (...args) => {
+		if (!isLinked()) {
+			console.error('链接失败')
+			return
+		}
+		signalr.invoke('insert-col', ...args).then(() => {
+			console.log('invoke insert-col')
+		})
+	}
+
+	const removeColumn = (...args) => {
+		if (!isLinked()) {
+			console.error('链接失败')
+			return
+		}
+		signalr.invoke('delete-col', ...args).then(() => {
+			console.log('invoke delete-col')
+		})
+	}
+
 	const undo = (...args) => {}
 
 	const refreshSheet = (id) => {
@@ -172,6 +201,9 @@ export const useSynergy = () => {
 			changeCell,
 
 			addRow,
+			removeRow,
+			addColumn,
+			removeColumn,
 		}
 	}
 

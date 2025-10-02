@@ -341,6 +341,7 @@ const initialData = (data = []) => {
 			useSleep(250).then(() => {
 				sheet.state.loading = false
 				sheet.state.changeSheet = false
+				sheet.hooks.editHook.setFormulaValue()
 			})
 		}
 	}
@@ -2169,6 +2170,7 @@ defineExpose({
 	asyncInputCell: (...args) => sheet.hooks.synergyHook.changeCell(...args), // 单元格输入
 	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
 	asyncAddRow: (...args) => sheet.hooks.synergyHook.addRow(...args), // 添加行
+	asyncAddColumn: (...args) => sheet.hooks.synergyHook.addColumn(...args), // 添加列
 })
 </script>
 <template>

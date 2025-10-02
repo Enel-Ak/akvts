@@ -324,6 +324,16 @@ export const useEdit = () => {
 			// 标记是否需要还原（ESC键）
 			const shouldRestore = e.key === 'Escape'
 
+			const asyncConfig = () => {
+				// 同步配置
+				if (sheet.config.synergy) {
+					sheet.hooks.synergyHook.asyncConfig({
+						formulaed: sheet.config.formulaed,
+						formulaMap: sheet.config.formulaMap,
+					})
+				}
+			}
+
 			// 先执行blur，然后根据需要还原或清除状态
 			blur()
 
@@ -331,18 +341,12 @@ export const useEdit = () => {
 				// ESC键：还原原始状态
 				setTimeout(() => {
 					restoreOriginalFormulaState()
+					asyncConfig()
 				}, 10) // 确保在blur完成后执行
 			} else if (e.key === 'Enter') {
 				// Enter键：清除原始状态（确认编辑）
 				clearOriginalFormulaState()
-			}
-
-			// 同步配置
-			if (sheet.config.formula) {
-				sheet.hooks.synergyHook.asyncConfig({
-					formulaed: sheet.config.formulaed,
-					formulaMap: sheet.config.formulaMap,
-				})
+				asyncConfig()
 			}
 
 			return

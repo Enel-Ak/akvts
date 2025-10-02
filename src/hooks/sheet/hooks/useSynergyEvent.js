@@ -12,6 +12,9 @@ const EventMap = {
 	UserLeaved: 'OnUserLeaved', //  用户离开
 	SheetUpdated: 'OnSheetUpdated', // sheet更新(名称)
 	RowInserted: 'OnRowInserted', // 添加行
+	ColInserted: 'OnColInserted', // 添加列
+	RowDeleted: 'OnRowDeleted', // 删除行
+	ColDeleted: 'OnColDeleted', // 删除列
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
@@ -147,8 +150,45 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.RowInserted, (res) => {
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
 		console.log('RowInserted', res)
 		sheet.hooks.toolsHook.addRow(null, false, true, {
+			startIndex: res.startIndex,
+			count: res.count,
+		})
+	})
+
+	signalr.on(EventMap.RowDeleted, (res) => {
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
+		console.log('RowDeleted', res)
+		sheet.hooks.toolsHook.removeRow(null, {
+			startIndex: res.startIndex,
+			count: res.count,
+		})
+	})
+
+	signalr.on(EventMap.ColInserted, (res) => {
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
+		console.log('ColInserted', res)
+		sheet.hooks.toolsHook.addColumn(null, false, true, {
+			startIndex: res.startIndex,
+			count: res.count,
+		})
+	})
+
+	signalr.on(EventMap.ColDeleted, (res) => {
+		console.log('ColDeleted', res)
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
+		console.log('ColDeleted', res)
+		sheet.hooks.toolsHook.removeColumn(null, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})

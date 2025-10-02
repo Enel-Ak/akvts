@@ -586,45 +586,73 @@ export const useTools = () => {
 	}
 
 	// 删除行
-	const removeRow = async () => {
+	const removeRow = async (_, asyncData = null, callback = null) => {
 		if (!sheet.config.removeRow) {
 			ElMessage.warning('请先在配置中开启删除行功能')
 			return
 		}
-		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
-		if (r === undefined) return
-
-		// 检查要删除的行范围是否有锁定的单元格
-		const checkResult = canRemoveRows(r, rr)
-		if (!checkResult.canRemove) {
-			ElMessage.warning(checkResult.reason)
-			return
-		}
-
-		if (sheet.celldata.size >= sheet.props.limit) {
-			sheet.state.loading = true
-			sheet.state.progress = 0
-			sheet.state.msg = '正在处理数据...'
-		}
-
-		const deleteCount = rr - r + 1
-		const deletedRows = new Map()
-
 		try {
-			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
-				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
-					if (rowIndex < r) {
-						// newMap.set(rowIndex, rowData)
-					} else if (rowIndex > rr) {
-						sheet.celldata.set(rowIndex - deleteCount, rowData)
-					} else {
-						deletedRows.set(`${rowIndex}`, {
-							rowData: useStringArrayToBuffer(rowData),
-							deleteCount,
-						})
-					}
+			let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+			if (r === undefined) return
+
+			let deleteCount = rr - r + 1
+
+			if (asyncData) {
+				r = asyncData.startIndex
+				rr = asyncData.startIndex + asyncData.count - 1
+				deleteCount = asyncData.count
+			}
+
+			const deletedRows = new Map()
+
+			// 检查要删除的行范围是否有锁定的单元格
+			const checkResult = canRemoveRows(r, rr)
+			if (!checkResult.canRemove) {
+				ElMessage.warning(checkResult.reason)
+				return
+			}
+
+			if (sheet.celldata.size >= sheet.props.limit) {
+				sheet.state.loading = true
+				sheet.state.progress = 0
+				sheet.state.msg = '正在处理数据...'
+			}
+
+			// 先找到数据的最大行索引，用于后续清理
+			let maxRowIndex = 0
+			sheet.celldata.forEach((_, rowIndex) => {
+				if (typeof rowIndex === 'number') {
+					maxRowIndex = Math.max(maxRowIndex, rowIndex)
 				}
 			})
+
+			await useProcessMapInBatches(
+				sheet?.original?.sheetId || sheet.id,
+				sheet.celldata,
+				(rowIndex, rowData) => {
+					console.log(rowIndex)
+
+					if (typeof rowIndex === 'number') {
+						if (rowIndex >= r && rowIndex <= rr) {
+							deletedRows.set(`${rowIndex}`, {
+								rowData: useStringArrayToBuffer(rowData),
+								deleteCount,
+							})
+						} else if (rowIndex > rr) {
+							// 移动数据到新位置
+							sheet.celldata.set(rowIndex - deleteCount, rowData)
+						}
+					}
+				}
+			)
+
+			// 清除最后几行的重复数据，避免重复显示
+			// 只清除原来数据末尾的 deleteCount 行
+			for (let i = maxRowIndex; i > maxRowIndex - deleteCount; i--) {
+				if (i > maxRowIndex - deleteCount) {
+					sheet.celldata.delete(i)
+				}
+			}
 
 			// 保存历史
 			sheet.hooks.historyHook.save(deletedRows, 'removeRow')
@@ -686,6 +714,14 @@ export const useTools = () => {
 				sheet.hooks.selectionRangeHook.clearCache()
 			}
 
+			if (sheet.config.synergy && !asyncData) {
+				sheet.hooks.synergyHook.removeRow({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					startIndex: r,
+					count: deleteCount,
+				})
+			}
+
 			// 优化：延迟触发选区重新计算，避免立即卡顿
 			setTimeout(() => {
 				if (sheet.hooks?.selectionRangeHook?.refreshSelection) {
@@ -702,7 +738,7 @@ export const useTools = () => {
 
 	// 添加列
 	const addColumnCount = ref(1)
-	const addColumn = async (_, isEnd = false, save = true) => {
+	const addColumn = async (_, isEnd = false, save = true, asyncData = null) => {
 		if (!sheet.config.addColumn) {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return
@@ -712,11 +748,18 @@ export const useTools = () => {
 			addColumnCount.value = 1
 		}
 
-		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
 
 		// 确定插入列的位置
-		const insertColIndex = isEnd ? sheet.config.colCount : cc + 1
+		let insertColIndex = isEnd ? sheet.config.colCount : cc + 1
+
+		if (asyncData) {
+			c = asyncData.startIndex
+			cc = asyncData.startIndex + asyncData.count - 1
+			addColumnCount.value = asyncData.count
+			insertColIndex = asyncData.startIndex
+		}
 
 		// 检查是否可以在选中区域添加列
 		// 只有在锁定单元格的具体列位置插入才禁止，在左侧插入允许（锁定单元格会右移）
@@ -815,6 +858,14 @@ export const useTools = () => {
 					'addCol'
 				)
 			}
+
+			if (sheet.config.synergy && !asyncData) {
+				sheet.hooks.synergyHook.addColumn({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					count: addColumnCount.value,
+					startIndex: insertColIndex,
+				})
+			}
 		} catch (error) {
 			console.error('添加列失败', error)
 		} finally {
@@ -824,13 +875,21 @@ export const useTools = () => {
 	}
 
 	// 删除列
-	const removeColumn = async () => {
+	const removeColumn = async (_, asyncData = null, callback = null) => {
 		if (!sheet.config.removeColumn) {
 			ElMessage.warning('请先在配置中开启删除列功能')
 			return
 		}
-		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
+
+		let deleteCount = cc - c + 1
+
+		if (asyncData) {
+			c = asyncData.startIndex
+			cc = asyncData.startIndex + asyncData.count - 1
+			deleteCount = asyncData.count
+		}
 
 		// 检查要删除的列范围是否有锁定的单元格
 		const checkResult = canRemoveColumns(c, cc)
@@ -844,8 +903,6 @@ export const useTools = () => {
 			sheet.state.progress = 0
 			sheet.state.msg = '正在处理数据...'
 		}
-
-		const deleteCount = cc - c + 1
 
 		// 优化：使用更紧凑的历史存储结构，类似删除行的方式
 		const deletedColsData = {
@@ -980,6 +1037,14 @@ export const useTools = () => {
 						sheet.hooks.selectionRangeHook.refreshSelection()
 					}
 				}, 100)
+			}
+
+			if (sheet.config.synergy && !asyncData) {
+				sheet.hooks.synergyHook.removeColumn({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					startIndex: c,
+					count: deleteCount,
+				})
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)

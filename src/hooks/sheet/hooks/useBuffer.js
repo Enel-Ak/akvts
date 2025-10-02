@@ -85,10 +85,12 @@ export const useStringArrayToBuffer = (arr) => {
 	offset += 4
 
 	for (const bytes of encoded) {
-		view.setUint32(offset, bytes.length)
-		offset += 4
-		new Uint8Array(buffer, offset, bytes.length).set(bytes)
-		offset += bytes.length
+		if (bytes) {
+			view.setUint32(offset, bytes.length)
+			offset += 4
+			new Uint8Array(buffer, offset, bytes.length).set(bytes)
+			offset += bytes.length
+		}
 	}
 
 	return buffer
