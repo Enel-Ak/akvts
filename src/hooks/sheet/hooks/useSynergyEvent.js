@@ -11,6 +11,7 @@ const EventMap = {
 	OnlineUsered: 'OnOnlineUsered', // 获取在线用户
 	UserLeaved: 'OnUserLeaved', //  用户离开
 	SheetUpdated: 'OnSheetUpdated', // sheet更新(名称)
+	RowInserted: 'OnRowInserted', // 添加行
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
@@ -122,6 +123,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.CellDataChanged, async (res) => {
+		console.log('CellDataChanged', isCurrentSheet(res.sheetId))
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
@@ -142,6 +144,14 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			sheet.hooks.editHook.setCellValue(res.row, res.col, res.value)
 			sheet.hooks.editHook.setRowHeight(res.row, res.col, false)
 		}, 120)
+	})
+
+	signalr.on(EventMap.RowInserted, (res) => {
+		console.log('RowInserted', res)
+		sheet.hooks.toolsHook.addRow(null, false, true, {
+			startIndex: res.startIndex,
+			count: res.count,
+		})
 	})
 
 	signalr.on(EventMap.OnlineUsered, (res) => {

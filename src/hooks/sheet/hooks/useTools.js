@@ -461,7 +461,7 @@ export const useTools = () => {
 
 	// 添加行
 	const addRowCount = ref(1)
-	const addRow = async (_, isEnd = false, save = true) => {
+	const addRow = async (_, isEnd = false, save = true, asyncData = null) => {
 		if (!sheet.config.addRow) {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
@@ -471,17 +471,24 @@ export const useTools = () => {
 			addRowCount.value = 1
 		}
 
-		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 
 		// 确定插入位置
 		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
 		let insertRowIndex
 
-		if (isEnd) {
-			insertRowIndex = sheet.config.rowCount
+		if (asyncData) {
+			r = asyncData.startIndex
+			rr = asyncData.startIndex
+			addRowCount.value = asyncData.count
+			insertRowIndex = asyncData.startIndex
 		} else {
-			// 在选中行的下一行插入（无论是否筛选状态）
-			insertRowIndex = rr + 1
+			if (isEnd) {
+				insertRowIndex = sheet.config.rowCount
+			} else {
+				// 在选中行的下一行插入（无论是否筛选状态）
+				insertRowIndex = rr + 1
+			}
 		}
 
 		// 检查是否可以在选中区域添加行
@@ -561,6 +568,14 @@ export const useTools = () => {
 					},
 					'addRow'
 				)
+			}
+
+			if (sheet.config.synergy && !asyncData) {
+				sheet.hooks.synergyHook.addRow({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					count: addRowCount.value,
+					startIndex: insertRowIndex,
+				})
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)

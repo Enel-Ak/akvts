@@ -37,6 +37,7 @@ export const useSynergy = () => {
 			},
 			(error) => {
 				sheet.state.loading = true
+				sheet.state.progress = -1
 				sheet.state.msg = '连接已断开, 请刷新页面尝试重新连接'
 			}
 		)
@@ -132,7 +133,15 @@ export const useSynergy = () => {
 		})
 	}
 
-	const addRow = (...args) => {}
+	const addRow = (...args) => {
+		if (!isLinked()) {
+			console.error('链接失败')
+			return
+		}
+		signalr.invoke('insert-row', ...args).then(() => {
+			console.log('invoke insert-row')
+		})
+	}
 	const removeRow = (...args) => {}
 	const addColumn = (...args) => {}
 	const removeColumn = (...args) => {}
@@ -161,6 +170,8 @@ export const useSynergy = () => {
 			changeSheetName,
 			eventCell,
 			changeCell,
+
+			addRow,
 		}
 	}
 

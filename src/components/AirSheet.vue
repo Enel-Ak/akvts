@@ -21,6 +21,7 @@ import {useMapToBuffer, useBufferToMap} from '@/hooks/sheet/hooks/useBuffer'
 import {useColor, useSleep, useDebounce} from '@/hooks'
 import AirSheetFilter from './AirSheetFilter.vue'
 import AirSheetSearch from './AirSheetSearch.vue'
+import {useProcessMapInBatches} from '../hooks/sheet/hooks/useProcessMapInBatches'
 
 const stateType = {
 	normal: 0,
@@ -87,7 +88,7 @@ const props = defineProps({
 	// 协同相关配置
 	api: {type: String, default: ''},
 	token: {type: String, default: ''},
-	synergyData: {type: Array, default: () => []},
+	asyncSheet: {type: Array, default: () => []},
 })
 
 // 容器
@@ -322,7 +323,8 @@ const initialData = (data = []) => {
 		while (processed < total && count < batchSize && performance.now() - start < 16) {
 			const row = celldata[processed]
 			if (row) {
-				cellMap.set(processed, toRaw(row))
+				const result = row.map((x) => x || (x === 0 && '0'))
+				cellMap.set(processed, toRaw(result))
 			}
 			processed++
 			count++
@@ -2071,13 +2073,15 @@ watch(
 watch(
 	() => props.modelValue?.celldata,
 	(newVal) => {
+		console.log('newCelldata', newVal)
+
 		initialData(newVal)
 	}
 )
 
 // 协同数据变化
 watch(
-	() => props.synergyData,
+	() => props.asyncSheet,
 	(newVal) => {
 		if ((!newVal && !newVal.length) || !props.modelValue?.config.synergy) {
 			return
@@ -2124,6 +2128,11 @@ onUnmounted(() => {
 
 defineExpose({
 	destroy,
+	loading: (value, msg) => {
+		sheet.state.loading = value
+		sheet.state.msg = msg
+		sheet.state.progress = -1
+	},
 	setRange: (...arg) => sheet.hooks.selectionRangeHook.setRange(...arg),
 	setMerge: (...arg) => sheet.hooks.mergeHook.setMerge(...arg),
 	setCellValue: (...arg) => sheet.hooks.editHook.setCellValue(...arg),
@@ -2159,6 +2168,7 @@ defineExpose({
 	asyncEventCell: (...args) => sheet.hooks.synergyHook.eventCell(...args), // 点击单元格
 	asyncInputCell: (...args) => sheet.hooks.synergyHook.changeCell(...args), // 单元格输入
 	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
+	asyncAddRow: (...args) => sheet.hooks.synergyHook.addRow(...args), // 添加行
 })
 </script>
 <template>
@@ -2972,10 +2982,15 @@ defineExpose({
 											@dblclick.stop="
 												sheet.hooks.editHook.startEdit($event, cell)
 											"
-											@blur="onCellBlur($event, cell)"
-											@input="sheet.hooks.editHook.inputCell($event, cell)"
+											@blur="
+												($event) => {
+													onCellBlur($event, cell)
+													sheet.hooks.editHook.inputCell($event, cell)
+												}
+											"
 										></div>
 									</div>
+									<!-- @input="sheet.hooks.editHook.inputCell($event, cell)" -->
 									<div
 										v-else
 										v-html="sheet.hooks.editHook.formattedValue(cell.v, cell)"
@@ -2992,8 +3007,12 @@ defineExpose({
 										@dblclick.stop="
 											sheet.hooks.editHook.startEdit($event, cell)
 										"
-										@blur="onCellBlur($event, cell)"
-										@input="sheet.hooks.editHook.inputCell($event, cell)"
+										@blur="
+											($event) => {
+												onCellBlur($event, cell)
+												sheet.hooks.editHook.inputCell($event, cell)
+											}
+										"
 										class="cell"
 									></div>
 								</template>
@@ -3266,7 +3285,7 @@ defineExpose({
 			<!-- sheet栏 -->
 			<div class="sheetbar">
 				<Icons
-					v-if="!props.synergyData.length && sheet.config.synergy"
+					v-if="!props.asyncSheet.length && sheet.config.synergy"
 					name="Loading2"
 					size="14px"
 					class="loading-animation mg-right-10"

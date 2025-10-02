@@ -408,7 +408,7 @@ export const useEdit = () => {
 	// 单元格输入的时候
 	let prevText = ''
 	const inputCell = (e, cell) => {
-		const value = cell.v || e.target.innerText
+		const value = e.target.innerText
 
 		if (sheet.state.formula) {
 			console.log('公式模式下不触发输入事件')
