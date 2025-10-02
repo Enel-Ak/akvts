@@ -1218,6 +1218,17 @@ const beatch = async () => {
 	config.value.celldata = data.map((item) => (item === undefined ? [] : item))
 }
 
+const getSheetConfig = async () => {
+	const res = await axios.request({
+		url: `http://10.110.10.105:9527/api/online-table/table/sheet-config/${sheetId.value}`,
+		method: 'GET',
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	})
+	return res.data
+}
+
 const addSheet = (sheet) => {
 	console.log('AddSheet', sheet)
 	sheetRef.value.asyncCreateSheet({
@@ -1242,8 +1253,12 @@ const synergyJoinSheet = async (id) => {
 	// config.value.celldata = [[1], [2]]
 	// console.log('config', config.value)
 
-	sheetRef.value.loading(true, '正在获取数据')
+	sheetRef.value.loading(true, '正在获取最新数据')
 	await beatch()
+	const sheetConfig = await getSheetConfig()
+	Object.assign(config.value.config, {
+		...sheetConfig,
+	})
 	sheetRef.value.loading(false)
 }
 
@@ -1268,7 +1283,7 @@ const asyncInputCell = (prev, value, cell) => {
 const asyncConfig = (json) => {
 	sheetRef.value.asyncConfig({
 		sheetId: sheetId.value,
-		config: json,
+		config: JSON.stringify(json),
 	})
 }
 
@@ -1312,6 +1327,10 @@ onMounted(() => {
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
 			await beatch()
+			const sheetConfig = await getSheetConfig()
+			Object.assign(config.value.config, {
+				...sheetConfig,
+			})
 			config.value.celldata = data.value
 		})
 	// setTimeout(() => {

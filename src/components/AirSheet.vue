@@ -98,6 +98,7 @@ const sheetStore = useAirSheetStore()
 const sheetId = ref(containerId)
 const sheets = computed(() => sheetStore.getAllSheet)
 const sheet = reactive({})
+const onlineUser = computed(() => sheetStore.getOnline)
 const isLoading = computed(() => {
 	return (
 		sheet?.state.loading ||
@@ -2017,6 +2018,12 @@ const onDbClickSheet = (e, sheetItem) => {
 	e.target.focus()
 	isDbClickSheet = true
 	const blur = () => {
+		if (!e.target.textContent) {
+			ElMessage.error('Sheet表名称不能为空')
+			e.target.focus()
+			return
+		}
+
 		if (sheet.config.synergy) {
 			sheet.hooks.synergyHook.changeSheetName(id, {
 				sheetName: e.target.textContent,
@@ -2025,9 +2032,18 @@ const onDbClickSheet = (e, sheetItem) => {
 		sheetStore.setSheetName(id, e.target.textContent)
 		e.target.removeAttribute('contenteditable')
 		e.target.removeEventListener('blur', blur)
+		e.target.removeEventListener('keydown', keydown)
+	}
+
+	const keydown = (event) => {
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			blur()
+		}
 	}
 
 	e.target.addEventListener('blur', blur)
+	e.target.addEventListener('keydown', keydown)
 }
 
 const onDeleteSheet = (sheetItem) => {
@@ -2060,8 +2076,14 @@ watch(
 watch(
 	() => props.modelValue?.config,
 	(newVal) => {
-		sheet.config = Object.assign(sheet.config, newVal)
-		const mc = newVal.merged
+		if (sheet.state.formula) {
+			return
+		}
+		console.log('modelValue config', newVal)
+
+		sheet.config = Object.assign(sheet.config, toRaw(newVal))
+		const mc = newVal.merged || {}
+		const formulaed = newVal.formulaed || {}
 		if (Object.keys(mc).length > 0) {
 			Object.entries(mc).forEach(([key, value]) => {
 				const [r, c] = key.split('-').map(Number)
@@ -2069,7 +2091,12 @@ watch(
 				sheet.hooks.mergeHook.setMerge(r, c, rs, cs, false)
 			})
 		}
-	}
+
+		if (Object.keys(formulaed).length > 0) {
+			sheet.hooks.editHook.setFormulaValue()
+		}
+	},
+	{deep: true}
 )
 
 watch(
@@ -2189,7 +2216,7 @@ defineExpose({
 				<!-- 在线用户 -->
 				<div v-if="sheet.config.synergy" class="flx df aic">
 					<Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" />
-					<template v-for="(user, idx) of sheetStore.getOnline">
+					<template v-for="(user, idx) of onlineUser">
 						<span v-if="idx < 10" class="online-user" :title="user.name">
 							{{ user.name.slice(0, 1) }}
 						</span>
@@ -2993,7 +3020,6 @@ defineExpose({
 											"
 										></div>
 									</div>
-									<!-- @input="sheet.hooks.editHook.inputCell($event, cell)" -->
 									<div
 										v-else
 										v-html="sheet.hooks.editHook.formattedValue(cell.v, cell)"
@@ -3305,9 +3331,9 @@ defineExpose({
 								sheetItem[1].id === sheetId ||
 								sheetItem[1].original.sheetId === sheetId,
 						}"
-						@keydown.stop
-						@keyup.stop
 						@keypress.stop
+						@keyup.stop
+						@keydown.stop
 						@click="onChangeSheet(sheetItem, $event)"
 						@dblclick="onDbClickSheet($event, sheetItem)"
 					>

@@ -49,7 +49,6 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			c: user.col,
 			rr: user.row,
 			cc: user.col,
-			value: '',
 			state: 1,
 		})
 	}
@@ -106,9 +105,11 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		}
 		console.log('EventCell', res)
 		if (res.config) {
-			const configKeys = Object.keys(res.config)
+			const config = JSON.parse(res.config)
+			const configKeys = Object.keys(config)
 			configKeys.forEach((key) => {
-				Object.assign(sheet.config[key], res.config[key])
+				// Object.assign(sheet.config[key], config[key])
+				sheet.config[key] = config[key]
 			})
 
 			if (configKeys.includes('formulaed')) {
@@ -116,7 +117,6 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			}
 
 			if (configKeys.includes('merged')) {
-				console.log('merged', res)
 				sheet.hooks.mergeHook.refreshMerge()
 			}
 
@@ -225,6 +225,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	signalr.on(EventMap.UserLeaved, (res) => {
 		console.log('OnUserLeaved', res)
+		useSynergyEvent.removeGroupUser(res.userId)
 		sheetStore.removeOnlineUser(res.userId)
 	})
 }

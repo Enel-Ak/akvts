@@ -346,7 +346,7 @@ export const useSelectionRange = () => {
 		}
 
 		if (state && sheet.celldata.get(r)) {
-			sheet.celldata.get(r)[c] = value
+			// sheet.celldata.get(r)[c] = value
 			highlight.state = 0
 		}
 

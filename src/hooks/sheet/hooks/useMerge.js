@@ -153,7 +153,10 @@ export const useMerge = () => {
 
 	// 删除指定的合并单元格
 	const removeMergedCell = (r, c) => {
-		mergedCells.delete(`${r}-${c}`)
+		if (mergedCells.has(`${r}-${c}`)) {
+			mergedCells.delete(`${r}-${c}`)
+			sheet.config.merged = getMergedCells()
+		}
 	}
 
 	const findMergedCell = (r, c) => {
@@ -192,6 +195,9 @@ export const useMerge = () => {
 		const merged = sheet.config.merged
 		for (const key in merged) {
 			mergedCells.set(key, merged[key])
+		}
+		if (Object.values(merged).length === 0) {
+			mergedCells.clear()
 		}
 	}
 
