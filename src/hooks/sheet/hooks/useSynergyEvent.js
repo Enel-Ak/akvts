@@ -29,9 +29,10 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	// 高亮组用户
 	useSynergyEvent.groupUsers = (user) => {
-		const u = sheet.config.online.find((f) => f.id === user.operatorUserId)
+		const u = sheet.config.online.find((f) => f.id === user[sheet.props.userKeys[0]])
 
 		if (u) {
+			// 更新在线用户
 			Object.assign(u, {
 				r: user.row,
 				c: user.col,
@@ -42,8 +43,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		}
 
 		sheet.config.online.push({
-			id: user.operatorUserId,
-			name: user.operatorName || '用户',
+			id: user[sheet.props.userKeys[0]],
+			name: user[sheet.props.userKeys[1]] || '用户',
 			r: user.row,
 			c: user.col,
 			rr: user.row,
@@ -96,19 +97,28 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		useSynergyEvent.removeGroupUser(res.operatorUserId)
+		useSynergyEvent.removeGroupUser(res[sheet.props.userKeys[0]])
 	})
 
 	signalr.on(EventMap.EventClicked, (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log('EventClicked', res)
+		console.log('EventCell', res)
 		if (res.config) {
 			const configKeys = Object.keys(res.config)
 			configKeys.forEach((key) => {
 				Object.assign(sheet.config[key], res.config[key])
 			})
+
+			if (configKeys.includes('formulaed')) {
+				sheet.hooks.editHook.setFormulaValue()
+			}
+
+			if (configKeys.includes('merged')) {
+				console.log('merged', res)
+				sheet.hooks.mergeHook.refreshMerge()
+			}
 
 			if (
 				res.hasOwnProperty('row') &&
@@ -122,7 +132,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			useSynergyEvent.groupUsers(res)
 		}
 
-		useSynergyEvent.groupUsers(res)
+		// useSynergyEvent.groupUsers(res)
 	})
 
 	signalr.on(EventMap.CellDataChanged, async (res) => {

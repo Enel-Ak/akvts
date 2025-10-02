@@ -226,32 +226,36 @@ export const useSelectionRange = () => {
 	const setHighlightRange = (highlight) => {
 		const {id, r, c, rr, cc, value, state} = highlight
 
-		// 计算行高
-		let totalOffsetTop = r * sheet.props.rowHeight
-		let totleHeight = (rr - r + 1) * sheet.props.rowHeight
+		// 扩展范围以包含合并单元格
+		const expandedRange = getExpandedRange(r, c, rr, cc)
+		const {r: expandedR, c: expandedC, rr: expandedRR, cc: expandedCC} = expandedRange
+
+		// 计算行高（使用扩展后的范围）
+		let totalOffsetTop = expandedR * sheet.props.rowHeight
+		let totleHeight = (expandedRR - expandedR + 1) * sheet.props.rowHeight
 
 		// 使用缓存计算修改的行的差值
 		let modifiedBefore = 0
 		let modifiedInRange = 0
 		modifiedRowsCache().map.forEach((diff, row) => {
-			if (row < r) {
+			if (row < expandedR) {
 				modifiedBefore += diff
-			} else if (row >= r && row <= rr) {
+			} else if (row >= expandedR && row <= expandedRR) {
 				modifiedInRange += diff
 			}
 		})
 
-		// 计算列宽
-		let totaloffsetLeft = c * sheet.props.colWidth
-		let totleWidth = (cc - c + 1) * sheet.props.colWidth
+		// 计算列宽（使用扩展后的范围）
+		let totaloffsetLeft = expandedC * sheet.props.colWidth
+		let totleWidth = (expandedCC - expandedC + 1) * sheet.props.colWidth
 
 		// 使用缓存计算修改的列的差值
 		let modifiedColBefore = 0
 		let modifiedColInRange = 0
 		modifiedColsCache().map.forEach((diff, col) => {
-			if (col < c) {
+			if (col < expandedC) {
 				modifiedColBefore += diff
-			} else if (col >= c && col <= cc) {
+			} else if (col >= expandedC && col <= expandedCC) {
 				modifiedColInRange += diff
 			}
 		})

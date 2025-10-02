@@ -117,6 +117,8 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+		console.log('event-cell', ...args)
+
 		signalr.invoke('event-cell', ...args).then(() => {
 			console.log('invoke event-cell')
 		})

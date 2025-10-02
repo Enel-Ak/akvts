@@ -28,33 +28,37 @@ export const useSignalr = (key, path, token, callback, errorCallback) => {
 		signalr[key]?.state === Signalr.HubConnectionState.Disconnected
 	) {
 		if (path) {
-			signalr[key] = {}
-			signalr[key].token = token
-			signalr[key].hubConnection = new Signalr.HubConnectionBuilder()
-				.withUrl(`${path}`, {
-					transport: Signalr.HttpTransportType.WebSockets,
-					accessTokenFactory() {
-						return signalr[key].token
-					},
-				})
-				.build()
+			try {
+				signalr[key] = {}
+				signalr[key].token = token
+				signalr[key].hubConnection = new Signalr.HubConnectionBuilder()
+					.withUrl(`${path}`, {
+						transport: Signalr.HttpTransportType.WebSockets,
+						accessTokenFactory() {
+							return signalr[key].token
+						},
+					})
+					.build()
 
-			signalr[key].hubConnection
-				?.start()
-				.then(() => {
-					signalr[key].path = path
-					typeof callback === 'function' ? callback('success') : null
-				})
-				.catch((err) => {
-					signalr[key].hubConnection = null
-					signalr[key].token = null
-					console.error('Signalr connection failed')
+				signalr[key].hubConnection
+					?.start()
+					.then(() => {
+						signalr[key].path = path
+						typeof callback === 'function' ? callback('success') : null
+					})
+					.catch((err) => {
+						signalr[key].hubConnection = null
+						signalr[key].token = null
+						console.error('Signalr connection failed')
+						typeof errorCallback === 'function' ? errorCallback('error') : null
+					})
+
+				signalr[key].hubConnection.onclose((error) => {
 					typeof errorCallback === 'function' ? errorCallback('error') : null
 				})
-
-			signalr[key].hubConnection.onclose((error) => {
-				typeof errorCallback === 'function' ? errorCallback('error') : null
-			})
+			} catch (err) {
+				console.log('signalr error', err)
+			}
 		}
 	} else {
 		// console.log('Signalr connection is still alive: ', signalr[key]?.state)

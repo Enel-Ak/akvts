@@ -256,6 +256,7 @@ export const useEdit = () => {
 
 			// 使用延时处理，给公式菜单点击事件留出执行时间
 			nextTick(() => {
+				console.log('setFormulaValue', cellEl)
 				setFormulaValue(cellEl)
 			})
 			setTimeout(() => {
@@ -327,7 +328,7 @@ export const useEdit = () => {
 			const asyncConfig = () => {
 				// 同步配置
 				if (sheet.config.synergy) {
-					sheet.hooks.synergyHook.asyncConfig({
+					sheet.emits?.('asyncConfig', {
 						formulaed: sheet.config.formulaed,
 						formulaMap: sheet.config.formulaMap,
 					})
@@ -338,8 +339,8 @@ export const useEdit = () => {
 			blur()
 
 			if (shouldRestore) {
-				// ESC键：还原原始状态
 				setTimeout(() => {
+					// ESC键：还原原始状态
 					restoreOriginalFormulaState()
 					asyncConfig()
 				}, 10) // 确保在blur完成后执行

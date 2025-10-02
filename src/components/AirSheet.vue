@@ -89,6 +89,7 @@ const props = defineProps({
 	api: {type: String, default: ''},
 	token: {type: String, default: ''},
 	asyncSheet: {type: Array, default: () => []},
+	userKeys: {type: Array, default: () => ['operatorUserId', 'operatorName']},
 })
 
 // 容器

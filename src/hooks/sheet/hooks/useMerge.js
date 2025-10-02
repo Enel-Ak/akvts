@@ -188,6 +188,13 @@ export const useMerge = () => {
 		return null
 	}
 
+	const refreshMerge = () => {
+		const merged = sheet.config.merged
+		for (const key in merged) {
+			mergedCells.set(key, merged[key])
+		}
+	}
+
 	const refreshSheet = (id) => {
 		sheet = sheetStore.getSheet(id)
 		mergedCells.clear()
@@ -210,6 +217,7 @@ export const useMerge = () => {
 			removeMergedCell,
 
 			refreshSheet,
+			refreshMerge,
 		}
 	}
 

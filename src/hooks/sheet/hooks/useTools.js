@@ -348,6 +348,10 @@ export const useTools = () => {
 		sheet.hooks.historyHook.save()
 
 		sheet.hooks.mergeHook.setMerge(r, c, rr - r + 1, cc - c + 1)
+
+		if (sheet.config.synergy) {
+			synergyEvent({merged: sheet.config.merged})
+		}
 	}
 
 	// 边框
