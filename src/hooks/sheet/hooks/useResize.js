@@ -163,6 +163,14 @@ export const useResize = () => {
 			sheet.hooks.selectionRangeHook.selecting = true
 		}
 
+		if (sheet.config.synergy) {
+			// 同步配置
+			sheet?.emits('asyncConfig', {
+				rResize: sheet.config.rResize,
+				cResize: sheet.config.cResize,
+			})
+		}
+
 		isResizing.value = false
 		resizingEl = null
 		sheetContainer = null
@@ -191,6 +199,7 @@ export const useResize = () => {
 	}
 
 	const refreshSheet = (id) => {
+		sheetKey = id
 		sheet = sheetStore.getSheet(id)
 	}
 

@@ -1104,6 +1104,12 @@ export const useTools = () => {
 		}
 
 		ElMessage.success(`已锁定`)
+
+		if (sheet.config.synergy) {
+			sheet?.emits('asyncConfig', {
+				locked: sheet.config.locked,
+			})
+		}
 	}
 
 	// 解锁
@@ -1124,6 +1130,12 @@ export const useTools = () => {
 		}
 
 		ElMessage.success(`已解锁`)
+
+		if (sheet.config.synergy) {
+			sheet?.emits('asyncConfig', {
+				locked: sheet.config.locked,
+			})
+		}
 	}
 
 	// 筛选, 先把当前列所有数据取出来
@@ -1992,17 +2004,27 @@ export const useTools = () => {
 		sheet.hooks.historyHook.save()
 
 		let lockTimer = null
+		let canAsync = true
 		for (let row = r; row <= rr; row++) {
 			for (let col = c; col <= cc; col++) {
 				if (sheet.config.locked[`${row}-${col}`]) {
 					clearTimeout(lockTimer)
 					lockTimer = setTimeout(() => ElMessage.warning('单元格已锁定'), 16)
+					canAsync = false
 					continue
 				}
 				delete sheet.config.styled[`${row}-${col}`]
 				delete sheet.config.formulaed[`${row}-${col}`]
 				delete sheet.config.formulaMap[`${row}-${col}`]
 			}
+		}
+
+		if (sheet.config.synergy && canAsync) {
+			sheet?.emits('asyncConfig', {
+				styled: sheet.config.styled,
+				formulaed: sheet.config.formulaed,
+				formulaMap: sheet.config.formulaMap,
+			})
 		}
 	}
 

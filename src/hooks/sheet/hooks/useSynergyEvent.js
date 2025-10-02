@@ -34,10 +34,10 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		if (u) {
 			// 更新在线用户
 			Object.assign(u, {
-				r: user.row,
-				c: user.col,
-				rr: user.row,
-				cc: user.col,
+				r: user.row || u.r,
+				c: user.col || u.c,
+				rr: user.row || u.rr,
+				cc: user.col || u.cc,
 			})
 			return
 		}
