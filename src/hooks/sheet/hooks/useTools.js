@@ -929,13 +929,16 @@ export const useTools = () => {
 						// 重建公式
 						const newFormula = `=${functionName}(${cellRefs.join(',')})`
 
-						console.log('公式重建:', {
-							key: newKey,
-							oldFormula: currentFormula,
-							newFormula: newFormula,
-							formulaMapRefs: value,
-							cellRefs: cellRefs,
-						})
+						// 调试信息（可通过环境变量控制）
+						if (process.env.NODE_ENV === 'development' || sheet.config.debug) {
+							console.log('公式重建:', {
+								key: newKey,
+								oldFormula: currentFormula,
+								newFormula: newFormula,
+								formulaMapRefs: value,
+								cellRefs: cellRefs,
+							})
+						}
 
 						sheet.config.formulaed[newKey] = newFormula
 
@@ -997,10 +1000,16 @@ export const useTools = () => {
 				}
 			})
 
-			// 重新计算所有公式
+			// 重新计算所有公式（防止重复触发）
 			if (sheet.hooks.editHook && sheet.hooks.editHook.setFormulaValue) {
-				setTimeout(() => {
+				// 清除之前的计算任务，避免重复计算
+				if (sheet.state.formulaRecalcTimer) {
+					clearTimeout(sheet.state.formulaRecalcTimer)
+				}
+
+				sheet.state.formulaRecalcTimer = setTimeout(() => {
 					sheet.hooks.editHook.setFormulaValue()
+					sheet.state.formulaRecalcTimer = null
 				}, 0)
 			}
 		}

@@ -734,9 +734,11 @@ export const useEdit = () => {
 							// 如果值是公式（以=开头），说明这是一个公式单元格，应该跳过或返回0
 							// 避免循环引用和获取到公式字符串而不是计算值
 							if (typeof value === 'string' && value.startsWith('=')) {
-								console.log(
-									`警告: 单元格 ${cellRef} 包含公式 ${value}，返回0避免循环引用`
-								)
+								if (process.env.NODE_ENV === 'development' || sheet.config.debug) {
+									console.log(
+										`警告: 单元格 ${cellRef} 包含公式 ${value}，返回0避免循环引用`
+									)
+								}
 								return 0
 							}
 
@@ -744,10 +746,14 @@ export const useEdit = () => {
 							const numValue = Number(value)
 							const result = isNaN(numValue) ? 0 : numValue
 
-							console.log(`获取单元格值: ${cellRef} = ${value} -> ${result}`)
+							if (process.env.NODE_ENV === 'development' || sheet.config.debug) {
+								console.log(`获取单元格值: ${cellRef} = ${value} -> ${result}`)
+							}
 							return result
 						}
-						console.log(`单元格 ${cellRef} 不存在或为空，返回0`)
+						if (process.env.NODE_ENV === 'development' || sheet.config.debug) {
+							console.log(`单元格 ${cellRef} 不存在或为空，返回0`)
+						}
 						return 0
 					}
 
@@ -785,12 +791,15 @@ export const useEdit = () => {
 							result = formula
 					}
 
-					console.log(`公式计算: ${key} = ${formula}`, {
-						functionName,
-						paramsList,
-						values,
-						result,
-					})
+					// 调试信息（可通过环境变量控制）
+					if (process.env.NODE_ENV === 'development' || sheet.config.debug) {
+						console.log(`公式计算: ${key} = ${formula}`, {
+							functionName,
+							paramsList,
+							values,
+							result,
+						})
+					}
 
 					// 设置单元格显示值
 					if (sheet.celldata.has(rowIndex)) {
