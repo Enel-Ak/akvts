@@ -1293,6 +1293,9 @@ const validateCellReferences = (formula) => {
 const inputCache = new Map()
 const inputCacheCell = []
 let textareaHistory = ''
+
+// 跟踪正在编辑的单元格坐标
+let editingCellPosition = null
 const onInput = (e) => {
 	try {
 		// 边界情况检查
@@ -1302,8 +1305,15 @@ const onInput = (e) => {
 		}
 
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		console.log('onInput 开始 - 获取选区信息:', {
+			ranged,
+			isFormulaMode: sheet.state.formula,
+			rangedValue: sheet.hooks.selectionRangeHook.ranged.value,
+			inputValue: e.target.value,
+		})
+
 		if (!ranged || typeof ranged.r !== 'number' || typeof ranged.c !== 'number') {
-			console.warn('onInput: 无效的选区信息')
+			console.warn('onInput: 无效的选区信息', ranged)
 			return
 		}
 
@@ -1370,16 +1380,17 @@ const onInput = (e) => {
 			}
 		}
 
-		// 防抖处理公式计算和行高调整
+		// 防抖处理公式计算和行高调整（不包含协同同步）
 		useDebounce(
 			(row, col) => {
 				try {
-					emits('asyncInputCell', textareaHistory, inputValue, {
-						sheetId: sheet.original.sheetId,
+					console.log('onInput 处理（不同步）:', {
 						row,
 						col,
+						inputValue,
+						isFormulaMode: sheet.state.formula,
+						editingCellPosition,
 					})
-					textareaHistory = inputValue
 
 					// 只有在公式模式下或有公式配置时才重新计算公式
 					if (sheet.state.formula || Object.keys(sheet.config.formulaed).length > 0) {
@@ -1413,8 +1424,11 @@ const onTextareaFocus = (e) => {
 		const cellKey = `${r}-${c}`
 		const inputValue = sheet.hooks.editHook.inputValue
 
+		// 设置正在编辑的单元格坐标
+		editingCellPosition = {r, c}
+		console.log('textarea 获取焦点，设置编辑坐标:', {r, c, inputValue})
+
 		textareaHistory = inputValue
-		console.log('textarea 获取焦点，当前内容:', inputValue)
 
 		// 检查当前内容是否为公式，或者当前单元格是否已配置为公式
 		const hasFormulaConfig = !!sheet.config.formulaed[cellKey]
@@ -1513,6 +1527,41 @@ const onTextareaKeydown = (e) => {
 			} else if (e.key === 'Enter') {
 				// Enter键：确认公式并退出公式模式
 				try {
+					// 发送协同消息（回车键确认）
+					let finalRow, finalCol
+					if (editingCellPosition) {
+						finalRow = editingCellPosition.r
+						finalCol = editingCellPosition.c
+					} else {
+						finalRow = r
+						finalCol = c
+					}
+
+					if (inputValue !== textareaHistory) {
+						console.log('Enter键 发送协同消息:', {
+							finalRow,
+							finalCol,
+							inputValue,
+							textareaHistory,
+						})
+
+						emits('asyncInputCell', textareaHistory, inputValue, {
+							sheetId: sheet.original.sheetId,
+							r: finalRow,
+							c: finalCol,
+						})
+						textareaHistory = inputValue
+
+						// 同步配置更新
+						if (sheet.config.synergy) {
+							console.log('Enter键 同步配置更新')
+							emits('asyncConfig', {
+								formulaed: sheet.config.formulaed,
+								formulaMap: sheet.config.formulaMap,
+							})
+						}
+					}
+
 					if (inputValue && inputValue.startsWith('=')) {
 						if (isFormulaFormat(inputValue) && validateCellReferences(inputValue)) {
 							// 保存公式
@@ -1564,6 +1613,58 @@ const onTextareaKeydown = (e) => {
 
 const onInputBlur = () => {
 	try {
+		// 在失去焦点时发送最终的协同消息
+		const inputValue = sheet.hooks.editHook.inputValue
+
+		// 确定最终的编辑坐标
+		let finalRow, finalCol
+		if (editingCellPosition) {
+			finalRow = editingCellPosition.r
+			finalCol = editingCellPosition.c
+			console.log('onInputBlur 使用 editingCellPosition:', editingCellPosition)
+		} else {
+			const ranged = sheet.hooks.selectionRangeHook.getRanged()
+			if (ranged && typeof ranged.r === 'number' && typeof ranged.c === 'number') {
+				finalRow = ranged.r
+				finalCol = ranged.c
+				console.log('onInputBlur 使用当前选区:', {r: finalRow, c: finalCol})
+			} else {
+				console.warn('onInputBlur: 无法确定编辑坐标')
+				editingCellPosition = null
+				return
+			}
+		}
+
+		// 发送协同消息
+		if (inputValue !== textareaHistory) {
+			console.log('onInputBlur 发送协同消息:', {
+				finalRow,
+				finalCol,
+				inputValue,
+				textareaHistory,
+			})
+
+			emits('asyncInputCell', textareaHistory, inputValue, {
+				sheetId: sheet.original.sheetId,
+				r: finalRow,
+				c: finalCol,
+			})
+			textareaHistory = inputValue
+
+			// 同步配置更新
+			if (sheet.config.synergy) {
+				console.log('onInputBlur 同步配置更新')
+				emits('asyncConfig', {
+					formulaed: sheet.config.formulaed,
+					formulaMap: sheet.config.formulaMap,
+				})
+			}
+		}
+
+		// 清除正在编辑的单元格坐标
+		console.log('textarea 失去焦点，清除编辑坐标:', editingCellPosition)
+		editingCellPosition = null
+
 		// 边界情况检查
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
 		if (!ranged || typeof ranged.r !== 'number' || typeof ranged.c !== 'number') {
@@ -1572,7 +1673,6 @@ const onInputBlur = () => {
 		}
 
 		const {r, c} = ranged
-		const inputValue = sheet.hooks.editHook.inputValue
 
 		// 输入值安全检查
 		if (inputValue && typeof inputValue !== 'string') {

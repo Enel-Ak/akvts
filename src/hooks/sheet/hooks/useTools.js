@@ -3007,6 +3007,7 @@ export const useTools = () => {
 
 			refreshSheet,
 			parseCellRange,
+			asyncUpdateConfig,
 		}
 	}
 

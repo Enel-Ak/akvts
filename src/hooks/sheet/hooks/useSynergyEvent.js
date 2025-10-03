@@ -181,7 +181,14 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.CellDataChanged, async (res) => {
-		console.log('CellDataChanged', isCurrentSheet(res.sheetId))
+		console.log('CellDataChanged 接收到协同消息:', {
+			sheetId: res.sheetId,
+			row: res.row,
+			col: res.col,
+			value: res.value,
+			currentSheet: sheet.original.sheetId,
+			isCurrentSheet: isCurrentSheet(res.sheetId),
+		})
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}

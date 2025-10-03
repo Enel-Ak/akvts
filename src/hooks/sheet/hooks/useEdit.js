@@ -119,6 +119,27 @@ export const useEdit = () => {
 		originalFormulaState = null
 	}
 
+	// 获取正在编辑的单元格坐标
+	const getEditingCellPosition = () => {
+		console.log('getEditingCellPosition 调用:', {
+			hasOriginalState: !!originalFormulaState,
+			originalFormulaState: originalFormulaState
+				? {
+						cellKey: originalFormulaState.cellKey,
+						cell: originalFormulaState.cell,
+				  }
+				: null,
+		})
+
+		if (originalFormulaState && originalFormulaState.cell) {
+			return {
+				r: originalFormulaState.cell.r,
+				c: originalFormulaState.cell.c,
+			}
+		}
+		return null
+	}
+
 	const enterContainer = (e) => {
 		enter = true
 	}
@@ -1050,6 +1071,7 @@ export const useEdit = () => {
 			setRowHeight,
 			getCellValue,
 			setFormulaSelectionCell,
+			getEditingCellPosition,
 
 			inputCell,
 
