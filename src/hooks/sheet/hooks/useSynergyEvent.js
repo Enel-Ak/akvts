@@ -314,13 +314,226 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		sheetStore.removeOnlineUser(res.userId)
 	})
 
-	signalr.on(EventMap.OperationReverted, (res) => {
-		console.log('OperationReverted', res)
+	signalr.on(EventMap.OperationReverted, async (res) => {
+		console.log(
+			'OperationReverted 接收到撤销通知:',
+			{
+				sheetId: res.sheetId,
+				actionType: res.actionType,
+				rankType: res.rankType,
+				startIndex: res.startIndex,
+				count: res.count,
+				hasConfig: !!res.config,
+				hasCelldata: !!res.cellData,
+				currentSheet: sheet.original.sheetId,
+			},
+			res
+		)
+
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
+
 		// actionType: 0 插入, 1 删除
 		// RankType: 0 行, 1 列
+
+		try {
+			// 撤销插入操作 = 执行删除
+			if (res.actionType === 0) {
+				if (res.rankType === 0) {
+					// 撤销插入行 = 删除行
+					console.log('执行撤销插入行操作(删除行)', {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+					await sheet.hooks.toolsHook.removeRow(null, {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+				} else if (res.rankType === 1) {
+					// 撤销插入列 = 删除列
+					console.log('执行撤销插入列操作(删除列)', {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+					await sheet.hooks.toolsHook.removeColumn(null, {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+				}
+			}
+			// 撤销删除操作 = 执行插入
+			else if (res.actionType === 1) {
+				if (res.rankType === 0) {
+					// 撤销删除行 = 插入行
+					console.log('执行撤销删除行操作(插入行)', {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+					await sheet.hooks.toolsHook.addRow(null, false, true, {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+				} else if (res.rankType === 1) {
+					// 撤销删除列 = 插入列
+					console.log('执行撤销删除列操作(插入列)', {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+					await sheet.hooks.toolsHook.addColumn(null, false, true, {
+						startIndex: res.startIndex,
+						count: res.count,
+					})
+				}
+			}
+
+			// 处理配置恢复 (参考 EventClicked 事件处理器)
+			if (res.config) {
+				try {
+					const config = JSON.parse(res.config)
+					const configKeys = Object.keys(config)
+					console.log('OperationReverted 恢复配置:', configKeys)
+
+					configKeys.forEach((key) => {
+						sheet.config[key] = config[key]
+					})
+
+					// 如果包含公式配置,需要清除计算值并重新计算
+					if (configKeys.includes('formulaed')) {
+						const formulaedKeys = Object.keys(config.formulaed || {})
+						formulaedKeys.forEach((key) => {
+							const [r, c] = key.split('-').map(Number)
+							const formula = config.formulaed[key]
+							if (formula && formula.startsWith('=')) {
+								// 清除计算值，保留公式
+								if (
+									sheet.celldata.has(r) &&
+									sheet.celldata.get(r)[c] !== undefined
+								) {
+									sheet.celldata.get(r)[c] = formula
+								}
+							}
+						})
+
+						// 重新计算所有公式
+						setTimeout(() => {
+							sheet.hooks.editHook.setFormulaValue()
+						}, 0)
+					}
+
+					// 如果包含合并单元格配置,需要刷新合并状态
+					if (configKeys.includes('merged')) {
+						sheet.hooks.mergeHook.refreshMerge()
+						// 强制触发界面重新渲染
+						setTimeout(() => {
+							if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+								sheet.state.lastMergeUpdate = Date.now()
+							}
+						}, 0)
+					}
+
+					// 如果有任何配置更新，都可能影响公式计算
+					if (
+						configKeys.length > 0 &&
+						Object.keys(sheet.config.formulaed || {}).length > 0
+					) {
+						const formulaedKeys = Object.keys(sheet.config.formulaed || {})
+						formulaedKeys.forEach((key) => {
+							const [r, c] = key.split('-').map(Number)
+							const formula = sheet.config.formulaed[key]
+							if (formula && formula.startsWith('=')) {
+								if (
+									sheet.celldata.has(r) &&
+									sheet.celldata.get(r)[c] !== undefined
+								) {
+									sheet.celldata.get(r)[c] = formula
+								}
+							}
+						})
+
+						setTimeout(() => {
+							sheet.hooks.editHook.setFormulaValue()
+						}, 100)
+					}
+				} catch (error) {
+					console.error('OperationReverted 解析配置失败:', error)
+				}
+			}
+
+			// 处理单元格数据恢复 (参考 CellDataChanged 事件处理器)
+			if (res.cellData && Array.isArray(res.cellData)) {
+				try {
+					console.log(
+						'OperationReverted 恢复单元格数据:',
+						res.cellData.length,
+						'个单元格'
+					)
+
+					// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
+					res.cellData.forEach(([row, col, value]) => {
+						// 更新 DOM 元素
+						const cellEl = document
+							.querySelector(`#${sheet.containerId}`)
+							?.querySelector(`[data-cell="${row}-${col}"]`)
+
+						if (cellEl) {
+							cellEl.innerText = value || ''
+						}
+
+						// 更新数据模型
+						if (!sheet.celldata.get(row)) {
+							sheet.celldata.set(row, [])
+						}
+
+						// 使用 setTimeout 确保在正确的时机更新
+						setTimeout(() => {
+							// 使用 editHook 的方法来正确设置单元格值和行高
+							sheet.hooks.editHook.setCellValue(row, col, value)
+							sheet.hooks.editHook.setRowHeight(row, col, false)
+
+							// 检查是否有公式引用了这个单元格
+							let needsFormulaRecalculation = false
+
+							// 遍历所有公式的引用映射
+							Object.keys(sheet.config.formulaMap || {}).forEach((formulaKey) => {
+								const references = sheet.config.formulaMap[formulaKey] || []
+								const isReferenced = references.some(
+									(ref) => ref.r === row && ref.c === col
+								)
+
+								if (isReferenced) {
+									needsFormulaRecalculation = true
+									// 清除引用这个单元格的公式的计算值
+									const [formulaRow, formulaCol] = formulaKey
+										.split('-')
+										.map(Number)
+									const formula = sheet.config.formulaed[formulaKey]
+									if (formula && formula.startsWith('=')) {
+										if (
+											sheet.celldata.has(formulaRow) &&
+											sheet.celldata.get(formulaRow)[formulaCol] !== undefined
+										) {
+											sheet.celldata.get(formulaRow)[formulaCol] = formula
+										}
+									}
+								}
+							})
+
+							// 如果有公式引用了这个单元格，触发重新计算
+							if (needsFormulaRecalculation) {
+								setTimeout(() => {
+									sheet.hooks.editHook.setFormulaValue()
+								}, 50)
+							}
+						}, 120)
+					})
+				} catch (error) {
+					console.error('OperationReverted 恢复单元格数据失败:', error)
+				}
+			}
+		} catch (error) {
+			console.error('处理撤销操作失败:', error)
+		}
 	})
 }
 

@@ -147,6 +147,9 @@ export const useHistory = () => {
 				// 撤销单元格修改
 				if (state.celldata.size > 0) {
 					try {
+						// 收集需要同步的单元格变化
+						const cellChanges = []
+
 						await useProcessMapInBatches(
 							sheet.id,
 							state.celldata,
@@ -156,9 +159,26 @@ export const useHistory = () => {
 								}
 
 								const [r, c] = rowIndex.split('-').map(Number)
+
+								// 保存撤销前的值(当前值)用于协同通知
+								const beforeValue = sheet.celldata.get(r)?.[c] || ''
+								const afterValue = rowData
+
+								// 更新单元格数据
 								if (sheet.celldata.get(r)) {
 									sheet.celldata.get(r)[c] = rowData
 								}
+
+								// 收集变化用于协同通知
+								if (sheet.config.synergy) {
+									cellChanges.push({
+										r,
+										c,
+										before: beforeValue,
+										after: afterValue,
+									})
+								}
+
 								const merged = sheet.hooks.mergeHook.findMergedCell(r, c)
 								if (merged) {
 									sheet.hooks.selectionRangeHook.setRange(
@@ -173,6 +193,20 @@ export const useHistory = () => {
 								}
 							}
 						)
+
+						// 协同通知:单元格修改撤销
+						if (sheet.config.synergy && cellChanges.length > 0) {
+							cellChanges.forEach((change) => {
+								sheet.hooks.synergyHook.changeCell({
+									sheetId: sheet?.original?.sheetId || sheet.id,
+									row: change.r,
+									col: change.c,
+									before: change.before,
+									after: change.after,
+								})
+							})
+						}
+
 						state.celldata.clear()
 					} catch (error) {
 						console.error('撤销单元格修改失败:', error)
@@ -261,6 +295,13 @@ export const useHistory = () => {
 							await sheet.hooks.toolsHook.filterByCheckedSilent(currentFiltered)
 						}
 
+						// 协同通知:撤销添加列
+						if (sheet.config.synergy) {
+							sheet.hooks.synergyHook.undoRowColumn(
+								sheet?.original?.sheetId || sheet.id
+							)
+						}
+
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)
@@ -268,7 +309,7 @@ export const useHistory = () => {
 				}
 
 				// 撤销删除行
-				if (state.removeRow) {
+				if (state.removeRow && state.removeRow.size > 0) {
 					// 创建新的数据结构
 					try {
 						state.removeRow.forEach((value, key) => {
@@ -300,6 +341,13 @@ export const useHistory = () => {
 						// 优化：撤销删除行后清理缓存，提高后续操作性能
 						if (sheet.hooks?.selectionRangeHook?.clearCache) {
 							sheet.hooks.selectionRangeHook.clearCache()
+						}
+
+						// 协同通知:撤销删除行
+						if (sheet.config.synergy) {
+							sheet.hooks.synergyHook.undoRowColumn(
+								sheet?.original?.sheetId || sheet.id
+							)
 						}
 					} catch (error) {
 						console.error('撤销删除行失败:', error)
@@ -373,6 +421,13 @@ export const useHistory = () => {
 						if (sheet.hooks?.selectionRangeHook?.clearCache) {
 							sheet.hooks.selectionRangeHook.clearCache()
 						}
+
+						// 协同通知:撤销删除列
+						if (sheet.config.synergy) {
+							sheet.hooks.synergyHook.undoRowColumn(
+								sheet?.original?.sheetId || sheet.id
+							)
+						}
 					} catch (error) {
 						console.error('撤销删除列失败:', error)
 					}
@@ -383,6 +438,11 @@ export const useHistory = () => {
 					sheet.hooks.mergeHook.setMergeCells(
 						new Map(Object.entries(state.config.merged))
 					)
+				}
+
+				// 协同通知:同步配置更新
+				if (sheet.config.synergy) {
+					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 				}
 
 				sheet.history.delete(count)
