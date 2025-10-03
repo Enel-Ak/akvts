@@ -464,50 +464,538 @@ export const useTools = () => {
 		setCellStyles('st', true)
 	}
 
+	// 本地的列转换函数
+	const convertTitle = (input) => {
+		// 如果输入是数字，转换为字母
+		if (typeof input === 'number') {
+			if (input < 0) return ''
+
+			let title = ''
+			let n = input
+
+			// 转换算法
+			while (n >= 0) {
+				// 获取当前位的字母 (A-Z)
+				title = String.fromCharCode(65 + (n % 26)) + title
+				// 计算下一位
+				n = Math.floor(n / 26) - 1
+			}
+
+			return title
+		}
+		// 如果输入是字母，转换为数字
+		else if (typeof input === 'string') {
+			const str = input.toUpperCase()
+			let result = 0
+
+			// 遍历字符串中的每个字符
+			for (let i = 0; i < str.length; i++) {
+				// 获取当前字符的ASCII码并转换为0-25的数字
+				const charCode = str.charCodeAt(i) - 65
+
+				// 累加结果：每个位置的字母值乘以26的幂
+				result = result * 26 + charCode + 1
+			}
+
+			// 因为Excel列是从1开始的，但我们的索引是从0开始的，所以减1
+			return result - 1
+		}
+
+		// 如果输入既不是数字也不是字符串，返回空字符串
+		return ''
+	}
+
+	// 更新公式中的单元格引用
+	const updateCellReferencesInFormula = (formula, insertRow, insertCol, count) => {
+		const isDelete = count < 0
+		const absCount = Math.abs(count)
+
+		// 匹配单元格引用的正则表达式，如 A1, B2, C10 等
+		const cellRefRegex = /([A-Z]+)(\d+)/g
+
+		return formula.replace(cellRefRegex, (match, colStr, rowStr) => {
+			const col = convertTitle(colStr)
+			const row = parseInt(rowStr) - 1 // 转为0基索引
+
+			let newRow = row
+			let newCol = col
+			let isInvalidRef = false
+
+			if (insertRow !== null) {
+				if (isDelete) {
+					// 删除行操作
+					if (row >= insertRow && row < insertRow + absCount) {
+						// 引用的行被删除了，标记为无效引用
+						isInvalidRef = true
+					} else if (row >= insertRow + absCount) {
+						// 引用的行在被删除范围之后，向前移动
+						newRow = row - absCount
+					}
+				} else {
+					// 添加行操作
+					if (row >= insertRow) {
+						newRow = row + count
+					}
+				}
+			}
+
+			if (insertCol !== null) {
+				if (isDelete) {
+					// 删除列操作
+					if (col >= insertCol && col < insertCol + absCount) {
+						// 引用的列被删除了，标记为无效引用
+						isInvalidRef = true
+					} else if (col >= insertCol + absCount) {
+						// 引用的列在被删除范围之后，向前移动
+						newCol = col - absCount
+					}
+				} else {
+					// 添加列操作
+					if (col >= insertCol) {
+						newCol = col + count
+					}
+				}
+			}
+
+			// 如果引用无效，返回错误标记
+			if (isInvalidRef) {
+				return '#REF!'
+			}
+
+			// 如果位置发生了变化，返回新的引用
+			if (newRow !== row || newCol !== col) {
+				const newColStr = convertTitle(newCol)
+				const newRowStr = (newRow + 1).toString() // 转为1基索引
+				return newColStr + newRowStr
+			}
+
+			return match // 位置没有变化，返回原引用
+		})
+	}
+
 	const asyncUpdateConfig = (count = 0, row = null, col = null, callback = null) => {
+		const isDelete = count < 0
+		const absCount = Math.abs(count)
+
+		// 处理行列格式的配置对象
 		const loops = (obj) => {
+			const keysToUpdate = []
+			const keysToDelete = []
+
 			Object.keys(obj).forEach((key) => {
 				const [r, c] = key.split('-').map(Number)
+				let shouldDelete = false
 				let curRow = r
 				let curCol = c
 
-				if (row !== null && r >= row) {
-					curRow = r + count
+				if (row !== null) {
+					if (isDelete) {
+						// 删除操作：检查是否在被删除的范围内
+						if (r >= row && r < row + absCount) {
+							shouldDelete = true
+						} else if (r >= row + absCount) {
+							// 在被删除范围之后的行，向前移动
+							curRow = r - absCount
+						}
+					} else {
+						// 添加操作：在插入位置之后的行向后移动
+						if (r >= row) {
+							curRow = r + count
+						}
+					}
 				}
 
-				if (col !== null && c >= col) {
-					curCol = c + count
+				if (col !== null) {
+					if (isDelete) {
+						// 删除操作：检查是否在被删除的范围内
+						if (c >= col && c < col + absCount) {
+							shouldDelete = true
+						} else if (c >= col + absCount) {
+							// 在被删除范围之后的列，向前移动
+							curCol = c - absCount
+						}
+					} else {
+						// 添加操作：在插入位置之后的列向后移动
+						if (c >= col) {
+							curCol = c + count
+						}
+					}
 				}
 
-				// 只有当位置发生变化时才进行移动操作
-				if (curRow !== r || curCol !== c) {
-					obj[`${curRow}-${curCol}`] = obj[key]
-					delete obj[key]
-					callback && callback(r, c, curRow, curCol)
+				if (shouldDelete) {
+					keysToDelete.push(key)
+				} else if (curRow !== r || curCol !== c) {
+					keysToUpdate.push({
+						oldKey: key,
+						newKey: `${curRow}-${curCol}`,
+						oldRow: r,
+						oldCol: c,
+						newRow: curRow,
+						newCol: curCol,
+						value: obj[key],
+					})
 				}
+			})
+
+			// 删除需要删除的键
+			keysToDelete.forEach((key) => {
+				delete obj[key]
+			})
+
+			// 批量更新位置变化的键
+			keysToUpdate.forEach(({oldKey, newKey, oldRow, oldCol, newRow, newCol, value}) => {
+				obj[newKey] = value
+				delete obj[oldKey]
+				callback && callback(oldRow, oldCol, newRow, newCol)
 			})
 		}
 
+		// 处理所有行列格式的配置对象
+		loops(sheet.config.merged)
 		loops(sheet.config.locked)
 		loops(sheet.config.styled)
 		loops(sheet.config.formulaed)
-		loops(sheet.config.formulaMap)
+		// formulaMap 需要特殊处理，不能使用通用的 loops 函数
 
+		// 处理 rResize（行调整大小）
 		if (row !== null) {
+			const rResizeUpdates = []
 			Object.keys(sheet.config.rResize).forEach((r) => {
-				if (Number(r) >= row) {
-					sheet.config.rResize[Number(r) + count] = sheet.config.rResize[r]
-					delete sheet.config.rResize[r]
+				const rowNum = Number(r)
+				if (isDelete) {
+					// 删除操作
+					if (rowNum >= row && rowNum < row + absCount) {
+						// 在被删除范围内，直接删除
+						delete sheet.config.rResize[r]
+					} else if (rowNum >= row + absCount) {
+						// 在被删除范围之后，向前移动
+						rResizeUpdates.push({
+							oldKey: r,
+							newKey: rowNum - absCount,
+							value: sheet.config.rResize[r],
+						})
+					}
+				} else {
+					// 添加操作
+					if (rowNum >= row) {
+						rResizeUpdates.push({
+							oldKey: r,
+							newKey: rowNum + count,
+							value: sheet.config.rResize[r],
+						})
+					}
+				}
+			})
+
+			rResizeUpdates.forEach(({oldKey, newKey, value}) => {
+				sheet.config.rResize[newKey] = value
+				delete sheet.config.rResize[oldKey]
+			})
+		}
+
+		// 处理 cResize（列调整大小）
+		if (col !== null) {
+			const cResizeUpdates = []
+			Object.keys(sheet.config.cResize).forEach((c) => {
+				const colNum = Number(c)
+				if (isDelete) {
+					// 删除操作
+					if (colNum >= col && colNum < col + absCount) {
+						// 在被删除范围内，直接删除
+						delete sheet.config.cResize[c]
+					} else if (colNum >= col + absCount) {
+						// 在被删除范围之后，向前移动
+						cResizeUpdates.push({
+							oldKey: c,
+							newKey: colNum - absCount,
+							value: sheet.config.cResize[c],
+						})
+					}
+				} else {
+					// 添加操作
+					if (colNum >= col) {
+						cResizeUpdates.push({
+							oldKey: c,
+							newKey: colNum + count,
+							value: sheet.config.cResize[c],
+						})
+					}
+				}
+			})
+
+			cResizeUpdates.forEach(({oldKey, newKey, value}) => {
+				sheet.config.cResize[newKey] = value
+				delete sheet.config.cResize[oldKey]
+			})
+		}
+
+		// 处理合并单元格的 mergedCells Map
+		const mergeHook = sheet.hooks.mergeHook
+		if (mergeHook && mergeHook.getMergedCells && mergeHook.setMergeCells) {
+			const mergedCells = mergeHook.getMergedCells()
+			const newMergedCells = new Map()
+
+			Object.keys(mergedCells).forEach((key) => {
+				const [r, c] = key.split('-').map(Number)
+				let shouldDelete = false
+				let curRow = r
+				let curCol = c
+
+				if (row !== null) {
+					if (isDelete) {
+						if (r >= row && r < row + absCount) {
+							shouldDelete = true
+						} else if (r >= row + absCount) {
+							curRow = r - absCount
+						}
+					} else {
+						if (r >= row) {
+							curRow = r + count
+						}
+					}
+				}
+
+				if (col !== null) {
+					if (isDelete) {
+						if (c >= col && c < col + absCount) {
+							shouldDelete = true
+						} else if (c >= col + absCount) {
+							curCol = c - absCount
+						}
+					} else {
+						if (c >= col) {
+							curCol = c + count
+						}
+					}
+				}
+
+				if (!shouldDelete) {
+					const newKey = `${curRow}-${curCol}`
+					newMergedCells.set(newKey, mergedCells[key])
+				}
+			})
+
+			mergeHook.setMergeCells(newMergedCells)
+		}
+
+		// 处理 formulaMap（公式引用映射）- 需要特殊处理
+		const formulaMapKeys = Object.keys(sheet.config.formulaMap)
+		if (formulaMapKeys.length > 0) {
+			const formulaMapUpdates = []
+			const formulaMapDeletes = []
+
+			formulaMapKeys.forEach((key) => {
+				const [r, c] = key.split('-').map(Number)
+				let shouldDelete = false
+				let curRow = r
+				let curCol = c
+
+				// 处理行操作 - 更新公式单元格的位置
+				if (row !== null) {
+					if (isDelete) {
+						if (r >= row && r < row + absCount) {
+							shouldDelete = true
+						} else if (r >= row + absCount) {
+							curRow = r - absCount
+						}
+					} else {
+						if (r >= row) {
+							curRow = r + count
+						}
+					}
+				}
+
+				// 处理列操作 - 更新公式单元格的位置
+				if (col !== null) {
+					if (isDelete) {
+						if (c >= col && c < col + absCount) {
+							shouldDelete = true
+						} else if (c >= col + absCount) {
+							curCol = c - absCount
+						}
+					} else {
+						if (c >= col) {
+							curCol = c + count
+						}
+					}
+				}
+
+				if (shouldDelete) {
+					formulaMapDeletes.push(key)
+				} else {
+					// 更新公式单元格的位置键
+					const newKey = `${curRow}-${curCol}`
+
+					// 更新公式引用的单元格位置
+					const updatedReferences = sheet.config.formulaMap[key]
+						.map((ref) => {
+							let newRefRow = ref.r
+							let newRefCol = ref.c
+							let isRefDeleted = false
+
+							// 处理行操作对引用单元格的影响
+							if (row !== null) {
+								if (isDelete) {
+									if (ref.r >= row && ref.r < row + absCount) {
+										// 被引用的单元格被删除了
+										isRefDeleted = true
+									} else if (ref.r >= row + absCount) {
+										newRefRow = ref.r - absCount
+									}
+								} else {
+									if (ref.r >= row) {
+										newRefRow = ref.r + count
+									}
+								}
+							}
+
+							// 处理列操作对引用单元格的影响
+							if (col !== null) {
+								if (isDelete) {
+									if (ref.c >= col && ref.c < col + absCount) {
+										// 被引用的单元格被删除了
+										isRefDeleted = true
+									} else if (ref.c >= col + absCount) {
+										newRefCol = ref.c - absCount
+									}
+								} else {
+									if (ref.c >= col) {
+										newRefCol = ref.c + count
+									}
+								}
+							}
+
+							// 如果引用的单元格被删除，返回null，稍后过滤掉
+							if (isRefDeleted) {
+								return null
+							}
+
+							// 更新引用的range信息
+							const updatedRange = {
+								...ref.range,
+								start: {row: newRefRow, col: newRefCol},
+								end: {row: newRefRow, col: newRefCol},
+							}
+
+							return {
+								r: newRefRow,
+								c: newRefCol,
+								range: updatedRange,
+							}
+						})
+						.filter((ref) => ref !== null) // 过滤掉被删除的引用
+
+					formulaMapUpdates.push({
+						oldKey: key,
+						newKey: newKey,
+						value: updatedReferences,
+					})
+				}
+			})
+
+			// 批量删除和更新
+			formulaMapDeletes.forEach((key) => {
+				delete sheet.config.formulaMap[key]
+				// 同时删除对应的公式
+				delete sheet.config.formulaed[key]
+			})
+
+			formulaMapUpdates.forEach(({oldKey, newKey, value}) => {
+				sheet.config.formulaMap[newKey] = value
+
+				// 如果公式单元格位置发生了变化，需要更新 formulaed
+				if (oldKey !== newKey) {
+					// 移动公式到新位置
+					if (sheet.config.formulaed[oldKey]) {
+						sheet.config.formulaed[newKey] = sheet.config.formulaed[oldKey]
+						delete sheet.config.formulaed[oldKey]
+					}
+					delete sheet.config.formulaMap[oldKey]
+				}
+
+				// 根据更新后的 formulaMap 重建公式字符串
+				if (value.length > 0 && sheet.config.formulaed[newKey]) {
+					const currentFormula = sheet.config.formulaed[newKey]
+					// 提取公式函数名（如 SUM, AVERAGE 等）
+					const formulaMatch = currentFormula.match(/^=([A-Z]+)\(/)
+					if (formulaMatch) {
+						const functionName = formulaMatch[1]
+						// 根据 formulaMap 重建参数列表
+						const cellRefs = value.map((ref) => {
+							const colStr = convertTitle(ref.c)
+							const rowStr = (ref.r + 1).toString()
+							return colStr + rowStr
+						})
+						// 重建公式
+						const newFormula = `=${functionName}(${cellRefs.join(',')})`
+						sheet.config.formulaed[newKey] = newFormula
+
+						// 同时更新 celldata 中的公式
+						const [r, c] = newKey.split('-').map(Number)
+						if (sheet.celldata.has(r)) {
+							if (!sheet.celldata.get(r)) {
+								sheet.celldata.set(r, [])
+							}
+							sheet.celldata.get(r)[c] = newFormula
+						}
+					}
 				}
 			})
 		}
 
-		if (col !== null) {
-			Object.keys(sheet.config.cResize).forEach((c) => {
-				if (Number(c) >= col) {
-					sheet.config.cResize[Number(c) + count] = sheet.config.cResize[c]
-					delete sheet.config.cResize[c]
+		// 处理公式单元格的引用更新和计算值清除
+		const formulaedKeys = Object.keys(sheet.config.formulaed)
+		if (formulaedKeys.length > 0) {
+			// 更新公式中的单元格引用
+			formulaedKeys.forEach((key) => {
+				const formula = sheet.config.formulaed[key]
+				if (formula && formula.startsWith('=')) {
+					const updatedFormula = updateCellReferencesInFormula(formula, row, col, count)
+					if (updatedFormula !== formula) {
+						sheet.config.formulaed[key] = updatedFormula
+						// 同时更新 celldata 中的公式
+						const [r, c] = key.split('-').map(Number)
+						if (sheet.celldata.has(r)) {
+							if (!sheet.celldata.get(r)) {
+								sheet.celldata.set(r, [])
+							}
+							sheet.celldata.get(r)[c] = updatedFormula
+						}
+					}
 				}
+			})
+
+			// 清除所有公式单元格的计算值，保留公式
+			formulaedKeys.forEach((key) => {
+				const [r, c] = key.split('-').map(Number)
+				if (sheet.celldata.has(r) && sheet.celldata.get(r)[c] !== undefined) {
+					const formula = sheet.config.formulaed[key]
+					if (formula && formula.startsWith('=')) {
+						sheet.celldata.get(r)[c] = formula
+					}
+				}
+			})
+
+			// 重新计算所有公式
+			if (sheet.hooks.editHook && sheet.hooks.editHook.setFormulaValue) {
+				setTimeout(() => {
+					sheet.hooks.editHook.setFormulaValue()
+				}, 0)
+			}
+		}
+
+		// 协同功能支持 - 使用 nextTick 确保所有本地状态更新完成后再发送协同消息
+		if (sheet.config.synergy) {
+			nextTick(() => {
+				sheet?.emits('asyncConfig', {
+					merged: sheet.config.merged,
+					locked: sheet.config.locked,
+					styled: sheet.config.styled,
+					formulaed: sheet.config.formulaed,
+					formulaMap: sheet.config.formulaMap,
+					rResize: sheet.config.rResize,
+					cResize: sheet.config.cResize,
+				})
 			})
 		}
 	}
@@ -543,9 +1031,6 @@ export const useTools = () => {
 				insertRowIndex = rr + 1
 			}
 		}
-
-		// 处理样式和其他配置
-		asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
 
 		// 检查是否可以在选中区域添加行
 		// 只有在锁定单元格的具体行位置插入才禁止，在上方插入允许（锁定单元格会下移）
@@ -593,30 +1078,14 @@ export const useTools = () => {
 				sheet.celldata.set(i, [])
 			}
 
-			// 处理合并单元格（筛选状态下不需要移动合并单元格）
-			if (!isFiltered) {
-				const mergedCells = sheet.hooks.mergeHook.getMergedCells()
-				const newMergedCells = new Map()
-
-				for (const [key, value] of Object.entries(mergedCells)) {
-					const [row, col] = key.split('-').map(Number)
-					if (row >= insertRowIndex) {
-						// 如果合并单元格在插入行之后，向下移动一行
-						newMergedCells.set(`${row + addRowCount.value}-${col}`, value)
-					} else {
-						newMergedCells.set(key, value)
-					}
-				}
-
-				// 更新合并单元格
-				sheet.hooks.mergeHook.setMergeCells(newMergedCells)
-			}
-
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
-			// 更新锁定单元格位置（在插入位置之后的锁定单元格需要向下移动）
-			// updateLockedCellsAfterAddRow(insertRowIndex, addRowCount.value)
+			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
+			// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
+			if (!isFiltered) {
+				asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
+			}
 
 			// 如果当前处于筛选状态，重新筛选以包含新行
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
@@ -726,46 +1195,8 @@ export const useTools = () => {
 			// 保存历史
 			sheet.hooks.historyHook.save(deletedRows, 'removeRow')
 
-			// 更新合并单元格的位置
-			const mc = sheet.hooks.mergeHook.getMergedCells()
-			const nmc = new Map()
-			Object.keys(mc).forEach((key) => {
-				const [row, col] = key.split('-').map(Number)
-				const {rs, cs} = mc[key]
-
-				if (row < r) {
-					// 在删除行之前的合并单元格
-					if (row + rs > r) {
-						// 如果合并单元格跨越了删除范围，需要减少 rowspan
-						const overlap = Math.min(rr - r + 1, row + rs - r)
-						nmc.set(key, {
-							rs: rs - overlap,
-							cs,
-						})
-					} else {
-						// 合并单元格完全在删除范围之前，保持不变
-						nmc.set(key, mc[key])
-					}
-				} else if (row > rr) {
-					// 在删除行之后的合并单元格需要更新行号
-					nmc.set(`${row - deleteCount}-${col}`, {
-						rs,
-						cs,
-					})
-				}
-				// 如果合并单元格的起始位置在删除范围内，则不添加到新的 Map 中（相当于删除）
-			})
-			sheet.hooks.mergeHook.setMergeCells(nmc)
-
-			// 删除行相关的cellstyle
-			for (let i = r; i <= rr; i++) {
-				Object.keys(sheet.config.styled).forEach((key) => {
-					const [row] = key.split('-').map(Number)
-					if (row === i) {
-						delete sheet.config.styled[key]
-					}
-				})
-			}
+			// 使用 asyncUpdateConfig 统一处理所有配置更新（删除操作）
+			asyncUpdateConfig(-deleteCount, r, null)
 
 			// 更新sheet.celldata
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
@@ -862,28 +1293,8 @@ export const useTools = () => {
 
 			sheet.config.colCount += addColumnCount.value
 
-			// 更新锁定单元格位置（在插入位置之后的锁定单元格需要向右移动）
-			updateLockedCellsAfterAddColumn(insertColIndex, addColumnCount.value)
-
-			// 更新合并单元格
-			const mc = sheet.hooks.mergeHook.getMergedCells()
-			const nmc = new Map()
-			Object.keys(mc).forEach((key) => {
-				const [r, c] = key.split('-').map(Number)
-				const {rs, cs} = mc[key]
-
-				if (c < insertColIndex) {
-					// 在插入列之前的合并单元格保持不变
-					nmc.set(key, mc[key])
-				} else {
-					// 在插入列之后的合并单元格需要更新列号
-					nmc.set(`${r}-${c + addColumnCount.value}`, {
-						rs,
-						cs,
-					})
-				}
-			})
-			sheet.hooks.mergeHook.setMergeCells(nmc)
+			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
+			asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
 
 			// 如果当前处于筛选状态，需要更新筛选数据
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
@@ -1018,45 +1429,8 @@ export const useTools = () => {
 				}
 			}, 0)
 
-			// 更新合并单元格的位置
-			const mc = sheet.hooks.mergeHook.getMergedCells()
-			const nmc = new Map()
-			Object.keys(mc).forEach((key) => {
-				const [row, col] = key.split('-').map(Number)
-				const {rs, cs} = mc[key]
-
-				if (col < c) {
-					// 在删除列之前的合并单元格
-					if (col + cs > c) {
-						// 如果合并单元格跨越了删除范围，需要减少 rowspan
-						const overlap = Math.min(cc - c + 1, col + cs - c)
-						nmc.set(key, {
-							rs,
-							cs: cs - overlap,
-						})
-					} else {
-						// 合并单元格完全在删除范围之前，保持不变
-						nmc.set(key, mc[key])
-					}
-				} else if (col > cc) {
-					// 在删除列之后的合并单元格需要更新行号
-					nmc.set(`${row}-${col - deleteCount}`, {
-						rs,
-						cs,
-					})
-				}
-			})
-			sheet.hooks.mergeHook.setMergeCells(nmc)
-
-			// 删除列相关的cellstyle
-			for (let i = c; i <= cc; i++) {
-				Object.keys(sheet.config.styled).forEach((key) => {
-					const [_, col] = key.split('-').map(Number)
-					if (col === i) {
-						delete sheet.config.styled[key]
-					}
-				})
-			}
+			// 使用 asyncUpdateConfig 统一处理所有配置更新（删除列操作）
+			asyncUpdateConfig(-deleteCount, null, c)
 
 			// 更新sheet.celldata和其他相关操作
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)

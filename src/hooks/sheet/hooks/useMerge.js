@@ -28,6 +28,14 @@ export const useMerge = () => {
 				// 相同位置且相同大小，则取消合并
 				mergedCells.delete(currentKey)
 				sheet.config.merged = getMergedCells()
+
+				// 取消合并后，需要确保被合并单元格的内容能够正确显示
+				// 强制触发界面重新渲染
+				if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+					setTimeout(() => {
+						sheet.state.lastMergeUpdate = Date.now()
+					}, 0)
+				}
 				return
 			} else {
 				// 相同位置但大小不同，删除旧合并
@@ -85,6 +93,14 @@ export const useMerge = () => {
 		}
 
 		sheet.config.merged = getMergedCells()
+
+		// 批量设置合并单元格后，强制触发界面重新渲染
+		// 这对于协同同步时的界面更新非常重要
+		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+			setTimeout(() => {
+				sheet.state.lastMergeUpdate = Date.now()
+			}, 0)
+		}
 	}
 
 	// 获取单元格样式
@@ -198,6 +214,14 @@ export const useMerge = () => {
 		}
 		if (Object.values(merged).length === 0) {
 			mergedCells.clear()
+		}
+
+		// 刷新合并单元格后，强制触发界面重新渲染
+		// 这对于协同同步时的界面更新非常重要
+		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+			setTimeout(() => {
+				sheet.state.lastMergeUpdate = Date.now()
+			}, 0)
 		}
 	}
 

@@ -113,11 +113,56 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			})
 
 			if (configKeys.includes('formulaed')) {
-				sheet.hooks.editHook.setFormulaValue()
+				// 协同同步时，需要清除所有公式单元格的计算值，然后重新计算
+				const formulaedKeys = Object.keys(config.formulaed || {})
+				formulaedKeys.forEach((key) => {
+					const [r, c] = key.split('-').map(Number)
+					const formula = config.formulaed[key]
+					if (formula && formula.startsWith('=')) {
+						// 清除计算值，保留公式
+						if (sheet.celldata.has(r) && sheet.celldata.get(r)[c] !== undefined) {
+							sheet.celldata.get(r)[c] = formula
+						}
+					}
+				})
+
+				// 确保公式配置更新后重新计算所有公式
+				setTimeout(() => {
+					sheet.hooks.editHook.setFormulaValue()
+				}, 0)
 			}
 
 			if (configKeys.includes('merged')) {
 				sheet.hooks.mergeHook.refreshMerge()
+				// 强制触发界面重新渲染，确保合并单元格状态变化立即生效
+				setTimeout(() => {
+					// 触发重新渲染以更新合并单元格的显示状态
+					if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+						// 通过更新一个无关紧要的状态来触发重新渲染
+						sheet.state.lastMergeUpdate = Date.now()
+					}
+				}, 0)
+			}
+
+			// 如果有任何配置更新，都可能影响公式计算，需要重新计算公式
+			// 特别是在行列操作后，公式引用可能已经更新，需要重新计算值
+			if (configKeys.length > 0 && Object.keys(sheet.config.formulaed || {}).length > 0) {
+				// 清除所有公式单元格的计算值，确保重新计算
+				const formulaedKeys = Object.keys(sheet.config.formulaed || {})
+				formulaedKeys.forEach((key) => {
+					const [r, c] = key.split('-').map(Number)
+					const formula = sheet.config.formulaed[key]
+					if (formula && formula.startsWith('=')) {
+						// 清除计算值，保留公式
+						if (sheet.celldata.has(r) && sheet.celldata.get(r)[c] !== undefined) {
+							sheet.celldata.get(r)[c] = formula
+						}
+					}
+				})
+
+				setTimeout(() => {
+					sheet.hooks.editHook.setFormulaValue()
+				}, 100) // 增加延迟，确保所有配置和数据都已更新
 			}
 
 			if (
@@ -156,6 +201,39 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		setTimeout(() => {
 			sheet.hooks.editHook.setCellValue(res.row, res.col, res.value)
 			sheet.hooks.editHook.setRowHeight(res.row, res.col, false)
+
+			// 检查这个单元格是否被其他公式引用，如果是，需要重新计算那些公式
+			let needsFormulaRecalculation = false
+
+			// 遍历所有公式的引用映射，查找是否有公式引用了这个单元格
+			Object.keys(sheet.config.formulaMap || {}).forEach((formulaKey) => {
+				const references = sheet.config.formulaMap[formulaKey] || []
+				const isReferenced = references.some(
+					(ref) => ref.r === res.row && ref.c === res.col
+				)
+
+				if (isReferenced) {
+					needsFormulaRecalculation = true
+					// 清除引用这个单元格的公式的计算值
+					const [formulaRow, formulaCol] = formulaKey.split('-').map(Number)
+					const formula = sheet.config.formulaed[formulaKey]
+					if (formula && formula.startsWith('=')) {
+						if (
+							sheet.celldata.has(formulaRow) &&
+							sheet.celldata.get(formulaRow)[formulaCol] !== undefined
+						) {
+							sheet.celldata.get(formulaRow)[formulaCol] = formula
+						}
+					}
+				}
+			})
+
+			// 如果有公式引用了这个单元格，触发重新计算
+			if (needsFormulaRecalculation) {
+				setTimeout(() => {
+					sheet.hooks.editHook.setFormulaValue()
+				}, 50)
+			}
 		}, 120)
 	})
 

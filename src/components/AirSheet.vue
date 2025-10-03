@@ -306,8 +306,6 @@ const initialData = (data = []) => {
 		celldata = data
 	}
 
-	console.log(444, celldata)
-
 	const total = celldata.length || sheet.config.rowCount
 
 	let processed = 0
@@ -2102,9 +2100,21 @@ watch(
 watch(
 	() => props.modelValue?.celldata,
 	(newVal) => {
-		console.log('newCelldata', newVal)
-
 		initialData(newVal)
+	}
+)
+
+// 监听合并单元格状态变化，确保界面及时更新
+watch(
+	() => sheet.state?.lastMergeUpdate,
+	() => {
+		// 当合并单元格状态发生变化时，强制重新渲染
+		if (sheet.state?.lastMergeUpdate) {
+			nextTick(() => {
+				// 触发重新计算可见区域和单元格渲染
+				updateVisibleRange()
+			})
+		}
 	}
 )
 
