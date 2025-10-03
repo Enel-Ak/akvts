@@ -1,5 +1,4 @@
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
-import {useDebounce} from '@/hooks'
 
 const EventMap = {
 	EventClicked: 'OnEventClicked', // 接收到单元格点击
@@ -15,6 +14,7 @@ const EventMap = {
 	ColInserted: 'OnColInserted', // 添加列
 	RowDeleted: 'OnRowDeleted', // 删除行
 	ColDeleted: 'OnColDeleted', // 删除列
+	OperationReverted: 'OnOperationReverted', // 撤销行列添加/删除
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
@@ -34,10 +34,10 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		if (u) {
 			// 更新在线用户
 			Object.assign(u, {
-				r: user.row || u.r,
-				c: user.col || u.c,
-				rr: user.row || u.rr,
-				cc: user.col || u.cc,
+				r: user.row !== null ? user.row : u.r,
+				c: user.col !== null ? user.col : u.c,
+				rr: user.row !== null ? user.row : u.rr,
+				cc: user.col !== null ? user.col : u.cc,
 			})
 			return
 		}
@@ -227,6 +227,15 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		console.log('OnUserLeaved', res)
 		useSynergyEvent.removeGroupUser(res.userId)
 		sheetStore.removeOnlineUser(res.userId)
+	})
+
+	signalr.on(EventMap.OperationReverted, (res) => {
+		console.log('OperationReverted', res)
+		if (isCurrentSheet(res.sheetId)) {
+			return
+		}
+		// actionType: 0 插入, 1 删除
+		// RankType: 0 行, 1 列
 	})
 }
 

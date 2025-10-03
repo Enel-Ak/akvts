@@ -220,6 +220,12 @@ export const useHistory = () => {
 							await sheet.hooks.toolsHook.filterByCheckedSilent(currentFiltered)
 						}
 
+						if (sheet.config.synergy) {
+							sheet.hooks.synergyHook.undoRowColumn(
+								sheet?.original?.sheetId || sheet.id
+							)
+						}
+
 						state.addRow = null
 					} catch (error) {
 						console.error('撤销添加行失败:', error)

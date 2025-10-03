@@ -176,7 +176,15 @@ export const useSynergy = () => {
 		})
 	}
 
-	const undo = (...args) => {}
+	const undoRowColumn = (...args) => {
+		if (!isLinked()) {
+			console.error('链接失败')
+			return
+		}
+		signalr.invoke('revert-last-operation', ...args).then(() => {
+			console.log('invoke revert-last-operation')
+		})
+	}
 
 	const refreshSheet = (id) => {
 		sheetKey = id
@@ -206,6 +214,7 @@ export const useSynergy = () => {
 			removeRow,
 			addColumn,
 			removeColumn,
+			undoRowColumn,
 		}
 	}
 

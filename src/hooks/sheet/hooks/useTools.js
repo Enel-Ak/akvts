@@ -10,6 +10,7 @@ import {
 	useStringArrayToBuffer,
 	useBufferToStringArray,
 } from './useBuffer'
+import {sassTrue} from 'sass'
 
 export const useTools = () => {
 	const sheetStore = useAirSheetStore()
@@ -463,6 +464,54 @@ export const useTools = () => {
 		setCellStyles('st', true)
 	}
 
+	const asyncUpdateConfig = (count = 0, row = null, col = null, callback = null) => {
+		const loops = (obj) => {
+			Object.keys(obj).forEach((key) => {
+				const [r, c] = key.split('-').map(Number)
+				let curRow = r
+				let curCol = c
+
+				if (row !== null && r >= row) {
+					curRow = r + count
+				}
+
+				if (col !== null && c >= col) {
+					curCol = c + count
+				}
+
+				// 只有当位置发生变化时才进行移动操作
+				if (curRow !== r || curCol !== c) {
+					obj[`${curRow}-${curCol}`] = obj[key]
+					delete obj[key]
+					callback && callback(r, c, curRow, curCol)
+				}
+			})
+		}
+
+		loops(sheet.config.locked)
+		loops(sheet.config.styled)
+		loops(sheet.config.formulaed)
+		loops(sheet.config.formulaMap)
+
+		if (row !== null) {
+			Object.keys(sheet.config.rResize).forEach((r) => {
+				if (Number(r) >= row) {
+					sheet.config.rResize[Number(r) + count] = sheet.config.rResize[r]
+					delete sheet.config.rResize[r]
+				}
+			})
+		}
+
+		if (col !== null) {
+			Object.keys(sheet.config.cResize).forEach((c) => {
+				if (Number(c) >= col) {
+					sheet.config.cResize[Number(c) + count] = sheet.config.cResize[c]
+					delete sheet.config.cResize[c]
+				}
+			})
+		}
+	}
+
 	// 添加行
 	const addRowCount = ref(1)
 	const addRow = async (_, isEnd = false, save = true, asyncData = null) => {
@@ -495,6 +544,9 @@ export const useTools = () => {
 			}
 		}
 
+		// 处理样式和其他配置
+		asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
+
 		// 检查是否可以在选中区域添加行
 		// 只有在锁定单元格的具体行位置插入才禁止，在上方插入允许（锁定单元格会下移）
 		const checkResult = canAddRowAt(insertRowIndex, r, rr)
@@ -511,16 +563,29 @@ export const useTools = () => {
 
 		try {
 			// 移动现有数据为新行腾出空间
+			// 先收集需要移动的数据，避免在遍历时修改导致的问题
+			const dataToMove = new Map()
+			const rowsToDelete = new Set()
+
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
-					if (rowIndex < insertRowIndex) {
-						// 插入位置之前的数据保持不变
-						// sheet.celldata.set(rowIndex, rowData)
-					} else {
-						// 插入位置之后的数据向下移动
-						sheet.celldata.set(rowIndex + addRowCount.value, rowData)
+					if (rowIndex >= insertRowIndex) {
+						// 收集需要向下移动的数据
+						dataToMove.set(rowIndex + addRowCount.value, rowData)
+						// 记录需要清除的原位置
+						rowsToDelete.add(rowIndex)
 					}
 				}
+			})
+
+			// 清除原位置的数据
+			rowsToDelete.forEach((rowIndex) => {
+				sheet.celldata.delete(rowIndex)
+			})
+
+			// 设置移动后的数据
+			dataToMove.forEach((rowData, newRowIndex) => {
+				sheet.celldata.set(newRowIndex, rowData)
 			})
 
 			// 在指定位置插入新的空行
@@ -551,7 +616,7 @@ export const useTools = () => {
 			sheet.config.rowCount += addRowCount.value
 
 			// 更新锁定单元格位置（在插入位置之后的锁定单元格需要向下移动）
-			updateLockedCellsAfterAddRow(insertRowIndex, addRowCount.value)
+			// updateLockedCellsAfterAddRow(insertRowIndex, addRowCount.value)
 
 			// 如果当前处于筛选状态，重新筛选以包含新行
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
