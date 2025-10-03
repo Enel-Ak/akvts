@@ -928,6 +928,15 @@ export const useTools = () => {
 						})
 						// 重建公式
 						const newFormula = `=${functionName}(${cellRefs.join(',')})`
+
+						console.log('公式重建:', {
+							key: newKey,
+							oldFormula: currentFormula,
+							newFormula: newFormula,
+							formulaMapRefs: value,
+							cellRefs: cellRefs,
+						})
+
 						sheet.config.formulaed[newKey] = newFormula
 
 						// 同时更新 celldata 中的公式
@@ -946,20 +955,32 @@ export const useTools = () => {
 		// 处理公式单元格的引用更新和计算值清除
 		const formulaedKeys = Object.keys(sheet.config.formulaed)
 		if (formulaedKeys.length > 0) {
-			// 更新公式中的单元格引用
+			// 注意：不再使用 updateCellReferencesInFormula 进行二次更新
+			// 因为 formulaMap 的处理已经正确更新了公式字符串
+			// 避免双重更新导致的不一致问题
+
+			// 对于没有 formulaMap 的公式（如手动输入的公式），仍需要更新引用
 			formulaedKeys.forEach((key) => {
-				const formula = sheet.config.formulaed[key]
-				if (formula && formula.startsWith('=')) {
-					const updatedFormula = updateCellReferencesInFormula(formula, row, col, count)
-					if (updatedFormula !== formula) {
-						sheet.config.formulaed[key] = updatedFormula
-						// 同时更新 celldata 中的公式
-						const [r, c] = key.split('-').map(Number)
-						if (sheet.celldata.has(r)) {
-							if (!sheet.celldata.get(r)) {
-								sheet.celldata.set(r, [])
+				// 只有当该公式没有对应的 formulaMap 时，才使用字符串替换方式更新
+				if (!sheet.config.formulaMap[key]) {
+					const formula = sheet.config.formulaed[key]
+					if (formula && formula.startsWith('=')) {
+						const updatedFormula = updateCellReferencesInFormula(
+							formula,
+							row,
+							col,
+							count
+						)
+						if (updatedFormula !== formula) {
+							sheet.config.formulaed[key] = updatedFormula
+							// 同时更新 celldata 中的公式
+							const [r, c] = key.split('-').map(Number)
+							if (sheet.celldata.has(r)) {
+								if (!sheet.celldata.get(r)) {
+									sheet.celldata.set(r, [])
+								}
+								sheet.celldata.get(r)[c] = updatedFormula
 							}
-							sheet.celldata.get(r)[c] = updatedFormula
 						}
 					}
 				}

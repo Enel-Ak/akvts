@@ -2178,8 +2178,23 @@ watch(
 			return
 		}
 		console.log('modelValue config', newVal)
-
+		// 预防切换sheet时配置错误, 并且保留原始基础配置
+		const clearConfigKeys = [
+			'merged',
+			'formulaed',
+			'formulaMap',
+			'styled',
+			'locked',
+			'rResize',
+			'cResize',
+		]
+		clearConfigKeys.forEach((key) => {
+			if (sheet.config[key]) {
+				sheet.config[key] = {}
+			}
+		})
 		sheet.config = Object.assign(sheet.config, toRaw(newVal))
+
 		const mc = newVal.merged || {}
 		const formulaed = newVal.formulaed || {}
 		if (Object.keys(mc).length > 0) {

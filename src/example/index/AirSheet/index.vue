@@ -1256,6 +1256,7 @@ const synergyJoinSheet = async (id) => {
 	sheetRef.value.loading(true, '正在获取最新数据')
 	await beatch()
 	const sheetConfig = await getSheetConfig()
+	console.log('sheetConfig', sheetConfig)
 	Object.assign(config.value.config, {
 		...sheetConfig,
 	})
