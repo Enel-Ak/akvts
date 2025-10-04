@@ -206,6 +206,9 @@ export const useResize = () => {
 	const destroy = () => {
 		worker.terminate()
 		renderRequests.clear()
+
+		sheet = null
+		sheetKey = null
 	}
 
 	const refreshSheet = (id) => {

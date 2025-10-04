@@ -346,13 +346,23 @@ export const useTools = () => {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 
 		if (r === null || r === undefined) return
+
+		console.log('=== useTools.setMerge 开始 ===')
+		console.log('选中范围:', {r, c, rr, cc})
+		console.log('合并前的 merged 配置:', sheet.config.merged)
+
 		sheet.hooks.historyHook.save()
 
 		sheet.hooks.mergeHook.setMerge(r, c, rr - r + 1, cc - c + 1)
 
+		console.log('合并后的 merged 配置:', sheet.config.merged)
+
 		if (sheet.config.synergy) {
+			console.log('协同模式：发送 merged 配置')
 			synergyEvent({merged: sheet.config.merged})
 		}
+
+		console.log('=== useTools.setMerge 结束 ===')
 	}
 
 	// 边框
@@ -2976,11 +2986,17 @@ export const useTools = () => {
 		sheet.emits?.('asyncConfig', json)
 	}
 
+	const destroy = () => {
+		sheet = null
+		sheetKey = null
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 		setTimeout(() => console.log('installed useTools'), 16)
 		return {
+			destroy,
 			setCellStyle,
 
 			setFont,

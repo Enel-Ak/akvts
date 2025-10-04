@@ -460,6 +460,7 @@ export const useHistory = () => {
 
 	const destroy = () => {
 		sheet.history.clear()
+		sheet = null
 	}
 
 	const refreshSheet = (id) => {

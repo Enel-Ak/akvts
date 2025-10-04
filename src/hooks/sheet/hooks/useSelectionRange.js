@@ -1204,6 +1204,9 @@ export const useSelectionRange = () => {
 		mouseDownPos = {x: 0, y: 0}
 		selection = {r: -1, c: -1, rr: -1, cc: -1}
 		ranged.value = null
+
+		sheet = null
+		sheetKey = null
 	}
 
 	// 移除事件监听器

@@ -21,24 +21,31 @@ export const useMerge = () => {
 		const currentKey = `${r}-${c}`
 		const existingMerge = mergedCells.get(currentKey)
 
+		console.log('setMerge 调用:', {r, c, rs, cs, force, currentKey, existingMerge})
+
 		// 检查是否是相同位置的框选
 		if (existingMerge) {
 			// 如果是相同位置，检查大小是否相同
 			if (existingMerge.rs === rs && existingMerge.cs === cs && force) {
 				// 相同位置且相同大小，则取消合并
+				console.log('取消合并:', currentKey)
 				mergedCells.delete(currentKey)
 				sheet.config.merged = getMergedCells()
+
+				console.log('取消合并后的 merged 配置:', sheet.config.merged)
 
 				// 取消合并后，需要确保被合并单元格的内容能够正确显示
 				// 强制触发界面重新渲染
 				if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
 					setTimeout(() => {
 						sheet.state.lastMergeUpdate = Date.now()
+						console.log('取消合并触发界面重新渲染')
 					}, 0)
 				}
 				return
 			} else {
 				// 相同位置但大小不同，删除旧合并
+				console.log('删除旧合并（大小不同）:', currentKey)
 				mergedCells.delete(currentKey)
 			}
 		}
@@ -72,16 +79,21 @@ export const useMerge = () => {
 		}
 
 		// 删除所有冲突的合并单元格
+		if (conflictingMerges.size > 0) {
+			console.log('删除冲突的合并单元格:', [...conflictingMerges])
+		}
 		conflictingMerges.forEach((key) => {
 			mergedCells.delete(key)
 		})
 
 		// 创建新合并（如果rs和cs都大于0）
 		if (rs > 0 && cs > 0) {
+			console.log('创建新合并:', currentKey, {rs, cs})
 			mergedCells.set(currentKey, {rs, cs})
 		}
 
 		sheet.config.merged = getMergedCells()
+		console.log('setMerge 完成，最终 merged 配置:', sheet.config.merged)
 	}
 
 	// 批量设置合并单元格
@@ -208,19 +220,27 @@ export const useMerge = () => {
 	}
 
 	const refreshMerge = () => {
+		console.log('refreshMerge 开始，当前 merged 配置:', sheet.config.merged)
+		console.log('refreshMerge 之前的 mergedCells:', [...mergedCells.entries()])
+
 		const merged = sheet.config.merged
+
+		// 先清空 mergedCells，避免旧数据残留
+		mergedCells.clear()
+
+		// 重新设置所有合并单元格
 		for (const key in merged) {
 			mergedCells.set(key, merged[key])
 		}
-		if (Object.values(merged).length === 0) {
-			mergedCells.clear()
-		}
+
+		console.log('refreshMerge 之后的 mergedCells:', [...mergedCells.entries()])
 
 		// 刷新合并单元格后，强制触发界面重新渲染
 		// 这对于协同同步时的界面更新非常重要
 		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
 			setTimeout(() => {
 				sheet.state.lastMergeUpdate = Date.now()
+				console.log('refreshMerge 触发界面重新渲染')
 			}, 0)
 		}
 	}
@@ -233,11 +253,17 @@ export const useMerge = () => {
 		}
 	}
 
+	const destroy = () => {
+		sheet = null
+		sheetKey = null
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 		setTimeout(() => console.log('installed useMerge'), 16)
 		return {
+			destroy,
 			getCellStyle,
 			getMergedCells,
 			setMerge,

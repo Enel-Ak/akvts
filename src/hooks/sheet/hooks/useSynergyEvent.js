@@ -148,13 +148,17 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			}
 
 			if (configKeys.includes('merged')) {
+				console.log('接收到 merged 配置更新:', config.merged)
+				console.log('更新前的 sheet.config.merged:', sheet.config.merged)
 				sheet.hooks.mergeHook.refreshMerge()
+				console.log('更新后的 sheet.config.merged:', sheet.config.merged)
 				// 强制触发界面重新渲染，确保合并单元格状态变化立即生效
 				setTimeout(() => {
 					// 触发重新渲染以更新合并单元格的显示状态
 					if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
 						// 通过更新一个无关紧要的状态来触发重新渲染
 						sheet.state.lastMergeUpdate = Date.now()
+						console.log('协同接收：触发界面重新渲染')
 					}
 				}, 0)
 			}

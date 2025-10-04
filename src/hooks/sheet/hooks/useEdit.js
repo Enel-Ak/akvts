@@ -1051,6 +1051,9 @@ export const useEdit = () => {
 		container.removeEventListener('mouseout', leaveContainer)
 		document.removeEventListener('keydown', startEdit)
 		container = null
+
+		sheet = null
+		sheetKey = null
 	}
 
 	const refreshSheet = async (id) => {

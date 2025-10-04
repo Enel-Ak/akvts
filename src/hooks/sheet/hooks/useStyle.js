@@ -108,10 +108,15 @@ export const useStyle = () => {
 		return style
 	}
 
+	const destroy = () => {
+		sheet = null
+	}
+
 	const init = (key) => {
 		sheet = sheetStore.getSheet(key)
 		setTimeout(() => console.log('installed useStyle'), 16)
 		return {
+			destroy,
 			getStyle,
 		}
 	}

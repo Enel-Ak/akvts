@@ -48,6 +48,9 @@ export const useRender = () => {
 			worker.terminate()
 		}
 		renderRequests.clear()
+
+		sheet = null
+		sheetKey = null
 	}
 
 	const refreshSheet = (id) => {

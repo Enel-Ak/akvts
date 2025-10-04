@@ -1308,7 +1308,7 @@ onMounted(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.104:9527/api/online-table/table/3a1c90f1-dda3-1f5a-1f23-24cf8dc67a02?autoCreate=true',
+			url: 'http://10.110.10.104:9527/api/online-table/table/3a1cc0e0-a948-0f4d-d0fa-ff28da3817e4?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,

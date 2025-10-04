@@ -501,6 +501,9 @@ export function useCopy() {
 		document.removeEventListener('keydown', handleKeyDown)
 		// 移除paste事件监听
 		document.removeEventListener('paste', handlePaste)
+
+		sheet = null
+		sheetKey = null
 	}
 
 	return {

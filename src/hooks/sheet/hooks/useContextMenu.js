@@ -77,6 +77,8 @@ export const useContextMenu = () => {
 		if (container) {
 			container.removeEventListener('contextmenu', handleContextMenu)
 		}
+
+		sheet = null
 	}
 
 	const refreshSheet = (id) => {

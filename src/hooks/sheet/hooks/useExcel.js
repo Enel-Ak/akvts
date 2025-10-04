@@ -386,6 +386,11 @@ export const useExcel = () => {
 		sheet = sheetStore.getSheet(id)
 	}
 
+	const destroy = () => {
+		sheet = null
+		sheetKey = null
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -397,6 +402,7 @@ export const useExcel = () => {
 			exportExcel,
 
 			refreshSheet,
+			destroy,
 		}
 	}
 

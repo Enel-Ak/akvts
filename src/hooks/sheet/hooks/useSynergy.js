@@ -192,6 +192,11 @@ export const useSynergy = () => {
 		useSynergyEvent?.refreshSheet(id)
 	}
 
+	const destroy = () => {
+		sheet = null
+		sheetKey = null
+	}
+
 	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
@@ -199,6 +204,7 @@ export const useSynergy = () => {
 			console.log('installed useSynergy')
 		}, 16)
 		return {
+			destroy,
 			connection,
 			refreshSheet,
 			asyncConfig,
