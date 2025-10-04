@@ -105,7 +105,8 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			return state.sheets
 		},
 		getAllSheet: (state) => {
-			return [...state?.sheets]
+			if (!state.sheets) return []
+			return [...state.sheets]
 		},
 		getSheet: (state) => (key) => {
 			if (!state.sheets) return null
@@ -158,6 +159,16 @@ export const useAirSheetStore = defineStore('AirSheet', {
 					...structuredClone(
 						toRaw(componentProps?.modelValue?.config || componentProps?.config)
 					),
+
+					// 创建新的数据配置对象, 不复用上一个sheet
+					merged: {},
+					locked: {},
+					styled: {},
+					formulaed: {},
+					formulaMap: {},
+					filtered: {},
+					rResize: {},
+					cResize: {},
 				}
 
 				const jsonProps = JSON.parse(JSON.stringify(componentProps))
@@ -230,19 +241,24 @@ export const useAirSheetStore = defineStore('AirSheet', {
 				}
 			}
 		},
-		deleteSheet: function (key) {
+		deleteSheet: function (targetKey) {
 			let deleteId = ''
 
-			for (let [key, value] of this.sheets) {
-				if (value.id === key) {
-					deleteId = value.id
-				} else if (value.original.sheetId === key) {
-					deleteId = value.original.sheetId
+			for (let [mapKey, value] of this.sheets) {
+				if (value.id === targetKey) {
+					deleteId = mapKey
+					break
+				} else if (value.original.sheetId === targetKey) {
+					deleteId = mapKey
+					break
 				}
 			}
 
 			if (deleteId) {
+				console.log('deleteSheet: 删除 sheet', {targetKey, deleteId})
 				this.sheets.delete(deleteId)
+			} else {
+				console.warn('deleteSheet: 未找到要删除的 sheet', targetKey)
 			}
 		},
 		setLinked: function (value) {

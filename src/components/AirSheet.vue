@@ -17,11 +17,9 @@ import {
 import {ElMessage} from 'element-plus'
 import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
-import {useMapToBuffer, useBufferToMap} from '@/hooks/sheet/hooks/useBuffer'
 import {useColor, useSleep, useDebounce} from '@/hooks'
 import AirSheetFilter from './AirSheetFilter.vue'
 import AirSheetSearch from './AirSheetSearch.vue'
-import {useProcessMapInBatches} from '../hooks/sheet/hooks/useProcessMapInBatches'
 
 const stateType = {
 	normal: 0,
@@ -2083,7 +2081,7 @@ const onChangeSheet = async (sheetItem, e) => {
 	dbTimer = setTimeout(() => {
 		if (
 			isDbClickSheet ||
-			e?.target.getAttribute('contenteditable') ||
+			e?.target?.getAttribute?.('contenteditable') ||
 			sheet?.original?.sheetId === sheetItem[1]?.original?.sheetId
 		) {
 			isDbClickSheet = false
@@ -2144,13 +2142,94 @@ const onDbClickSheet = (e, sheetItem) => {
 	e.target.addEventListener('keydown', keydown)
 }
 
+// 用于记录删除时的目标 sheet（供 watch 使用）
+let pendingSwitchTarget = null
+
 const onDeleteSheet = (sheetItem) => {
-	const id = sheetItem[1]?.original?.sheetId || sheetItem.id
-	if (!sheet.config.synergy) {
-		sheetStore.deleteSheet(id)
-		onChangeSheet(sheetStore.getLastSheet?.id)
+	const deleteId = sheetItem[1]?.original?.sheetId || sheetItem[1]?.id || sheetItem.id
+	const currentSheetId = sheet?.original?.sheetId || sheetId.value
+
+	console.log('=== onDeleteSheet 开始 ===')
+	console.log('删除参数:', {
+		sheetItem,
+		deleteId,
+		currentSheetId,
+		isCurrentSheet: deleteId === currentSheetId,
+		isSynergy: sheet.config.synergy,
+	})
+
+	// 判断是否删除的是当前选中的 sheet
+	const isDeletingCurrentSheet = deleteId === currentSheetId
+
+	// 如果删除的是当前 sheet，需要智能切换
+	let targetSheetId = null
+	if (isDeletingCurrentSheet) {
+		// 获取所有 sheet 的数组
+		const allSheets = sheetStore.getAllSheet
+
+		console.log(
+			'所有 sheets:',
+			allSheets.map(([k, v]) => ({
+				key: k,
+				id: v.id,
+				sheetId: v.original?.sheetId,
+				name: v.name,
+			}))
+		)
+
+		// 找到被删除 sheet 的索引
+		const deleteIndex = allSheets.findIndex(
+			([_, value]) => value.id === deleteId || value.original.sheetId === deleteId
+		)
+
+		console.log('被删除 sheet 的索引:', deleteIndex, '总数:', allSheets.length)
+
+		if (deleteIndex !== -1) {
+			// 判断后面是否还有 sheet
+			if (deleteIndex < allSheets.length - 1) {
+				// 有后续 sheet，切换到下一个
+				const nextSheet = allSheets[deleteIndex + 1]
+				targetSheetId = nextSheet[1]?.original?.sheetId || nextSheet[1]?.id
+				console.log('切换到下一个 sheet:', targetSheetId, nextSheet[1]?.name)
+			} else if (deleteIndex > 0) {
+				// 没有后续 sheet，切换到前一个
+				const prevSheet = allSheets[deleteIndex - 1]
+				targetSheetId = prevSheet[1]?.original?.sheetId || prevSheet[1]?.id
+				console.log('切换到前一个 sheet:', targetSheetId, prevSheet[1]?.name)
+			} else {
+				// 只剩一个 sheet，不允许删除
+				console.warn('不能删除最后一个 sheet')
+				ElMessage.warning('至少需要保留一个 Sheet')
+				return
+			}
+		}
+
+		// 记录目标 sheet，供 watch 使用
+		pendingSwitchTarget = targetSheetId
+		console.log('已设置 pendingSwitchTarget:', pendingSwitchTarget)
 	}
-	emits('asyncRemoveSheet', id)
+
+	// 执行删除操作
+	console.log('执行删除操作:', {
+		deleteId,
+		targetSheetId,
+		pendingSwitchTarget,
+		isSynergy: sheet.config.synergy,
+	})
+
+	// 触发删除事件（用于外部监听和协同通知）
+	emits('asyncRemoveSheet', deleteId)
+
+	// 非协同模式：立即删除本地 sheet
+	if (!sheet.config.synergy) {
+		console.log('非协同模式：立即删除本地 sheet')
+		sheetStore.deleteSheet(deleteId)
+		console.log('删除完成，等待 watch 触发切换')
+	} else {
+		console.log('协同模式：等待服务器响应后会触发 OnSheetDeleted 事件')
+	}
+
+	console.log('=== onDeleteSheet 结束 ===')
 }
 
 watch(
@@ -2168,6 +2247,105 @@ watch(
 		)()
 	},
 	{deep: true}
+)
+
+// 监听当前 sheet 是否被删除，如果被删除则自动切换
+watch(
+	() => sheetStore.getAllSheet,
+	(allSheets) => {
+		console.log('watch 触发：检查 sheet 列表变化', {
+			allSheetsCount: allSheets?.length,
+			currentSheetId: sheetId.value,
+			pendingSwitchTarget,
+		})
+
+		if (!allSheets || allSheets.length === 0) {
+			console.log('watch: 没有可用的 sheets，跳过')
+			return
+		}
+
+		const currentSheetId = sheetId.value
+		// 检查当前 sheet 是否还存在
+		const currentSheetExists = allSheets.some(
+			([_, value]) => value.id === currentSheetId || value.original.sheetId === currentSheetId
+		)
+
+		console.log('watch: 当前 sheet 是否存在:', currentSheetExists)
+
+		if (!currentSheetExists) {
+			console.log('检测到当前 sheet 已被删除，自动切换到其他 sheet')
+
+			// 优先使用预设的目标 sheet，否则使用第一个
+			let targetSheetId = pendingSwitchTarget
+			let targetSheet = null
+
+			if (targetSheetId) {
+				targetSheet = sheetStore.getSheet(targetSheetId)
+				console.log('使用预设的目标 sheet:', targetSheetId, targetSheet?.name)
+			}
+
+			if (!targetSheet) {
+				// 如果预设的目标不存在，使用第一个可用的 sheet
+				targetSheet = allSheets[0][1]
+				targetSheetId = targetSheet.original?.sheetId || targetSheet.id
+				console.log(
+					'预设目标不存在，使用第一个可用的 sheet:',
+					targetSheetId,
+					targetSheet.name
+				)
+			}
+
+			console.log('自动切换到:', targetSheetId, targetSheet.name)
+
+			// 清除预设目标
+			pendingSwitchTarget = null
+
+			// 更新 sheetId（这会触发 UI 更新）
+			sheetId.value = targetSheetId
+			console.log('已更新 sheetId.value 为:', targetSheetId)
+
+			// 发送离开旧 sheet 的事件（如果是协同模式）
+			if (sheet.config.synergy) {
+				console.log('发送 asyncLeaveSheet 事件:', currentSheetId)
+				emits('asyncLeaveSheet', currentSheetId)
+			}
+
+			// 清空旧数据
+			for (const key in sheet) {
+				delete sheet[key]
+			}
+
+			// 赋值新数据
+			Object.assign(sheet, targetSheet)
+
+			// 确保 config 属性存在
+			if (!sheet.config.rResize) sheet.config.rResize = {}
+			if (!sheet.config.cResize) sheet.config.cResize = {}
+			if (!sheet.config.merged) sheet.config.merged = {}
+			if (!sheet.config.locked) sheet.config.locked = {}
+			if (!sheet.config.styled) sheet.config.styled = {}
+			if (!sheet.config.formulaed) sheet.config.formulaed = {}
+			if (!sheet.config.formulaMap) sheet.config.formulaMap = {}
+			if (!sheet.config.filtered) sheet.config.filtered = {}
+
+			// 触发切换状态
+			sheet.state.changeSheet = true
+
+			// 发送加入新 sheet 的事件（如果是协同模式）
+			if (sheet.config.synergy) {
+				console.log('发送 asyncJoinSheet 事件:', targetSheetId)
+				emits('asyncJoinSheet', targetSheetId)
+			}
+
+			// 刷新所有 hooks
+			Object.values(sheet.hooks || {}).forEach((hook) => {
+				hook?.refreshSheet?.(targetSheetId)
+			})
+
+			console.log('自动切换完成，当前 sheet:', sheet.name)
+		}
+	},
+	{deep: false}
 )
 
 // 配置变化处理

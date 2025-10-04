@@ -20,7 +20,7 @@ const EventMap = {
 export const useSynergyEvent = (sheetId, signalr) => {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = sheetId
-	let sheet = null
+	let sheet = sheetStore.getSheet(sheetKey) // 初始化时就获取 sheet
 
 	useSynergyEvent.refreshSheet = (id) => {
 		sheetKey = id
@@ -82,8 +82,23 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.DeletedSheet, (res) => {
-		console.log('onDeletedSheet', res)
-		sheetStore.deleteSheet(res.sheetId)
+		console.log('onDeletedSheet 接收到删除通知:', res)
+
+		const deleteId = res.sheetId
+
+		console.log('协同删除 sheet:', {
+			deleteId,
+			allSheets: sheetStore.getAllSheet.map(([k, v]) => ({
+				key: k,
+				id: v.id,
+				sheetId: v.original?.sheetId,
+				name: v.name,
+			})),
+		})
+
+		// 执行删除操作（让组件层的 watch 来处理切换）
+		sheetStore.deleteSheet(deleteId)
+		console.log('协同删除：sheet 已删除，等待组件层 watch 触发切换')
 	})
 
 	signalr.on(EventMap.JoinSheetGroup, (res) => {

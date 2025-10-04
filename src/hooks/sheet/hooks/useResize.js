@@ -30,12 +30,22 @@ export const useResize = () => {
 
 	// 获取行的实际高度
 	const getRowHeight = (index) => {
-		return (sheet.config.rResize[index] || sheet.props.rowHeight) * sheet.config.zoom
+		// 确保 rResize 存在
+		if (!sheet.config.rResize) {
+			console.warn('getRowHeight: rResize 不存在，初始化为空对象')
+			sheet.config.rResize = {}
+		}
+		return (sheet.config.rResize[index] || sheet.props?.rowHeight || 25) * sheet.config.zoom
 	}
 
 	// 获取列的实际宽度
 	const getColWidth = (index) => {
-		return (sheet.config.cResize[index] || sheet.props.colWidth) * sheet.config.zoom
+		// 确保 cResize 存在
+		if (!sheet.config.cResize) {
+			console.warn('getColWidth: cResize 不存在，初始化为空对象')
+			sheet.config.cResize = {}
+		}
+		return (sheet.config.cResize[index] || sheet.props?.colWidth || 100) * sheet.config.zoom
 	}
 
 	const setRowHeight = (index, height) => {
