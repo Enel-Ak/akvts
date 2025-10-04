@@ -2085,10 +2085,10 @@ const onAddSheet = async () => {
 		console.log('本地 sheet 已添加（临时）:', newSheet?.name, newSheet?.id)
 
 		// 通知服务器创建（服务器会广播给所有用户，包括自己）
-		sheet.hooks.synergyHook.createSheet({
-			sheetId: newSheet.id,
-			sheetName: tempName,
-		})
+		// sheet.hooks.synergyHook.createSheet({
+		// 	sheetId: newSheet.id,
+		// 	sheetName: tempName,
+		// })
 
 		// 触发外部事件
 		emits('addSheet', newSheet)
