@@ -3088,7 +3088,7 @@ defineExpose({
 						</div>
 					</div>
 
-					<div class="group">
+					<div class="group" v-if="sheet.config.undo">
 						<div
 							class="item"
 							@click="

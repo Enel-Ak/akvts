@@ -47,6 +47,7 @@ const defaultSheet = {
 		full: true, // 全屏
 		filter: true, // 筛选
 		find: true, // 查找
+		undo: true, // 撤销
 		synergy: false, // 协同
 
 		online: [], // 协同高亮在线的, 当前sheet的
