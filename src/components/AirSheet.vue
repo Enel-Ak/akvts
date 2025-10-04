@@ -2123,7 +2123,9 @@ const onChangeSheet = async (sheetItem, e) => {
 		const id = sheetItem[1]?.original?.sheetId || sheetItem.id
 		sheetId.value = id
 
-		emits('asyncLeaveSheet', sheet.original.sheetId)
+		if (sheet.config.synergy) {
+			emits('asyncLeaveSheet', sheet.original.sheetId)
+		}
 
 		for (const key in sheet) {
 			delete sheet[key]
@@ -2133,7 +2135,9 @@ const onChangeSheet = async (sheetItem, e) => {
 
 		sheet.state.changeSheet = true
 
-		emits('asyncJoinSheet', sheet.original.sheetId)
+		if (sheet.config.synergy) {
+			emits('asyncJoinSheet', sheet.original.sheetId)
+		}
 
 		Object.values(sheet.hooks).forEach((hook) => {
 			hook?.refreshSheet?.(id)

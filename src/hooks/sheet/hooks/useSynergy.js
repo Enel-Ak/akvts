@@ -189,7 +189,7 @@ export const useSynergy = () => {
 	const refreshSheet = (id) => {
 		sheetKey = id
 		sheet = sheetStore.getSheet(id)
-		useSynergyEvent?.refreshSheet(id)
+		useSynergyEvent?.refreshSheet?.(id)
 	}
 
 	const destroy = () => {
