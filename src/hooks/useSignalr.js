@@ -54,6 +54,7 @@ export const useSignalr = (key, path, token, callback, errorCallback) => {
 					})
 
 				signalr[key].hubConnection.onclose((error) => {
+					console.error('Signalr connection close')
 					typeof errorCallback === 'function' ? errorCallback('error') : null
 				})
 			} catch (err) {
@@ -72,7 +73,7 @@ export const useSignalr = (key, path, token, callback, errorCallback) => {
 		10000
 	)
 
-	return signalr[key].hubConnection
+	return signalr[key]?.hubConnection
 }
 
 export default {useSignalr, useSignalrStop}

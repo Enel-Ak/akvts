@@ -210,18 +210,24 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		},
 
 		initSynergySheets: async function (sheets, containerId, componentProps) {
-			// let count = 0
-			// for (const [key, value] of this.sheets) {
-			// 	value.original.sheetId = sheets[count].id
-			// 	value.name = sheets[count].name
-			// 	count++
-			// }
-			// if (count < sheets.length) {
+			// 保留第一个
+			const firstKey = this.sheets.keys().next().value
+			const firstValue = this.sheets.get(firstKey)
+
 			this.sheets.clear()
-			for (let i = count; i < sheets.length; i++) {
-				await this.init(sheets[i], containerId, componentProps)
+			this.sheets.set(firstKey, firstValue)
+
+			let count = 0
+			for (const [key, value] of this.sheets) {
+				value.original.sheetId = sheets[count].id
+				value.name = sheets[count].name
+				count++
 			}
-			// }
+			if (count < sheets.length) {
+				for (let i = count; i < sheets.length; i++) {
+					await this.init(sheets[i], containerId, componentProps)
+				}
+			}
 		},
 
 		addSheet: async function (sheet, componentProps, emits, callback) {

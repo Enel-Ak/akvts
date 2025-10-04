@@ -7,7 +7,7 @@ const route = useRoute()
 const sheetRef = ref()
 const config = ref({
 	config: {
-		synergy: false,
+		synergy: true,
 		showHorizontalScreen: false,
 		// showToolbar: false,
 		// edit: true,
@@ -1304,36 +1304,36 @@ watch(
 	}
 )
 
-onMounted(() => {
+onActivated(() => {
 	// 获取sheets
-	// axios
-	// 	.request({
-	// 		url: 'http://10.110.10.104:9527/api/online-table/table/3a1cc0e0-a948-0f4d-d0fa-ff28da3817e4?autoCreate=true',
-	// 		method: 'GET',
-	// 		headers: {
-	// 			Authorization: `Bearer ${token}`,
-	// 		},
-	// 	})
-	// 	.then(async (res) => {
-	// 		const arr = []
-	// 		res.data.sheets.forEach((sheet) => {
-	// 			arr.push({
-	// 				id: sheet.id,
-	// 				name: sheet.sheetName,
-	// 				_raw: JSON.parse(JSON.stringify(sheet)),
-	// 			})
-	// 		})
-	// 		api.value += `?tableId=${arr[0]._raw.tableId}`
-	// 		synergyData.value = arr
-	// 		tableId.value = arr[0]._raw.tableId
-	// 		sheetId.value = arr[0]._raw.id
-	// 		await beatch()
-	// 		const sheetConfig = await getSheetConfig()
-	// 		Object.assign(config.value.config, {
-	// 			...sheetConfig,
-	// 		})
-	// 		config.value.celldata = data.value
-	// 	})
+	axios
+		.request({
+			url: 'http://10.110.10.104:9527/api/online-table/table/3a1cc0e0-a948-0f4d-d0fa-ff28da3817e4?autoCreate=true',
+			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
+		.then(async (res) => {
+			const arr = []
+			res.data.sheets.forEach((sheet) => {
+				arr.push({
+					id: sheet.id,
+					name: sheet.sheetName,
+					_raw: JSON.parse(JSON.stringify(sheet)),
+				})
+			})
+			api.value = `http://10.110.10.104:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}`
+			synergyData.value = arr
+			tableId.value = arr[0]._raw.tableId
+			sheetId.value = arr[0]._raw.id
+			await beatch()
+			const sheetConfig = await getSheetConfig()
+			Object.assign(config.value.config, {
+				...sheetConfig,
+			})
+			config.value.celldata = data.value
+		})
 	// setTimeout(() => {
 	// 	console.log('config', config.value)
 	// 	config.value.celldata = Array.from({length: 51200}, (_, r) => {
