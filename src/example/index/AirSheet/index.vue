@@ -1231,10 +1231,10 @@ const getSheetConfig = async () => {
 
 const addSheet = (sheet) => {
 	console.log('AddSheet', sheet)
-	sheetRef.value.asyncCreateSheet({
-		SheetName: sheet.name,
-		sheetConfig: null,
-	})
+	// sheetRef.value.asyncCreateSheet({
+	// 	SheetName: sheet.name,
+	// 	sheetConfig: null,
+	// })
 }
 
 const onAsyncEventCell = (range) => {

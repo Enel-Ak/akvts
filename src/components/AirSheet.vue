@@ -2069,9 +2069,42 @@ const onJumpToCell = async (row, col) => {
 }
 
 const onAddSheet = async () => {
-	const key = `air-sheet-${Math.random().toString(16).slice(2)}`
-	await sheet.hooks.toolsHook.addSheet(key, props, emits)
-	emits('addSheet', sheetStore.getLastSheet)
+	console.log('=== onAddSheet 开始 ===')
+	console.log('添加 sheet:', {isSynergy: sheet.config.synergy})
+
+	// 如果是协同模式，先通知服务器创建，等待服务器返回 ID
+	if (sheet.config.synergy) {
+		console.log('协同模式：通知服务器创建 sheet')
+		const key = `air-sheet-${Math.random().toString(16).slice(2)}`
+		const tempName = `Sheet${sheetStore.getAllSheet.length + 1}`
+
+		// 先添加本地 sheet（临时 ID）
+		await sheet.hooks.toolsHook.addSheet(key, props, emits)
+		const newSheet = sheetStore.getLastSheet
+
+		console.log('本地 sheet 已添加（临时）:', newSheet?.name, newSheet?.id)
+
+		// 通知服务器创建（服务器会广播给所有用户，包括自己）
+		sheet.hooks.synergyHook.createSheet({
+			sheetId: newSheet.id,
+			sheetName: tempName,
+		})
+
+		// 触发外部事件
+		emits('addSheet', newSheet)
+	} else {
+		// 非协同模式：直接添加本地 sheet
+		const key = `air-sheet-${Math.random().toString(16).slice(2)}`
+		await sheet.hooks.toolsHook.addSheet(key, props, emits)
+		const newSheet = sheetStore.getLastSheet
+
+		console.log('本地 sheet 已添加:', newSheet?.name, newSheet?.id)
+
+		// 触发外部事件
+		emits('addSheet', newSheet)
+	}
+
+	console.log('=== onAddSheet 结束 ===')
 }
 
 let dbTimer = null
