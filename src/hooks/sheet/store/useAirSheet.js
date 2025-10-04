@@ -92,7 +92,7 @@ const defaultSheet = {
 	_temp: {},
 }
 
-export const useAirSheetStore = defineStore('AirSheet', {
+export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36).slice(2)}`, {
 	persist: true, // 开启持久化
 	state: () => {
 		return {
@@ -225,7 +225,7 @@ export const useAirSheetStore = defineStore('AirSheet', {
 			}
 			if (count < sheets.length) {
 				for (let i = count; i < sheets.length; i++) {
-					await this.init(sheets[i], containerId, componentProps)
+					await this.init(sheets[i], containerId, componentProps, emits)
 				}
 			}
 		},

@@ -477,7 +477,7 @@ export function useCopy() {
 		sheet = sheetStore.getSheet(id)
 	}
 
-	const init = (key) => {
+	const init = (key, containerId) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 		setTimeout(() => {
