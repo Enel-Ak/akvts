@@ -132,12 +132,6 @@ export const useAirSheetStore = defineStore('AirSheet', {
 		getOnline: (state) => state.online,
 	},
 	actions: {
-		destroy: function () {
-			this.sheets.clear()
-			this.online = []
-			this.linked = false
-			this.sheets = null
-		},
 		init: async function (sheet, containerId, componentProps, emits, callback) {
 			if (!this.sheets) {
 				this.sheets = new Map()

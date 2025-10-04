@@ -1854,12 +1854,6 @@ const destroy = () => {
 	if (forceUpdateHandler) {
 		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
 	}
-	for (const [key, value] of sheet.hooks) {
-		if (value.destroy) {
-			value.destroy()
-		}
-	}
-	sheetStore?.destroy()
 }
 
 // 判断是否为移动设备
