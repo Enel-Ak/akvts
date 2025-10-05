@@ -27,13 +27,10 @@ watch(
 		if (val) {
 			uploadRef.value?.clearFiles()
 		}
-		visible.value = val
 	}
 )
 
 const uploadRef = ref()
-const baseUrl = import.meta.env.VITE_GLOBAL_API_URL
-const visible = ref(props.modelValue)
 
 const onDownloadTemplate = () => {
 	axios
@@ -76,7 +73,7 @@ const onClose = () => {
 </script>
 <template>
 	<Dialog
-		v-model="visible"
+		v-bind="$attrs"
 		confirmText="确认上传"
 		:title="title"
 		@close="onClose"
@@ -96,7 +93,7 @@ const onClose = () => {
 			v-bind="$attrs"
 			ref="uploadRef"
 			class="upload-component"
-			:action="`${baseUrl}${url}`"
+			:action="`${url}`"
 			:auto-upload="autoUpload"
 			:multiple="multiple"
 			:accept="accept"
