@@ -8,13 +8,14 @@ export const useSignalrStop = (key) => {
 		signalr.hasOwnProperty(key) &&
 		signalr[key]?.state !== Signalr.HubConnectionState.Disconnected
 	) {
-		signalr[key].hubConnection?.stop()
+		signalr[key]?.hubConnection?.stop()
 		signalr[key] = null
 	} else {
 		Object.keys(signalr).forEach((key) => {
 			if (signalr[key]?.state !== Signalr.HubConnectionState.Disconnected) {
-				signalr[key].hubConnection?.stop()
+				signalr[key]?.hubConnection?.stop()
 				signalr[key] = null
+				delete signalr[key]
 			}
 		})
 	}
