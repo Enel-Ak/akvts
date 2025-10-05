@@ -73,6 +73,15 @@ export const useSynergy = () => {
 			return
 		}
 
+		// 在离开 sheet 前，清除当前用户的权限
+		if (sheet.hooks.permissionsHook) {
+			const currentUserId = sheetStore.getCurrentUserId
+			if (currentUserId) {
+				console.log('leaveSheet - 清除当前用户权限:', currentUserId)
+				sheet.hooks.permissionsHook.releasePermissions(currentUserId)
+			}
+		}
+
 		await signalr.invoke('leave-sheet-group', ...args).then((res) => {
 			console.log('leave-sheet-group', ...args, res)
 		})
