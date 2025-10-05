@@ -12,6 +12,7 @@ import {useContextMenu} from '../hooks/useContextMenu'
 import {useSelectionRange} from '../hooks/useSelectionRange'
 import {useExcel} from '../hooks/useExcel'
 import {useSynergy} from '../hooks/useSynergy'
+import {useSignalrStop} from '@/hooks/useSignalr'
 
 const defaultSheet = {
 	props: {},
@@ -210,6 +211,8 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 		},
 
 		initSynergySheets: async function (sheets, containerId, componentProps, emits) {
+			useSignalrStop()
+
 			// 保留第一个
 			const firstKey = this.sheets.keys().next().value
 			const firstValue = this.sheets.get(firstKey)

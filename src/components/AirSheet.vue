@@ -3654,7 +3654,7 @@ defineExpose({
 			<!-- sheet栏 -->
 			<div class="sheetbar">
 				<Icons
-					v-if="!props.asyncSheet.length && sheet.config.synergy"
+					v-if="!sheets.length && sheet.config.synergy"
 					name="Loading2"
 					size="14px"
 					class="loading-animation mg-right-10"
