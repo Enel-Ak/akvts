@@ -12,6 +12,7 @@ import {useContextMenu} from '../hooks/useContextMenu'
 import {useSelectionRange} from '../hooks/useSelectionRange'
 import {useExcel} from '../hooks/useExcel'
 import {useSynergy} from '../hooks/useSynergy'
+import {usePermissions} from '../hooks/usePermissions'
 import {useSignalrStop} from '@/hooks/useSignalr'
 
 const defaultSheet = {
@@ -54,6 +55,7 @@ const defaultSheet = {
 		online: [], // 协同高亮在线的, 当前sheet的
 		merged: {}, // 已合并单元格
 		locked: {}, // 锁定单元格
+		permissions: {}, // 权限
 		styled: {}, // 有样式的单元格
 		formulaed: {}, // 有公式的单元格
 		formulaMap: {}, // 被公式引用的单元格
@@ -67,6 +69,7 @@ const defaultSheet = {
 			c: 0,
 		},
 
+		auth: 0, // 0 不设置权限, 1 每行独立, 2 每列独立, 3 单元格独立
 		rowCount: 40,
 		colCount: 20,
 	},
@@ -100,6 +103,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 			sheets: null,
 			online: [], // 整个表在线的用户
 			linked: false, // 是否协同链接成功
+			currentUserId: null, // 当前用户ID（用于权限控制）
 		}
 	},
 	getters: {
@@ -131,6 +135,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 		},
 		getLinked: (state) => state.linked,
 		getOnline: (state) => state.online,
+		getCurrentUserId: (state) => state.currentUserId,
 	},
 	actions: {
 		init: async function (sheet, containerId, componentProps, emits, callback) {
@@ -198,6 +203,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 						contextMenuHook: useContextMenu().init(key, containerId),
 						excelHook: useExcel().init(key),
 						synergyHook: useSynergy().init(key),
+						permissionsHook: usePermissions().init(key),
 					}
 				} else {
 					re.containerId = this.sheets.values().next().value.containerId
@@ -291,6 +297,11 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 
 		removeOnlineUser: function (userId) {
 			this.online = this.online.filter((item) => item.id !== userId)
+		},
+
+		setCurrentUserId: function (userId) {
+			this.currentUserId = userId
+			console.log('设置当前用户ID:', userId)
 		},
 	},
 })

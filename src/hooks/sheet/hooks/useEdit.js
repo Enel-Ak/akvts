@@ -216,6 +216,21 @@ export const useEdit = () => {
 	}
 
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
+		// 权限检查 - 在开始编辑前检查是否有权限
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				cell.r,
+				cell.c,
+				1,
+				1
+			)
+
+			if (permissionCheck.locked) {
+				ElMessage.warning(permissionCheck.reason)
+				return // 阻止编辑
+			}
+		}
+
 		const cellEl = document.querySelector(`[data-cell="${cell.r}-${cell.c}"]`)
 
 		// 检查是否是公式单元格，如果是则保存原始状态

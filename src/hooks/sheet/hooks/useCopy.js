@@ -17,6 +17,30 @@ export function useCopy() {
 	// 处理粘贴事件
 	const handlePaste = (e) => {
 		e.preventDefault()
+
+		// 权限检查 - 在粘贴前检查目标区域是否有权限
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		if (
+			ranged &&
+			sheet.hooks.permissionsHook &&
+			sheet.config.synergy &&
+			sheet.config.auth > 0
+		) {
+			const rowspan = Math.abs(ranged.rr - ranged.r) + 1
+			const colspan = Math.abs(ranged.cc - ranged.c) + 1
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				Math.min(ranged.r, ranged.rr),
+				Math.min(ranged.c, ranged.cc),
+				rowspan,
+				colspan
+			)
+
+			if (permissionCheck.locked) {
+				ElMessage.warning(permissionCheck.reason)
+				return // 阻止粘贴
+			}
+		}
+
 		const clipboardData = e.clipboardData || window.clipboardData
 
 		// 快速检查数据大小

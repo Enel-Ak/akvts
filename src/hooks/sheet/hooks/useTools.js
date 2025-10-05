@@ -18,8 +18,32 @@ export const useTools = () => {
 	let sheet = null
 
 	const isLocked = () => {
-		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
-		return !!sheet.config.locked[`${r}-${c}`]
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		const {r, c, rr, cc} = ranged
+
+		// 检查传统锁定
+		if (sheet.config.locked[`${r}-${c}`]) {
+			return true
+		}
+
+		// 检查权限锁定
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const rowspan = Math.abs(rr - r) + 1
+			const colspan = Math.abs(cc - c) + 1
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				Math.min(r, rr),
+				Math.min(c, cc),
+				rowspan,
+				colspan
+			)
+
+			if (permissionCheck.locked) {
+				ElMessage.warning(permissionCheck.reason)
+				return true
+			}
+		}
+
+		return false
 	}
 
 	// 检查指定行是否有锁定的单元格

@@ -226,8 +226,46 @@ export const useSelectionRange = () => {
 	const setHighlightRange = (highlight) => {
 		const {id, r, c, rr, cc, value, state} = highlight
 
+		// 获取该用户的权限类型 (如果启用了权限模式)
+		const permission = sheet.config.permissions?.[id]
+		const permissionType = permission?.type || 'cell' // 默认为单元格级
+
+		console.log('setHighlightRange 调用:', {
+			userId: id,
+			原始范围: {r, c, rr, cc},
+			auth: sheet.config.auth,
+			permission,
+			permissionType,
+		})
+
+		// 根据权限类型调整高亮范围
+		let finalR = r,
+			finalC = c,
+			finalRR = rr,
+			finalCC = cc
+
+		// 修复：只要有 permission 就应该调整高亮范围，不需要检查 auth
+		// 因为 permission 的存在本身就说明启用了权限模式
+		if (permission) {
+			switch (permissionType) {
+				case 'row':
+					// 行级权限: 高亮整行
+					finalC = 0
+					finalCC = sheet.config.colCount - 1
+					console.log('setHighlightRange 调整为整行:', {finalR, finalC, finalRR, finalCC})
+					break
+				case 'column':
+					// 列级权限: 高亮整列
+					finalR = 0
+					finalRR = sheet.config.rowCount - 1
+					console.log('setHighlightRange 调整为整列:', {finalR, finalC, finalRR, finalCC})
+					break
+				// 'cell' 类型保持原样
+			}
+		}
+
 		// 扩展范围以包含合并单元格
-		const expandedRange = getExpandedRange(r, c, rr, cc)
+		const expandedRange = getExpandedRange(finalR, finalC, finalRR, finalCC)
 		const {r: expandedR, c: expandedC, rr: expandedRR, cc: expandedCC} = expandedRange
 
 		// 计算行高（使用扩展后的范围）
@@ -345,18 +383,50 @@ export const useSelectionRange = () => {
 			color = highlightRanges.get(id)['--z-highlight-color']
 		}
 
+		// 将 HSL 颜色转换为 RGB（用于 rgba）
+		const hslToRgb = (hslStr) => {
+			const match = hslStr.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
+			if (!match) return '0, 0, 0'
+
+			let h = parseInt(match[1]) / 360
+			let s = parseInt(match[2]) / 100
+			let l = parseInt(match[3]) / 100
+
+			let r, g, b
+			if (s === 0) {
+				r = g = b = l
+			} else {
+				const hue2rgb = (p, q, t) => {
+					if (t < 0) t += 1
+					if (t > 1) t -= 1
+					if (t < 1 / 6) return p + (q - p) * 6 * t
+					if (t < 1 / 2) return q
+					if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
+					return p
+				}
+				const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+				const p = 2 * l - q
+				r = hue2rgb(p, q, h + 1 / 3)
+				g = hue2rgb(p, q, h)
+				b = hue2rgb(p, q, h - 1 / 3)
+			}
+
+			return `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`
+		}
+
 		if (state && sheet.celldata.get(r)) {
 			// sheet.celldata.get(r)[c] = value
 			highlight.state = 0
 		}
 
 		highlightRanges.set(id, {
-			border: `1px solid ${color}`,
 			top: (totalOffsetTop + modifiedBefore - 0.5) * sheet.config.zoom + 'px',
 			left: (totaloffsetLeft + modifiedColBefore - 0.5) * sheet.config.zoom + 'px',
 			height: (totleHeight + modifiedInRange + 1) * sheet.config.zoom + 'px',
 			width: (totleWidth + modifiedColInRange + 1) * sheet.config.zoom + 'px',
 			'--z-highlight-color': color,
+			'--z-highlight-color-rgb': hslToRgb(color),
+			'--z-permission-type': permissionType,
 		})
 		return highlightRanges.get(id)
 	}
@@ -630,10 +700,39 @@ export const useSelectionRange = () => {
 		// 点击单元格
 		ranged.value = {...selection}
 
+		// 更新权限锁定
+		if (sheet.config.synergy && sheet.hooks.permissionsHook) {
+			sheet.hooks.permissionsHook.updatePermissions(
+				selection.r,
+				selection.c,
+				selection.rr,
+				selection.cc
+			)
+		}
+
 		if (sheet.config.synergy) {
 			useDebounce(
 				() => {
-					sheet.emits?.('asyncEventCell', ranged.value)
+					// 发送选区信息，同时包含 permissions 配置
+					// 注意：这里同时发送选区和权限是因为它们是一起变化的
+					const eventData = {
+						...ranged.value,
+					}
+
+					// 如果启用了权限模式，添加 permissions 配置
+					if (sheet.config.auth > 0 && sheet.config.permissions) {
+						eventData.config = JSON.stringify({
+							permissions: sheet.config.permissions,
+						})
+						console.log('发送选区和权限配置:', {
+							range: ranged.value,
+							permissions: sheet.config.permissions,
+						})
+					} else {
+						console.log('发送选区信息:', ranged.value)
+					}
+
+					sheet.emits?.('asyncEventCell', eventData)
 				},
 				300,
 				'asyncEventCell'

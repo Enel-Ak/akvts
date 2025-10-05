@@ -720,20 +720,38 @@ const isLockedCell = () => {
 		return true
 	}
 
-	const ranged = useSelectionRangeHook.ranged
+	const ranged = sheet.hooks.selectionRangeHook.getRanged()
 	if (!ranged) return true
 
-	const startRow = Math.min(ranged.start.row, ranged.end.row)
-	const startCol = Math.min(ranged.start.col, ranged.end.col)
-	const endRow = Math.max(ranged.start.row, ranged.end.row)
-	const endCol = Math.max(ranged.start.col, ranged.end.col)
+	const startRow = Math.min(ranged.r, ranged.rr)
+	const startCol = Math.min(ranged.c, ranged.cc)
+	const endRow = Math.max(ranged.r, ranged.rr)
+	const endCol = Math.max(ranged.c, ranged.cc)
 
+	// 检查传统锁定
 	for (let row = startRow; row <= endRow; row++) {
 		for (let col = startCol; col <= endCol; col++) {
 			if (sheet.config.locked[`${row}-${col}`]) {
 				lockedTimer = setTimeout(() => ElMessage.warning(`单元格已锁定`), 300)
 				return true
 			}
+		}
+	}
+
+	// 检查权限锁定
+	if (sheet.hooks.permissionsHook && sheet.config.synergy) {
+		const rowspan = endRow - startRow + 1
+		const colspan = endCol - startCol + 1
+		const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+			startRow,
+			startCol,
+			rowspan,
+			colspan
+		)
+
+		if (permissionCheck.locked) {
+			lockedTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
+			return true
 		}
 	}
 
@@ -1318,6 +1336,26 @@ const onInput = (e) => {
 		const {r, c, rr, cc} = ranged
 		const inputValue = e.target.value
 
+		// 权限检查
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const rowspan = Math.abs(rr - r) + 1
+			const colspan = Math.abs(cc - c) + 1
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				Math.min(r, rr),
+				Math.min(c, cc),
+				rowspan,
+				colspan
+			)
+
+			if (permissionCheck.locked) {
+				// 阻止输入并恢复原值
+				e.preventDefault()
+				e.target.value = sheet.hooks.editHook.inputValue || ''
+				ElMessage.warning(permissionCheck.reason)
+				return
+			}
+		}
+
 		// 输入长度限制
 		if (inputValue && inputValue.length > 1000) {
 			console.warn('输入内容过长，已截断')
@@ -1421,6 +1459,18 @@ const onTextareaFocus = (e) => {
 		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
 		const cellKey = `${r}-${c}`
 		const inputValue = sheet.hooks.editHook.inputValue
+
+		// 权限检查 - 在获得焦点时检查是否有编辑权限
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(r, c, 1, 1)
+
+			if (permissionCheck.locked) {
+				// 阻止编辑并失去焦点
+				e.target.blur()
+				ElMessage.warning(permissionCheck.reason)
+				return
+			}
+		}
 
 		// 设置正在编辑的单元格坐标
 		editingCellPosition = {r, c}
@@ -1655,6 +1705,7 @@ const onInputBlur = () => {
 				emits('asyncConfig', {
 					formulaed: sheet.config.formulaed,
 					formulaMap: sheet.config.formulaMap,
+					// permissions 在选中单元格时通过 useSelectionRange 同步，不在这里同步
 				})
 			}
 		}
@@ -2541,6 +2592,9 @@ defineExpose({
 	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
 	asyncAddRow: (...args) => sheet.hooks.synergyHook.addRow(...args), // 添加行
 	asyncAddColumn: (...args) => sheet.hooks.synergyHook.addColumn(...args), // 添加列
+
+	// 权限相关
+	setCurrentUserId: (userId) => sheetStore.setCurrentUserId(userId), // 设置当前用户ID（用于权限控制）
 })
 </script>
 <template>
@@ -3434,6 +3488,7 @@ defineExpose({
 						:key="`${updateTimer + index}`"
 						v-for="(item, index) of sheet.config?.online"
 						class="highlight"
+						:data-permission-type="sheet.config?.permissions?.[item.id]?.type || 'cell'"
 						:style="sheet.hooks?.selectionRangeHook?.setHighlightRange(item)"
 					>
 						<div class="label">{{ item.name }}</div>

@@ -623,6 +623,46 @@
 		position: absolute;
 		pointer-events: none;
 		z-index: 2;
+		transition: all 0.2s ease;
+
+		// 行级权限高亮样式
+		&[data-permission-type='row'] {
+			// 实线边框 + 半透明背景
+			border: 2px solid var(--z-highlight-color) !important;
+			background-color: rgba(var(--z-highlight-color-rgb), 0.1) !important;
+
+			.label {
+				&::before {
+					content: '🔒 ';
+				}
+			}
+		}
+
+		// 列级权限高亮样式
+		&[data-permission-type='column'] {
+			// 虚线边框 + 半透明背景
+			border: 2px dashed var(--z-highlight-color) !important;
+			background-color: rgba(var(--z-highlight-color-rgb), 0.1) !important;
+
+			.label {
+				&::before {
+					content: '🔒 ';
+				}
+			}
+		}
+
+		// 单元格级权限高亮样式
+		&[data-permission-type='cell'] {
+			// 实线边框，无背景
+			border: 2px solid var(--z-highlight-color) !important;
+
+			.label {
+				&::before {
+					content: '🔒 ';
+				}
+			}
+		}
+
 		.label {
 			background-color: var(--z-highlight-color);
 			border-radius: 3px 3px 0 0;
@@ -633,6 +673,8 @@
 			position: absolute;
 			top: -18px;
 			right: -1px;
+			white-space: nowrap;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 		}
 	}
 

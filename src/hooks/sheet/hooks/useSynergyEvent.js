@@ -29,28 +29,52 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	// 高亮组用户
 	useSynergyEvent.groupUsers = (user) => {
-		const u = sheet.config.online.find((f) => f.id === user[sheet.props.userKeys[0]])
+		const userId = user[sheet.props.userKeys[0]]
+		const u = sheet.config.online.find((f) => f.id === userId)
+
+		console.log('groupUsers 调用:', {
+			userId,
+			row: user.row,
+			col: user.col,
+			rowEnd: user.rowEnd,
+			colEnd: user.colEnd,
+			existingUser: u ? '更新' : '新增',
+		})
 
 		if (u) {
-			// 更新在线用户
-			Object.assign(u, {
+			// 更新在线用户，包含完整的选区范围
+			const updated = {
 				r: user.row !== null ? user.row : u.r,
 				c: user.col !== null ? user.col : u.c,
-				rr: user.row !== null ? user.row : u.rr,
-				cc: user.col !== null ? user.col : u.cc,
-			})
+				rr:
+					user.rowEnd !== null && user.rowEnd !== undefined
+						? user.rowEnd
+						: user.row !== null
+						? user.row
+						: u.rr,
+				cc:
+					user.colEnd !== null && user.colEnd !== undefined
+						? user.colEnd
+						: user.col !== null
+						? user.col
+						: u.cc,
+			}
+			Object.assign(u, updated)
+			console.log('groupUsers 更新后:', {userId, ...updated})
 			return
 		}
 
-		sheet.config.online.push({
-			id: user[sheet.props.userKeys[0]],
+		const newUser = {
+			id: userId,
 			name: user[sheet.props.userKeys[1]] || '用户',
 			r: user.row,
 			c: user.col,
-			rr: user.row,
-			cc: user.col,
+			rr: user.rowEnd !== null && user.rowEnd !== undefined ? user.rowEnd : user.row,
+			cc: user.colEnd !== null && user.colEnd !== undefined ? user.colEnd : user.col,
 			state: 1,
-		})
+		}
+		sheet.config.online.push(newUser)
+		console.log('groupUsers 新增用户:', newUser)
 	}
 
 	// 移除高亮组用户
@@ -111,21 +135,40 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		useSynergyEvent.removeGroupUser(res[sheet.props.userKeys[0]])
+		const userId = res[sheet.props.userKeys[0]]
+		console.log('OnLeaveSheetGroup - 用户离开 sheet:', userId)
+
+		// 移除高亮
+		useSynergyEvent.removeGroupUser(userId)
+
+		// 清理离开用户的权限锁定
+		if (sheet.hooks.permissionsHook) {
+			sheet.hooks.permissionsHook.releasePermissions(userId)
+			console.log('OnLeaveSheetGroup - 已清除用户权限:', userId)
+		}
 	})
 
 	signalr.on(EventMap.EventClicked, (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log('EventCell', res)
+		console.log('EventCell 接收到事件:', res)
+
+		// 处理配置同步
 		if (res.config) {
 			const config = JSON.parse(res.config)
 			const configKeys = Object.keys(config)
+			console.log('EventCell 配置键:', configKeys)
+
 			configKeys.forEach((key) => {
 				// Object.assign(sheet.config[key], config[key])
 				sheet.config[key] = config[key]
 			})
+
+			// 同步 permissions 数据
+			if (configKeys.includes('permissions')) {
+				console.log('接收到 permissions 配置更新:', config.permissions)
+			}
 
 			if (configKeys.includes('formulaed')) {
 				// 协同同步时，需要清除所有公式单元格的计算值，然后重新计算
@@ -183,20 +226,26 @@ export const useSynergyEvent = (sheetId, signalr) => {
 					sheet.hooks.editHook.setFormulaValue()
 				}, 100) // 增加延迟，确保所有配置和数据都已更新
 			}
-
-			if (
-				res.hasOwnProperty('row') &&
-				res.hasOwnProperty('col') &&
-				res.row >= 0 &&
-				res.col >= 0
-			) {
-				useSynergyEvent.groupUsers(res)
-			}
-		} else {
-			useSynergyEvent.groupUsers(res)
 		}
 
-		// useSynergyEvent.groupUsers(res)
+		// 更新在线用户的选区信息（无论是否有 config 都需要更新）
+		if (
+			res.hasOwnProperty('row') &&
+			res.hasOwnProperty('col') &&
+			res.row >= 0 &&
+			res.col >= 0
+		) {
+			console.log('EventCell 更新在线用户选区:', {
+				userId: res[sheet.props.userKeys[0]],
+				row: res.row,
+				col: res.col,
+				rowEnd: res.rowEnd,
+				colEnd: res.colEnd,
+			})
+			useSynergyEvent.groupUsers(res)
+		} else {
+			console.warn('EventCell 缺少 row/col 信息，无法更新在线用户选区')
+		}
 	})
 
 	signalr.on(EventMap.CellDataChanged, async (res) => {
@@ -331,6 +380,11 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		console.log('OnUserLeaved', res)
 		useSynergyEvent.removeGroupUser(res.userId)
 		sheetStore.removeOnlineUser(res.userId)
+
+		// 清理离开用户的权限锁定
+		if (sheet.hooks.permissionsHook) {
+			sheet.hooks.permissionsHook.releasePermissions(res.userId)
+		}
 	})
 
 	signalr.on(EventMap.OperationReverted, async (res) => {
