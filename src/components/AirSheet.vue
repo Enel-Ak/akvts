@@ -2964,7 +2964,7 @@ defineExpose({
 					<!-- 锁定解锁 -->
 					<div class="group" v-if="sheet.config.locked || sheet.config.unlock">
 						<div
-							v-if="sheet.config.locked"
+							v-if="sheet.config.lock"
 							class="item"
 							:class="{active: setActiveTool('lock').lock}"
 							@click="sheet.hooks.toolsHook.setLocked"
