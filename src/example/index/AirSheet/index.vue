@@ -9,7 +9,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 1,
+		auth: 2,
 		// showToolbar: false,
 		// edit: true,
 		// freezeCount: {
