@@ -209,7 +209,9 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 			console.log('inited AirSheet', this.sheets.get(key))
 		},
 
-		initSynergySheets: async function (sheets, containerId, componentProps) {
+		initSynergySheets: async function (sheets, containerId, componentProps, emits) {
+			if (!sheets.length) return
+
 			// 保留第一个
 			const firstKey = this.sheets.keys().next().value
 			const firstValue = this.sheets.get(firstKey)
@@ -223,6 +225,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 				value.name = sheets[count].name
 				count++
 			}
+
 			if (count < sheets.length) {
 				for (let i = count; i < sheets.length; i++) {
 					await this.init(sheets[i], containerId, componentProps, emits)
