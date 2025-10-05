@@ -210,14 +210,14 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 		},
 
 		initSynergySheets: async function (sheets, containerId, componentProps, emits) {
-			if (!sheets.length) return
-
 			// 保留第一个
 			const firstKey = this.sheets.keys().next().value
 			const firstValue = this.sheets.get(firstKey)
 
 			this.sheets.clear()
 			this.sheets.set(firstKey, firstValue)
+
+			if (!sheets.length) return Promise.resolve()
 
 			let count = 0
 			for (const [key, value] of this.sheets) {
