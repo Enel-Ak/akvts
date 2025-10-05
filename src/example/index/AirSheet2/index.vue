@@ -1077,102 +1077,102 @@ const bba = {
 	],
 }
 
-onActivated(() => {
-	// sheetRef.value
-	// 	.luckyToAir(aab.globalStyle, [
-	// 		...aab.header,
-	// 		...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
-	// 	])
-	// 	.then((res) => {
-	// 		Object.assign(config.value, {
-	// 			config: {
-	// 				...res.config,
-	// 			},
-	// 			celldata: res.celldata,
-	// 		})
-	// 	})
+// onActivated(() => {
+// sheetRef.value
+// 	.luckyToAir(aab.globalStyle, [
+// 		...aab.header,
+// 		...bba.items.map((item) => JSON.parse(item.rawData)).flat(1),
+// 	])
+// 	.then((res) => {
+// 		Object.assign(config.value, {
+// 			config: {
+// 				...res.config,
+// 			},
+// 			celldata: res.celldata,
+// 		})
+// 	})
 
-	// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
-	// sheetRef.value.setMerge(5, 4, 4, 4)
-	// sheetRef.value.setMergeCell(1, 5, 4, 4)
-	// sheetRef.value.setCellValue(0, 0, 'hello')
+// sheetRef.value.setCellBackground(0, 0, 1, 1, '#f00')
+// sheetRef.value.setMerge(5, 4, 4, 4)
+// sheetRef.value.setMergeCell(1, 5, 4, 4)
+// sheetRef.value.setCellValue(0, 0, 'hello')
 
-	// config.value.config.style = {
-	// 	'1-1': {
-	// 		bg: '#f00',
-	// 	},
-	// }
-	// config.value.config.mergedCells = {
-	// 	'1-3': {
-	// 		rowspan: 2,
-	// 		colspan: 2,
-	// 	},
-	// }
-	// config.value.celldata[0][0] = '123'
+// config.value.config.style = {
+// 	'1-1': {
+// 		bg: '#f00',
+// 	},
+// }
+// config.value.config.mergedCells = {
+// 	'1-3': {
+// 		rowspan: 2,
+// 		colspan: 2,
+// 	},
+// }
+// config.value.celldata[0][0] = '123'
 
-	setTimeout(() => {
-		// config.value.config.cellMultiple[1] = {
-		// 	id: 2,
-		// 	name: '测试2',
-		// 	r: 5,
-		// 	c: 3,
-		// 	rr: 5,
-		// 	cc: 3,
-		// 	value: '测试内容2',
-		// 	state: 1,
-		// }
-		// config.value.config.cellMultiple[3] = {
-		// 	id: 4,
-		// 	name: '测试4变化后',
-		// 	r: 9,
-		// 	c: 2,
-		// 	rr: 9,
-		// 	cc: 2,
-		// 	value: '测试内容4变化后',
-		// 	state: 1,
-		// }
-		// config.value.config.cellMultiple[5] = {
-		// 	id: 6,
-		// 	name: '测试6变化后',
-		// 	r: 23,
-		// 	c: 7,
-		// 	rr: 23,
-		// 	cc: 7,
-		// 	value: '测试内容6变化后',
-		// 	state: 1,
-		// }
-		// sheetRef.value.setMergeCell(0, 0, 2, 4)
-		// sheetRef.value.setRange(0, 0, 2, 4)
-		// config.value.celldata[0][0] = '123'
-		// config.value.celldata[0][0] = '123'
-		// sheetRef.value.airToLucky().then((res) => {})
-		// sheetRef.value
-		// 	.luckyToAir(
-		// 		{
-		// 			merge: {
-		// 				'4_4': {r: 4, c: 4, rs: 2, cs: 2},
-		// 			},
-		// 		},
-		// 		[
-		// 			{r: 0, c: 0, v: {v: '123'}},
-		// 			{r: 0, c: 1, v: {v: '3123'}},
-		// 		]
-		// 	)
-		// 	.then((res) => {
-		// 		config.value.config = res.config
-		// 		config.value.celldata = res.celldata
-		// 	})
-	}, 3000)
+// setTimeout(() => {
+// config.value.config.cellMultiple[1] = {
+// 	id: 2,
+// 	name: '测试2',
+// 	r: 5,
+// 	c: 3,
+// 	rr: 5,
+// 	cc: 3,
+// 	value: '测试内容2',
+// 	state: 1,
+// }
+// config.value.config.cellMultiple[3] = {
+// 	id: 4,
+// 	name: '测试4变化后',
+// 	r: 9,
+// 	c: 2,
+// 	rr: 9,
+// 	cc: 2,
+// 	value: '测试内容4变化后',
+// 	state: 1,
+// }
+// config.value.config.cellMultiple[5] = {
+// 	id: 6,
+// 	name: '测试6变化后',
+// 	r: 23,
+// 	c: 7,
+// 	rr: 23,
+// 	cc: 7,
+// 	value: '测试内容6变化后',
+// 	state: 1,
+// }
+// sheetRef.value.setMergeCell(0, 0, 2, 4)
+// sheetRef.value.setRange(0, 0, 2, 4)
+// config.value.celldata[0][0] = '123'
+// config.value.celldata[0][0] = '123'
+// sheetRef.value.airToLucky().then((res) => {})
+// sheetRef.value
+// 	.luckyToAir(
+// 		{
+// 			merge: {
+// 				'4_4': {r: 4, c: 4, rs: 2, cs: 2},
+// 			},
+// 		},
+// 		[
+// 			{r: 0, c: 0, v: {v: '123'}},
+// 			{r: 0, c: 1, v: {v: '3123'}},
+// 		]
+// 	)
+// 	.then((res) => {
+// 		config.value.config = res.config
+// 		config.value.celldata = res.celldata
+// 	})
+// }, 3000)
 
-	// sheetRef.value.mergeCells(1, 3, 3, 3)
-})
+// sheetRef.value.mergeCells(1, 3, 3, 3)
+// })
 
 //21025
 const onClick = () => {}
 const api = ref('http://10.110.10.104:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk1NDY4NjUsImV4cCI6MTc1OTcxODg2NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc1OTU0Njg2NCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyJsZWRnZXItc3VwZXItYWRtaW4iLCLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Iiwi566h55CG5ZGYIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8IiwiZGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2MS1iMzZjLTBmYzctZDZkYzdjOWNmMmE3IiwiYmlnRGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2MS0xY2QyLWMyY2EtYTJlZjAyZmRiMjZiIiwiaWF0IjoxNzU5NTQ2ODY1LCJzY29wZSI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJwd2QiXX0.pnCiaLFzzkNTauwQry1GeEh1uRyJkYBt6aEDZk5L5VsnUlVkxsAQfIH-LNhMu9iXwOiJdrFnH5lla8Y9Uku6Hqv1oCR5jxwW3MqAL9BEeGrs5htGp2d1htuSBMk_bk_PG-ALqnnD4v5ZbOHYkXXoiYMyRBX6F1sZPDXPaVsN-K77Chqg2I3iglq2pxV99orcC-dxkqSrunEF7S8C0NLd0Z9K-PzrUu64xTPVvJHhiOMuhKcawI5elKzHTKARg3QGWy_a2G_dnLydQGURr306SSFBO17BqTDpYvk-hn1O1jzgS7VbH_jJzeSvqVr9DF8Wm8KxvcP8jfKFB8j3Mp5jMA'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk0NTYyNzcsImV4cCI6MTc1OTYyODI3NywiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1OTQ1NjI3NiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc1OTQ1NjI3Nywic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.WjsLWp4FfUSocJgQYZqKR63gD3QJ3Hw9V73eTm7Ok_CxrbX6BcOznulINZOnmkNKrEJu-X5P71NKpQdseMTho5lvYeKAu9XFT578ReURyg9I3wVGhZGVETSdn6TsFfQDkIoi31jrFjZJZg0Fm0-SOt-nZnVvG1w991fSI92jDcVb74CHQQLJbYqxs6VLiOkOYnBb5LNowuupmII8uhQuMefyYnvL12xrxBZy5H2_OhmjbE9Dtp794v69A88kifMUYMjLebu7ISQWoWnXYLuyxzDT46_BGD1kc8kxB6U5Rh12iZwPBS7vHlNxvInJB3IjtYPTKbQ_lgVtrOTJn0t5pQ'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk2Mjk5NTYsImV4cCI6MTc1OTgwMTk1NiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1OTYyNjkwNiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7wiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTMxOGQtZmQ5OS00YzYxZjllYmIxN2YiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk2Mjk5NTYsInNjb3BlIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbInB3ZCJdfQ.ofyyGsFXA9yLvNB18-MwVP02KNtUbCaovRyza0WqO9OyCbeBnhX4tYUkEEAfEEZ7wLI2vR5lsAHMBTSDjo7eChGJPOaKtC6hfxpHgkbK7qIGf-0PwgmqCggHoPMF7OgbdlXERmfa8Oq9d3RlxnHEkZ2fqkyjnibVTP1Yc03QQOhYCTyukfgJjP7RrLNuXuCvI098d1ICEps_khibS97zMyzWlIGDZZiGxNiClmA0Oabt7F8vMXoEJ81EEBbyxXFMvaIpR9SIicihkyeHdfajNaVvmT_PHAogMzaMOepKkeytz1WEzR_h_jgqJq3YvTU76bLbUJQBho8b-7qCJSWguA'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1304,7 +1304,7 @@ watch(
 	}
 )
 
-onActivated(() => {
+onMounted(() => {
 	// 获取sheets
 	axios
 		.request({
@@ -1334,6 +1334,13 @@ onActivated(() => {
 			})
 			config.value.celldata = data.value
 		})
+		.catch((err) => {
+			console.log(err)
+		})
+})
+onActivated(() => {
+	console.log(1)
+
 	// setTimeout(() => {
 	// 	console.log('config', config.value)
 	// 	config.value.celldata = Array.from({length: 51200}, (_, r) => {
@@ -1369,7 +1376,7 @@ onActivated(() => {
 <route>
 	{
 		meta: {
-			title: 'AirSheet',
+			title: 'AirSheet2',
 		},
 	}
 </route>

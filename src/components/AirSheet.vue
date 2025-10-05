@@ -2452,11 +2452,13 @@ watch(
 watch(
 	() => props.asyncSheet,
 	(newVal) => {
-		if ((!newVal && !newVal.length) || !props.modelValue?.config.synergy) {
+		if (!newVal || !newVal.length || !props.modelValue?.config.synergy) {
 			return
 		}
 
 		sheetStore?.initSynergySheets(newVal, containerId, props, emits).then(() => {
+			console.log(3333)
+
 			if (props.modelValue?.config.synergy) {
 				sheet.hooks.synergyHook.connection(props.api, props.token, () => {
 					sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)

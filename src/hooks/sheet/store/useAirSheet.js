@@ -214,25 +214,32 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 			useSignalrStop()
 
 			// 保留第一个
-			const firstKey = this.sheets.keys().next().value
-			const firstValue = this.sheets.get(firstKey)
+			// const firstKey = this.sheets.keys().next().value
+			// const firstValue = this.sheets.get(firstKey)
 
-			this.sheets.clear()
-			this.sheets.set(firstKey, firstValue)
+			// firstValue.containerId = containerId
 
-			if (!sheets.length) return Promise.resolve()
+			this.sheets?.clear()
+			// this.sheets.set(firstKey, firstValue)
 
-			let count = 0
-			for (const [key, value] of this.sheets) {
-				value.original.sheetId = sheets[count].id
-				value.name = sheets[count].name
-				count++
-			}
+			// if (!sheets.length) return Promise.resolve()
 
-			if (count < sheets.length) {
-				for (let i = count; i < sheets.length; i++) {
-					await this.init(sheets[i], containerId, componentProps, emits)
-				}
+			// let count = 0
+			// for (const [key, value] of this.sheets) {
+			// 	value.original.sheetId = sheets[count].id
+			// 	value.name = sheets[count].name
+			// 	count++
+			// }
+
+			// if (count < sheets.length) {
+			// 	for (let i = count; i < sheets.length; i++) {
+			// 		await this.init(sheets[i], containerId, componentProps, emits)
+			// 	}
+			// }
+			this.online.length = 0
+			this.linked = false
+			for (let i = 0; i < sheets.length; i++) {
+				await this.init(sheets[i], containerId, componentProps, emits)
 			}
 		},
 
