@@ -3571,6 +3571,9 @@ const getSuperPermissionStyle = (range, index) => {
 											@dblclick.stop="
 												sheet.hooks.editHook.startEdit($event, cell)
 											"
+											@input.stop="
+												sheet.hooks.editHook.inputCell($event, cell)
+											"
 											@blur="
 												($event) => {
 													onCellBlur($event, cell)
@@ -3595,6 +3598,7 @@ const getSuperPermissionStyle = (range, index) => {
 										@dblclick.stop="
 											sheet.hooks.editHook.startEdit($event, cell)
 										"
+										@input.stop="sheet.hooks.editHook.inputCell($event, cell)"
 										@blur="
 											($event) => {
 												onCellBlur($event, cell)
@@ -3750,7 +3754,7 @@ const getSuperPermissionStyle = (range, index) => {
 
 					<!-- 公式菜单 -->
 					<div
-						v-if="sheet.state.formula"
+						v-if="sheet.state.openformula && sheet.config.edit"
 						class="context-menu shadow-12"
 						:style="{...sheet.state.formulaStyle, width: '145px'}"
 					>

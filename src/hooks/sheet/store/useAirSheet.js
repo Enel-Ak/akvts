@@ -89,6 +89,7 @@ const defaultSheet = {
 		filter: false, // 是否开启筛选
 		search: false, // 是否开启查找
 		formula: false, // 是否进入公式状态
+		openformula: false, // 是否打开公式菜单
 		formulaStyle: {},
 
 		msg: '正在加载数据...',

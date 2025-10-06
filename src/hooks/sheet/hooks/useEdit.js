@@ -268,6 +268,7 @@ export const useEdit = () => {
 			}
 
 			isFormula.value = true
+
 			const cellRect = cellEl.getBoundingClientRect()
 			const containerRect = container.getBoundingClientRect()
 
@@ -298,6 +299,7 @@ export const useEdit = () => {
 			}
 
 			sheet.state.formula = true
+			sheet.state.openformula = true
 		}
 
 		const blur = () => {
@@ -306,6 +308,7 @@ export const useEdit = () => {
 				setTimeout(() => {
 					// formulaStyle.value = {}
 					sheet.state.formulaStyle = {}
+					sheet.state.openformula = false
 					isFormula.value = false
 				}, 150)
 				return
@@ -335,6 +338,7 @@ export const useEdit = () => {
 			setTimeout(() => {
 				// formulaStyle.value = {}
 				sheet.state.formulaStyle = {}
+				sheet.state.openformula = false
 				isFormula.value = false
 				// 编辑完成，清除原始状态
 				clearOriginalFormulaState()
@@ -351,14 +355,13 @@ export const useEdit = () => {
 				startsWithEquals: cellEl.innerText.startsWith('='),
 			})
 
-			// 检查是否是公式
-
-			if (cellEl.innerText.startsWith('=')) {
-				console.log('检测到公式输入，调用 setFormula()')
-				// cellEl.innerText = ''
-				delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
-				setFormula()
-			}
+			// // 检查是否是公式
+			// if (cellEl.innerText.startsWith('=')) {
+			// 	console.log('检测到公式输入，调用 setFormula()')
+			// 	// cellEl.innerText = ''
+			// 	delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
+			// 	setFormula()
+			// }
 
 			inputValue.value = cellEl.innerText
 
@@ -478,21 +481,14 @@ export const useEdit = () => {
 		selection.removeAllRanges()
 		selection.addRange(range)
 
-		// // 检查是否是公式
-		// if (e.key === '=') {
-		// 	console.log('按下 = 键，调用 setFormula()')
-		// 	cellEl.innerText = ''
-		// 	delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
-		// 	setFormula()
-		// }
-
-		// console.log(4444, cellEl.innerText, isFormula)
-		// if (cellEl.innerText.startsWith('=')) {
-		// 	console.log('内容以 = 开头，设置 sheet.state.formula = true')
-		// 	console.log(4444, isFormula)
-
-		// 	sheet.state.formula = true
-		// }
+		// 检查是否是公式
+		if (e.key === '=') {
+			cellEl.innerText = ''
+			delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
+			setFormula()
+		} else if (cellEl.innerText.startsWith('=')) {
+			setFormula()
+		}
 
 		cellEl.addEventListener('input', input)
 		cellEl.addEventListener('blur', blur)
@@ -723,6 +719,7 @@ export const useEdit = () => {
 					if (params) {
 						sheet.config.formulaed[`${row}-${col}`] = `=${key}(${params[1]})`
 					}
+					delete sheet.config.formulaMap[`${row}-${col}`]
 				} else {
 					sheet.config.formulaed[`${row}-${col}`] = `=${key}()`
 				}
@@ -741,6 +738,8 @@ export const useEdit = () => {
 		if (!sheet.state.formula) {
 			setFormulaValue(container.querySelector(`[data-cell="${r}-${c}"]`))
 		}
+
+		sheet.state.openformula = false
 	}
 
 	// 根据公式计算结果

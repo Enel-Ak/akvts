@@ -206,9 +206,27 @@ export const useSynergyEvent = (sheetId, signalr) => {
 				}, 0)
 			}
 
-			// 如果有任何配置更新，都可能影响公式计算，需要重新计算公式
-			// 特别是在行列操作后，公式引用可能已经更新，需要重新计算值
-			if (configKeys.length > 0 && Object.keys(sheet.config.formulaed || {}).length > 0) {
+			// 只有在特定配置更新时才触发公式重新计算
+			// permissions 和 superPermissions 的更新不应该触发公式重新计算
+			const formulaRelatedKeys = [
+				'formulaed',
+				'formulaMap',
+				'merged',
+				'rResize',
+				'cResize',
+				'styled',
+				'locked',
+			]
+			const hasFormulaRelatedUpdate = configKeys.some((key) =>
+				formulaRelatedKeys.includes(key)
+			)
+
+			if (hasFormulaRelatedUpdate && Object.keys(sheet.config.formulaed || {}).length > 0) {
+				console.log(
+					'检测到公式相关配置更新，触发公式重新计算:',
+					configKeys.filter((key) => formulaRelatedKeys.includes(key))
+				)
+
 				// 清除所有公式单元格的计算值，确保重新计算
 				const formulaedKeys = Object.keys(sheet.config.formulaed || {})
 				formulaedKeys.forEach((key) => {
@@ -225,6 +243,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 				setTimeout(() => {
 					sheet.hooks.editHook.setFormulaValue()
 				}, 100) // 增加延迟，确保所有配置和数据都已更新
+			} else if (configKeys.length > 0) {
+				console.log('检测到非公式相关配置更新，跳过公式重新计算:', configKeys)
 			}
 		}
 
@@ -505,11 +525,30 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						}, 0)
 					}
 
-					// 如果有任何配置更新，都可能影响公式计算
+					// 只有在特定配置更新时才触发公式重新计算
+					// permissions 和 superPermissions 的更新不应该触发公式重新计算
+					const formulaRelatedKeys = [
+						'formulaed',
+						'formulaMap',
+						'merged',
+						'rResize',
+						'cResize',
+						'styled',
+						'locked',
+					]
+					const hasFormulaRelatedUpdate = configKeys.some((key) =>
+						formulaRelatedKeys.includes(key)
+					)
+
 					if (
-						configKeys.length > 0 &&
+						hasFormulaRelatedUpdate &&
 						Object.keys(sheet.config.formulaed || {}).length > 0
 					) {
+						console.log(
+							'OperationReverted 检测到公式相关配置更新，触发公式重新计算:',
+							configKeys.filter((key) => formulaRelatedKeys.includes(key))
+						)
+
 						const formulaedKeys = Object.keys(sheet.config.formulaed || {})
 						formulaedKeys.forEach((key) => {
 							const [r, c] = key.split('-').map(Number)
@@ -527,6 +566,11 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						setTimeout(() => {
 							sheet.hooks.editHook.setFormulaValue()
 						}, 100)
+					} else if (configKeys.length > 0) {
+						console.log(
+							'OperationReverted 检测到非公式相关配置更新，跳过公式重新计算:',
+							configKeys
+						)
 					}
 				} catch (error) {
 					console.error('OperationReverted 解析配置失败:', error)
