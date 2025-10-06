@@ -2,7 +2,6 @@ import {ref, reactive, nextTick, watch, onMounted} from 'vue'
 import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
 import {useAirSheetStore} from '../store/useAirSheet'
-import {useDebounce} from '@/hooks'
 
 export const useEdit = () => {
 	const sheetStore = useAirSheetStore()
@@ -257,6 +256,17 @@ export const useEdit = () => {
 		}
 
 		const setFormula = () => {
+			console.log('setFormula 被调用', {
+				cellEl: !!cellEl,
+				container: !!container,
+				cell,
+			})
+
+			if (!cellEl || !container) {
+				console.error('setFormula: cellEl 或 container 未定义')
+				return
+			}
+
 			isFormula.value = true
 			const cellRect = cellEl.getBoundingClientRect()
 			const containerRect = container.getBoundingClientRect()
@@ -265,7 +275,18 @@ export const useEdit = () => {
 			const scrollLeft = container.scrollLeft || 0
 			const scrollTop = container.scrollTop || 0
 
-			formulaStyle.value = {
+			// formulaStyle.value = {
+			// 	left: cellRect.left - containerRect.left + scrollLeft + 'px',
+			// 	top: cellRect.bottom - containerRect.top + scrollTop + 'px',
+			// 	width: cellRect.width + 'px',
+			// }
+
+			// console.log('公式菜单样式已设置', {
+			// 	isFormula: isFormula.value,
+			// 	formulaStyle: formulaStyle.value,
+			// })
+
+			sheet.state.formulaStyle = {
 				left: cellRect.left - containerRect.left + scrollLeft + 'px',
 				top: cellRect.bottom - containerRect.top + scrollTop + 'px',
 				width: cellRect.width + 'px',
@@ -283,7 +304,8 @@ export const useEdit = () => {
 			if (sheet.state.formula) {
 				cellEl.focus()
 				setTimeout(() => {
-					formulaStyle.value = {}
+					// formulaStyle.value = {}
+					sheet.state.formulaStyle = {}
 					isFormula.value = false
 				}, 150)
 				return
@@ -311,7 +333,8 @@ export const useEdit = () => {
 				setFormulaValue(cellEl)
 			})
 			setTimeout(() => {
-				formulaStyle.value = {}
+				// formulaStyle.value = {}
+				sheet.state.formulaStyle = {}
 				isFormula.value = false
 				// 编辑完成，清除原始状态
 				clearOriginalFormulaState()
@@ -323,8 +346,17 @@ export const useEdit = () => {
 			// 体验优化而已
 			cellEl.style.removeProperty('line-height')
 
+			console.log('input 事件触发', {
+				innerText: cellEl.innerText,
+				startsWithEquals: cellEl.innerText.startsWith('='),
+			})
+
 			// 检查是否是公式
+
 			if (cellEl.innerText.startsWith('=')) {
+				console.log('检测到公式输入，调用 setFormula()')
+				// cellEl.innerText = ''
+				delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
 				setFormula()
 			}
 
@@ -446,16 +478,21 @@ export const useEdit = () => {
 		selection.removeAllRanges()
 		selection.addRange(range)
 
-		// 检查是否是公式
-		if (e.key === '=') {
-			cellEl.innerText = ''
-			delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
-			setFormula()
-		}
+		// // 检查是否是公式
+		// if (e.key === '=') {
+		// 	console.log('按下 = 键，调用 setFormula()')
+		// 	cellEl.innerText = ''
+		// 	delete sheet.config.formulaed[`${cell.r}-${cell.c}`]
+		// 	setFormula()
+		// }
 
-		if (cellEl.innerText.startsWith('=')) {
-			sheet.state.formula = true
-		}
+		// console.log(4444, cellEl.innerText, isFormula)
+		// if (cellEl.innerText.startsWith('=')) {
+		// 	console.log('内容以 = 开头，设置 sheet.state.formula = true')
+		// 	console.log(4444, isFormula)
+
+		// 	sheet.state.formula = true
+		// }
 
 		cellEl.addEventListener('input', input)
 		cellEl.addEventListener('blur', blur)
@@ -624,11 +661,14 @@ export const useEdit = () => {
 				}
 			}
 
-			if (formula) {
+			// 处理公式：如果输入以 = 开头，或者单元格已有公式配置
+			if (formula || (text && text.startsWith('='))) {
 				if (format) {
+					// 保存公式到配置
 					sheet.config.formulaed[`${rowIndex}-${colIndex}`] = output
 				} else {
-					output = formula
+					// 还原时使用已保存的公式
+					output = formula || output
 				}
 			}
 		} catch (error) {
@@ -1122,8 +1162,8 @@ export const useEdit = () => {
 		return {
 			inputValue,
 			editing,
-			isFormula,
-			formulaStyle,
+			// isFormula,
+			// formulaStyle,
 
 			destroy,
 			startEdit,
@@ -1138,7 +1178,6 @@ export const useEdit = () => {
 			getEditingCellPosition,
 
 			inputCell,
-
 			refreshSheet,
 		}
 	}

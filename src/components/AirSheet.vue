@@ -2206,6 +2206,14 @@ const onChangeSheet = async (sheetItem, e) => {
 		sheet.celldata.clear()
 		sheet.filterCellData.clear()
 
+		// 清空 inputCache 和编辑状态，避免数据污染
+		inputCache.clear()
+		inputCacheCell.length = 0
+		editingCellPosition = null
+
+		// 重置公式状态
+		sheet.state.formula = false
+
 		sheet.state.changeSheet = true
 
 		if (sheet.config.synergy) {
@@ -2443,6 +2451,14 @@ watch(
 			// 清空 celldata，等待从接口获取最新数据
 			sheet.celldata.clear()
 			sheet.filterCellData.clear()
+
+			// 清空 inputCache 和编辑状态，避免数据污染
+			inputCache.clear()
+			inputCacheCell.length = 0
+			editingCellPosition = null
+
+			// 重置公式状态
+			sheet.state.formula = false
 
 			// 确保 config 属性存在
 			if (!sheet.config.rResize) sheet.config.rResize = {}
@@ -3734,9 +3750,9 @@ const getSuperPermissionStyle = (range, index) => {
 
 					<!-- 公式菜单 -->
 					<div
-						v-if="sheet.hooks.editHook.isFormula && sheet.config.edit"
+						v-if="sheet.state.formula"
 						class="context-menu shadow-12"
-						:style="{...sheet.hooks.editHook.formulaStyle, width: '145px'}"
+						:style="{...sheet.state.formulaStyle, width: '145px'}"
 					>
 						<div
 							class="menu-item"
