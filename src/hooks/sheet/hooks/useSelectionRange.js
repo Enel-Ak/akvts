@@ -711,32 +711,32 @@ export const useSelectionRange = () => {
 		}
 
 		if (sheet.config.synergy) {
-			useDebounce(
-				() => {
-					// 发送选区信息，同时包含 permissions 配置
-					// 注意：这里同时发送选区和权限是因为它们是一起变化的
-					const eventData = {
-						...ranged.value,
-					}
+			// useDebounce(
+			// 	() => {
+			// 发送选区信息，同时包含 permissions 配置
+			// 注意：这里同时发送选区和权限是因为它们是一起变化的
+			const eventData = {
+				...ranged.value,
+			}
 
-					// 如果启用了权限模式，添加 permissions 配置
-					if (sheet.config.auth > 0 && sheet.config.permissions) {
-						eventData.config = JSON.stringify({
-							permissions: sheet.config.permissions,
-						})
-						console.log('发送选区和权限配置:', {
-							range: ranged.value,
-							permissions: sheet.config.permissions,
-						})
-					} else {
-						console.log('发送选区信息:', ranged.value)
-					}
+			// 如果启用了权限模式，添加 permissions 配置
+			if (sheet.config.auth > 0 && sheet.config.permissions) {
+				eventData.config = JSON.stringify({
+					permissions: sheet.config.permissions,
+				})
+				console.log('发送选区和权限配置:', {
+					range: ranged.value,
+					permissions: sheet.config.permissions,
+				})
+			} else {
+				console.log('发送选区信息:', ranged.value)
+			}
 
-					sheet.emits?.('asyncEventCell', eventData)
-				},
-				300,
-				'asyncEventCell'
-			)()
+			sheet.emits?.('asyncEventCell', eventData)
+			// }
+			// 	300,
+			// 	'asyncEventCell'
+			// )()
 		}
 	}
 
