@@ -1,0 +1,248 @@
+import {useAirSheetStore} from '../store/useAirSheet'
+
+/**
+ * 超级权限管理 Hook
+ * 实现高优先级的权限控制功能，优先级高于普通 permissions
+ * superPermissions 支持实时同步，通过 asyncConfig 广播给其他用户
+ */
+export const useSuperPermissions = () => {
+	const sheetStore = useAirSheetStore()
+	let sheetKey = null
+	let sheet = null
+
+	/**
+	 * 检查指定位置是否被 superPermissions 锁定
+	 * @param {number} row - 行索引
+	 * @param {number} col - 列索引
+	 * @param {number} rowspan - 行跨度 (默认1)
+	 * @param {number} colspan - 列跨度 (默认1)
+	 * @returns {{locked: boolean, reason: string, range: object|null}} 检查结果
+	 */
+	const checkSuperPermission = (row, col, rowspan = 1, colspan = 1) => {
+		if (!sheet || !sheet.config.superPermissions) {
+			return {locked: false, reason: '', range: null}
+		}
+
+		const superPermissions = sheet.config.superPermissions
+
+		// superPermissions 可以是对象数组或对象集合
+		const permissionList = Array.isArray(superPermissions)
+			? superPermissions
+			: Object.values(superPermissions)
+
+		console.log('checkSuperPermission 调用:', {
+			检查位置: {row, col, rowspan, colspan},
+			superPermissions: permissionList,
+		})
+
+		// 检查目标区域是否与任何 superPermission 区域重叠
+		for (let i = 0; i < permissionList.length; i++) {
+			const permission = permissionList[i]
+			if (!permission) continue
+
+			const {r: startRow, c: startCol, rr: endRow, cc: endCol, v: description} = permission
+
+			// 检查是否有重叠
+			// 目标区域: [row, row + rowspan - 1] x [col, col + colspan - 1]
+			// 权限区域: [startRow, endRow] x [startCol, endCol]
+			const targetEndRow = row + rowspan - 1
+			const targetEndCol = col + colspan - 1
+
+			const hasOverlap = !(
+				targetEndRow < startRow ||
+				row > endRow ||
+				targetEndCol < startCol ||
+				col > endCol
+			)
+
+			if (hasOverlap) {
+				console.log('checkSuperPermission: 检测到超级权限锁定!', {
+					目标区域: {row, col, targetEndRow, targetEndCol},
+					权限区域: {startRow, startCol, endRow, endCol},
+					描述: description,
+				})
+
+				return {
+					locked: true,
+					reason: description
+						? `该区域受保护: ${description}`
+						: '该区域受超级权限保护，不可编辑',
+					range: permission,
+				}
+			}
+		}
+
+		console.log('checkSuperPermission: 未检测到超级权限锁定')
+		return {locked: false, reason: '', range: null}
+	}
+
+	/**
+	 * 获取所有 superPermission 区域（用于渲染高亮）
+	 * @returns {Array} superPermission 区域列表
+	 */
+	const getSuperPermissionRanges = () => {
+		if (!sheet || !sheet.config.superPermissions) {
+			return []
+		}
+
+		const superPermissions = sheet.config.superPermissions
+
+		// superPermissions 可以是对象数组或对象集合
+		const permissionList = Array.isArray(superPermissions)
+			? superPermissions
+			: Object.values(superPermissions)
+
+		return permissionList.filter((p) => p && typeof p === 'object')
+	}
+
+	/**
+	 * 生成随机颜色（用于高亮显示）
+	 * @param {number} index - 索引（用于生成不同的颜色）
+	 * @returns {string} RGB 颜色字符串
+	 */
+	const generateColor = (index) => {
+		// 使用预定义的颜色列表，确保颜色足够明显且美观
+		const colors = [
+			'255, 107, 107', // 红色
+			'255, 159, 64', // 橙色
+			'255, 205, 86', // 黄色
+			'75, 192, 192', // 青色
+			'54, 162, 235', // 蓝色
+			'153, 102, 255', // 紫色
+			'255, 99, 132', // 粉色
+			'201, 203, 207', // 灰色
+			'255, 193, 7', // 琥珀色
+			'76, 175, 80', // 绿色
+		]
+
+		return colors[index % colors.length]
+	}
+
+	/**
+	 * 设置 superPermission
+	 * @param {number} r - 起始行
+	 * @param {number} c - 起始列
+	 * @param {number} rr - 结束行
+	 * @param {number} cc - 结束列
+	 * @param {string} v - 描述信息（可选）
+	 * @returns {string} permission ID
+	 */
+	const setSuperPermission = (r, c, rr, cc, v = '受保护区域') => {
+		if (!sheet || !sheet.config.superPermissions) {
+			console.error('setSuperPermission: sheet 或 superPermissions 不存在')
+			return null
+		}
+
+		// 生成唯一 ID
+		const id = `sp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+		// 添加 superPermission
+		sheet.config.superPermissions[id] = {r, c, rr, cc, v}
+
+		console.log('setSuperPermission:', {id, r, c, rr, cc, v})
+
+		// 同步权限配置到其他用户
+		if (sheet.config.synergy) {
+			sheet.emits?.('asyncConfig', {
+				superPermissions: sheet.config.superPermissions,
+			})
+		}
+
+		return id
+	}
+
+	/**
+	 * 删除 superPermission
+	 * @param {string} id - permission ID
+	 */
+	const removeSuperPermission = (id) => {
+		if (!sheet || !sheet.config.superPermissions) {
+			console.error('removeSuperPermission: sheet 或 superPermissions 不存在')
+			return
+		}
+
+		// 删除 superPermission
+		delete sheet.config.superPermissions[id]
+
+		console.log('removeSuperPermission:', {id})
+
+		// 同步权限配置到其他用户
+		if (sheet.config.synergy) {
+			sheet.emits?.('asyncConfig', {
+				superPermissions: sheet.config.superPermissions,
+			})
+		}
+	}
+
+	/**
+	 * 清空所有 superPermissions
+	 */
+	const clearSuperPermissions = () => {
+		if (!sheet || !sheet.config.superPermissions) {
+			console.error('clearSuperPermissions: sheet 或 superPermissions 不存在')
+			return
+		}
+
+		// 清空所有 superPermissions
+		sheet.config.superPermissions = {}
+
+		console.log('clearSuperPermissions')
+
+		// 同步权限配置到其他用户
+		if (sheet.config.synergy) {
+			sheet.emits?.('asyncConfig', {
+				superPermissions: sheet.config.superPermissions,
+			})
+		}
+	}
+
+	/**
+	 * 刷新 sheet 引用
+	 * @param {string} id - sheet ID
+	 */
+	const refreshSheet = (id) => {
+		sheet = sheetStore.getSheet(id)
+	}
+
+	/**
+	 * 销毁 hook
+	 */
+	const destroy = () => {
+		sheet = null
+		sheetKey = null
+	}
+
+	/**
+	 * 初始化 hook
+	 * @param {string} key - sheet key
+	 * @returns {object} hook 方法集合
+	 */
+	const init = (key) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(key)
+
+		// 确保 superPermissions 对象存在
+		if (!sheet.config.superPermissions) {
+			sheet.config.superPermissions = {}
+		}
+
+		setTimeout(() => {
+			console.log('installed useSuperPermissions')
+		}, 16)
+
+		return {
+			checkSuperPermission,
+			getSuperPermissionRanges,
+			generateColor,
+			setSuperPermission,
+			removeSuperPermission,
+			clearSuperPermissions,
+			refreshSheet,
+			destroy,
+		}
+	}
+
+	return {
+		init,
+	}
+}

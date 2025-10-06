@@ -333,6 +333,7 @@ const initialData = (data = []) => {
 			requestAnimationFrame(processBatch)
 		} else {
 			sheet.state.progress = 100
+
 			sheetStore.$patch((state) => {
 				state.sheets.get(sheet.id).celldata = markRaw(cellMap)
 			})
@@ -2187,7 +2188,7 @@ const onChangeSheet = async (sheetItem, e) => {
 		sheet.state.changeSheet = true
 
 		if (sheet.config.synergy) {
-			emits('asyncJoinSheet', sheet.original.sheetId)
+			emits('asyncJoinSheet', sheet.original.sheetId, sheet)
 		}
 
 		Object.values(sheet.hooks).forEach((hook) => {
@@ -2415,6 +2416,8 @@ watch(
 			if (!sheet.config.formulaed) sheet.config.formulaed = {}
 			if (!sheet.config.formulaMap) sheet.config.formulaMap = {}
 			if (!sheet.config.filtered) sheet.config.filtered = {}
+			if (!sheet.config.permissions) sheet.config.permissions = {}
+			if (!sheet.config.superPermissions) sheet.config.superPermissions = {}
 
 			// 触发切换状态
 			sheet.state.changeSheet = true
@@ -2422,7 +2425,7 @@ watch(
 			// 发送加入新 sheet 的事件（如果是协同模式）
 			if (sheet.config.synergy) {
 				console.log('发送 asyncJoinSheet 事件:', targetSheetId)
-				emits('asyncJoinSheet', targetSheetId)
+				emits('asyncJoinSheet', targetSheetId, sheet)
 			}
 
 			// 刷新所有 hooks
@@ -2453,12 +2456,16 @@ watch(
 			'locked',
 			'rResize',
 			'cResize',
+			'filtered',
+			'permissions',
+			'superPermissions',
 		]
 		clearConfigKeys.forEach((key) => {
 			if (sheet.config[key]) {
 				sheet.config[key] = {}
 			}
 		})
+
 		sheet.config = Object.assign(sheet.config, toRaw(newVal))
 
 		const mc = newVal.merged || {}
@@ -2508,8 +2515,6 @@ watch(
 		}
 
 		sheetStore?.initSynergySheets(newVal, containerId, props, emits).then(() => {
-			console.log(3333)
-
 			if (props.modelValue?.config.synergy) {
 				sheet.hooks.synergyHook.connection(props.api, props.token, () => {
 					sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
@@ -2596,6 +2601,111 @@ defineExpose({
 	// 权限相关
 	setCurrentUserId: (userId) => sheetStore.setCurrentUserId(userId), // 设置当前用户ID（用于权限控制）
 })
+
+// 计算 permission 区域的样式
+const getPermissionStyle = (range, index) => {
+	if (!range || !sheet.hooks?.selectionRangeHook) return {}
+
+	const {r, c, rr, cc} = range
+
+	// 使用 selectionRangeHook 的方法计算位置和大小
+	// 创建一个临时的高亮对象
+	const tempHighlight = {
+		id: `permission-${index}`,
+		r,
+		c,
+		rr,
+		cc,
+	}
+
+	// 获取基础样式
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
+
+	// 生成颜色（根据 userId 生成一致的颜色）
+	const colors = [
+		'255, 107, 107', // 红色
+		'255, 159, 64', // 橙色
+		'255, 205, 86', // 黄色
+		'75, 192, 192', // 青色
+		'54, 162, 235', // 蓝色
+		'153, 102, 255', // 紫色
+		'255, 99, 132', // 粉色
+		'201, 203, 207', // 灰色
+	]
+	const color = colors[index % colors.length]
+
+	// 添加权限特有的样式
+	return {
+		...baseStyle,
+		'--z-highlight-color': `rgb(${color})`,
+		'--z-highlight-color-rgb': color,
+		border: `2px solid rgb(${color})`,
+		backgroundColor: `rgba(${color}, 0.1)`, // 透明背景色
+		zIndex: 2, // 比普通高亮更高，但比超级权限低
+	}
+}
+
+// 计算 superPermission 区域的样式
+const getSuperPermissionStyle = (range, index) => {
+	if (!range || !sheet.props) return {}
+
+	const {r, c, rr, cc} = range
+
+	// 直接计算位置和大小，不使用 setHighlightRange（避免范围被扩展）
+	// 计算起始位置
+	let totalOffsetTop = r * sheet.props.rowHeight
+	let totalOffsetLeft = c * sheet.props.colWidth
+
+	// 计算高度和宽度
+	let totalHeight = (rr - r + 1) * sheet.props.rowHeight
+	let totalWidth = (cc - c + 1) * sheet.props.colWidth
+
+	// 考虑修改的行高
+	if (sheet.config.rResize) {
+		for (let row = 0; row < r; row++) {
+			if (sheet.config.rResize[row]) {
+				totalOffsetTop += sheet.config.rResize[row] - sheet.props.rowHeight
+			}
+		}
+		for (let row = r; row <= rr; row++) {
+			if (sheet.config.rResize[row]) {
+				totalHeight += sheet.config.rResize[row] - sheet.props.rowHeight
+			}
+		}
+	}
+
+	// 考虑修改的列宽
+	if (sheet.config.cResize) {
+		for (let col = 0; col < c; col++) {
+			if (sheet.config.cResize[col]) {
+				totalOffsetLeft += sheet.config.cResize[col] - sheet.props.colWidth
+			}
+		}
+		for (let col = c; col <= cc; col++) {
+			if (sheet.config.cResize[col]) {
+				totalWidth += sheet.config.cResize[col] - sheet.props.colWidth
+			}
+		}
+	}
+
+	// 生成随机颜色
+	const color = sheet.hooks.superPermissionsHook?.generateColor(index) || '255, 107, 107'
+
+	// 返回样式
+	return {
+		position: 'absolute',
+		top: `${totalOffsetTop}px`,
+		left: `${totalOffsetLeft}px`,
+		width: `${totalWidth}px`,
+		height: `${totalHeight}px`,
+		'--z-highlight-color': `rgb(${color})`,
+		'--z-highlight-color-rgb': color,
+		border: `2px solid rgb(${color})`,
+		backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
+		zIndex: 3, // 比普通高亮更高的层级
+		pointerEvents: 'none', // 不阻止鼠标事件
+	}
+}
 </script>
 <template>
 	<div
@@ -3494,6 +3604,32 @@ defineExpose({
 						<div class="label">{{ item.name }}</div>
 					</div>
 
+					<!-- 权限高亮 -->
+					<div
+						:key="`permission-${index}`"
+						v-for="(
+							range, index
+						) of sheet.hooks?.permissionsHook?.getPermissionRanges() || []"
+						class="highlight"
+						:data-permission-type="range.type"
+						:style="getPermissionStyle(range, index)"
+					>
+						<div class="label">{{ range.userName || '权限区域' }}</div>
+					</div>
+
+					<!-- 超级权限高亮 -->
+					<div
+						:key="`super-${index}`"
+						v-for="(
+							range, index
+						) of sheet.hooks?.superPermissionsHook?.getSuperPermissionRanges() || []"
+						class="highlight super-permission"
+						:data-super-permission="true"
+						:style="getSuperPermissionStyle(range, index)"
+					>
+						<div class="label">{{ range.v || '受保护区域' }}</div>
+					</div>
+
 					<!-- 右键菜单 -->
 					<div
 						v-show="sheet.hooks.contextMenuHook.contextMenuVisible"
@@ -3747,7 +3883,7 @@ defineExpose({
 					</span>
 				</template>
 
-				<span class="new-sheet" @click="onAddSheet">
+				<span v-if="sheet.config.createSheet" class="new-sheet" @click="onAddSheet">
 					<Icons name="Add"></Icons>
 				</span>
 			</div>

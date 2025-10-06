@@ -16,6 +16,7 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+
 		const key = `air-sheet-ws-${Math.random().toString(36).slice(2)}`
 		sheet.state.loading = true
 		sheet.state.msg = '正在连接中...'

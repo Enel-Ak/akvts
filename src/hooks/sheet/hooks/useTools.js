@@ -1236,6 +1236,7 @@ export const useTools = () => {
 
 					if (typeof rowIndex === 'number') {
 						if (rowIndex >= r && rowIndex <= rr) {
+							// 保存被删除的行数据
 							deletedRows.set(`${rowIndex}`, {
 								rowData: useStringArrayToBuffer(rowData),
 								deleteCount,
@@ -1249,11 +1250,10 @@ export const useTools = () => {
 			)
 
 			// 清除最后几行的重复数据，避免重复显示
-			// 只清除原来数据末尾的 deleteCount 行
-			for (let i = maxRowIndex; i > maxRowIndex - deleteCount; i--) {
-				if (i > maxRowIndex - deleteCount) {
-					sheet.celldata.delete(i)
-				}
+			// 修复：正确清除原来数据末尾的 deleteCount 行
+			// 从 maxRowIndex 开始，向下清除 deleteCount 行
+			for (let i = maxRowIndex; i > maxRowIndex - deleteCount && i >= 0; i--) {
+				sheet.celldata.delete(i)
 			}
 
 			// 保存历史

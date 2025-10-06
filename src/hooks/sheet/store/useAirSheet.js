@@ -13,11 +13,13 @@ import {useSelectionRange} from '../hooks/useSelectionRange'
 import {useExcel} from '../hooks/useExcel'
 import {useSynergy} from '../hooks/useSynergy'
 import {usePermissions} from '../hooks/usePermissions'
+import {useSuperPermissions} from '../hooks/useSuperPermissions'
 import {useSignalrStop} from '@/hooks/useSignalr'
 
 const defaultSheet = {
 	props: {},
 	config: {
+		// 每个sheet公共的配置
 		howHorizontalScreen: true, // 移动端不是横向提醒
 		showToolBar: true, // 工具栏
 		showstateBar: true, // 状态栏
@@ -51,11 +53,16 @@ const defaultSheet = {
 		find: true, // 查找
 		undo: true, // 撤销
 		synergy: false, // 协同
-
+		createSheet: true, // 添加新sheet
 		online: [], // 协同高亮在线的, 当前sheet的
+		rowCount: 40,
+		colCount: 20,
+
+		// 每个sheet独立的配置
 		merged: {}, // 已合并单元格
 		locked: {}, // 锁定单元格
 		permissions: {}, // 权限
+		superPermissions: {}, // 权限控制, 优先级别高于 permissions
 		styled: {}, // 有样式的单元格
 		formulaed: {}, // 有公式的单元格
 		formulaMap: {}, // 被公式引用的单元格
@@ -63,15 +70,11 @@ const defaultSheet = {
 		rResize: {}, // 有调整大小的行
 		cResize: {}, // 有调整大小的列
 		keys: [], //  配置单元格的 Key
-
 		freezeCount: {
 			r: 0,
 			c: 0,
 		},
-
 		auth: 0, // 0 不设置权限, 1 每行独立, 2 每列独立, 3 单元格独立
-		rowCount: 40,
-		colCount: 20,
 	},
 	history: null, // 历史记录
 	hooks: {}, // 扩展对象
@@ -161,21 +164,87 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 				clone.history = shallowReactive(new Map()) // 同一个引用
 				clone.celldata = shallowReactive(new Map()) // 同一个引用
 				clone.filterCellData = shallowReactive(new Map()) // 同一个引用
-				clone.config = {
-					...clone.config,
-					...structuredClone(
-						toRaw(componentProps?.modelValue?.config || componentProps?.config)
-					),
 
-					// 创建新的数据配置对象, 不复用上一个sheet
-					merged: {},
-					locked: {},
-					styled: {},
-					formulaed: {},
-					formulaMap: {},
-					filtered: {},
-					rResize: {},
-					cResize: {},
+				// 获取传入的配置
+				const incomingConfig = componentProps?.modelValue?.config || componentProps?.config
+
+				// 判断是否是创建新 sheet
+				// containerId 为 null 表示是通过 addSheet 创建的新 sheet
+				const isAddingNewSheet = containerId === null
+
+				// 从 incomingConfig 中分离公共配置和独立配置
+				// 独立配置（每个 sheet 独立的数据）
+				const independentConfigKeys = [
+					'merged',
+					'locked',
+					'styled',
+					'formulaed',
+					'formulaMap',
+					'filtered',
+					'rResize',
+					'cResize',
+					'permissions',
+					'superPermissions',
+					'online',
+					'keys',
+					'freezeCount',
+					'auth',
+				]
+
+				let publicConfig = {} // 公共配置（组件功能配置）
+				let independentConfig = {} // 独立配置（每个 sheet 的数据）
+
+				if (incomingConfig) {
+					// 分离公共配置和独立配置
+					const tempPublic = {}
+					const tempIndependent = {}
+
+					for (const key in incomingConfig) {
+						if (independentConfigKeys.includes(key)) {
+							tempIndependent[key] = incomingConfig[key]
+						} else {
+							tempPublic[key] = incomingConfig[key]
+						}
+					}
+
+					publicConfig = tempPublic
+					independentConfig = tempIndependent
+				}
+
+				// 根据是否是新 sheet 来决定如何处理独立配置
+				let finalIndependentConfig = {}
+				if (isAddingNewSheet) {
+					// 创建新 sheet：独立配置为空对象
+					independentConfigKeys.forEach((key) => {
+						if (key === 'keys') {
+							finalIndependentConfig[key] = []
+						} else if (key === 'freezeCount') {
+							finalIndependentConfig[key] = {r: 0, c: 0}
+						} else if (key === 'auth') {
+							finalIndependentConfig[key] = 0
+						} else {
+							finalIndependentConfig[key] = {}
+						}
+					})
+				} else {
+					// 初始化已有 sheet：保留原有的独立配置
+					independentConfigKeys.forEach((key) => {
+						if (key === 'keys') {
+							finalIndependentConfig[key] = independentConfig[key] || []
+						} else if (key === 'freezeCount') {
+							finalIndependentConfig[key] = independentConfig[key] || {r: 0, c: 0}
+						} else if (key === 'auth') {
+							finalIndependentConfig[key] = independentConfig[key] || 0
+						} else {
+							finalIndependentConfig[key] = independentConfig[key] || {}
+						}
+					})
+				}
+
+				clone.config = {
+					...clone.config, // defaultSheet 的默认配置
+					...structuredClone(toRaw(publicConfig)), // 公共配置（组件功能配置）
+					...finalIndependentConfig, // 独立配置（每个 sheet 的数据）
 				}
 
 				const jsonProps = JSON.parse(JSON.stringify(componentProps))
@@ -204,6 +273,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 						excelHook: useExcel().init(key),
 						synergyHook: useSynergy().init(key),
 						permissionsHook: usePermissions().init(key),
+						superPermissionsHook: useSuperPermissions().init(key),
 					}
 				} else {
 					re.containerId = this.sheets.values().next().value.containerId
@@ -245,7 +315,13 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 			this.online.length = 0
 			this.linked = false
 			for (let i = 0; i < sheets.length; i++) {
-				await this.init(sheets[i], containerId, componentProps, emits)
+				// 为每个 sheet 创建独立的 componentProps
+				// 需要融合 v-model 的所有配置（公共 + 独立）和 sheet 自己的配置
+
+				const cleanProps = {
+					...componentProps,
+				}
+				await this.init(sheets[i], containerId, cleanProps, emits)
 			}
 		},
 

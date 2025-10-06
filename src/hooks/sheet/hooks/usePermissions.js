@@ -63,6 +63,16 @@ export const usePermissions = () => {
 
 		const timestamp = Date.now()
 
+		// 获取当前用户名（从 sheetStore.getOnline 获取）
+		let userName = userId // 默认使用 userId
+		const onlineUsers = sheetStore.getOnline
+		if (Array.isArray(onlineUsers)) {
+			const user = onlineUsers.find((u) => u && u.id === userId)
+			if (user && user.name) {
+				userName = user.name
+			}
+		}
+
 		// 根据权限模式设置锁定
 		switch (sheet.config.auth) {
 			case 1: // 行级权限
@@ -75,9 +85,11 @@ export const usePermissions = () => {
 						type: 'row',
 						targets,
 						timestamp,
+						userName, // 添加用户名
 					}
 					console.log('updatePermissions - 行级权限:', {
 						userId,
+						userName,
 						targets,
 						allPermissions: sheet.config.permissions,
 					})
@@ -94,9 +106,11 @@ export const usePermissions = () => {
 						type: 'column',
 						targets,
 						timestamp,
+						userName, // 添加用户名
 					}
 					console.log('updatePermissions - 列级权限:', {
 						userId,
+						userName,
 						targets,
 						allPermissions: sheet.config.permissions,
 					})
@@ -115,9 +129,11 @@ export const usePermissions = () => {
 						type: 'cell',
 						targets,
 						timestamp,
+						userName, // 添加用户名
 					}
 					console.log('updatePermissions - 单元格级权限:', {
 						userId,
+						userName,
 						targets,
 						allPermissions: sheet.config.permissions,
 					})
@@ -128,6 +144,7 @@ export const usePermissions = () => {
 
 	/**
 	 * 检查指定位置是否被其他用户锁定
+	 * 优先检查 superPermissions（高优先级），然后检查普通 permissions
 	 * @param {number} row - 行索引
 	 * @param {number} col - 列索引
 	 * @param {number} rowspan - 行跨度 (默认1)
@@ -135,6 +152,25 @@ export const usePermissions = () => {
 	 * @returns {{locked: boolean, lockedBy: string|null, reason: string}} 检查结果
 	 */
 	const checkPermission = (row, col, rowspan = 1, colspan = 1) => {
+		// 优先检查 superPermissions（高优先级权限）
+		if (sheet?.hooks?.superPermissionsHook) {
+			const superCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
+				row,
+				col,
+				rowspan,
+				colspan
+			)
+			if (superCheck.locked) {
+				console.log('checkPermission: 被 superPermissions 锁定')
+				return {
+					locked: true,
+					lockedBy: 'super',
+					reason: superCheck.reason,
+				}
+			}
+		}
+
+		// 如果没有被 superPermissions 锁定，继续检查普通 permissions
 		if (!sheet || !sheet.config.synergy) {
 			return {locked: false, lockedBy: null, reason: ''}
 		}
@@ -185,15 +221,27 @@ export const usePermissions = () => {
 					}
 
 					if (isLocked) {
-						// 从 online 用户列表中获取用户名
-						const user = sheet.config.online?.find((u) => u.id === permUserId)
-						const userName = user?.name || '其他用户'
+						// 获取用户名：优先使用 permission.userName，如果没有再从 sheetStore.getOnline 中获取
+						let userName = permission.userName
+
+						if (!userName) {
+							// 从 sheetStore.getOnline 中获取用户名
+							const onlineUsers = sheetStore.getOnline
+							if (Array.isArray(onlineUsers)) {
+								const user = onlineUsers.find((u) => u && u.id === permUserId)
+								userName = user?.name || '其他用户'
+							} else {
+								userName = '其他用户'
+							}
+						}
+
 						console.log('checkPermission: 检测到锁定!', {
 							位置: {r, c},
 							锁定类型: type,
 							锁定目标: targets,
 							锁定用户: permUserId,
 							用户名: userName,
+							permissionUserName: permission.userName,
 						})
 						return {
 							locked: true,
@@ -246,6 +294,113 @@ export const usePermissions = () => {
 				permissions: sheet.config.permissions,
 			})
 		}
+	}
+
+	/**
+	 * 获取所有 permission 区域（用于渲染高亮）
+	 * @returns {Array} permission 区域列表
+	 */
+	const getPermissionRanges = () => {
+		if (!sheet || !sheet.config.permissions) {
+			return []
+		}
+
+		const permissions = sheet.config.permissions
+		const ranges = []
+
+		// 获取当前用户 ID
+		const currentUserId = getCurrentUserId()
+
+		// 获取在线用户列表（从 sheetStore.getOnline 获取）
+		const onlineUsers = sheetStore.getOnline || []
+		const userMap = {}
+
+		console.log('getPermissionRanges - 在线用户列表:', {
+			onlineUsers,
+			type: Array.isArray(onlineUsers) ? 'array' : typeof onlineUsers,
+		})
+
+		// 构建用户映射表
+		if (Array.isArray(onlineUsers)) {
+			onlineUsers.forEach((user) => {
+				if (user && user.id && user.name) {
+					userMap[user.id] = user.name
+					console.log('getPermissionRanges - 添加用户映射:', {
+						id: user.id,
+						name: user.name,
+					})
+				}
+			})
+		}
+
+		console.log('getPermissionRanges - 用户映射表:', userMap)
+
+		// 遍历所有用户的权限
+		for (const userId in permissions) {
+			// 跳过当前用户自己的权限（不高亮）
+			if (userId === currentUserId) {
+				continue
+			}
+
+			const permission = permissions[userId]
+			if (!permission || !permission.type || !permission.targets) continue
+
+			const {type, targets} = permission
+
+			// 获取用户名：优先使用 permission.userName，如果没有再从 userMap 中获取
+			const userName = permission.userName || userMap[userId] || userId
+
+			console.log('getPermissionRanges - 处理权限:', {
+				userId,
+				userName,
+				permissionUserName: permission.userName,
+				type,
+				userMap,
+			})
+
+			if (type === 'row') {
+				// 行级权限：每一行作为一个范围
+				targets.forEach((row) => {
+					ranges.push({
+						r: row,
+						c: 0,
+						rr: row,
+						cc: sheet.config.colCount - 1,
+						type: 'row',
+						userId,
+						userName,
+					})
+				})
+			} else if (type === 'column') {
+				// 列级权限：每一列作为一个范围
+				targets.forEach((col) => {
+					ranges.push({
+						r: 0,
+						c: col,
+						rr: sheet.config.rowCount - 1,
+						cc: col,
+						type: 'column',
+						userId,
+						userName,
+					})
+				})
+			} else if (type === 'cell') {
+				// 单元格级权限：每个单元格作为一个范围
+				targets.forEach((cell) => {
+					ranges.push({
+						r: cell.row,
+						c: cell.col,
+						rr: cell.row,
+						cc: cell.col,
+						type: 'cell',
+						userId,
+						userName,
+					})
+				})
+			}
+		}
+
+		return ranges
 	}
 
 	/**
@@ -321,6 +476,7 @@ export const usePermissions = () => {
 			checkPermission,
 			releasePermissions,
 			clearAllPermissions,
+			getPermissionRanges,
 			refreshSheet,
 			destroy,
 		}

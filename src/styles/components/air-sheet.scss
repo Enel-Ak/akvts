@@ -653,13 +653,30 @@
 
 		// 单元格级权限高亮样式
 		&[data-permission-type='cell'] {
-			// 实线边框，无背景
+			// 实线边框 + 半透明背景（与行级、列级保持一致）
 			border: 2px solid var(--z-highlight-color) !important;
+			background-color: rgba(var(--z-highlight-color-rgb), 0.1) !important;
 
 			.label {
 				&::before {
 					content: '🔒 ';
 				}
+			}
+		}
+
+		// 超级权限高亮样式
+		&.super-permission {
+			// 2px 边框 + 半透明背景 + 模糊效果
+			border: 2px solid var(--z-highlight-color) !important;
+			background-color: rgba(var(--z-highlight-color-rgb), 0.15) !important;
+			backdrop-filter: blur(2px); // 添加模糊效果
+			z-index: 3 !important; // 比普通权限更高的层级
+
+			.label {
+				&::before {
+					content: '🔐 '; // 使用不同的图标区分超级权限
+				}
+				font-weight: bold;
 			}
 		}
 
