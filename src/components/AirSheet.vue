@@ -2179,11 +2179,32 @@ const onChangeSheet = async (sheetItem, e) => {
 			emits('asyncLeaveSheet', sheet.original.sheetId)
 		}
 
+		// 获取目标 sheet
+		const targetSheet = sheetStore.getSheet(id)
+
+		// 保存需要保留的引用（celldata, filterCellData, history, hooks）
+		const preservedCelldata = sheet.celldata
+		const preservedFilterCellData = sheet.filterCellData
+		const preservedHistory = sheet.history
+		const preservedHooks = sheet.hooks
+
+		// 清空旧数据
 		for (const key in sheet) {
 			delete sheet[key]
 		}
 
-		Object.assign(sheet, sheetStore.getSheet(id))
+		// 赋值新数据（使用浅拷贝）
+		Object.assign(sheet, targetSheet)
+
+		// 恢复保留的引用，并清空数据
+		sheet.celldata = preservedCelldata
+		sheet.filterCellData = preservedFilterCellData
+		sheet.history = preservedHistory
+		sheet.hooks = preservedHooks
+
+		// 清空 celldata，等待从接口获取最新数据
+		sheet.celldata.clear()
+		sheet.filterCellData.clear()
 
 		sheet.state.changeSheet = true
 
@@ -2399,6 +2420,12 @@ watch(
 				emits('asyncLeaveSheet', currentSheetId)
 			}
 
+			// 保存需要保留的引用（celldata, filterCellData, history, hooks）
+			const preservedCelldata = sheet.celldata
+			const preservedFilterCellData = sheet.filterCellData
+			const preservedHistory = sheet.history
+			const preservedHooks = sheet.hooks
+
 			// 清空旧数据
 			for (const key in sheet) {
 				delete sheet[key]
@@ -2406,6 +2433,16 @@ watch(
 
 			// 赋值新数据
 			Object.assign(sheet, targetSheet)
+
+			// 恢复保留的引用，并清空数据
+			sheet.celldata = preservedCelldata
+			sheet.filterCellData = preservedFilterCellData
+			sheet.history = preservedHistory
+			sheet.hooks = preservedHooks
+
+			// 清空 celldata，等待从接口获取最新数据
+			sheet.celldata.clear()
+			sheet.filterCellData.clear()
 
 			// 确保 config 属性存在
 			if (!sheet.config.rResize) sheet.config.rResize = {}

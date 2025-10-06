@@ -1273,7 +1273,7 @@ const synergyJoinSheet = async (id, sheet) => {
 		Object.assign(sheet.config, {
 			...sheetConfig,
 			permissions: {},
-			superPermissions: [{r: 2, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
+			superPermissions: [{r: 2, c: 1, rr: 3, cc: 3, v: '权限区域'}],
 		})
 	}
 
