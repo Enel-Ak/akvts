@@ -1251,7 +1251,7 @@ const onAsyncEventCell = (range) => {
 
 	// 如果包含 config（权限配置），一起传递
 	if (range.config) {
-		eventData.config = range.config
+		eventData.config = JSON.stringify(range.config)
 	}
 
 	sheetRef.value.asyncEventCell(eventData)
