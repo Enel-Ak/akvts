@@ -276,6 +276,7 @@ export function useCopy() {
 
 		if (pasteData.data.length) {
 			const oldCellData = []
+			const cellChanges = [] // 收集单元格变更用于协同同步
 			const maxRows = pasteData.data.length + baseRow
 			const maxCols = pasteData.data[0].length + baseCol
 
@@ -303,11 +304,22 @@ export function useCopy() {
 					}
 
 					// 保存原始数据用于历史记录
+					const oldValue = sheet.celldata.get(targetRow)[targetCol]
 					oldCellData.push({
 						r: targetRow,
 						c: targetCol,
-						v: sheet.celldata.get(targetRow)[targetCol],
+						v: oldValue,
 					})
+
+					// 收集变更用于协同同步
+					if (sheet.config.synergy) {
+						cellChanges.push({
+							r: targetRow,
+							c: targetCol,
+							before: oldValue || '',
+							after: cell,
+						})
+					}
 
 					// 替换数据
 					requestAnimationFrame(() => {
@@ -317,6 +329,23 @@ export function useCopy() {
 			})
 
 			sheet.hooks.historyHook.save(oldCellData, 'edit')
+
+			// 协同编辑: 同步单元格变更到其他用户
+			if (sheet.config.synergy && cellChanges.length > 0) {
+				console.log('粘贴操作协同同步:', {
+					变更数量: cellChanges.length,
+					起始位置: `${baseRow},${baseCol}`,
+				})
+				cellChanges.forEach((change) => {
+					sheet.hooks.synergyHook.changeCell({
+						sheetId: sheet?.original?.sheetId || sheet.id,
+						row: change.r,
+						col: change.c,
+						before: change.before,
+						after: change.after,
+					})
+				})
+			}
 
 			// 先删除目标区域内的所有已存在的合并单元格
 			const targetEndRow = baseRow + pasteData.data.length - 1

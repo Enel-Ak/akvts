@@ -1171,10 +1171,10 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://10.110.10.103:9527/signalr-hubs/onlinetable')
+const api = ref('http://10.110.10.107:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
-	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk2NTU1MTQsImV4cCI6MTc1OTgyNzUxNCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWUxZjMtNjcwYy00MzA3LTU2NDA0MGJhYzJlYiIsImF1dGhfdGltZSI6MTc1OTY1NTUxMywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX2hyaEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMjIxOCIsInlrei1lbXBsb3llZS1jb2RlIjoiR0VfODg1NjY0ODMzOTM1Nzk0NDkyOSIsInJvbGUiOiLln7rnoYDlip_og70t5rid5b-r5pS_IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inlrei1zZGFnX2hyaCIsImJ1c2luZXNzUm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LThjNmYtY2M5MC0wNzVjY2Y0OTlhMTEiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk2NTU1MTQsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.IOO85EQo-JyrA01W9OCoPMPJvO4zdyrZvcYB0JO-wYjXF1xydTVxpyrTIaNiNEi9M8rjGt4UiZqSiwXKpWNI7yVm6uVE6mAonKg1jL2kx2YDctXiUIJrICjI7iSQ7cQGVsTdQSxrtdB84CW0H9vJuEZVMiBgyAqNj7gDfModOkrik8vgAd2Rj9U_rBOJt4hbt2cXY7sHBpq-jwDo-w39p3-tlxNEpD_S2ytPDluss22mC2g1hVwubKhk9CK5AdoLAcmsJP27JhVp3f2qpG2M7WVOnWFk4WFuUkcBJLsXbKUFPB7vSScpQA7qzLuQ6f8NsCvSm3h0A7LuZSl0JvP8uQ'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk2Mjk5NTYsImV4cCI6MTc1OTgwMTk1NiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1OTYyNjkwNiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7wiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTMxOGQtZmQ5OS00YzYxZjllYmIxN2YiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk2Mjk5NTYsInNjb3BlIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbInB3ZCJdfQ.ofyyGsFXA9yLvNB18-MwVP02KNtUbCaovRyza0WqO9OyCbeBnhX4tYUkEEAfEEZ7wLI2vR5lsAHMBTSDjo7eChGJPOaKtC6hfxpHgkbK7qIGf-0PwgmqCggHoPMF7OgbdlXERmfa8Oq9d3RlxnHEkZ2fqkyjnibVTP1Yc03QQOhYCTyukfgJjP7RrLNuXuCvI098d1ICEps_khibS97zMyzWlIGDZZiGxNiClmA0Oabt7F8vMXoEJ81EEBbyxXFMvaIpR9SIicihkyeHdfajNaVvmT_PHAogMzaMOepKkeytz1WEzR_h_jgqJq3YvTU76bLbUJQBho8b-7qCJSWguA'
+	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk4ODg4MDEsImV4cCI6MTc2MDA2MDgwMSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1OTYyNjkwNiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7wiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTMxOGQtZmQ5OS00YzYxZjllYmIxN2YiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk4ODg4MDEsInNjb3BlIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbInB3ZCJdfQ.YXxP-pFXO2ejgJYU2uPTTumAA3iVsJpiCaKyHh9IzEZJtoURMIhdMbnyVoC-4DW47k_NuV-ELVSqOtV7aozoZMU3PHFXcmjlj1r9BsIZXd-_lEqU-V6w5PKXNG8xeBBYkx1fK_7xgOmu9ElC3d5cK1ftYtB40EnQgjswt_2-z8YB53ETP6rKv-MtccdafkmLo8sbfV3EZ39UCXuOOhx7O6ps3h6KuZZsrVnTU5RCvbXAYBx1poNjyFngGU9_B-vDTelWlx5xdI2Ft9Q21VBHI6nZsSTihN9wiYZtnxX6d7X13R_iOh98GofiGMzJSPJY07zQsz4Z5JLZ7s2PT-Zreg'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk4ODg3NjgsImV4cCI6MTc2MDA2MDc2OCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWUxZjMtNjcwYy00MzA3LTU2NDA0MGJhYzJlYiIsImF1dGhfdGltZSI6MTc1OTg4ODc2NywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX2hyaEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMjIxOCIsInlrei1lbXBsb3llZS1jb2RlIjoiR0VfODg1NjY0ODMzOTM1Nzk0NDkyOSIsInJvbGUiOiLln7rnoYDlip_og70t5rid5b-r5pS_IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inlrei1zZGFnX2hyaCIsImJ1c2luZXNzUm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LThjNmYtY2M5MC0wNzVjY2Y0OTlhMTEiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk4ODg3NjgsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.uDX9vz92EFqbPpJJgnC0Jiedq1Wsgb6QFitdjRBThRX01JJzrxZw0ri7OEkxJQmHiKZScWcOvx4J5QUf5ILrLapZwn_4BdjDroO2G5m6pNePsfHEE1TI8vjtmp4KgQ5fYL47dizH_6crn_lVZBP-_O6LzU-Gs8H8i2JRXvCEdEtullXw1DbyuLmi8It9vXNu56wDOWKtbYmUeZDOq2jIIQieUbd5KvrdkgrtFSA7m3OHzeK6p91SFkuXt1QzmclfFtJaV0vgIoVtpy8xCzr6qqWFzEu-RLqJ0utYOj5zLsK7V9ISZYtZM5d2WDxyafD7DrGbg8ForodZvNiFV2_f0Q'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1184,7 +1184,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://10.110.10.103:9527/api/online-table/table/cell-data',
+			url: 'http://10.110.10.107:9527/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				sheetId: sheetId.value,
@@ -1222,7 +1222,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://10.110.10.103:9527/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://10.110.10.107:9527/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1354,7 +1354,7 @@ onActivated(() => {
 
 	axios
 		.request({
-			url: 'http://10.110.10.103:9527/api/online-table/table/3a1cc59c-27de-f355-3fc4-451323e58e6b?autoCreate=true',
+			url: 'http://10.110.10.107:9527/api/online-table/table/3a1ccabb-e36f-1ceb-b6fe-9fe5a7f5f296?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1370,16 +1370,16 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://10.110.10.103:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}`
+			api.value = `http://10.110.10.107:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
-			await beatch()
-			const sheetConfig = await getSheetConfig()
-			Object.assign(config.value.config, {
-				...sheetConfig,
-			})
-			config.value.celldata = data.value
+			// await beatch()
+			// const sheetConfig = await getSheetConfig()
+			// Object.assign(config.value.config, {
+			// 	...sheetConfig,
+			// })
+			// config.value.celldata = data.value
 		})
 	// setTimeout(() => {
 	// 	console.log('config', config.value)
