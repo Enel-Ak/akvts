@@ -1232,8 +1232,6 @@ export const useTools = () => {
 				sheet?.original?.sheetId || sheet.id,
 				sheet.celldata,
 				(rowIndex, rowData) => {
-					console.log(rowIndex)
-
 					if (typeof rowIndex === 'number') {
 						if (rowIndex >= r && rowIndex <= rr) {
 							// 保存被删除的行数据
@@ -1241,6 +1239,8 @@ export const useTools = () => {
 								rowData: useStringArrayToBuffer(rowData),
 								deleteCount,
 							})
+							// ✅ 立即删除被选中的行
+							sheet.celldata.delete(rowIndex)
 						} else if (rowIndex > rr) {
 							// 移动数据到新位置
 							sheet.celldata.set(rowIndex - deleteCount, rowData)
@@ -1249,10 +1249,10 @@ export const useTools = () => {
 				}
 			)
 
-			// 清除最后几行的重复数据，避免重复显示
-			// 修复：正确清除原来数据末尾的 deleteCount 行
-			// 从 maxRowIndex 开始，向下清除 deleteCount 行
-			for (let i = maxRowIndex; i > maxRowIndex - deleteCount && i >= 0; i--) {
+			// ✅ 清除移动后留下的重复数据
+			// 删除操作后,原来的最后 deleteCount 行数据已经向上移动了
+			// 需要删除原位置的重复数据: [maxRowIndex - deleteCount + 1, maxRowIndex]
+			for (let i = maxRowIndex - deleteCount + 1; i <= maxRowIndex; i++) {
 				sheet.celldata.delete(i)
 			}
 
