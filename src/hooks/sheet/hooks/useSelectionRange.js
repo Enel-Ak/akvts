@@ -377,10 +377,22 @@ export const useSelectionRange = () => {
 
 		let color = null
 
-		if (!highlightRanges.has(id)) {
-			color = randomColor()
+		// ✅ 优先使用用户自带的颜色(从 highlight.color 或 sheet.config.online 中获取)
+		if (highlight.color) {
+			// 用户对象自带颜色
+			color = highlight.color
 		} else {
-			color = highlightRanges.get(id)['--z-highlight-color']
+			// 尝试从 sheet.config.online 中查找用户颜色
+			const onlineUser = sheet.config?.online?.find((u) => u.id === id)
+			if (onlineUser && onlineUser.color) {
+				color = onlineUser.color
+			} else if (!highlightRanges.has(id)) {
+				// 如果没有找到用户颜色,则生成随机颜色
+				color = randomColor()
+			} else {
+				// 使用缓存的颜色
+				color = highlightRanges.get(id)['--z-highlight-color']
+			}
 		}
 
 		// 将 HSL 颜色转换为 RGB（用于 rgba）

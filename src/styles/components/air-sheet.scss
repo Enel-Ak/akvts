@@ -70,8 +70,9 @@
 			@return hsl($hue, $saturation, $lightness);
 		}
 
+		// ✅ 修复: 使用 nth-of-type 而不是 nth-child,避免被其他元素(如 Icons)影响
 		@for $i from 1 through 10 {
-			&:nth-child(#{$i}) {
+			&:nth-of-type(#{$i}) {
 				backdrop-filter: blur(8px);
 				background-color: random-color($i, 10);
 				opacity: #{(11 - $i) / 10};

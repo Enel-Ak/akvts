@@ -36,6 +36,7 @@ const emits = defineEmits([
 	'cellDrop',
 
 	'addSheet',
+	'changeSheetName',
 
 	// 协同相关
 	'asyncInputCell',
@@ -2247,6 +2248,7 @@ const onDbClickSheet = (e, sheetItem) => {
 		e.target.removeAttribute('contenteditable')
 		e.target.removeEventListener('blur', blur)
 		e.target.removeEventListener('keydown', keydown)
+		emits('changeSheetName', e.target.textContent, sheet)
 	}
 
 	const keydown = (event) => {
@@ -2661,39 +2663,52 @@ const getPermissionStyle = (range, index) => {
 
 	const {r, c, rr, cc} = range
 
+	// ✅ 基于 userId 生成一致的颜色
+	const generatePermissionColor = (userId) => {
+		const colors = [
+			'hsl(0, 75%, 55%)', // 红色
+			'hsl(30, 75%, 55%)', // 橙色
+			'hsl(60, 75%, 55%)', // 黄色
+			'hsl(120, 75%, 45%)', // 绿色
+			'hsl(180, 75%, 45%)', // 青色
+			'hsl(210, 75%, 55%)', // 蓝色
+			'hsl(270, 75%, 55%)', // 紫色
+			'hsl(300, 75%, 55%)', // 粉色
+			'hsl(330, 75%, 55%)', // 玫红
+			'hsl(45, 75%, 50%)', // 金色
+		]
+
+		// 基于 userId 生成一致的颜色索引
+		let hash = 0
+		const userIdStr = String(userId || index)
+		for (let i = 0; i < userIdStr.length; i++) {
+			hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const colorIndex = Math.abs(hash) % colors.length
+
+		return colors[colorIndex]
+	}
+
+	// 生成权限区域的颜色
+	const permissionColor = generatePermissionColor(range.userId)
+
 	// 使用 selectionRangeHook 的方法计算位置和大小
-	// 创建一个临时的高亮对象
+	// 创建一个临时的高亮对象,并传入颜色
 	const tempHighlight = {
-		id: `permission-${index}`,
+		id: `permission-${range.userId || index}`,
 		r,
 		c,
 		rr,
 		cc,
+		color: permissionColor, // ✅ 传入生成的颜色
 	}
 
-	// 获取基础样式
+	// 获取基础样式(已包含颜色信息)
 	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
-
-	// 生成颜色（根据 userId 生成一致的颜色）
-	const colors = [
-		'255, 107, 107', // 红色
-		'255, 159, 64', // 橙色
-		'255, 205, 86', // 黄色
-		'75, 192, 192', // 青色
-		'54, 162, 235', // 蓝色
-		'153, 102, 255', // 紫色
-		'255, 99, 132', // 粉色
-		'201, 203, 207', // 灰色
-	]
-	const color = colors[index % colors.length]
 
 	// 添加权限特有的样式
 	return {
 		...baseStyle,
-		'--z-highlight-color': `rgb(${color})`,
-		'--z-highlight-color-rgb': color,
-		border: `2px solid rgb(${color})`,
-		backgroundColor: `rgba(${color}, 0.1)`, // 透明背景色
 		zIndex: 2, // 比普通高亮更高，但比超级权限低
 	}
 }
@@ -2741,8 +2756,34 @@ const getSuperPermissionStyle = (range, index) => {
 		}
 	}
 
-	// 生成随机颜色
-	const color = sheet.hooks.superPermissionsHook?.generateColor(index) || '255, 107, 107'
+	// ✅ 基于 userId 生成一致的颜色
+	const generateSuperPermissionColor = (userId) => {
+		const colors = [
+			'255, 107, 107', // 红色
+			'255, 159, 64', // 橙色
+			'255, 205, 86', // 黄色
+			'75, 192, 192', // 青色
+			'54, 162, 235', // 蓝色
+			'153, 102, 255', // 紫色
+			'255, 99, 132', // 粉色
+			'201, 203, 207', // 灰色
+			'255, 193, 7', // 琥珀色
+			'76, 175, 80', // 绿色
+		]
+
+		// 基于 userId 生成一致的颜色索引
+		let hash = 0
+		const userIdStr = String(userId || index)
+		for (let i = 0; i < userIdStr.length; i++) {
+			hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const colorIndex = Math.abs(hash) % colors.length
+
+		return colors[colorIndex]
+	}
+
+	// 生成超级权限区域的颜色
+	const color = generateSuperPermissionColor(range.userId)
 
 	// 返回样式
 	return {

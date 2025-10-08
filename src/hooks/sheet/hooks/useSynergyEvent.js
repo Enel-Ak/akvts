@@ -27,6 +27,32 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		sheet = sheetStore.getSheet(sheetKey)
 	}
 
+	// 生成用户颜色的辅助函数
+	const generateUserColor = (userId) => {
+		// 使用预定义的颜色列表
+		const colors = [
+			'hsl(0, 75%, 55%)', // 红色
+			'hsl(30, 75%, 55%)', // 橙色
+			'hsl(60, 75%, 55%)', // 黄色
+			'hsl(120, 75%, 45%)', // 绿色
+			'hsl(180, 75%, 45%)', // 青色
+			'hsl(210, 75%, 55%)', // 蓝色
+			'hsl(270, 75%, 55%)', // 紫色
+			'hsl(300, 75%, 55%)', // 粉色
+			'hsl(330, 75%, 55%)', // 玫红
+			'hsl(45, 75%, 50%)', // 金色
+		]
+
+		// 基于 userId 生成一致的颜色索引
+		let hash = 0
+		for (let i = 0; i < userId.length; i++) {
+			hash = userId.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const index = Math.abs(hash) % colors.length
+
+		return colors[index]
+	}
+
 	// 高亮组用户
 	useSynergyEvent.groupUsers = (user) => {
 		const userId = user[sheet.props.userKeys[0]]
@@ -64,6 +90,9 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			return
 		}
 
+		// 生成用户专属颜色
+		const userColor = generateUserColor(userId)
+
 		const newUser = {
 			id: userId,
 			name: user[sheet.props.userKeys[1]] || '用户',
@@ -72,9 +101,10 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			rr: user.rowEnd !== null && user.rowEnd !== undefined ? user.rowEnd : user.row,
 			cc: user.colEnd !== null && user.colEnd !== undefined ? user.colEnd : user.col,
 			state: 1,
+			color: userColor, // ✅ 添加颜色字段
 		}
 		sheet.config.online.push(newUser)
-		console.log('groupUsers 新增用户:', newUser)
+		console.log('groupUsers 新增用户:', newUser, '颜色:', userColor)
 	}
 
 	// 移除高亮组用户
