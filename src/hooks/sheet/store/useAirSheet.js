@@ -156,6 +156,15 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 				name = sheet.name
 			}
 
+			// 🔍 调试日志: 追踪 init 调用
+			console.log('🔍 [DEBUG] sheetStore.init called', {
+				key,
+				containerId,
+				hasKey: this.sheets.has(key),
+				sheetsSize: this.sheets.size,
+				stack: new Error().stack,
+			})
+
 			if (!this.sheets.has(key)) {
 				const clone = structuredClone(defaultSheet)
 
@@ -260,6 +269,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 
 				const re = this.sheets.get(key)
 				if (containerId && this.sheets.size === 1) {
+					console.log('🔍 [DEBUG] Initializing hooks for first sheet')
 					re.emits = emits
 					re.hooks = {
 						renderHook: useRender().init(key),
@@ -278,6 +288,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 						superPermissionsHook: useSuperPermissions().init(key),
 					}
 				} else {
+					console.log('🔍 [DEBUG] Reusing hooks from existing sheet')
 					re.containerId = this.sheets.values().next().value.containerId
 					re.emits = this.sheets.values().next().value.emits
 					re.hooks = this.sheets.values().next().value.hooks

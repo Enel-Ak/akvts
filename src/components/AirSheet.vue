@@ -107,6 +107,11 @@ const isLoading = computed(() => {
 		props.state === stateType.loading
 	)
 })
+
+// ✅ 使用计算属性缓存权限区域,避免重复计算
+const permissionRanges = computed(() => {
+	return sheet.hooks?.permissionsHook?.getPermissionRanges() || []
+})
 const Tabs = [
 	{name: 'start', label: '开始'},
 	{name: 'formula', label: '公式'},
@@ -2584,7 +2589,15 @@ onBeforeMount(() => {})
 
 // 初始化
 onMounted(() => {
+	// 🔍 调试日志: 追踪 onMounted 调用
+	console.log('🔍 [DEBUG] AirSheet onMounted called', {
+		sheetId: sheetId.value,
+		containerId,
+		stack: new Error().stack,
+	})
+
 	sheetStore.init(sheetId.value, containerId, props, emits, () => {
+		console.log('🔍 [DEBUG] sheetStore.init callback executed')
 		init()
 		if (!props.modelValue?.config.synergy) {
 			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
@@ -3705,9 +3718,7 @@ const getSuperPermissionStyle = (range, index) => {
 					<!-- 权限高亮 -->
 					<div
 						:key="`permission-${index}`"
-						v-for="(
-							range, index
-						) of sheet.hooks?.permissionsHook?.getPermissionRanges() || []"
+						v-for="(range, index) of permissionRanges"
 						class="highlight"
 						:data-permission-type="range.type"
 						:style="getPermissionStyle(range, index)"

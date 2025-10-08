@@ -2438,7 +2438,7 @@ export const useTools = () => {
 	const scrollToCellAndSelect = async (targetRow, targetCol) => {
 		try {
 			// 获取容器引用
-			const container = document.querySelector(`#${sheetKey}`)
+			const container = document.querySelector(`#${sheet.containerId}`)
 			if (!container) {
 				console.error('找不到表格容器')
 				return
@@ -2995,6 +2995,7 @@ export const useTools = () => {
 	}
 
 	const refreshSheet = (id) => {
+		sheetKey = id
 		sheet = sheetStore.getSheet(id)
 	}
 

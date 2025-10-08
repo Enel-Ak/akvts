@@ -14,6 +14,11 @@ const workerCode = `
 
 `
 
+// ✅ 模块级别的标志位和引用,防止重复初始化
+let isInitialized = false
+let globalContainer = null
+let globalWorker = null
+
 export const useSelectionRange = () => {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = null
@@ -649,8 +654,19 @@ export const useSelectionRange = () => {
 		}
 	}
 
+	// 🔍 调试: 追踪 handleMouseDown 调用次数
+	let mouseDownCallCount = 0
+
 	// 鼠标点击处理
 	const handleMouseDown = (e) => {
+		mouseDownCallCount++
+		console.log('🔍 [DEBUG] handleMouseDown triggered', {
+			count: mouseDownCallCount,
+			button: e.button,
+			target: e.target.className,
+			stack: new Error().stack,
+		})
+
 		if (e.button !== 0) return // 只处理左键点击
 
 		mouseDownPos = {x: e.clientX, y: e.clientY}
@@ -1349,6 +1365,8 @@ export const useSelectionRange = () => {
 	}
 
 	const destroy = () => {
+		console.log('🔍 [DEBUG] useSelectionRange.destroy called')
+
 		clear()
 
 		// 清理定时器
@@ -1364,19 +1382,28 @@ export const useSelectionRange = () => {
 		// 清理缓存
 		clearCache()
 
-		if (container) {
-			if (worker) {
-				worker.terminate()
-				worker = null
+		// ✅ 使用全局引用清理
+		if (globalContainer) {
+			if (globalWorker) {
+				globalWorker.terminate()
+				globalWorker = null
 			}
-			container.removeEventListener('mousedown', handleMouseDown)
+			globalContainer.removeEventListener('mousedown', handleMouseDown)
 			window.removeEventListener('mousemove', handleMouseMove)
 			window.removeEventListener('mouseup', handleMouseUp)
 			document.removeEventListener('mousemove', handleDragMove)
 			document.removeEventListener('mouseup', handleDragEnd)
 			document.removeEventListener('keydown', handleKeyDown)
 			document.removeEventListener('keyup', handleKeyUp)
+			globalContainer = null
+		}
+
+		// 清理局部引用
+		if (container) {
 			container = null
+		}
+		if (worker) {
+			worker = null
 		}
 
 		// 重置状态
@@ -1384,6 +1411,9 @@ export const useSelectionRange = () => {
 		dragging.value = false
 		ranged.value = {r: -1, c: -1, rr: -1, cc: -1}
 		selection = {r: -1, c: -1, rr: -1, cc: -1}
+
+		// ✅ 重置初始化标志
+		isInitialized = false
 	}
 
 	// 监听配置变化，清理缓存
@@ -1578,6 +1608,22 @@ export const useSelectionRange = () => {
 
 	// 初始化
 	const init = (key, containerId) => {
+		// 🔍 调试日志: 追踪 init 调用
+		console.log('🔍 [DEBUG] useSelectionRange.init called', {
+			key,
+			containerId,
+			isInitialized,
+			stack: new Error().stack,
+		})
+
+		// ✅ 如果已经初始化过,先清理旧的事件监听器
+		if (isInitialized) {
+			console.warn(
+				'⚠️ [WARNING] useSelectionRange already initialized, cleaning up old listeners'
+			)
+			destroy()
+		}
+
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 
@@ -1591,13 +1637,19 @@ export const useSelectionRange = () => {
 				return
 			}
 
+			console.log('🔍 [DEBUG] Adding event listeners to container:', containerId)
+
+			// ✅ 使用全局引用
+			globalContainer = container
+
 			const blob = new Blob([workerCode], {type: 'application/javascript'})
 			const workerUrl = URL.createObjectURL(blob)
 			worker = new Worker(workerUrl)
+			globalWorker = worker
 			worker.onmessage = (e) => {}
 
 			// 基本鼠标事件
-			container.addEventListener('mousedown', handleMouseDown)
+			globalContainer.addEventListener('mousedown', handleMouseDown)
 			window.addEventListener('mousemove', handleMouseMove)
 			window.addEventListener('mouseup', handleMouseUp)
 
@@ -1609,7 +1661,10 @@ export const useSelectionRange = () => {
 			document.addEventListener('keydown', handleKeyDown)
 			document.addEventListener('keyup', handleKeyUp)
 
-			setTimeout(() => console.log('installed useSelectionRange with optimizations'), 16)
+			// ✅ 标记为已初始化
+			isInitialized = true
+
+			console.log('🔍 [DEBUG] Event listeners added successfully')
 		}, 16)
 
 		return {

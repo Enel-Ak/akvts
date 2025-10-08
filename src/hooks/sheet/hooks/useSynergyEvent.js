@@ -18,6 +18,13 @@ const EventMap = {
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
+	// 🔍 调试日志: 追踪 useSynergyEvent 调用
+	console.log('🔍 [DEBUG] useSynergyEvent called', {
+		sheetId,
+		signalrInstance: signalr,
+		stack: new Error().stack,
+	})
+
 	const sheetStore = useAirSheetStore()
 	let sheetKey = sheetId
 	let sheet = sheetStore.getSheet(sheetKey) // 初始化时就获取 sheet

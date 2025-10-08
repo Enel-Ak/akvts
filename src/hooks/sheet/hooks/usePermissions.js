@@ -315,25 +315,14 @@ export const usePermissions = () => {
 		const onlineUsers = sheetStore.getOnline || []
 		const userMap = {}
 
-		console.log('getPermissionRanges - 在线用户列表:', {
-			onlineUsers,
-			type: Array.isArray(onlineUsers) ? 'array' : typeof onlineUsers,
-		})
-
 		// 构建用户映射表
 		if (Array.isArray(onlineUsers)) {
 			onlineUsers.forEach((user) => {
 				if (user && user.id && user.name) {
 					userMap[user.id] = user.name
-					console.log('getPermissionRanges - 添加用户映射:', {
-						id: user.id,
-						name: user.name,
-					})
 				}
 			})
 		}
-
-		console.log('getPermissionRanges - 用户映射表:', userMap)
 
 		// 遍历所有用户的权限
 		for (const userId in permissions) {
@@ -349,14 +338,6 @@ export const usePermissions = () => {
 
 			// 获取用户名：优先使用 permission.userName，如果没有再从 userMap 中获取
 			const userName = permission.userName || userMap[userId] || userId
-
-			console.log('getPermissionRanges - 处理权限:', {
-				userId,
-				userName,
-				permissionUserName: permission.userName,
-				type,
-				userMap,
-			})
 
 			if (type === 'row') {
 				// 行级权限：每一行作为一个范围
@@ -400,7 +381,8 @@ export const usePermissions = () => {
 			}
 		}
 
-		return ranges
+		// 返回副本，避免外部修改
+		return ranges.map((range) => ({...range}))
 	}
 
 	/**
