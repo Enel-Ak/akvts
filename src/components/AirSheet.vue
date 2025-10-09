@@ -108,21 +108,46 @@ const isLoading = computed(() => {
 	)
 })
 
-// ✅ 使用计算属性缓存权限区域,避免重复计算
-const permissionRanges = computed(() => {
-	return sheet.hooks?.permissionsHook?.getPermissionRanges() || []
-})
+// ✅ 临时权限区域（临时锁定）
+// ✅ 修复筛选后权限高亮位置未自动更新的问题：使用 ref + watch
+const permissionRanges = ref([])
+
+// 监听 permissions 和 rowMapping 的变化，更新 permissionRanges
+watch(
+	[
+		() => sheet.config?.permissions,
+		() => sheet.rowMapping, // 监听筛选状态的变化
+		() => sheet.config?.filtered, // 监听筛选条件的变化
+	],
+	() => {
+		permissionRanges.value = sheet.hooks?.permissionsHook?.getPermissionRanges() || []
+		console.log('✅ permissionRanges 已更新:', {
+			筛选状态: sheet.config?.filtered?.length > 0,
+			权限数量: permissionRanges.value.length,
+		})
+	},
+	{deep: true, immediate: true}
+)
 
 // ✅ 新增: 深度权限区域(持久锁定)
 // ✅ 修复问题1: 使用 ref 存储，通过 watch 监听变化
 const deepPermissionRanges = ref([])
 
-// 监听 deepPermissions 的变化，更新 deepPermissionRanges
+// ✅ 修复筛选后权限高亮位置未自动更新的问题
+// 监听 deepPermissions 和 rowMapping 的变化，更新 deepPermissionRanges
 watch(
-	() => sheet.config?.deepPermissions,
+	[
+		() => sheet.config?.deepPermissions,
+		() => sheet.rowMapping, // 监听筛选状态的变化
+		() => sheet.config?.filtered, // 监听筛选条件的变化
+	],
 	() => {
 		deepPermissionRanges.value = sheet.hooks?.permissionsHook?.getDeepPermissionRanges() || []
-		console.log('✅ deepPermissionRanges 已更新:', deepPermissionRanges.value)
+		console.log('✅ deepPermissionRanges 已更新:', {
+			筛选状态: sheet.config?.filtered?.length > 0,
+			权限数量: deepPermissionRanges.value.length,
+			ranges: deepPermissionRanges.value,
+		})
 	},
 	{deep: true, immediate: true}
 )

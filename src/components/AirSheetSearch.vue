@@ -39,7 +39,7 @@ const onKeyPress = (event) => {
 
 // 虚拟滚动配置
 const ITEM_HEIGHT = 36 // 每个搜索结果项的高度
-const VISIBLE_COUNT = 8 // 可见的搜索结果数量
+const VISIBLE_COUNT = 6 // 可见的搜索结果数量
 const BUFFER_SIZE = 2 // 缓冲区大小
 
 // 虚拟滚动状态
