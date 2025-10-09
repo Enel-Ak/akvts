@@ -1797,6 +1797,22 @@ export const useTools = () => {
 			// 获取所有合并单元格组
 			const mergedGroups = getMergedCellGroups()
 
+			// ✅ 性能优化: 在循环外部构建筛选条件映射，避免重复构建
+			const filtersByColumn = new Map()
+			for (const filter of sheet.config.filtered) {
+				if (!filtersByColumn.has(filter.c)) {
+					filtersByColumn.set(filter.c, [])
+				}
+				filtersByColumn.get(filter.c).push(filter.v)
+			}
+
+			console.log('filterByChecked - 筛选条件映射:', {
+				filtersByColumn: Array.from(filtersByColumn.entries()).map(([col, values]) => ({
+					列索引: col,
+					筛选值: values,
+				})),
+			})
+
 			// 第一阶段：标准筛选，找出符合条件的行
 			const matchedRows = new Set()
 			let processedCount = 0
@@ -1810,22 +1826,15 @@ export const useTools = () => {
 					return
 				}
 
-				// 按列分组筛选条件
-				const filtersByColumn = new Map()
-				for (const filter of sheet.config.filtered) {
-					if (!filtersByColumn.has(filter.c)) {
-						filtersByColumn.set(filter.c, [])
-					}
-					filtersByColumn.get(filter.c).push(filter.v)
-				}
-
 				let matchesAllColumns = true
 
 				// 检查每一列的筛选条件
 				for (const [columnIndex, filterValues] of filtersByColumn) {
 					// 边界情况处理：检查列索引有效性
 					if (columnIndex < 0 || columnIndex >= rowData.length) {
-						continue
+						// ✅ 修复: 列索引无效时，该行不匹配
+						matchesAllColumns = false
+						break
 					}
 
 					let cellValue = rowData[columnIndex]
@@ -1972,6 +1981,15 @@ export const useTools = () => {
 			// 获取所有合并单元格组
 			const mergedGroups = getMergedCellGroups()
 
+			// ✅ 性能优化: 在循环外部构建筛选条件映射，避免重复构建
+			const filtersByColumn = new Map()
+			for (const filter of sheet.config.filtered) {
+				if (!filtersByColumn.has(filter.c)) {
+					filtersByColumn.set(filter.c, [])
+				}
+				filtersByColumn.get(filter.c).push(filter.v)
+			}
+
 			// 第一阶段：标准筛选，找出符合条件的行
 			const matchedRows = new Set()
 
@@ -1981,70 +1999,44 @@ export const useTools = () => {
 					return
 				}
 
-				// 按列分组筛选条件
-				const filtersByColumn = new Map()
-				for (const filter of sheet.config.filtered) {
-					if (!filtersByColumn.has(filter.c)) {
-						filtersByColumn.set(filter.c, [])
-					}
-					filtersByColumn.get(filter.c).push(filter.v)
-				}
-
 				let matchesAllColumns = true
 
-				// 检查是否为空行（筛选后添加行时需要包含空行）
-				let isEmptyRow = true
-				for (let i = 0; i < rowData.length; i++) {
-					const cellValue = rowData[i]
-					if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
-						isEmptyRow = false
+				// ✅ 修复问题1: 移除空行的特殊处理，让空行也参与正常的筛选逻辑
+				// 检查每一列的筛选条件
+				for (const [columnIndex, filterValues] of filtersByColumn) {
+					// 边界情况处理：检查列索引有效性
+					if (columnIndex < 0 || columnIndex >= rowData.length) {
+						// ✅ 修复: 列索引无效时，该行不匹配
+						matchesAllColumns = false
 						break
 					}
-				}
 
-				// 如果是空行，直接包含在筛选结果中（筛选后添加行时不过滤空行）
-				if (isEmptyRow) {
-					matchesAllColumns = true
-				} else {
-					// 非空行：检查每一列的筛选条件
-					for (const [columnIndex, filterValues] of filtersByColumn) {
-						// 边界情况处理：检查列索引有效性
-						if (columnIndex < 0 || columnIndex >= rowData.length) {
-							// 如果列不存在，直接跳过该行（不匹配）
-							matchesAllColumns = false
+					let cellValue = rowData[columnIndex]
+
+					// 特殊处理：对于合并单元格，需要检查是否应该使用合并单元格的值
+					const mergedCell = sheet.hooks.mergeHook.findMergedCell(rowIndex, columnIndex)
+					if (mergedCell && mergedCell.r !== rowIndex) {
+						// 如果当前行不是合并单元格的起始行，获取起始行的值
+						const startRowData = sheet.celldata.get(mergedCell.r)
+						if (startRowData && startRowData[columnIndex] !== undefined) {
+							cellValue = startRowData[columnIndex]
+						}
+					}
+
+					// 检查当前列的值是否匹配任一筛选值（OR逻辑）
+					let matchesThisColumn = false
+					for (const filterValue of filterValues) {
+						// 严格匹配，不处理空值的特殊情况
+						if (cellValue === filterValue) {
+							matchesThisColumn = true
 							break
 						}
+					}
 
-						let cellValue = rowData[columnIndex]
-
-						// 特殊处理：对于合并单元格，需要检查是否应该使用合并单元格的值
-						const mergedCell = sheet.hooks.mergeHook.findMergedCell(
-							rowIndex,
-							columnIndex
-						)
-						if (mergedCell && mergedCell.r !== rowIndex) {
-							// 如果当前行不是合并单元格的起始行，获取起始行的值
-							const startRowData = sheet.celldata.get(mergedCell.r)
-							if (startRowData && startRowData[columnIndex] !== undefined) {
-								cellValue = startRowData[columnIndex]
-							}
-						}
-
-						// 检查当前列的值是否匹配任一筛选值（OR逻辑）
-						let matchesThisColumn = false
-						for (const filterValue of filterValues) {
-							// 严格匹配，不处理空值的特殊情况
-							if (cellValue === filterValue) {
-								matchesThisColumn = true
-								break
-							}
-						}
-
-						// 如果当前列不匹配任何筛选值，则整行不匹配
-						if (!matchesThisColumn) {
-							matchesAllColumns = false
-							break
-						}
+					// 如果当前列不匹配任何筛选值，则整行不匹配
+					if (!matchesThisColumn) {
+						matchesAllColumns = false
+						break
 					}
 				}
 

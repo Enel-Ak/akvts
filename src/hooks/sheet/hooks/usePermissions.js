@@ -737,6 +737,16 @@ export const usePermissions = () => {
 			})
 		}
 
+		// ✅ 修复问题2: 检测筛选状态，构建行号映射
+		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
+		const rowMapping = new Map() // 原始行号 -> 筛选后行号
+
+		if (isFiltered && sheet.rowMapping && Array.isArray(sheet.rowMapping)) {
+			sheet.rowMapping.forEach((item) => {
+				rowMapping.set(item.originalIndex, item.filteredIndex)
+			})
+		}
+
 		// 遍历所有用户的权限
 		for (const userId in permissions) {
 			// ✅ 新需求: 跳过当前用户自己的 permissions
@@ -754,24 +764,48 @@ export const usePermissions = () => {
 
 			if (type === 'row') {
 				// 行级权限：每一行作为一个范围
-				targets.forEach((row) => {
-					ranges.push({
-						r: row,
-						c: 0,
-						rr: row,
-						cc: sheet.config.colCount - 1,
-						type: 'row',
-						userId,
-						userName,
-					})
+				targets.forEach((originalRow) => {
+					// ✅ 修复问题2: 在筛选状态下，转换原始行号为筛选后行号
+					if (isFiltered) {
+						const filteredRow = rowMapping.get(originalRow)
+						// 如果该行不在筛选结果中，跳过
+						if (filteredRow === undefined) {
+							return
+						}
+						ranges.push({
+							r: filteredRow,
+							c: 0,
+							rr: filteredRow,
+							cc: sheet.config.colCount - 1,
+							type: 'row',
+							userId,
+							userName,
+							originalRow, // 保留原始行号，用于调试
+						})
+					} else {
+						ranges.push({
+							r: originalRow,
+							c: 0,
+							rr: originalRow,
+							cc: sheet.config.colCount - 1,
+							type: 'row',
+							userId,
+							userName,
+						})
+					}
 				})
 			} else if (type === 'column') {
 				// 列级权限：每一列作为一个范围
+				// ✅ 修复问题2: 列级权限不需要转换（列号在筛选前后保持不变）
+				// 但需要调整行范围以匹配筛选后的行数
 				targets.forEach((col) => {
+					const maxRow = isFiltered
+						? sheet.filterCellData.size - 1
+						: sheet.config.rowCount - 1
 					ranges.push({
 						r: 0,
 						c: col,
-						rr: sheet.config.rowCount - 1,
+						rr: maxRow,
 						cc: col,
 						type: 'column',
 						userId,
@@ -781,15 +815,35 @@ export const usePermissions = () => {
 			} else if (type === 'cell') {
 				// 单元格级权限：每个单元格作为一个范围
 				targets.forEach((cell) => {
-					ranges.push({
-						r: cell.row,
-						c: cell.col,
-						rr: cell.row,
-						cc: cell.col,
-						type: 'cell',
-						userId,
-						userName,
-					})
+					const originalRow = cell.row
+					// ✅ 修复问题2: 在筛选状态下，转换原始行号为筛选后行号
+					if (isFiltered) {
+						const filteredRow = rowMapping.get(originalRow)
+						// 如果该行不在筛选结果中，跳过
+						if (filteredRow === undefined) {
+							return
+						}
+						ranges.push({
+							r: filteredRow,
+							c: cell.col,
+							rr: filteredRow,
+							cc: cell.col,
+							type: 'cell',
+							userId,
+							userName,
+							originalRow, // 保留原始行号，用于调试
+						})
+					} else {
+						ranges.push({
+							r: originalRow,
+							c: cell.col,
+							rr: originalRow,
+							cc: cell.col,
+							type: 'cell',
+							userId,
+							userName,
+						})
+					}
 				})
 			}
 		}
@@ -827,6 +881,16 @@ export const usePermissions = () => {
 			})
 		}
 
+		// ✅ 修复问题2: 检测筛选状态，构建行号映射
+		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
+		const rowMapping = new Map() // 原始行号 -> 筛选后行号
+
+		if (isFiltered && sheet.rowMapping && Array.isArray(sheet.rowMapping)) {
+			sheet.rowMapping.forEach((item) => {
+				rowMapping.set(item.originalIndex, item.filteredIndex)
+			})
+		}
+
 		// 遍历所有用户的深度权限
 		for (const userId in deepPermissions) {
 			// ✅ 修复问题2: 跳过当前用户自己的 deepPermissions（自身排除）
@@ -845,24 +909,48 @@ export const usePermissions = () => {
 
 			if (type === 'row') {
 				// 行级权限：每一行作为一个范围
-				targets.forEach((row) => {
-					ranges.push({
-						r: row,
-						c: 0,
-						rr: row,
-						cc: sheet.config.colCount - 1,
-						type: 'row',
-						userId,
-						userName,
-					})
+				targets.forEach((originalRow) => {
+					// ✅ 修复问题2: 在筛选状态下，转换原始行号为筛选后行号
+					if (isFiltered) {
+						const filteredRow = rowMapping.get(originalRow)
+						// 如果该行不在筛选结果中，跳过
+						if (filteredRow === undefined) {
+							return
+						}
+						ranges.push({
+							r: filteredRow,
+							c: 0,
+							rr: filteredRow,
+							cc: sheet.config.colCount - 1,
+							type: 'row',
+							userId,
+							userName,
+							originalRow, // 保留原始行号，用于调试
+						})
+					} else {
+						ranges.push({
+							r: originalRow,
+							c: 0,
+							rr: originalRow,
+							cc: sheet.config.colCount - 1,
+							type: 'row',
+							userId,
+							userName,
+						})
+					}
 				})
 			} else if (type === 'column') {
 				// 列级权限：每一列作为一个范围
+				// ✅ 修复问题2: 列级权限不需要转换（列号在筛选前后保持不变）
+				// 但需要调整行范围以匹配筛选后的行数
 				targets.forEach((col) => {
+					const maxRow = isFiltered
+						? sheet.filterCellData.size - 1
+						: sheet.config.rowCount - 1
 					ranges.push({
 						r: 0,
 						c: col,
-						rr: sheet.config.rowCount - 1,
+						rr: maxRow,
 						cc: col,
 						type: 'column',
 						userId,
@@ -872,15 +960,35 @@ export const usePermissions = () => {
 			} else if (type === 'cell') {
 				// 单元格级权限：每个单元格作为一个范围
 				targets.forEach((cell) => {
-					ranges.push({
-						r: cell.row,
-						c: cell.col,
-						rr: cell.row,
-						cc: cell.col,
-						type: 'cell',
-						userId,
-						userName,
-					})
+					const originalRow = cell.row
+					// ✅ 修复问题2: 在筛选状态下，转换原始行号为筛选后行号
+					if (isFiltered) {
+						const filteredRow = rowMapping.get(originalRow)
+						// 如果该行不在筛选结果中，跳过
+						if (filteredRow === undefined) {
+							return
+						}
+						ranges.push({
+							r: filteredRow,
+							c: cell.col,
+							rr: filteredRow,
+							cc: cell.col,
+							type: 'cell',
+							userId,
+							userName,
+							originalRow, // 保留原始行号，用于调试
+						})
+					} else {
+						ranges.push({
+							r: originalRow,
+							c: cell.col,
+							rr: originalRow,
+							cc: cell.col,
+							type: 'cell',
+							userId,
+							userName,
+						})
+					}
 				})
 			}
 		}
@@ -889,6 +997,7 @@ export const usePermissions = () => {
 			总数: ranges.length,
 			当前用户: currentUserId,
 			已排除当前用户: true,
+			筛选状态: isFiltered,
 			ranges,
 		})
 

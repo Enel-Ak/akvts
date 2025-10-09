@@ -78,6 +78,7 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * 获取所有 superPermission 区域（用于渲染高亮）
+	 * ✅ 修复问题2: 支持筛选状态下的行号转换
 	 * @returns {Array} superPermission 区域列表
 	 */
 	const getSuperPermissionRanges = () => {
@@ -92,7 +93,59 @@ export const useSuperPermissions = () => {
 			? superPermissions
 			: Object.values(superPermissions)
 
-		return permissionList.filter((p) => p && typeof p === 'object')
+		const validPermissions = permissionList.filter((p) => p && typeof p === 'object')
+
+		// ✅ 修复问题2: 检测筛选状态，构建行号映射
+		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
+		const rowMapping = new Map() // 原始行号 -> 筛选后行号
+
+		if (isFiltered && sheet.rowMapping && Array.isArray(sheet.rowMapping)) {
+			sheet.rowMapping.forEach((item) => {
+				rowMapping.set(item.originalIndex, item.filteredIndex)
+			})
+		}
+
+		// 如果不在筛选状态，直接返回原始权限
+		if (!isFiltered) {
+			return validPermissions
+		}
+
+		// ✅ 修复问题2: 在筛选状态下，转换行号并过滤不可见的权限
+		const filteredPermissions = []
+
+		for (const permission of validPermissions) {
+			const {r, rr, c, cc, v} = permission
+
+			// 检查权限范围是否与筛选结果有交集
+			let hasVisibleRows = false
+			let minFilteredRow = Infinity
+			let maxFilteredRow = -Infinity
+
+			// 遍历权限范围内的所有行，找出在筛选结果中可见的行
+			for (let row = r; row <= rr; row++) {
+				const filteredRow = rowMapping.get(row)
+				if (filteredRow !== undefined) {
+					hasVisibleRows = true
+					minFilteredRow = Math.min(minFilteredRow, filteredRow)
+					maxFilteredRow = Math.max(maxFilteredRow, filteredRow)
+				}
+			}
+
+			// 如果有可见的行，添加转换后的权限范围
+			if (hasVisibleRows) {
+				filteredPermissions.push({
+					r: minFilteredRow,
+					rr: maxFilteredRow,
+					c,
+					cc,
+					v,
+					originalR: r, // 保留原始行号，用于调试
+					originalRr: rr,
+				})
+			}
+		}
+
+		return filteredPermissions
 	}
 
 	/**
