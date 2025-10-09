@@ -2557,6 +2557,7 @@ watch(
 			'cResize',
 			'filtered',
 			'permissions',
+			'deepPermissions',
 			'superPermissions',
 		]
 		clearConfigKeys.forEach((key) => {
@@ -2613,15 +2614,32 @@ watch(
 			return
 		}
 
+		console.log(
+			'🔍 [DEBUG] asyncSheet changed, initializing synergy sheets',
+			{
+				sheetsCount: newVal.length,
+				synergy: props.modelValue?.config.synergy,
+			},
+			newVal
+		)
+		sheetId.value = newVal[0].id
 		sheetStore?.initSynergySheets(newVal, containerId, props, emits).then(() => {
+			// ✅ 修复: 协同模式下也需要调用 init() 进行组件级别的初始化
+			console.log(
+				'🔍 [DEBUG] initSynergySheets completed, calling init()',
+				newVal[0],
+				containerId
+			)
+			init()
 			if (props.modelValue?.config.synergy) {
+				emits('asyncJoinSheet', sheet.id, sheet)
 				sheet.hooks.synergyHook.connection(props.api, props.token, () => {
 					sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
 				})
 			}
 		})
 	},
-	{deep: true}
+	{deep: true, immediate: true} // ✅ 添加 immediate: true 确保初始化时触发
 )
 
 onBeforeMount(() => {})
@@ -2635,13 +2653,15 @@ onMounted(() => {
 		stack: new Error().stack,
 	})
 
-	sheetStore.init(sheetId.value, containerId, props, emits, () => {
-		console.log('🔍 [DEBUG] sheetStore.init callback executed')
-		init()
-		if (!props.modelValue?.config.synergy) {
-			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
-		}
-	})
+	if (!props.modelValue.config.synergy) {
+		sheetStore.init(sheetId.value, containerId, props, emits, () => {
+			console.log('🔍 [DEBUG] sheetStore.init callback executed')
+			init()
+			if (!props.modelValue?.config.synergy) {
+				sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+			}
+		})
+	}
 })
 
 onActivated(() => {})

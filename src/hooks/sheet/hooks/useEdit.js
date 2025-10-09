@@ -1151,30 +1151,32 @@ export const useEdit = () => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(sheetKey)
 
-		setTimeout(() => {
-			if (initialized || !containerId) return
-			initialized = true
-			container = document.querySelector(`#${containerId}`)
+		watch(
+			() => sheet.state.completed,
+			(bool) => {
+				if (initialized || !containerId || !bool) return
+				initialized = true
+				container = document.querySelector(`#${containerId}`)
+				container.addEventListener('mousemove', enterContainer)
+				container.addEventListener('mouseout', leaveContainer)
+				document.addEventListener('keydown', startEdit)
+				console.log('installed useEdit')
 
-			container.addEventListener('mousemove', enterContainer)
-			container.addEventListener('mouseout', leaveContainer)
-			document.addEventListener('keydown', startEdit)
-			console.log('installed useEdit')
+				watch(
+					() => sheet?.hooks.selectionRangeHook.ranged,
+					(newVal) => {
+						const {r, c, rr, cc} = newVal
+						if (r === undefined || c === undefined || r !== rr || c !== cc) {
+							inputValue.value = ''
+							return
+						}
 
-			watch(
-				() => sheet?.hooks.selectionRangeHook.ranged,
-				(newVal) => {
-					const {r, c, rr, cc} = newVal
-					if (r === undefined || c === undefined || r !== rr || c !== cc) {
-						inputValue.value = ''
-						return
-					}
-
-					inputValue.value = getCellValue(r, c)
-				},
-				{deep: true}
-			)
-		}, 16)
+						inputValue.value = getCellValue(r, c)
+					},
+					{deep: true}
+				)
+			}
+		)
 
 		return {
 			inputValue,
