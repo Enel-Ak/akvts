@@ -207,6 +207,11 @@ export const useSynergyEvent = (sheetId, signalr) => {
 				console.log('接收到 permissions 配置更新:', config.permissions)
 			}
 
+			// ✅ 同步 deepPermissions 数据
+			if (configKeys.includes('deepPermissions')) {
+				console.log('✅ 接收到 deepPermissions 配置更新:', config.deepPermissions)
+			}
+
 			if (configKeys.includes('formulaed')) {
 				// 协同同步时，需要清除所有公式单元格的计算值，然后重新计算
 				const formulaedKeys = Object.keys(config.formulaed || {})

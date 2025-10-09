@@ -112,6 +112,20 @@ const isLoading = computed(() => {
 const permissionRanges = computed(() => {
 	return sheet.hooks?.permissionsHook?.getPermissionRanges() || []
 })
+
+// ✅ 新增: 深度权限区域(持久锁定)
+// ✅ 修复问题1: 使用 ref 存储，通过 watch 监听变化
+const deepPermissionRanges = ref([])
+
+// 监听 deepPermissions 的变化，更新 deepPermissionRanges
+watch(
+	() => sheet.config?.deepPermissions,
+	() => {
+		deepPermissionRanges.value = sheet.hooks?.permissionsHook?.getDeepPermissionRanges() || []
+		console.log('✅ deepPermissionRanges 已更新:', deepPermissionRanges.value)
+	},
+	{deep: true, immediate: true}
+)
 const Tabs = [
 	{name: 'start', label: '开始'},
 	{name: 'formula', label: '公式'},
@@ -2671,6 +2685,7 @@ defineExpose({
 })
 
 // 计算 permission 区域的样式
+// ✅ 新需求: permissions 不透明,显示其他用户的临时锁定
 const getPermissionStyle = (range, index) => {
 	if (!range || !sheet.hooks?.selectionRangeHook) return {}
 
@@ -2706,23 +2721,82 @@ const getPermissionStyle = (range, index) => {
 	const permissionColor = generatePermissionColor(range.userId)
 
 	// 使用 selectionRangeHook 的方法计算位置和大小
-	// 创建一个临时的高亮对象,并传入颜色
 	const tempHighlight = {
 		id: `permission-${range.userId || index}`,
 		r,
 		c,
 		rr,
 		cc,
-		color: permissionColor, // ✅ 传入生成的颜色
+		color: permissionColor,
 	}
 
-	// 获取基础样式(已包含颜色信息)
+	// 获取基础样式
 	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
 
-	// 添加权限特有的样式
+	// ✅ 新需求: permissions 不透明
 	return {
 		...baseStyle,
-		zIndex: 2, // 比普通高亮更高，但比超级权限低
+		opacity: 1, // 不透明
+		zIndex: 2,
+	}
+}
+
+// ✅ 新增: 计算 deepPermission 区域的样式
+const getDeepPermissionStyle = (range, index) => {
+	if (!range || !sheet.hooks?.selectionRangeHook) return {}
+
+	const {r, c, rr, cc} = range
+
+	// 生成深度权限区域的颜色
+	const generatePermissionColor = (userId) => {
+		const colors = [
+			'hsl(0, 75%, 55%)', // 红色
+			'hsl(30, 75%, 55%)', // 橙色
+			'hsl(60, 75%, 55%)', // 黄色
+			'hsl(120, 75%, 45%)', // 绿色
+			'hsl(180, 75%, 45%)', // 青色
+			'hsl(270, 75%, 55%)', // 紫色
+			'hsl(300, 75%, 55%)', // 粉色
+			'hsl(330, 75%, 55%)', // 玫红
+			'hsl(45, 75%, 50%)', // 金色
+		]
+
+		let hash = 0
+		const userIdStr = String(userId || index)
+		for (let i = 0; i < userIdStr.length; i++) {
+			hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const colorIndex = Math.abs(hash) % colors.length
+
+		return colors[colorIndex]
+	}
+
+	const permissionColor = generatePermissionColor(range.userId)
+
+	// 使用 selectionRangeHook 的方法计算位置和大小
+	const tempHighlight = {
+		id: `deep-permission-${range.userId || index}`,
+		r,
+		c,
+		rr,
+		cc,
+		color: permissionColor,
+	}
+
+	// 获取基础样式
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
+
+	// ✅ 修复问题4: 使用 box-shadow 代替 border，避免重叠时边框变厚
+	// 移除 border 相关样式
+	const {border, borderTop, borderRight, borderBottom, borderLeft, ...styleWithoutBorder} =
+		baseStyle
+
+	return {
+		...styleWithoutBorder,
+		// 使用 box-shadow 实现边框效果
+		boxShadow: `inset 0 0 0 0.1px ${permissionColor}`,
+		opacity: 0.3, // 不透明
+		zIndex: 2, // ✅ 修复问题4: 高于临时权限 (permissions 的 z-index 是 2)
 	}
 }
 
@@ -3625,9 +3699,6 @@ const getSuperPermissionStyle = (range, index) => {
 											@dblclick.stop="
 												sheet.hooks.editHook.startEdit($event, cell)
 											"
-											@input.stop="
-												sheet.hooks.editHook.inputCell($event, cell)
-											"
 											@blur="
 												($event) => {
 													onCellBlur($event, cell)
@@ -3652,7 +3723,6 @@ const getSuperPermissionStyle = (range, index) => {
 										@dblclick.stop="
 											sheet.hooks.editHook.startEdit($event, cell)
 										"
-										@input.stop="sheet.hooks.editHook.inputCell($event, cell)"
 										@blur="
 											($event) => {
 												onCellBlur($event, cell)
@@ -3715,7 +3785,18 @@ const getSuperPermissionStyle = (range, index) => {
 						<div class="label">{{ item.name }}</div>
 					</div>
 
-					<!-- 权限高亮 -->
+					<!-- 深度权限高亮 (持久锁定) -->
+					<div
+						:key="`deep-permission-${index}`"
+						v-for="(range, index) of deepPermissionRanges"
+						class="highlight"
+						:data-permission-type="range.type"
+						:style="getDeepPermissionStyle(range, index)"
+					>
+						<div class="label">{{ range.userName || '锁定区域' }}</div>
+					</div>
+
+					<!-- 权限高亮 (临时锁定,不透明) -->
 					<div
 						:key="`permission-${index}`"
 						v-for="(range, index) of permissionRanges"

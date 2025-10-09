@@ -1,6 +1,7 @@
 import {computed, ref, shallowRef, watch, nextTick} from 'vue'
 import {useAirSheetStore} from '../store/useAirSheet'
 import {useDebounce} from '@/hooks/useDebounce'
+import {ElMessage} from 'element-plus'
 
 const workerCode = `
 	self.onmessage = (event) => {
@@ -708,6 +709,17 @@ export const useSelectionRange = () => {
 			return
 		}
 
+		// ✅ 问题二: 在选中前先检查权限,如果被锁定则直接提示并返回
+		if (sheet.config.synergy && sheet.config.auth > 0 && sheet.hooks.permissionsHook) {
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(pos.r, pos.c, 1, 1)
+
+			if (permissionCheck.locked) {
+				// 被其他用户锁定,直接提示并返回,不触发选区变化
+				ElMessage.warning(permissionCheck.reason)
+				return
+			}
+		}
+
 		selecting.value = true
 		dragging.value = false
 
@@ -726,6 +738,7 @@ export const useSelectionRange = () => {
 		}
 
 		// 点击单元格
+		const oldRanged = {...ranged.value}
 		ranged.value = {...selection}
 
 		// 更新权限锁定
@@ -739,32 +752,66 @@ export const useSelectionRange = () => {
 		}
 
 		if (sheet.config.synergy) {
-			// useDebounce(
-			// 	() => {
-			// 发送选区信息，同时包含 permissions 配置
-			// 注意：这里同时发送选区和权限是因为它们是一起变化的
-			const eventData = {
-				...ranged.value,
-			}
+			// ✅ 问题一: 根据权限模式判断是否需要同步
+			// 只有在真正切换到不同的行/列/单元格时才同步,避免UI闪烁
+			let needSync = false
 
-			// 如果启用了权限模式，添加 permissions 配置
-			if (sheet.config.auth > 0 && sheet.config.permissions) {
-				eventData.config = JSON.stringify({
-					permissions: sheet.config.permissions,
-				})
-				console.log('发送选区和权限配置:', {
-					range: ranged.value,
-					permissions: sheet.config.permissions,
-				})
+			if (sheet.config.auth === 1) {
+				// 行级权限: 只有切换到不同的行时才同步
+				needSync = oldRanged.r !== selection.r || oldRanged.rr !== selection.rr
+			} else if (sheet.config.auth === 2) {
+				// 列级权限: 只有切换到不同的列时才同步
+				needSync = oldRanged.c !== selection.c || oldRanged.cc !== selection.cc
+			} else if (sheet.config.auth === 3) {
+				// 单元格级权限: 只有切换到不同的单元格时才同步
+				needSync =
+					oldRanged.r !== selection.r ||
+					oldRanged.c !== selection.c ||
+					oldRanged.rr !== selection.rr ||
+					oldRanged.cc !== selection.cc
 			} else {
-				console.log('发送选区信息:', ranged.value)
+				// 无权限模式: 总是同步
+				needSync = true
 			}
 
-			sheet.emits?.('asyncEventCell', eventData)
-			// }
-			// 	300,
-			// 	'asyncEventCell'
-			// )()
+			if (needSync) {
+				// 发送选区信息，同时包含 permissions 和 deepPermissions 配置
+				const eventData = {
+					...ranged.value,
+				}
+
+				// 如果启用了权限模式，添加 permissions 和 deepPermissions 配置
+				if (sheet.config.auth > 0) {
+					const configToSync = {}
+
+					// 同步临时权限 (permissions)
+					if (sheet.config.permissions) {
+						configToSync.permissions = sheet.config.permissions
+					}
+
+					// ✅ 修复: 同步持久权限 (deepPermissions)
+					if (sheet.config.deepPermissions) {
+						configToSync.deepPermissions = sheet.config.deepPermissions
+					}
+
+					if (Object.keys(configToSync).length > 0) {
+						eventData.config = JSON.stringify(configToSync)
+						console.log('发送选区和权限配置:', {
+							range: ranged.value,
+							permissions: sheet.config.permissions,
+							deepPermissions: sheet.config.deepPermissions,
+						})
+					} else {
+						console.log('发送选区信息:', ranged.value)
+					}
+				} else {
+					console.log('发送选区信息:', ranged.value)
+				}
+
+				sheet.emits?.('asyncEventCell', eventData)
+			} else {
+				console.log('✅ 同一行/列/单元格内切换,不同步,避免UI闪烁')
+			}
 		}
 	}
 

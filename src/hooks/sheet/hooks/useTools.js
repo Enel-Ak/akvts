@@ -1059,6 +1059,7 @@ export const useTools = () => {
 					formulaMap: sheet.config.formulaMap,
 					rResize: sheet.config.rResize,
 					cResize: sheet.config.cResize,
+					deepPermissions: sheet.config.deepPermissions,
 				})
 			})
 		}

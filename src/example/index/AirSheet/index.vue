@@ -1171,7 +1171,7 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://10.110.10.107:9527/signalr-hubs/onlinetable')
+const api = ref('http://10.110.10.111:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk4OTIxNjgsImV4cCI6MTc2MDA2NDE2OCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWUxZjMtNjcwYy00MzA3LTU2NDA0MGJhYzJlYiIsImF1dGhfdGltZSI6MTc1OTg5MjE2OCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX2hyaEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMjIxOCIsInlrei1lbXBsb3llZS1jb2RlIjoiR0VfODg1NjY0ODMzOTM1Nzk0NDkyOSIsInJvbGUiOiLln7rnoYDlip_og70t5rid5b-r5pS_IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inlrei1zZGFnX2hyaCIsImJ1c2luZXNzUm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LThjNmYtY2M5MC0wNzVjY2Y0OTlhMTEiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk4OTIxNjgsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.d-kC-HZDz5bAulEP_T-CzPqWaPqLR4u_D1IyjiqyjkS-vpIS5TbY0MEknnS59FGi3RZVbLNtRBWOLYJVJ-cvPjK2IwxWxcV8Cfmbu3xMmyoDdHYJ43j_FuCK-FJ6XOI_vDZpcAweqqBKp_qpCilGnMErtgmUg0YgNQbeiUfO9-ciODNKh4sF9ROUjWdRxJ1KXoqrcbvT4UOkdMw1biTARVrmIF21n8I2uUNbh42QrdFN-L9XuuWp4XBE6hBq5VE_6a5itGXA6gigmpiPu_GE50wsb20i0yzkTDme5loRRM9qYl74b0fsEX8Ayz9iPclmjI-cm986F_D8EmRqzYPxLg'
 	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NTk4OTE4NTksImV4cCI6MTc2MDA2Mzg1OSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc1OTYyNjkwNiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7wiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTMxOGQtZmQ5OS00YzYxZjllYmIxN2YiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NTk4OTE4NTksInNjb3BlIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbInB3ZCJdfQ.N9oWfmMEdVWwl4gPQ5SE_ngSSmcpZRc82W5R9fzE4XDn96Haigb_zTUbvTUlW_yDi5-O3Fw2JzO6_ip5ZhtYWeCwDdoWBm2OEMX-lmizJUxJkEGElWfm87HjqnGLwVkzqmie0ekmdsqRPC-V-lhatJhiN8-NL4rTI2C0umB6X3AeE3AHVAVtyyc6OzcVFimkKHUcjl2DQ98mro6eKQbEyFTU1QyEg6XUp8O-brLNBwsQQsS4OvF_H6FAkQQjb3gj7HwaZE0ykFFF2binCTWp_qBC1C-lA5lZytqnaZEvoKOUpkitXEuVJU9VOaZZZqWHAcwSY5qXlqAAhKFmr6h0Aw'
@@ -1184,7 +1184,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://10.110.10.107:9527/api/online-table/table/cell-data',
+			url: 'http://10.110.10.111:9527/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				sheetId: sheetId.value,
@@ -1222,7 +1222,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://10.110.10.107:9527/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://10.110.10.111:9527/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1274,9 +1274,11 @@ const synergyJoinSheet = async (id, sheet) => {
 	console.log('sheetConfig', sheetConfig)
 
 	if (sheet) {
+		// 更新配置
 		Object.assign(sheet.config, {
 			...sheetConfig,
 			permissions: {},
+			deepPermissions: sheetConfig.deepPermissions || {},
 			superPermissions: [{r: 2, c: 1, rr: 3, cc: 3, v: '权限区域'}],
 		})
 	}
@@ -1358,7 +1360,7 @@ onActivated(() => {
 
 	axios
 		.request({
-			url: 'http://10.110.10.107:9527/api/online-table/table/3a1ccabb-e36f-1ceb-b6fe-9fe5a7f5f296?autoCreate=true',
+			url: 'http://10.110.10.111:9527/api/online-table/table/3a1cd937-0a6e-4587-bdd5-160736d10ccd?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1374,7 +1376,7 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://10.110.10.107:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}`
+			api.value = `http://10.110.10.111:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id

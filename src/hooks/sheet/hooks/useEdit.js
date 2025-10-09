@@ -325,6 +325,24 @@ export const useEdit = () => {
 				true
 			)
 
+			// ✅ 修复: 编辑完成后，更新 deepPermissions（持久锁定）
+			if (sheet.config.synergy && sheet.config.auth > 0) {
+				const ranged = sheet.hooks?.selectionRangeHook?.ranged
+				if (ranged && ranged.r !== -1) {
+					console.log('✅ useEdit.blur: 调用 updateDeepPermissions', {
+						cell: {r: cell.r, c: cell.c},
+						ranged,
+					})
+					// 调用 permissionsHook 的 updateDeepPermissions 方法
+					sheet.hooks?.permissionsHook?.updateDeepPermissions?.(
+						ranged.r,
+						ranged.c,
+						ranged.rr,
+						ranged.cc
+					)
+				}
+			}
+
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
 			cellEl.removeEventListener('input', input)
