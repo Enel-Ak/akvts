@@ -9,7 +9,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 1,
+		auth: 2,
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
 		// edit: true,
@@ -1360,7 +1360,7 @@ onActivated(() => {
 
 	axios
 		.request({
-			url: 'http://10.110.10.111:9527/api/online-table/table/3a1cd937-0a6e-4587-bdd5-160736d10ccd?autoCreate=true',
+			url: 'http://10.110.10.111:9527/api/online-table/table/3a1cd8a4-ef38-d0eb-a096-8013cf57c630?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,

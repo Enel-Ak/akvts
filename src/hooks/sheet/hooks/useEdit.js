@@ -327,20 +327,20 @@ export const useEdit = () => {
 
 			// ✅ 修复: 编辑完成后，更新 deepPermissions（持久锁定）
 			if (sheet.config.synergy && sheet.config.auth > 0) {
-				const ranged = sheet.hooks?.selectionRangeHook?.ranged
-				if (ranged && ranged.r !== -1) {
-					console.log('✅ useEdit.blur: 调用 updateDeepPermissions', {
-						cell: {r: cell.r, c: cell.c},
-						ranged,
-					})
-					// 调用 permissionsHook 的 updateDeepPermissions 方法
-					sheet.hooks?.permissionsHook?.updateDeepPermissions?.(
-						ranged.r,
-						ranged.c,
-						ranged.rr,
-						ranged.cc
-					)
-				}
+				// ✅ 修复列级权限问题: 使用 cell 的坐标而不是 ranged
+				// 因为 ranged 可能在 blur 时已经改变了（用户可能点击了其他单元格）
+				console.log('✅ useEdit.blur: 调用 updateDeepPermissions', {
+					cell: {r: cell.r, c: cell.c},
+					auth: sheet.config.auth,
+				})
+				// 调用 permissionsHook 的 updateDeepPermissions 方法
+				// 传递编辑的单元格坐标，updateDeepPermissions 会根据 auth 模式自动处理范围
+				sheet.hooks?.permissionsHook?.updateDeepPermissions?.(
+					cell.r,
+					cell.c,
+					cell.r,
+					cell.c
+				)
 			}
 
 			cellEl.removeAttribute('contenteditable')
