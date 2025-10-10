@@ -4107,18 +4107,12 @@ const getSuperPermissionStyle = (range, index) => {
 					>
 						{{ sheetItem[1].name }}
 						<el-popconfirm
-							v-if="idx > 0"
+							v-if="idx > 0 && sheet.config.deleteSheet"
 							title="确定删除吗？"
 							@confirm="onDeleteSheet(sheetItem)"
 						>
 							<template #reference>
-								<Icons
-									v-if="sheet.config.deleteSheet"
-									name="Clear2"
-									size="14"
-									class="close-sheet"
-									@click.stop
-								/>
+								<Icons name="Clear2" size="14" class="close-sheet" @click.stop />
 							</template>
 						</el-popconfirm>
 					</span>
