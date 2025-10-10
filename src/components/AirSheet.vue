@@ -2272,6 +2272,7 @@ const onChangeSheet = async (sheetItem, e) => {
 }
 
 const onDbClickSheet = (e, sheetItem) => {
+	if (!sheet.config.changeSheetName) return
 	const id = sheetItem[1]?.original?.sheetId || sheetItem.id
 	e.target.setAttribute('contenteditable', true)
 	e.target.focus()
@@ -3352,7 +3353,7 @@ const getSuperPermissionStyle = (range, index) => {
 					</div>
 
 					<!-- 锁定解锁 -->
-					<div class="group" v-if="sheet.config.locked || sheet.config.unlock">
+					<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
 						<div
 							v-if="sheet.config.lock"
 							class="item"
