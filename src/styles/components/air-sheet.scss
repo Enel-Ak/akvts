@@ -628,9 +628,22 @@
 
 		// 行级权限高亮样式
 		&[data-permission-type='row'] {
-			// 实线边框 + 半透明背景
-			border: 2px solid var(--z-highlight-color) !important;
-			background-color: rgba(var(--z-highlight-color-rgb), 0.1) !important;
+			// ✅ 修复: 改为虚线边框 + 半透明背景
+			// 添加半透明背景色
+			background: rgba(var(--z-highlight-color-rgb), 0.1);
+
+			// 使用伪元素实现虚线边框效果
+			&::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				border: 1px dashed var(--permission-color, var(--z-highlight-color));
+				pointer-events: none;
+				z-index: 1;
+			}
 
 			.label {
 				&::before {
@@ -641,9 +654,22 @@
 
 		// 列级权限高亮样式
 		&[data-permission-type='column'] {
-			// 虚线边框 + 半透明背景
-			border: 2px dashed var(--z-highlight-color) !important;
-			background-color: rgba(var(--z-highlight-color-rgb), 0.1) !important;
+			// ✅ 修复: 添加半透明背景色
+			background: rgba(var(--z-highlight-color-rgb), 0.1);
+
+			// ✅ 修复: 使用伪元素实现虚线边框效果
+			// 使用动态颜色变量 --permission-color
+			&::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				border: 1px dashed var(--permission-color, var(--z-highlight-color));
+				pointer-events: none;
+				z-index: 1;
+			}
 
 			.label {
 				&::before {
@@ -655,7 +681,7 @@
 		// 单元格级权限高亮样式
 		&[data-permission-type='cell'] {
 			// 实线边框 + 半透明背景（与行级、列级保持一致）
-			border: 2px solid var(--z-highlight-color) !important;
+			border: 1px solid var(--z-highlight-color) !important;
 			background-color: rgba(var(--z-highlight-color-rgb), 0.1) !important;
 
 			.label {
@@ -667,8 +693,8 @@
 
 		// 超级权限高亮样式
 		&.super-permission {
-			// 2px 边框 + 半透明背景 + 模糊效果
-			border: 2px solid var(--z-highlight-color) !important;
+			// 1px 边框 + 半透明背景 + 模糊效果
+			border: 1px solid var(--z-highlight-color) !important;
 			background-color: rgba(var(--z-highlight-color-rgb), 0.15) !important;
 			backdrop-filter: blur(2px); // 添加模糊效果
 			z-index: 3 !important; // 比普通权限更高的层级
@@ -683,16 +709,17 @@
 
 		.label {
 			background-color: var(--z-highlight-color);
-			border-radius: 3px 3px 0 0;
+			border-radius: 3px;
 			color: #fff;
 			font-size: 10px;
 			height: 18px;
 			padding: 3px 5px;
 			position: absolute;
-			top: -18px;
-			right: -1px;
+			top: 4px; // ✅ 修复: 标签显示在高亮框内的顶部
+			right: 4px; // ✅ 修复: 标签显示在高亮框内的右侧
 			white-space: nowrap;
 			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			z-index: 10; // ✅ 修复: 确保标签在高亮框之上
 		}
 	}
 

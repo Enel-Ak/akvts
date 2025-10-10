@@ -2779,12 +2779,28 @@ const getPermissionStyle = (range, index) => {
 	// 获取基础样式
 	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
 
-	// ✅ 新需求: permissions 不透明
-	return {
+	// ✅ 修复: 根据权限类型调整样式
+	const style = {
 		...baseStyle,
 		opacity: 1, // 不透明
 		zIndex: 2,
+		// ✅ 修复: 设置 CSS 变量，供伪元素使用
+		'--permission-color': permissionColor,
 	}
+
+	// ✅ 修复: 行级和列级权限使用半透明背景色，让 CSS 的伪元素虚线边框生效
+	if (range.type === 'row' || range.type === 'column') {
+		// 行级和列级权限：使用半透明背景色（10% 透明度）
+		style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
+		// 移除 border，让 CSS 的伪元素虚线边框生效
+		delete style.border
+		delete style.borderTop
+		delete style.borderRight
+		delete style.borderBottom
+		delete style.borderLeft
+	}
+
+	return style
 }
 
 // ✅ 新增: 计算 deepPermission 区域的样式
@@ -2837,13 +2853,26 @@ const getDeepPermissionStyle = (range, index) => {
 	const {border, borderTop, borderRight, borderBottom, borderLeft, ...styleWithoutBorder} =
 		baseStyle
 
-	return {
+	// ✅ 修复: 根据权限类型调整样式
+	const style = {
 		...styleWithoutBorder,
-		// 使用 box-shadow 实现边框效果
-		boxShadow: `inset 0 0 0 0.1px ${permissionColor}`,
-		opacity: 0.3, // 不透明
 		zIndex: 2, // ✅ 修复问题4: 高于临时权限 (permissions 的 z-index 是 2)
+		// ✅ 修复: 设置 CSS 变量，供伪元素使用
+		'--permission-color': permissionColor,
 	}
+
+	// ✅ 修复: 行级和列级权限使用半透明背景色，让 CSS 的伪元素虚线边框生效
+	if (range.type === 'row' || range.type === 'column') {
+		// 行级和列级权限：使用半透明背景色（10% 透明度）
+		style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
+		style.opacity = 1 // 不使用 opacity，直接在背景色中设置透明度
+	} else {
+		// 单元格级权限：使用 box-shadow 实现实线边框（1px）
+		style.boxShadow = `inset 0 0 0 1px ${permissionColor}`
+		style.opacity = 0.3 // 使用 opacity
+	}
+
+	return style
 }
 
 // 计算 superPermission 区域的样式
