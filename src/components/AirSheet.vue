@@ -2947,9 +2947,10 @@ const getSuperPermissionStyle = (range, index) => {
 	>
 		<template v-if="sheet?.state?.completed">
 			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
+				<slot name="toolbar-title"></slot>
 				<!-- 在线用户 -->
 				<div v-if="sheet.config.synergy" class="flx df aic">
-					<Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" />
+					<!-- <Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" /> -->
 					<template v-for="(user, idx) of onlineUser">
 						<span v-if="idx < 10" class="online-user" :title="user.name">
 							{{ user.name.slice(0, 1) }}
