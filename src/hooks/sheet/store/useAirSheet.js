@@ -54,6 +54,7 @@ const defaultSheet = {
 		undo: true, // 撤销
 		synergy: false, // 协同
 		createSheet: true, // 添加新sheet
+		deleteSheet: true, // 删除sheet
 		online: [], // 协同高亮在线的, 当前sheet的
 		rowCount: 40,
 		colCount: 20,
