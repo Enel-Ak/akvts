@@ -2877,46 +2877,9 @@ const getDeepPermissionStyle = (range, index) => {
 
 // 计算 superPermission 区域的样式
 const getSuperPermissionStyle = (range, index) => {
-	if (!range || !sheet.props) return {}
+	if (!range || !sheet.hooks?.selectionRangeHook) return {}
 
 	const {r, c, rr, cc} = range
-
-	// 直接计算位置和大小，不使用 setHighlightRange（避免范围被扩展）
-	// 计算起始位置
-	let totalOffsetTop = r * sheet.props.rowHeight
-	let totalOffsetLeft = c * sheet.props.colWidth
-
-	// 计算高度和宽度
-	let totalHeight = (rr - r + 1) * sheet.props.rowHeight
-	let totalWidth = (cc - c + 1) * sheet.props.colWidth
-
-	// 考虑修改的行高
-	if (sheet.config.rResize) {
-		for (let row = 0; row < r; row++) {
-			if (sheet.config.rResize[row]) {
-				totalOffsetTop += sheet.config.rResize[row] - sheet.props.rowHeight
-			}
-		}
-		for (let row = r; row <= rr; row++) {
-			if (sheet.config.rResize[row]) {
-				totalHeight += sheet.config.rResize[row] - sheet.props.rowHeight
-			}
-		}
-	}
-
-	// 考虑修改的列宽
-	if (sheet.config.cResize) {
-		for (let col = 0; col < c; col++) {
-			if (sheet.config.cResize[col]) {
-				totalOffsetLeft += sheet.config.cResize[col] - sheet.props.colWidth
-			}
-		}
-		for (let col = c; col <= cc; col++) {
-			if (sheet.config.cResize[col]) {
-				totalWidth += sheet.config.cResize[col] - sheet.props.colWidth
-			}
-		}
-	}
 
 	// ✅ 基于 userId 生成一致的颜色
 	const generateSuperPermissionColor = (userId) => {
@@ -2947,16 +2910,25 @@ const getSuperPermissionStyle = (range, index) => {
 	// 生成超级权限区域的颜色
 	const color = generateSuperPermissionColor(range.userId)
 
+	// ✅ 修复: 使用 selectionRangeHook 的方法计算位置和大小（自动考虑 zoom）
+	const tempHighlight = {
+		id: `super-permission-${range.userId || index}`,
+		r,
+		c,
+		rr,
+		cc,
+		color: `rgb(${color})`,
+	}
+
+	// 获取基础样式（自动考虑 zoom、rResize、cResize）
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
+
 	// 返回样式
 	return {
-		position: 'absolute',
-		top: `${totalOffsetTop}px`,
-		left: `${totalOffsetLeft}px`,
-		width: `${totalWidth}px`,
-		height: `${totalHeight}px`,
+		...baseStyle,
 		'--z-highlight-color': `rgb(${color})`,
 		'--z-highlight-color-rgb': color,
-		border: `2px solid rgb(${color})`,
+		border: `1px solid rgb(${color})`, // ✅ 修复: 改为 1px，与其他权限一致
 		backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
 		zIndex: 3, // 比普通高亮更高的层级
 		pointerEvents: 'none', // 不阻止鼠标事件
