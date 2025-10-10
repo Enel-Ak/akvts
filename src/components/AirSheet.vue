@@ -2965,7 +2965,9 @@ const getSuperPermissionStyle = (range, index) => {
 				>
 					{{ item.label }}
 				</span>
-				<span class="flx"></span>
+				<span class="flx">
+					<slot name="toolbar"></slot>
+				</span>
 				<Icons
 					name="Back"
 					size="12"
