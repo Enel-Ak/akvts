@@ -106,32 +106,206 @@ export const useTools = () => {
 		return {canAdd: true, reason: ''}
 	}
 
-	// 检查删除行范围是否包含锁定单元格
+	// ✅ 新需求: 检查删除行范围是否包含锁定单元格（支持三种权限类型）
 	const canRemoveRows = (startRow, endRow) => {
-		if (!sheet.config.locked) return {canRemove: true, reason: ''}
-
-		for (let row = startRow; row <= endRow; row++) {
-			if (isRowLocked(row)) {
-				return {
-					canRemove: false,
-					reason: `无法删除行：第${row + 1}行包含锁定的单元格`,
+		// 检查传统锁定机制
+		if (sheet.config.locked) {
+			for (let row = startRow; row <= endRow; row++) {
+				if (isRowLocked(row)) {
+					return {
+						canRemove: false,
+						reason: `无法删除行：第${row + 1}行包含锁定的单元格`,
+					}
 				}
+			}
+		}
+
+		// ✅ 新需求: 根据 sheet.config.auth 检查权限
+		if (sheet.config.synergy && sheet.config.auth > 0) {
+			const auth = sheet.config.auth
+
+			// 获取当前用户ID
+			const getCurrentUserId = () => {
+				if (sheet?.config?.currentUserId) return sheet.config.currentUserId
+				if (sheetStore.getCurrentUserId) return sheetStore.getCurrentUserId
+				if (sheet?.props?.currentUserId) return sheet.props.currentUserId
+				return null
+			}
+			const currentUserId = getCurrentUserId()
+
+			// 辅助函数：检查权限对象中是否存在锁定
+			const checkPermissionObject = (permissionsObj, permissionType) => {
+				if (!permissionsObj || typeof permissionsObj !== 'object') return null
+
+				for (const [userId, permission] of Object.entries(permissionsObj)) {
+					// 跳过当前用户自己的权限
+					if (userId === currentUserId) continue
+
+					const {type, targets} = permission
+
+					// 根据 auth 模式检查不同的权限类型
+					if (auth === 1) {
+						// ✅ 修复: 行级权限 - 检查要删除的行是否被锁定
+						if (type === 'row' && targets && Array.isArray(targets)) {
+							for (const targetRow of targets) {
+								if (targetRow >= startRow && targetRow <= endRow) {
+									return {
+										canRemove: false,
+										reason: `第 ${targetRow + 1} 行已被锁定，无法删除`,
+										userName: permission.userName || '其他用户',
+									}
+								}
+							}
+						}
+					} else if (auth === 2) {
+						// ✅ 修复: 列级权限 - 如果有任何列被锁定，则不允许删除行
+						if (type === 'column' && targets && targets.length > 0) {
+							return {
+								canRemove: false,
+								reason: `存在被锁定的列，无法删除行`,
+								userName: permission.userName || '其他用户',
+							}
+						}
+					} else if (auth === 3) {
+						// 单元格级权限：检查要删除的行中是否包含被锁定的单元格
+						if (type === 'cell' && targets && Array.isArray(targets)) {
+							for (const target of targets) {
+								if (target.row >= startRow && target.row <= endRow) {
+									return {
+										canRemove: false,
+										reason: `第 ${
+											target.row + 1
+										} 行包含被锁定的单元格，无法删除`,
+										userName: permission.userName || '其他用户',
+									}
+								}
+							}
+						}
+					}
+				}
+
+				return null
+			}
+
+			// 检查 superPermissions（最高优先级）
+			if (sheet.config.superPermissions) {
+				const superCheck = checkPermissionObject(sheet.config.superPermissions, 'super')
+				if (superCheck) return superCheck
+			}
+
+			// 检查 deepPermissions（持久锁定）
+			if (sheet.config.deepPermissions) {
+				const deepCheck = checkPermissionObject(sheet.config.deepPermissions, 'deep')
+				if (deepCheck) return deepCheck
+			}
+
+			// 检查 permissions（临时锁定）
+			if (sheet.config.permissions) {
+				const permCheck = checkPermissionObject(sheet.config.permissions, 'temp')
+				if (permCheck) return permCheck
 			}
 		}
 
 		return {canRemove: true, reason: ''}
 	}
 
-	// 检查删除列范围是否包含锁定单元格
+	// ✅ 新需求: 检查删除列范围是否包含锁定单元格（支持三种权限类型）
 	const canRemoveColumns = (startCol, endCol) => {
-		if (!sheet.config.locked) return {canRemove: true, reason: ''}
-
-		for (let col = startCol; col <= endCol; col++) {
-			if (isColumnLocked(col)) {
-				return {
-					canRemove: false,
-					reason: `无法删除列：第${col + 1}列包含锁定的单元格`,
+		// 检查传统锁定机制
+		if (sheet.config.locked) {
+			for (let col = startCol; col <= endCol; col++) {
+				if (isColumnLocked(col)) {
+					return {
+						canRemove: false,
+						reason: `无法删除列：第${col + 1}列包含锁定的单元格`,
+					}
 				}
+			}
+		}
+
+		// ✅ 新需求: 根据 sheet.config.auth 检查权限
+		if (sheet.config.synergy && sheet.config.auth > 0) {
+			const auth = sheet.config.auth
+
+			// 获取当前用户ID
+			const getCurrentUserId = () => {
+				if (sheet?.config?.currentUserId) return sheet.config.currentUserId
+				if (sheetStore.getCurrentUserId) return sheetStore.getCurrentUserId
+				if (sheet?.props?.currentUserId) return sheet.props.currentUserId
+				return null
+			}
+			const currentUserId = getCurrentUserId()
+
+			// 辅助函数：检查权限对象中是否存在锁定
+			const checkPermissionObject = (permissionsObj, permissionType) => {
+				if (!permissionsObj || typeof permissionsObj !== 'object') return null
+
+				for (const [userId, permission] of Object.entries(permissionsObj)) {
+					// 跳过当前用户自己的权限
+					if (userId === currentUserId) continue
+
+					const {type, targets} = permission
+
+					// 根据 auth 模式检查不同的权限类型
+					if (auth === 1) {
+						// ✅ 修复: 行级权限 - 如果有任何行被锁定，则不允许删除列
+						if (type === 'row' && targets && targets.length > 0) {
+							return {
+								canRemove: false,
+								reason: `存在被锁定的行，无法删除列`,
+								userName: permission.userName || '其他用户',
+							}
+						}
+					} else if (auth === 2) {
+						// ✅ 修复: 列级权限 - 检查要删除的列是否被锁定
+						if (type === 'column' && targets && Array.isArray(targets)) {
+							for (const targetCol of targets) {
+								if (targetCol >= startCol && targetCol <= endCol) {
+									return {
+										canRemove: false,
+										reason: `第 ${targetCol + 1} 列已被锁定，无法删除`,
+										userName: permission.userName || '其他用户',
+									}
+								}
+							}
+						}
+					} else if (auth === 3) {
+						// 单元格级权限：检查要删除的列中是否包含被锁定的单元格
+						if (type === 'cell' && targets && Array.isArray(targets)) {
+							for (const target of targets) {
+								if (target.col >= startCol && target.col <= endCol) {
+									return {
+										canRemove: false,
+										reason: `第 ${
+											target.col + 1
+										} 列包含被锁定的单元格，无法删除`,
+										userName: permission.userName || '其他用户',
+									}
+								}
+							}
+						}
+					}
+				}
+
+				return null
+			}
+
+			// 检查 superPermissions（最高优先级）
+			if (sheet.config.superPermissions) {
+				const superCheck = checkPermissionObject(sheet.config.superPermissions, 'super')
+				if (superCheck) return superCheck
+			}
+
+			// 检查 deepPermissions（持久锁定）
+			if (sheet.config.deepPermissions) {
+				const deepCheck = checkPermissionObject(sheet.config.deepPermissions, 'deep')
+				if (deepCheck) return deepCheck
+			}
+
+			// 检查 permissions（临时锁定）
+			if (sheet.config.permissions) {
+				const permCheck = checkPermissionObject(sheet.config.permissions, 'temp')
+				if (permCheck) return permCheck
 			}
 		}
 
@@ -1146,6 +1320,89 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
+			// ✅ 新需求: 添加行后更新 deepPermissions 和 superPermissions
+			if (sheet.config.synergy && sheet.config.auth > 0) {
+				// 更新 deepPermissions
+				if (sheet.config.deepPermissions) {
+					const updatedDeepPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.deepPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'row') {
+							// 行级权限：更新行索引
+							const updatedTargets = targets.map((row) =>
+								row >= insertRowIndex ? row + addRowCount.value : row
+							)
+
+							updatedDeepPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets.map((cell) => ({
+								...cell,
+								row:
+									cell.row >= insertRowIndex
+										? cell.row + addRowCount.value
+										: cell.row,
+							}))
+
+							updatedDeepPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else {
+							// 列级权限：不受添加行影响
+							updatedDeepPermissions[userId] = permission
+						}
+					}
+					sheet.config.deepPermissions = updatedDeepPermissions
+				}
+
+				// 更新 superPermissions
+				if (sheet.config.superPermissions) {
+					const updatedSuperPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.superPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'row') {
+							// 行级权限：更新行索引
+							const updatedTargets = targets.map((row) =>
+								row >= insertRowIndex ? row + addRowCount.value : row
+							)
+
+							updatedSuperPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets.map((cell) => ({
+								...cell,
+								row:
+									cell.row >= insertRowIndex
+										? cell.row + addRowCount.value
+										: cell.row,
+							}))
+
+							updatedSuperPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else {
+							// 列级权限：不受添加行影响
+							updatedSuperPermissions[userId] = permission
+						}
+					}
+					sheet.config.superPermissions = updatedSuperPermissions
+				}
+			}
+
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
 			// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
 			if (!isFiltered) {
@@ -1208,11 +1465,16 @@ export const useTools = () => {
 
 			const deletedRows = new Map()
 
-			// 检查要删除的行范围是否有锁定的单元格
-			const checkResult = canRemoveRows(r, rr)
-			if (!checkResult.canRemove) {
-				ElMessage.warning(checkResult.reason)
-				return
+			// ✅ 修复: 只在非同步操作时检查权限
+			// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
+			// 此时权限已经在发起删除的用户端检查通过了，不需要再次检查
+			if (!asyncData) {
+				// 检查要删除的行范围是否有锁定的单元格
+				const checkResult = canRemoveRows(r, rr)
+				if (!checkResult.canRemove) {
+					ElMessage.warning(checkResult.reason)
+					return
+				}
 			}
 
 			if (sheet.celldata.size >= sheet.props.limit) {
@@ -1266,6 +1528,98 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
 
+			// ✅ 新需求: 删除行后更新 deepPermissions 和 superPermissions
+			// ⚠️ 重要: 只在非同步操作时更新权限（asyncData 为 null 时）
+			// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
+			// 此时权限已经在发起删除的用户端更新并同步过来了，不需要再次更新
+			if (sheet.config.synergy && sheet.config.auth > 0 && !asyncData) {
+				// 更新 deepPermissions
+				if (sheet.config.deepPermissions) {
+					const updatedDeepPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.deepPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'row') {
+							// 行级权限：更新行索引
+							const updatedTargets = targets
+								.filter((row) => row < r || row > rr) // 移除被删除的行
+								.map((row) => (row > rr ? row - deleteCount : row)) // 更新后面的行索引
+
+							if (updatedTargets.length > 0) {
+								updatedDeepPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets
+								.filter((cell) => cell.row < r || cell.row > rr) // 移除被删除行中的单元格
+								.map((cell) => ({
+									...cell,
+									row: cell.row > rr ? cell.row - deleteCount : cell.row, // 更新后面的单元格行索引
+								}))
+
+							if (updatedTargets.length > 0) {
+								updatedDeepPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else {
+							// 列级权限：不受删除行影响
+							updatedDeepPermissions[userId] = permission
+						}
+					}
+					sheet.config.deepPermissions = updatedDeepPermissions
+				}
+
+				// 更新 superPermissions
+				if (sheet.config.superPermissions) {
+					const updatedSuperPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.superPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'row') {
+							// 行级权限：更新行索引
+							const updatedTargets = targets
+								.filter((row) => row < r || row > rr) // 移除被删除的行
+								.map((row) => (row > rr ? row - deleteCount : row)) // 更新后面的行索引
+
+							if (updatedTargets.length > 0) {
+								updatedSuperPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets
+								.filter((cell) => cell.row < r || cell.row > rr) // 移除被删除行中的单元格
+								.map((cell) => ({
+									...cell,
+									row: cell.row > rr ? cell.row - deleteCount : cell.row, // 更新后面的单元格行索引
+								}))
+
+							if (updatedTargets.length > 0) {
+								updatedSuperPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else {
+							// 列级权限：不受删除行影响
+							updatedSuperPermissions[userId] = permission
+						}
+					}
+					sheet.config.superPermissions = updatedSuperPermissions
+				}
+			}
+
 			// 如果当前处于筛选状态，需要更新筛选数据和行号映射
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
 				// 使用静默模式重新执行筛选，避免闪烁
@@ -1284,6 +1638,16 @@ export const useTools = () => {
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					startIndex: r,
 					count: deleteCount,
+				})
+
+				// ✅ 新需求: 同步 deepPermissions 和 superPermissions 的更新
+				sheet.hooks.synergyHook.eventCell({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					type: 'config',
+					data: {
+						deepPermissions: sheet.config.deepPermissions,
+						superPermissions: sheet.config.superPermissions,
+					},
 				})
 			}
 
@@ -1357,6 +1721,89 @@ export const useTools = () => {
 			})
 
 			sheet.config.colCount += addColumnCount.value
+
+			// ✅ 新需求: 添加列后更新 deepPermissions 和 superPermissions
+			if (sheet.config.synergy && sheet.config.auth > 0) {
+				// 更新 deepPermissions
+				if (sheet.config.deepPermissions) {
+					const updatedDeepPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.deepPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'column') {
+							// 列级权限：更新列索引
+							const updatedTargets = targets.map((col) =>
+								col >= insertColIndex ? col + addColumnCount.value : col
+							)
+
+							updatedDeepPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets.map((cell) => ({
+								...cell,
+								col:
+									cell.col >= insertColIndex
+										? cell.col + addColumnCount.value
+										: cell.col,
+							}))
+
+							updatedDeepPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else {
+							// 行级权限：不受添加列影响
+							updatedDeepPermissions[userId] = permission
+						}
+					}
+					sheet.config.deepPermissions = updatedDeepPermissions
+				}
+
+				// 更新 superPermissions
+				if (sheet.config.superPermissions) {
+					const updatedSuperPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.superPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'column') {
+							// 列级权限：更新列索引
+							const updatedTargets = targets.map((col) =>
+								col >= insertColIndex ? col + addColumnCount.value : col
+							)
+
+							updatedSuperPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets.map((cell) => ({
+								...cell,
+								col:
+									cell.col >= insertColIndex
+										? cell.col + addColumnCount.value
+										: cell.col,
+							}))
+
+							updatedSuperPermissions[userId] = {
+								...permission,
+								targets: updatedTargets,
+							}
+						} else {
+							// 行级权限：不受添加列影响
+							updatedSuperPermissions[userId] = permission
+						}
+					}
+					sheet.config.superPermissions = updatedSuperPermissions
+				}
+			}
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
 			asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
@@ -1436,11 +1883,16 @@ export const useTools = () => {
 			deleteCount = asyncData.count
 		}
 
-		// 检查要删除的列范围是否有锁定的单元格
-		const checkResult = canRemoveColumns(c, cc)
-		if (!checkResult.canRemove) {
-			ElMessage.warning(checkResult.reason)
-			return
+		// ✅ 修复: 只在非同步操作时检查权限
+		// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
+		// 此时权限已经在发起删除的用户端检查通过了，不需要再次检查
+		if (!asyncData) {
+			// 检查要删除的列范围是否有锁定的单元格
+			const checkResult = canRemoveColumns(c, cc)
+			if (!checkResult.canRemove) {
+				ElMessage.warning(checkResult.reason)
+				return
+			}
 		}
 
 		if (sheet.celldata.size >= sheet.props.limit) {
@@ -1501,6 +1953,98 @@ export const useTools = () => {
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
 			sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc)
 
+			// ✅ 新需求: 删除列后更新 deepPermissions 和 superPermissions
+			// ⚠️ 重要: 只在非同步操作时更新权限（asyncData 为 null 时）
+			// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
+			// 此时权限已经在发起删除的用户端更新并同步过来了，不需要再次更新
+			if (sheet.config.synergy && sheet.config.auth > 0 && !asyncData) {
+				// 更新 deepPermissions
+				if (sheet.config.deepPermissions) {
+					const updatedDeepPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.deepPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'column') {
+							// 列级权限：更新列索引
+							const updatedTargets = targets
+								.filter((col) => col < c || col > cc) // 移除被删除的列
+								.map((col) => (col > cc ? col - deleteCount : col)) // 更新后面的列索引
+
+							if (updatedTargets.length > 0) {
+								updatedDeepPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets
+								.filter((cell) => cell.col < c || cell.col > cc) // 移除被删除列中的单元格
+								.map((cell) => ({
+									...cell,
+									col: cell.col > cc ? cell.col - deleteCount : cell.col, // 更新后面的单元格列索引
+								}))
+
+							if (updatedTargets.length > 0) {
+								updatedDeepPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else {
+							// 行级权限：不受删除列影响
+							updatedDeepPermissions[userId] = permission
+						}
+					}
+					sheet.config.deepPermissions = updatedDeepPermissions
+				}
+
+				// 更新 superPermissions
+				if (sheet.config.superPermissions) {
+					const updatedSuperPermissions = {}
+					for (const [userId, permission] of Object.entries(
+						sheet.config.superPermissions
+					)) {
+						const {type, targets} = permission
+
+						if (type === 'column') {
+							// 列级权限：更新列索引
+							const updatedTargets = targets
+								.filter((col) => col < c || col > cc) // 移除被删除的列
+								.map((col) => (col > cc ? col - deleteCount : col)) // 更新后面的列索引
+
+							if (updatedTargets.length > 0) {
+								updatedSuperPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else if (type === 'cell') {
+							// 单元格级权限：更新单元格位置
+							const updatedTargets = targets
+								.filter((cell) => cell.col < c || cell.col > cc) // 移除被删除列中的单元格
+								.map((cell) => ({
+									...cell,
+									col: cell.col > cc ? cell.col - deleteCount : cell.col, // 更新后面的单元格列索引
+								}))
+
+							if (updatedTargets.length > 0) {
+								updatedSuperPermissions[userId] = {
+									...permission,
+									targets: updatedTargets,
+								}
+							}
+						} else {
+							// 行级权限：不受删除列影响
+							updatedSuperPermissions[userId] = permission
+						}
+					}
+					sheet.config.superPermissions = updatedSuperPermissions
+				}
+			}
+
 			// 如果当前处于筛选状态，需要更新筛选条件中的列索引
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
 				// 更新筛选条件中的列索引
@@ -1552,6 +2096,16 @@ export const useTools = () => {
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					startIndex: c,
 					count: deleteCount,
+				})
+
+				// ✅ 新需求: 同步 deepPermissions 和 superPermissions 的更新
+				sheet.hooks.synergyHook.eventCell({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					type: 'config',
+					data: {
+						deepPermissions: sheet.config.deepPermissions,
+						superPermissions: sheet.config.superPermissions,
+					},
 				})
 			}
 		} catch (error) {

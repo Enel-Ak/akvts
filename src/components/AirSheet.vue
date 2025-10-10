@@ -2949,12 +2949,19 @@ const getSuperPermissionStyle = (range, index) => {
 			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
 				<slot name="toolbar-title"></slot>
 				<!-- 在线用户 -->
-				<div v-if="sheet.config.synergy" class="flx df aic">
+				<div v-if="sheet.config.synergy" class="flx df aic mg-left-5">
 					<!-- <Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" /> -->
 					<template v-for="(user, idx) of onlineUser">
-						<span v-if="idx < 10" class="online-user" :title="user.name">
-							{{ user.name.slice(0, 1) }}
-						</span>
+						<el-tooltip
+							class="box-item"
+							effect="light"
+							:content="user.name"
+							placement="top"
+						>
+							<span v-if="idx < 10" class="online-user">
+								{{ user.name.slice(0, 1) }}
+							</span>
+						</el-tooltip>
 					</template>
 				</div>
 				<span
