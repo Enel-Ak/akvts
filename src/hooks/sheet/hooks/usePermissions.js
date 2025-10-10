@@ -314,6 +314,172 @@ export const usePermissions = () => {
 	}
 
 	/**
+	 * 清除指定区域的 deepPermissions（持久锁定）
+	 * 用于剪切操作：清空源区域的数据后，移除该区域的持久锁定
+	 * @param {number} row - 起始行索引
+	 * @param {number} col - 起始列索引
+	 * @param {number} rowEnd - 结束行索引
+	 * @param {number} colEnd - 结束列索引
+	 */
+	const clearDeepPermissions = (row, col, rowEnd, colEnd) => {
+		if (!sheet || !sheet.config.synergy) return
+		if (sheet.config.auth === 0) return // 无权限模式
+
+		const userId = getCurrentUserId()
+		if (!userId) {
+			console.warn('clearDeepPermissions: 无法获取当前用户ID')
+			return
+		}
+
+		// 确保 deepPermissions 对象存在
+		if (!sheet.config.deepPermissions) {
+			sheet.config.deepPermissions = {}
+		}
+
+		// 获取已有的深度权限记录
+		const existingPermission = sheet.config.deepPermissions[userId]
+		if (!existingPermission) {
+			console.log('clearDeepPermissions: 当前用户没有 deepPermissions 记录')
+			return
+		}
+
+		console.log('✅ clearDeepPermissions 调用:', {
+			userId,
+			auth: sheet.config.auth,
+			clearRange: {row, col, rowEnd, colEnd},
+			existingPermission,
+		})
+
+		// 根据权限模式清除锁定
+		switch (sheet.config.auth) {
+			case 1: // 行级权限
+				{
+					if (existingPermission.type === 'row') {
+						const existingTargets = existingPermission.targets || []
+						const rowsToClear = []
+						for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+							rowsToClear.push(r)
+						}
+
+						// 从已有的锁定行中移除要清除的行
+						const remainingTargets = existingTargets.filter(
+							(r) => !rowsToClear.includes(r)
+						)
+
+						if (remainingTargets.length > 0) {
+							// 还有其他锁定的行，更新记录
+							sheet.config.deepPermissions[userId] = {
+								...existingPermission,
+								targets: remainingTargets,
+								timestamp: Date.now(),
+							}
+							console.log('clearDeepPermissions - 行级权限（部分清除）:', {
+								userId,
+								rowsToClear,
+								remainingTargets,
+							})
+						} else {
+							// 没有剩余的锁定行，删除整个记录
+							delete sheet.config.deepPermissions[userId]
+							console.log('clearDeepPermissions - 行级权限（完全清除）:', {
+								userId,
+								rowsToClear,
+							})
+						}
+					}
+				}
+				break
+
+			case 2: // 列级权限
+				{
+					if (existingPermission.type === 'column') {
+						const existingTargets = existingPermission.targets || []
+						const colsToClear = []
+						for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+							colsToClear.push(c)
+						}
+
+						// 从已有的锁定列中移除要清除的列
+						const remainingTargets = existingTargets.filter(
+							(c) => !colsToClear.includes(c)
+						)
+
+						if (remainingTargets.length > 0) {
+							sheet.config.deepPermissions[userId] = {
+								...existingPermission,
+								targets: remainingTargets,
+								timestamp: Date.now(),
+							}
+							console.log('clearDeepPermissions - 列级权限（部分清除）:', {
+								userId,
+								colsToClear,
+								remainingTargets,
+							})
+						} else {
+							delete sheet.config.deepPermissions[userId]
+							console.log('clearDeepPermissions - 列级权限（完全清除）:', {
+								userId,
+								colsToClear,
+							})
+						}
+					}
+				}
+				break
+
+			case 3: // 单元格级权限
+				{
+					if (existingPermission.type === 'cell') {
+						const existingTargets = existingPermission.targets || []
+						const cellsToClear = []
+						for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+							for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+								cellsToClear.push({row: r, col: c})
+							}
+						}
+
+						// 从已有的锁定单元格中移除要清除的单元格
+						const remainingTargets = existingTargets.filter(
+							(t) =>
+								!cellsToClear.some(
+									(clear) => clear.row === t.row && clear.col === t.col
+								)
+						)
+
+						if (remainingTargets.length > 0) {
+							sheet.config.deepPermissions[userId] = {
+								...existingPermission,
+								targets: remainingTargets,
+								timestamp: Date.now(),
+							}
+							console.log('clearDeepPermissions - 单元格级权限（部分清除）:', {
+								userId,
+								cellsToClear: cellsToClear.length,
+								remainingTargets: remainingTargets.length,
+							})
+						} else {
+							delete sheet.config.deepPermissions[userId]
+							console.log('clearDeepPermissions - 单元格级权限（完全清除）:', {
+								userId,
+								cellsToClear: cellsToClear.length,
+							})
+						}
+					}
+				}
+				break
+		}
+
+		// 同步深度权限配置到其他用户
+		if (sheet.config.synergy) {
+			console.log('✅ clearDeepPermissions: 同步 deepPermissions 到其他用户:', {
+				deepPermissions: sheet.config.deepPermissions,
+			})
+			sheet.emits?.('asyncConfig', {
+				deepPermissions: sheet.config.deepPermissions,
+			})
+		}
+	}
+
+	/**
 	 * 检查指定位置是否被其他用户锁定
 	 * ✅ 新需求: 优先检查 superPermissions, 然后检查 deepPermissions, 最后检查 permissions
 	 * @param {number} row - 行索引
@@ -1207,6 +1373,7 @@ export const usePermissions = () => {
 		return {
 			updatePermissions,
 			updateDeepPermissions, // ✅ 修复: 导出深度权限更新函数
+			clearDeepPermissions, // ✅ 新增: 导出深度权限清除函数（用于剪切操作）
 			checkPermission,
 			releasePermissions,
 			clearAllPermissions,

@@ -6,11 +6,15 @@ export function useCopy() {
 	let sheetKey = ''
 	let sheet = null
 
-	const handleKeyDown = (event) => {
+	const handleKeyDown = async (event) => {
 		// 复制 Ctrl+C / Command+C
 		if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
 			event.preventDefault()
-			copySelectedCells()
+			// ✅ 修复: 等待复制操作完成后显示成功提示
+			const copySuccess = await copySelectedCells()
+			if (copySuccess) {
+				ElMessage.success('复制成功')
+			}
 		}
 	}
 
@@ -347,6 +351,48 @@ export function useCopy() {
 				})
 			}
 
+			// ✅ 修复: 使用 requestAnimationFrame 确保数据更新完成后再更新 deepPermissions
+			requestAnimationFrame(() => {
+				// ✅ 修复: 粘贴操作后更新或清除 deepPermissions（持久锁定）
+				const pasteEndRow = baseRow + pasteData.data.length - 1
+				const pasteEndCol = baseCol + pasteData.data[0].length - 1
+
+				// ✅ 新增: 检查粘贴的数据是否全为空
+				const rangeIsEmpty = sheet.hooks?.permissionsHook?.isRangeEmpty?.(
+					baseRow,
+					baseCol,
+					pasteEndRow,
+					pasteEndCol
+				)
+
+				console.log('✅ useCopy.paste: 检查粘贴数据是否为空', {
+					起始位置: {r: baseRow, c: baseCol},
+					结束位置: {r: pasteEndRow, c: pasteEndCol},
+					auth: sheet.config.auth,
+					rangeIsEmpty,
+				})
+
+				if (rangeIsEmpty) {
+					// 粘贴的数据全为空，清除 deepPermissions
+					console.log('✅ useCopy.paste: 粘贴数据为空，调用 clearDeepPermissions')
+					sheet.hooks?.permissionsHook?.clearDeepPermissions?.(
+						baseRow,
+						baseCol,
+						pasteEndRow,
+						pasteEndCol
+					)
+				} else {
+					// 粘贴的数据不为空，更新 deepPermissions
+					console.log('✅ useCopy.paste: 粘贴数据不为空，调用 updateDeepPermissions')
+					sheet.hooks?.permissionsHook?.updateDeepPermissions?.(
+						baseRow,
+						baseCol,
+						pasteEndRow,
+						pasteEndCol
+					)
+				}
+			})
+
 			// 先删除目标区域内的所有已存在的合并单元格
 			const targetEndRow = baseRow + pasteData.data.length - 1
 			const targetEndCol = baseCol + pasteData.data[0].length - 1
@@ -401,12 +447,32 @@ export function useCopy() {
 				processCellStyle(cell, key, true)
 			})
 		}
+
+		// ✅ 修复: 所有操作完成后显示成功提示
+		ElMessage.success('粘贴成功')
 	}
 
 	// 复制选中单元格到Excel
 	const copySelectedCells = async (isCut = false) => {
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
+
+		// ✅ 新增: 权限检查 - 在复制/剪切前检查源区域是否被锁定
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const rowspan = Math.abs(rr - r) + 1
+			const colspan = Math.abs(cc - c) + 1
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				Math.min(r, rr),
+				Math.min(c, cc),
+				rowspan,
+				colspan
+			)
+
+			if (permissionCheck.locked) {
+				ElMessage.warning(`${permissionCheck.reason}，无法${isCut ? '剪切' : '复制'}`)
+				return // 阻止复制/剪切
+			}
+		}
 
 		// 创建表格HTML，添加完整的表格结构
 		let tableHtml = `
@@ -485,7 +551,11 @@ export function useCopy() {
 					'text/plain': textBlob,
 				}),
 			])
+			// ✅ 修复: 移除成功提示，由调用方在权限检查通过后显示
+			console.log(3333, isCut)
+
 			ElMessage.success(isCut ? '剪切成功' : '复制成功')
+			return true // 返回成功标志
 		} catch (error) {
 			console.error(isCut ? '剪切失败' : '复制失败:', error)
 			// 降级方案：使用传统方法
@@ -499,25 +569,94 @@ export function useCopy() {
 			selection.addRange(range)
 			document.execCommand('copy')
 			document.body.removeChild(tempDiv)
+			return true // 返回成功标志
 		}
 	}
 
 	// 剪切选中单元格
-	const cutSelectedCells = () => {
-		copySelectedCells(true)
+	const cutSelectedCells = async () => {
+		// ✅ 新增: 权限检查 - 在剪切前检查源区域是否被锁定
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
+
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const rowspan = Math.abs(rr - r) + 1
+			const colspan = Math.abs(cc - c) + 1
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				Math.min(r, rr),
+				Math.min(c, cc),
+				rowspan,
+				colspan
+			)
+
+			if (permissionCheck.locked) {
+				ElMessage.warning(`${permissionCheck.reason}，无法剪切`)
+				return // 阻止剪切
+			}
+		}
+
+		// 权限检查通过，执行复制到剪贴板
+		const copySuccess = await copySelectedCells(true)
+		if (!copySuccess) {
+			return // 复制失败，不继续执行剪切
+		}
+
 		const oldCellData = []
+		const cellChanges = [] // 收集单元格变更用于协同同步
+
 		for (let i = r; i <= rr; i++) {
 			for (let j = c; j <= cc; j++) {
+				const oldValue = sheet.celldata.get(i)[j]
 				oldCellData.push({
 					r: i,
 					c: j,
-					v: sheet.celldata.get(i)[j],
+					v: oldValue,
 				})
+
+				// 收集变更用于协同同步
+				if (sheet.config.synergy) {
+					cellChanges.push({
+						r: i,
+						c: j,
+						before: oldValue || '',
+						after: '',
+					})
+				}
+
 				sheet.celldata.get(i)[j] = ''
 			}
 		}
 		sheet.hooks.historyHook.save(oldCellData, 'edit')
+
+		// 协同编辑: 同步单元格变更到其他用户
+		if (sheet.config.synergy && cellChanges.length > 0) {
+			console.log('剪切操作协同同步:', {
+				变更数量: cellChanges.length,
+				起始位置: `${r},${c}`,
+			})
+			cellChanges.forEach((change) => {
+				sheet.hooks.synergyHook.changeCell({
+					sheetId: sheet?.original?.sheetId || sheet.id,
+					row: change.r,
+					col: change.c,
+					before: change.before,
+					after: change.after,
+				})
+			})
+		}
+
+		// ✅ 修复: 剪切操作后清除源区域的 deepPermissions（持久锁定）
+		console.log('✅ useCopy.cut: 调用 clearDeepPermissions', {
+			起始位置: {r, c},
+			结束位置: {r: rr, c: cc},
+			auth: sheet.config.auth,
+		})
+
+		// 调用 clearDeepPermissions 清除源区域的持久锁定
+		sheet.hooks?.permissionsHook?.clearDeepPermissions?.(r, c, rr, cc)
+
+		// ✅ 修复: 所有操作完成后显示成功提示
+		ElMessage.success('剪切成功')
 	}
 
 	// 点击粘贴时处理数据

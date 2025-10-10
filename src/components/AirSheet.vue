@@ -3906,7 +3906,7 @@ const getSuperPermissionStyle = (range, index) => {
 						<div
 							v-if="sheet.config.paste"
 							class="menu-item"
-							@click="sheet.hooks.copyHook.cutSelectedCells"
+							@click="sheet.hooks.copyHook.cutSelectedCells(true)"
 						>
 							<Icons name="Cut"></Icons>
 							<span>剪切</span>
@@ -3915,7 +3915,7 @@ const getSuperPermissionStyle = (range, index) => {
 						<div
 							v-if="sheet.config.paste"
 							class="menu-item"
-							@click="sheet.hooks.copyHook.copySelectedCells"
+							@click="sheet.hooks.copyHook.copySelectedCells(false)"
 						>
 							<Icons name="Copy"></Icons>
 							<span>复制</span>

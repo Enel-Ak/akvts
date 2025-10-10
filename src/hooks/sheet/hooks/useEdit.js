@@ -325,22 +325,44 @@ export const useEdit = () => {
 				true
 			)
 
-			// ✅ 修复: 编辑完成后，更新 deepPermissions（持久锁定）
+			// ✅ 修复: 编辑完成后，更新或清除 deepPermissions（持久锁定）
 			if (sheet.config.synergy && sheet.config.auth > 0) {
 				// ✅ 修复列级权限问题: 使用 cell 的坐标而不是 ranged
 				// 因为 ranged 可能在 blur 时已经改变了（用户可能点击了其他单元格）
-				console.log('✅ useEdit.blur: 调用 updateDeepPermissions', {
-					cell: {r: cell.r, c: cell.c},
-					auth: sheet.config.auth,
-				})
-				// 调用 permissionsHook 的 updateDeepPermissions 方法
-				// 传递编辑的单元格坐标，updateDeepPermissions 会根据 auth 模式自动处理范围
-				sheet.hooks?.permissionsHook?.updateDeepPermissions?.(
+
+				// ✅ 新增: 检查编辑后的数据是否为空
+				const rangeIsEmpty = sheet.hooks?.permissionsHook?.isRangeEmpty?.(
 					cell.r,
 					cell.c,
 					cell.r,
 					cell.c
 				)
+
+				console.log('✅ useEdit.blur: 检查数据是否为空', {
+					cell: {r: cell.r, c: cell.c},
+					auth: sheet.config.auth,
+					rangeIsEmpty,
+				})
+
+				if (rangeIsEmpty) {
+					// 数据为空，清除 deepPermissions
+					console.log('✅ useEdit.blur: 数据为空，调用 clearDeepPermissions')
+					sheet.hooks?.permissionsHook?.clearDeepPermissions?.(
+						cell.r,
+						cell.c,
+						cell.r,
+						cell.c
+					)
+				} else {
+					// 数据不为空，更新 deepPermissions
+					console.log('✅ useEdit.blur: 数据不为空，调用 updateDeepPermissions')
+					sheet.hooks?.permissionsHook?.updateDeepPermissions?.(
+						cell.r,
+						cell.c,
+						cell.r,
+						cell.c
+					)
+				}
 			}
 
 			cellEl.removeAttribute('contenteditable')
