@@ -1234,6 +1234,7 @@ export const useTools = () => {
 					rResize: sheet.config.rResize,
 					cResize: sheet.config.cResize,
 					deepPermissions: sheet.config.deepPermissions,
+					superPermissions: sheet.config.superPermissions, // ✅ 修复: 添加 superPermissions 同步
 				})
 			})
 		}
@@ -1324,9 +1325,14 @@ export const useTools = () => {
 			console.log('=== addRow: 开始 ===')
 			console.log('insertRowIndex:', insertRowIndex)
 			console.log('addRowCount:', addRowCount.value)
+			console.log('celldata size (添加前):', sheet.celldata.size)
 			console.log(
 				'deepPermissions (添加前):',
 				JSON.stringify(sheet.config.deepPermissions, null, 2)
+			)
+			console.log(
+				'superPermissions (添加前):',
+				JSON.stringify(sheet.config.superPermissions, null, 2)
 			)
 
 			// ✅ 修复: 添加行后更新 deepPermissions 和 superPermissions
@@ -1415,6 +1421,7 @@ export const useTools = () => {
 
 				// 🔍 调试日志：权限更新后
 				console.log('=== addRow: 权限更新后 ===')
+				console.log('celldata size (添加后):', sheet.celldata.size)
 				console.log(
 					'deepPermissions (添加后):',
 					JSON.stringify(sheet.config.deepPermissions, null, 2)
@@ -1424,6 +1431,16 @@ export const useTools = () => {
 					JSON.stringify(sheet.config.superPermissions, null, 2)
 				)
 			}
+
+			// 🔍 调试日志：检查 celldata 是否正确更新
+			console.log('=== addRow: celldata 检查 ===')
+			const celldataSnapshot = {}
+			sheet.celldata.forEach((rowData, rowIndex) => {
+				if (typeof rowIndex === 'number') {
+					celldataSnapshot[rowIndex] = rowData.length
+				}
+			})
+			console.log('celldata 行数快照:', celldataSnapshot)
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
 			// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
@@ -1453,10 +1470,28 @@ export const useTools = () => {
 			}
 
 			if (sheet.config.synergy && !asyncData) {
+				// ✅ 修复：同步 celldata 数据
+				// 收集所有 celldata 用于协同同步
+				const celldataArray = []
+				sheet.celldata.forEach((rowData, rowIndex) => {
+					if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+						// 只同步有数据的单元格
+						rowData.forEach((cellValue, colIndex) => {
+							if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+								celldataArray.push([rowIndex, colIndex, cellValue])
+							}
+						})
+					}
+				})
+
+				console.log('=== addRow: 同步数据 ===')
+				console.log('同步的 celldata 数量:', celldataArray.length)
+
 				sheet.hooks.synergyHook.addRow({
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					count: addRowCount.value,
 					startIndex: insertRowIndex,
+					celldata: celldataArray, // ✅ 新增：包含 celldata
 				})
 			}
 		} catch (error) {
@@ -1801,6 +1836,20 @@ export const useTools = () => {
 		}
 
 		try {
+			// 🔍 调试日志：添加列操作开始
+			console.log('=== addColumn: 开始 ===')
+			console.log('insertColIndex:', insertColIndex)
+			console.log('addColumnCount:', addColumnCount.value)
+			console.log('celldata size (添加前):', sheet.celldata.size)
+			console.log(
+				'deepPermissions (添加前):',
+				JSON.stringify(sheet.config.deepPermissions, null, 2)
+			)
+			console.log(
+				'superPermissions (添加前):',
+				JSON.stringify(sheet.config.superPermissions, null, 2)
+			)
+
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					// 创建新的行数据数组
@@ -1817,6 +1866,11 @@ export const useTools = () => {
 			})
 
 			sheet.config.colCount += addColumnCount.value
+
+			// 🔍 调试日志：celldata 更新后
+			console.log('=== addColumn: celldata 更新后 ===')
+			console.log('celldata size (更新后):', sheet.celldata.size)
+			console.log('colCount (更新后):', sheet.config.colCount)
 
 			// ✅ 修复: 添加列后更新 deepPermissions 和 superPermissions
 			// 无论是否开启协同模式或权限等级，只要有权限配置就应该更新
@@ -1901,6 +1955,17 @@ export const useTools = () => {
 					}
 					sheet.config.superPermissions = updatedSuperPermissions
 				}
+
+				// 🔍 调试日志：权限更新后
+				console.log('=== addColumn: 权限更新后 ===')
+				console.log(
+					'deepPermissions (添加后):',
+					JSON.stringify(sheet.config.deepPermissions, null, 2)
+				)
+				console.log(
+					'superPermissions (添加后):',
+					JSON.stringify(sheet.config.superPermissions, null, 2)
+				)
 			}
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
@@ -1950,10 +2015,28 @@ export const useTools = () => {
 			}
 
 			if (sheet.config.synergy && !asyncData) {
+				// ✅ 修复：同步 celldata 数据
+				// 收集所有 celldata 用于协同同步
+				const celldataArray = []
+				sheet.celldata.forEach((rowData, rowIndex) => {
+					if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
+						// 只同步有数据的单元格
+						rowData.forEach((cellValue, colIndex) => {
+							if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+								celldataArray.push([rowIndex, colIndex, cellValue])
+							}
+						})
+					}
+				})
+
+				console.log('=== addColumn: 同步数据 ===')
+				console.log('同步的 celldata 数量:', celldataArray.length)
+
 				sheet.hooks.synergyHook.addColumn({
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					count: addColumnCount.value,
 					startIndex: insertColIndex,
+					celldata: celldataArray, // ✅ 新增：包含 celldata
 				})
 			}
 		} catch (error) {

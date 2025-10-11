@@ -37,6 +37,14 @@ export const useHistory = () => {
 				styled: sheet.config.styled ? {...sheet.config.styled} : {},
 				merged: sheet.config.merged ? {...sheet.config.merged} : {},
 				locked: sheet.config.locked ? {...sheet.config.locked} : {},
+				// ✅ 修复: 保存权限配置，确保撤销操作时能够恢复权限区域
+				// 使用 JSON 序列化进行深拷贝，避免 structuredClone 无法克隆某些对象
+				deepPermissions: sheet.config.deepPermissions
+					? JSON.parse(JSON.stringify(sheet.config.deepPermissions))
+					: {},
+				superPermissions: sheet.config.superPermissions
+					? JSON.parse(JSON.stringify(sheet.config.superPermissions))
+					: {},
 			}
 
 			// 只在有筛选状态时才保存筛选相关数据
@@ -56,7 +64,27 @@ export const useHistory = () => {
 			}
 		} else {
 			// 对于简单操作，使用原来的深拷贝
-			state.config = JSON.parse(JSON.stringify(sheet.config))
+			// ✅ 修复: JSON.stringify 可能无法正确处理某些值，改用 structuredClone
+			// 但为了兼容性，先尝试 JSON 方式，然后补充权限配置
+			try {
+				state.config = JSON.parse(JSON.stringify(sheet.config))
+			} catch (error) {
+				console.warn('JSON 序列化失败，使用 structuredClone:', error)
+				state.config = structuredClone(sheet.config)
+			}
+
+			// ✅ 修复: 确保权限配置被正确保存（防止 JSON.stringify 丢失某些值）
+			if (sheet.config.deepPermissions) {
+				state.config.deepPermissions = JSON.parse(
+					JSON.stringify(sheet.config.deepPermissions)
+				)
+			}
+			if (sheet.config.superPermissions) {
+				state.config.superPermissions = JSON.parse(
+					JSON.stringify(sheet.config.superPermissions)
+				)
+			}
+
 			state.filterState = {
 				filtered:
 					sheet.config.filtered && Array.isArray(sheet.config.filtered)
@@ -106,6 +134,15 @@ export const useHistory = () => {
 		if (sheet.history.size > max) {
 			sheet.history.delete(sheet.history.keys().next().value)
 		}
+
+		// 🔍 调试日志：记录保存的权限配置
+		if (needsConfigCopy && (state.config.deepPermissions || state.config.superPermissions)) {
+			console.log('✅ 历史记录已保存权限配置:', {
+				type,
+				deepPermissions: state.config.deepPermissions,
+				superPermissions: state.config.superPermissions,
+			})
+		}
 		console.log('历史记录', sheet.history)
 	}
 
@@ -124,6 +161,14 @@ export const useHistory = () => {
 
 				// 撤销修改配置
 				Object.assign(sheet.config, state.config)
+
+				// 🔍 调试日志：记录恢复的权限配置
+				if (state.config.deepPermissions || state.config.superPermissions) {
+					console.log('✅ 撤销操作已恢复权限配置:', {
+						deepPermissions: sheet.config.deepPermissions,
+						superPermissions: sheet.config.superPermissions,
+					})
+				}
 
 				// 恢复筛选状态
 				if (state.filterState) {

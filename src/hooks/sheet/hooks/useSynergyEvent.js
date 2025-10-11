@@ -374,15 +374,56 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		}, 120)
 	})
 
-	signalr.on(EventMap.RowInserted, (res) => {
+	signalr.on(EventMap.RowInserted, async (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log('RowInserted', res)
-		sheet.hooks.toolsHook.addRow(null, false, true, {
+		console.log('RowInserted 接收到添加行事件:', {
+			startIndex: res.startIndex,
+			count: res.count,
+			hasCelldata: !!res.celldata,
+			celldataLength: res.celldata?.length || 0,
+		})
+
+		// 先执行添加行操作
+		await sheet.hooks.toolsHook.addRow(null, false, true, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
+
+		// ✅ 修复：恢复 celldata 数据
+		if (res.celldata && Array.isArray(res.celldata)) {
+			console.log('RowInserted 恢复 celldata:', res.celldata.length, '个单元格')
+
+			// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
+			res.celldata.forEach(([row, col, value]) => {
+				// 确保行存在
+				if (!sheet.celldata.get(row)) {
+					sheet.celldata.set(row, [])
+				}
+
+				// 设置单元格值
+				const rowData = sheet.celldata.get(row)
+				rowData[col] = value
+
+				// 更新 DOM 元素
+				setTimeout(() => {
+					const cellEl = document
+						.querySelector(`#${sheet.containerId}`)
+						?.querySelector(`[data-cell="${row}-${col}"]`)
+
+					if (cellEl) {
+						cellEl.innerText = value || ''
+					}
+
+					// 使用 editHook 的方法来正确设置单元格值和行高
+					if (sheet.hooks.editHook) {
+						sheet.hooks.editHook.setCellValue(row, col, value)
+						sheet.hooks.editHook.setRowHeight(row, col, false)
+					}
+				}, 100)
+			})
+		}
 	})
 
 	signalr.on(EventMap.RowDeleted, (res) => {
@@ -396,15 +437,56 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		})
 	})
 
-	signalr.on(EventMap.ColInserted, (res) => {
+	signalr.on(EventMap.ColInserted, async (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log('ColInserted', res)
-		sheet.hooks.toolsHook.addColumn(null, false, true, {
+		console.log('ColInserted 接收到添加列事件:', {
+			startIndex: res.startIndex,
+			count: res.count,
+			hasCelldata: !!res.celldata,
+			celldataLength: res.celldata?.length || 0,
+		})
+
+		// 先执行添加列操作
+		await sheet.hooks.toolsHook.addColumn(null, false, true, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
+
+		// ✅ 修复：恢复 celldata 数据
+		if (res.celldata && Array.isArray(res.celldata)) {
+			console.log('ColInserted 恢复 celldata:', res.celldata.length, '个单元格')
+
+			// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
+			res.celldata.forEach(([row, col, value]) => {
+				// 确保行存在
+				if (!sheet.celldata.get(row)) {
+					sheet.celldata.set(row, [])
+				}
+
+				// 设置单元格值
+				const rowData = sheet.celldata.get(row)
+				rowData[col] = value
+
+				// 更新 DOM 元素
+				setTimeout(() => {
+					const cellEl = document
+						.querySelector(`#${sheet.containerId}`)
+						?.querySelector(`[data-cell="${row}-${col}"]`)
+
+					if (cellEl) {
+						cellEl.innerText = value || ''
+					}
+
+					// 使用 editHook 的方法来正确设置单元格值和行高
+					if (sheet.hooks.editHook) {
+						sheet.hooks.editHook.setCellValue(row, col, value)
+						sheet.hooks.editHook.setRowHeight(row, col, false)
+					}
+				}, 100)
+			})
+		}
 	})
 
 	signalr.on(EventMap.ColDeleted, (res) => {
