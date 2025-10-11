@@ -2861,16 +2861,12 @@ const getDeepPermissionStyle = (range, index) => {
 		'--permission-color': permissionColor,
 	}
 
-	// ✅ 修复: 行级和列级权限使用半透明背景色，让 CSS 的伪元素虚线边框生效
-	if (range.type === 'row' || range.type === 'column') {
-		// 行级和列级权限：使用半透明背景色（10% 透明度）
-		style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
-		style.opacity = 1 // 不使用 opacity，直接在背景色中设置透明度
-	} else {
-		// 单元格级权限：使用 box-shadow 实现实线边框（1px）
-		style.boxShadow = `inset 0 0 0 1px ${permissionColor}`
-		style.opacity = 0.3 // 使用 opacity
-	}
+	// ✅ 修复: 统一所有权限等级的样式（auth=1, 2, 3 都使用虚线边框）
+	// 所有权限类型：使用半透明背景色（10% 透明度），让 CSS 的伪元素虚线边框生效
+	style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
+	style.opacity = 1 // 不使用 opacity，直接在背景色中设置透明度
+	// 移除 box-shadow，让 CSS 的伪元素虚线边框生效
+	delete style.boxShadow
 
 	return style
 }
