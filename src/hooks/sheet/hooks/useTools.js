@@ -2055,6 +2055,14 @@ export const useTools = () => {
 			// 无论是本地操作还是远程同步，都需要更新权限位置
 			// 这样可以避免权限位置不更新的问题，也避免了依赖 eventCell 事件导致的竞态条件
 			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
+				// 🔍 调试日志：删除列前的权限
+				console.log('=== removeColumn: 权限更新开始 ===')
+				console.log('删除的列范围:', {c, cc, deleteCount})
+				console.log(
+					'deepPermissions (删除前):',
+					JSON.stringify(sheet.config.deepPermissions, null, 2)
+				)
+
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
 					const updatedDeepPermissions = {}
@@ -2064,10 +2072,19 @@ export const useTools = () => {
 						const {type, targets} = permission
 
 						if (type === 'column') {
+							// 🔍 调试日志：列级权限更新
+							console.log('=== 更新列级权限 ===')
+							console.log('userId:', userId)
+							console.log('原始 targets:', targets)
+
 							// 列级权限：更新列索引
-							const updatedTargets = targets
-								.filter((col) => col < c || col > cc) // 移除被删除的列
-								.map((col) => (col > cc ? col - deleteCount : col)) // 更新后面的列索引
+							const filteredTargets = targets.filter((col) => col < c || col > cc) // 移除被删除的列
+							console.log('过滤后的 targets:', filteredTargets)
+
+							const updatedTargets = filteredTargets.map((col) =>
+								col > cc ? col - deleteCount : col
+							) // 更新后面的列索引
+							console.log('更新后的 targets:', updatedTargets)
 
 							if (updatedTargets.length > 0) {
 								updatedDeepPermissions[userId] = {
@@ -2140,6 +2157,17 @@ export const useTools = () => {
 					}
 					sheet.config.superPermissions = updatedSuperPermissions
 				}
+
+				// 🔍 调试日志：删除列后的权限
+				console.log('=== removeColumn: 权限更新完成 ===')
+				console.log(
+					'deepPermissions (删除后):',
+					JSON.stringify(sheet.config.deepPermissions, null, 2)
+				)
+				console.log(
+					'superPermissions (删除后):',
+					JSON.stringify(sheet.config.superPermissions, null, 2)
+				)
 			}
 
 			// 如果当前处于筛选状态，需要更新筛选条件中的列索引
