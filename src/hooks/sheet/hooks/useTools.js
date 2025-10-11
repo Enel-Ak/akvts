@@ -1320,8 +1320,19 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
-			// ✅ 新需求: 添加行后更新 deepPermissions 和 superPermissions
-			if (sheet.config.synergy && sheet.config.auth > 0) {
+			// 🔍 调试日志：添加行操作开始
+			console.log('=== addRow: 开始 ===')
+			console.log('insertRowIndex:', insertRowIndex)
+			console.log('addRowCount:', addRowCount.value)
+			console.log(
+				'deepPermissions (添加前):',
+				JSON.stringify(sheet.config.deepPermissions, null, 2)
+			)
+
+			// ✅ 修复: 添加行后更新 deepPermissions 和 superPermissions
+			// 无论是否开启协同模式或权限等级，只要有权限配置就应该更新
+			// 这样可以避免添加行后权限位置不更新，导致后续删除操作出现行索引错误
+			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
 					const updatedDeepPermissions = {}
@@ -1401,6 +1412,17 @@ export const useTools = () => {
 					}
 					sheet.config.superPermissions = updatedSuperPermissions
 				}
+
+				// 🔍 调试日志：权限更新后
+				console.log('=== addRow: 权限更新后 ===')
+				console.log(
+					'deepPermissions (添加后):',
+					JSON.stringify(sheet.config.deepPermissions, null, 2)
+				)
+				console.log(
+					'superPermissions (添加后):',
+					JSON.stringify(sheet.config.superPermissions, null, 2)
+				)
 			}
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
@@ -1463,6 +1485,16 @@ export const useTools = () => {
 				deleteCount = asyncData.count
 			}
 
+			// 🔍 调试日志：删除行操作开始
+			console.log('=== removeRow: 开始 ===')
+			console.log('getRanged():', {r, c, rr, cc})
+			console.log('deleteCount:', deleteCount)
+			console.log('asyncData:', asyncData)
+			console.log(
+				'deepPermissions (删除前):',
+				JSON.stringify(sheet.config.deepPermissions, null, 2)
+			)
+
 			const deletedRows = new Map()
 
 			// ✅ 修复: 只在非同步操作时检查权限
@@ -1491,6 +1523,21 @@ export const useTools = () => {
 				}
 			})
 
+			// 🔍 调试日志：删除前的 celldata
+			console.log('=== removeRow: celldata 删除前 ===')
+			console.log('maxRowIndex:', maxRowIndex)
+			console.log('要删除的行范围:', {r, rr})
+			const celldataBeforeDelete = {}
+			sheet.celldata.forEach((rowData, rowIndex) => {
+				if (typeof rowIndex === 'number' && rowIndex >= r - 1 && rowIndex <= rr + 2) {
+					celldataBeforeDelete[rowIndex] = rowData.map((cell) => cell?.v || '')
+				}
+			})
+			console.log('删除前的 celldata (r-1 到 rr+2):', celldataBeforeDelete)
+
+			// ✅ 修复：分两步处理，确保删除操作在移动操作之前完成
+			// 第一步：删除被选中的行
+			console.log('=== removeRow: 第一步 - 删除被选中的行 ===')
 			await useProcessMapInBatches(
 				sheet?.original?.sheetId || sheet.id,
 				sheet.celldata,
@@ -1503,21 +1550,66 @@ export const useTools = () => {
 								deleteCount,
 							})
 							// ✅ 立即删除被选中的行
+							console.log('删除 row', rowIndex)
 							sheet.celldata.delete(rowIndex)
-						} else if (rowIndex > rr) {
-							// 移动数据到新位置
-							sheet.celldata.set(rowIndex - deleteCount, rowData)
 						}
 					}
 				}
 			)
 
-			// ✅ 清除移动后留下的重复数据
-			// 删除操作后,原来的最后 deleteCount 行数据已经向上移动了
-			// 需要删除原位置的重复数据: [maxRowIndex - deleteCount + 1, maxRowIndex]
+			// 第二步：移动后面的行
+			console.log('=== removeRow: 第二步 - 移动后面的行 ===')
+			const rowsToMove = []
+			sheet.celldata.forEach((rowData, rowIndex) => {
+				if (typeof rowIndex === 'number' && rowIndex > rr) {
+					rowsToMove.push({
+						oldIndex: rowIndex,
+						newIndex: rowIndex - deleteCount,
+						data: rowData,
+					})
+				}
+			})
+			console.log(
+				'rowsToMove:',
+				rowsToMove.map((r) => ({oldIndex: r.oldIndex, newIndex: r.newIndex}))
+			)
+
+			await useProcessMapInBatches(
+				sheet?.original?.sheetId || sheet.id,
+				sheet.celldata,
+				(rowIndex, rowData) => {
+					if (typeof rowIndex === 'number' && rowIndex > rr) {
+						// ✅ 移动数据到新位置
+						const newIndex = rowIndex - deleteCount
+						console.log(`移动 row ${rowIndex} 到 row ${newIndex}`)
+						sheet.celldata.set(newIndex, rowData)
+					}
+				}
+			)
+
+			// ✅ 修复：清除移动后留下的重复数据
+			// 删除操作后，所有 > rr 的行都已经向上移动了 deleteCount 个位置
+			// 例如：删除 row 4 后，row 5-9 移动到 row 4-8
+			// 现在 Map 中有：row 0-3（原来的），row 4-8（移动后的），row 5-9（原来的位置，重复）
+			// 我们需要删除的是原来位置的最后 deleteCount 行：[maxRowIndex - deleteCount + 1, maxRowIndex]
+			// 例如：maxRowIndex=9, deleteCount=1，删除 [9, 9]
+			// 注意：不能删除 [rr + 1, maxRowIndex]，因为这会删除移动后的数据
+			console.log('=== removeRow: 清理重复数据 ===')
+			console.log('清理范围:', {start: maxRowIndex - deleteCount + 1, end: maxRowIndex})
 			for (let i = maxRowIndex - deleteCount + 1; i <= maxRowIndex; i++) {
+				console.log('删除 row', i)
 				sheet.celldata.delete(i)
 			}
+
+			// 🔍 调试日志：删除后的 celldata
+			console.log('=== removeRow: celldata 删除后 ===')
+			const celldataAfterDelete = {}
+			sheet.celldata.forEach((rowData, rowIndex) => {
+				if (typeof rowIndex === 'number' && rowIndex >= r - 1 && rowIndex <= rr + 2) {
+					celldataAfterDelete[rowIndex] = rowData.map((cell) => cell?.v || '')
+				}
+			})
+			console.log('删除后的 celldata (r-1 到 rr+2):', celldataAfterDelete)
 
 			// 保存历史
 			sheet.hooks.historyHook.save(deletedRows, 'removeRow')
@@ -1528,11 +1620,10 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
 
-			// ✅ 新需求: 删除行后更新 deepPermissions 和 superPermissions
-			// ⚠️ 重要: 只在非同步操作时更新权限（asyncData 为 null 时）
-			// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
-			// 此时权限已经在发起删除的用户端更新并同步过来了，不需要再次更新
-			if (sheet.config.synergy && sheet.config.auth > 0 && !asyncData) {
+			// ✅ 修复: 删除行后更新 deepPermissions 和 superPermissions
+			// 无论是本地操作还是远程同步，都需要更新权限位置
+			// 这样可以避免权限位置不更新的问题，也避免了依赖 eventCell 事件导致的竞态条件
+			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
 					const updatedDeepPermissions = {}
@@ -1618,6 +1709,17 @@ export const useTools = () => {
 					}
 					sheet.config.superPermissions = updatedSuperPermissions
 				}
+
+				// 🔍 调试日志：权限更新后
+				console.log('=== removeRow: 权限更新后 ===')
+				console.log(
+					'deepPermissions (删除后):',
+					JSON.stringify(sheet.config.deepPermissions, null, 2)
+				)
+				console.log(
+					'superPermissions (删除后):',
+					JSON.stringify(sheet.config.superPermissions, null, 2)
+				)
 			}
 
 			// 如果当前处于筛选状态，需要更新筛选数据和行号映射
@@ -1640,15 +1742,9 @@ export const useTools = () => {
 					count: deleteCount,
 				})
 
-				// ✅ 新需求: 同步 deepPermissions 和 superPermissions 的更新
-				sheet.hooks.synergyHook.eventCell({
-					sheetId: sheet?.original?.sheetId || sheet.id,
-					type: 'config',
-					data: {
-						deepPermissions: sheet.config.deepPermissions,
-						superPermissions: sheet.config.superPermissions,
-					},
-				})
+				// ✅ 修复: 移除单独的 eventCell 同步权限配置
+				// 因为权限已经在本地和远程都更新了（通过上面的权限更新逻辑）
+				// 不需要再通过 eventCell 同步，避免了竞态条件和覆盖问题
 			}
 
 			// 优化：延迟触发选区重新计算，避免立即卡顿
@@ -1722,8 +1818,10 @@ export const useTools = () => {
 
 			sheet.config.colCount += addColumnCount.value
 
-			// ✅ 新需求: 添加列后更新 deepPermissions 和 superPermissions
-			if (sheet.config.synergy && sheet.config.auth > 0) {
+			// ✅ 修复: 添加列后更新 deepPermissions 和 superPermissions
+			// 无论是否开启协同模式或权限等级，只要有权限配置就应该更新
+			// 这样可以避免添加列后权限位置不更新，导致后续删除操作出现列索引错误
+			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
 					const updatedDeepPermissions = {}
@@ -1953,11 +2051,10 @@ export const useTools = () => {
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
 			sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc)
 
-			// ✅ 新需求: 删除列后更新 deepPermissions 和 superPermissions
-			// ⚠️ 重要: 只在非同步操作时更新权限（asyncData 为 null 时）
-			// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
-			// 此时权限已经在发起删除的用户端更新并同步过来了，不需要再次更新
-			if (sheet.config.synergy && sheet.config.auth > 0 && !asyncData) {
+			// ✅ 修复: 删除列后更新 deepPermissions 和 superPermissions
+			// 无论是本地操作还是远程同步，都需要更新权限位置
+			// 这样可以避免权限位置不更新的问题，也避免了依赖 eventCell 事件导致的竞态条件
+			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
 					const updatedDeepPermissions = {}
@@ -2098,15 +2195,9 @@ export const useTools = () => {
 					count: deleteCount,
 				})
 
-				// ✅ 新需求: 同步 deepPermissions 和 superPermissions 的更新
-				sheet.hooks.synergyHook.eventCell({
-					sheetId: sheet?.original?.sheetId || sheet.id,
-					type: 'config',
-					data: {
-						deepPermissions: sheet.config.deepPermissions,
-						superPermissions: sheet.config.superPermissions,
-					},
-				})
+				// ✅ 修复: 移除单独的 eventCell 同步权限配置
+				// 因为权限已经在本地和远程都更新了（通过上面的权限更新逻辑）
+				// 不需要再通过 eventCell 同步，避免了竞态条件和覆盖问题
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)

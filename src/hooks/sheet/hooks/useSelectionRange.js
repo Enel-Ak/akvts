@@ -236,13 +236,13 @@ export const useSelectionRange = () => {
 		const permission = sheet.config.permissions?.[id]
 		const permissionType = permission?.type || 'cell' // 默认为单元格级
 
-		console.log('setHighlightRange 调用:', {
-			userId: id,
-			原始范围: {r, c, rr, cc},
-			auth: sheet.config.auth,
-			permission,
-			permissionType,
-		})
+		// console.log('setHighlightRange 调用:', {
+		// 	userId: id,
+		// 	原始范围: {r, c, rr, cc},
+		// 	auth: sheet.config.auth,
+		// 	permission,
+		// 	permissionType,
+		// })
 
 		// 根据权限类型调整高亮范围
 		let finalR = r,
