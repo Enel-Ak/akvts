@@ -2049,7 +2049,13 @@ export const useTools = () => {
 
 			// 更新sheet.celldata和其他相关操作
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
-			sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc)
+
+			// ✅ 优化：只在非同步操作时设置选区
+			// 如果是同步操作（asyncData 存在），说明是从其他用户的删除操作同步过来的
+			// 此时不应该设置当前用户的选区，避免干扰当前用户的操作
+			if (!asyncData) {
+				sheet.hooks.selectionRangeHook.setRange(r, c, rr, cc)
+			}
 
 			// ✅ 修复: 删除列后更新 deepPermissions 和 superPermissions
 			// 无论是本地操作还是远程同步，都需要更新权限位置
