@@ -780,32 +780,29 @@ export const useSelectionRange = () => {
 					...ranged.value,
 				}
 
-				// 如果启用了权限模式，添加 permissions 和 deepPermissions 配置
-				if (sheet.config.auth > 0) {
-					const configToSync = {}
+				// ✅ 修复：无论 auth 值如何，都需要同步 permissions（用于高亮显示）
+				const configToSync = {}
 
-					// 同步临时权限 (permissions)
-					if (sheet.config.permissions) {
-						configToSync.permissions = sheet.config.permissions
-					}
+				// 同步临时权限 (permissions) - auth=0 时也需要同步（用于高亮）
+				if (sheet.config.permissions) {
+					configToSync.permissions = sheet.config.permissions
+				}
 
-					// ✅ 修复: 同步持久权限 (deepPermissions)
-					if (sheet.config.deepPermissions) {
-						configToSync.deepPermissions = sheet.config.deepPermissions
-					}
+				// 同步持久权限 (deepPermissions) - 仅在 auth > 0 时需要
+				if (sheet.config.auth > 0 && sheet.config.deepPermissions) {
+					configToSync.deepPermissions = sheet.config.deepPermissions
+				}
 
-					if (Object.keys(configToSync).length > 0) {
-						eventData.config = JSON.stringify(configToSync)
-						console.log('发送选区和权限配置:', {
-							range: ranged.value,
-							permissions: sheet.config.permissions,
-							deepPermissions: sheet.config.deepPermissions,
-						})
-					} else {
-						console.log('发送选区信息:', ranged.value)
-					}
+				if (Object.keys(configToSync).length > 0) {
+					eventData.config = JSON.stringify(configToSync)
+					console.log('✅ 发送选区和配置:', {
+						auth: sheet.config.auth,
+						range: ranged.value,
+						permissions: sheet.config.permissions,
+						deepPermissions: sheet.config.deepPermissions,
+					})
 				} else {
-					console.log('发送选区信息:', ranged.value)
+					console.log('✅ 发送选区信息:', ranged.value)
 				}
 
 				sheet.emits?.('asyncEventCell', eventData)

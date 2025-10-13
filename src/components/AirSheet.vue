@@ -3833,6 +3833,23 @@ const getSuperPermissionStyle = (range, index) => {
 						v-for="(item, index) of sheet.config?.online"
 						class="highlight"
 						:data-permission-type="sheet.config?.permissions?.[item.id]?.type || 'cell'"
+						:data-no-lock="
+							(() => {
+								const perm = sheet.config?.permissions?.[item.id]
+								const noLock = perm?.noLock === true
+								console.log(
+									'🔍 [DEBUG] 渲染高亮 - item.id:',
+									item.id,
+									'permissions:',
+									perm,
+									'noLock:',
+									noLock,
+									'auth:',
+									sheet.config?.auth
+								)
+								return String(noLock)
+							})()
+						"
 						:style="sheet.hooks?.selectionRangeHook?.setHighlightRange(item)"
 					>
 						<div class="label">{{ item.name }}</div>
@@ -3844,6 +3861,7 @@ const getSuperPermissionStyle = (range, index) => {
 						v-for="(range, index) of deepPermissionRanges"
 						class="highlight"
 						:data-permission-type="range.type"
+						:data-no-lock="String(range.noLock === true)"
 						:style="getDeepPermissionStyle(range, index)"
 					>
 						<div class="label">{{ range.userName || '锁定区域' }}</div>
@@ -3855,6 +3873,7 @@ const getSuperPermissionStyle = (range, index) => {
 						v-for="(range, index) of permissionRanges"
 						class="highlight"
 						:data-permission-type="range.type"
+						:data-no-lock="String(range.noLock === true)"
 						:style="getPermissionStyle(range, index)"
 					>
 						<div class="label">{{ range.userName || '权限区域' }}</div>

@@ -645,10 +645,14 @@
 				z-index: 1;
 			}
 
-			.label {
-				&::before {
-					content: '🔒 ';
-				}
+			// ✅ auth=0 时不显示锁图标（优先级更高）
+			&[data-no-lock='true'] .label::before {
+				content: '' !important;
+			}
+
+			// auth > 0 时显示锁图标
+			&:not([data-no-lock='true']) .label::before {
+				content: '🔒 ';
 			}
 		}
 
@@ -671,10 +675,14 @@
 				z-index: 1;
 			}
 
-			.label {
-				&::before {
-					content: '🔒 ';
-				}
+			// ✅ auth=0 时不显示锁图标（优先级更高）
+			&[data-no-lock='true'] .label::before {
+				content: '' !important;
+			}
+
+			// auth > 0 时显示锁图标
+			&:not([data-no-lock='true']) .label::before {
+				content: '🔒 ';
 			}
 		}
 
@@ -696,10 +704,14 @@
 				z-index: 1;
 			}
 
-			.label {
-				&::before {
-					content: '🔒 ';
-				}
+			// ✅ auth=0 时不显示锁图标（优先级更高）
+			&[data-no-lock='true'] .label::before {
+				content: '' !important;
+			}
+
+			// auth > 0 时显示锁图标
+			&:not([data-no-lock='true']) .label::before {
+				content: '🔒 ';
 			}
 		}
 

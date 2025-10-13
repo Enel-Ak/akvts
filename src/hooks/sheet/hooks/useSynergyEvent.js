@@ -62,16 +62,22 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	// 高亮组用户
 	useSynergyEvent.groupUsers = (user) => {
+		console.log('🔍 [DEBUG] groupUsers 被调用，原始 user 对象:', user)
+		console.log('🔍 [DEBUG] sheet.props.userKeys:', sheet.props.userKeys)
+
 		const userId = user[sheet.props.userKeys[0]]
+		console.log('🔍 [DEBUG] 提取的 userId:', userId)
+
 		const u = sheet.config.online.find((f) => f.id === userId)
 
-		console.log('groupUsers 调用:', {
+		console.log('🔍 [DEBUG] groupUsers 调用:', {
 			userId,
 			row: user.row,
 			col: user.col,
 			rowEnd: user.rowEnd,
 			colEnd: user.colEnd,
 			existingUser: u ? '更新' : '新增',
+			currentOnlineUsers: sheet.config.online.length,
 		})
 
 		if (u) {
@@ -111,7 +117,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			color: userColor, // ✅ 添加颜色字段
 		}
 		sheet.config.online.push(newUser)
-		console.log('groupUsers 新增用户:', newUser, '颜色:', userColor)
+		console.log('✅ [接收] groupUsers 新增用户:', newUser, '颜色:', userColor)
+		console.log('✅ [接收] 当前 online 数组:', sheet.config.online)
 	}
 
 	// 移除高亮组用户
@@ -186,10 +193,20 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.EventClicked, (res) => {
+		console.log(
+			'🔍 [DEBUG] EventClicked 事件触发，res.sheetId:',
+			res.sheetId,
+			'sheet.original.sheetId:',
+			sheet.original.sheetId
+		)
+
+		// ✅ 修复：isCurrentSheet 返回 true 表示"不是当前 sheet"
+		// 所以这里的逻辑是：如果不是当前 sheet，就跳过
 		if (isCurrentSheet(res.sheetId)) {
+			console.log('⚠️ [WARNING] 跳过：不是当前 sheet 的事件')
 			return
 		}
-		console.log('EventCell 接收到事件:', res)
+		console.log('✅ [接收] EventCell 接收到事件（是当前 sheet）:', res)
 
 		// 处理配置同步
 		if (res.config) {
@@ -291,13 +308,20 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		}
 
 		// 更新在线用户的选区信息（无论是否有 config 都需要更新）
+		console.log('🔍 [DEBUG] 检查 row/col 信息:', {
+			hasRow: res.hasOwnProperty('row'),
+			hasCol: res.hasOwnProperty('col'),
+			row: res.row,
+			col: res.col,
+		})
+
 		if (
 			res.hasOwnProperty('row') &&
 			res.hasOwnProperty('col') &&
 			res.row >= 0 &&
 			res.col >= 0
 		) {
-			console.log('EventCell 更新在线用户选区:', {
+			console.log('✅ [接收] EventCell 更新在线用户选区:', {
 				userId: res[sheet.props.userKeys[0]],
 				row: res.row,
 				col: res.col,
@@ -306,7 +330,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			})
 			useSynergyEvent.groupUsers(res)
 		} else {
-			console.warn('EventCell 缺少 row/col 信息，无法更新在线用户选区')
+			console.warn('⚠️ [WARNING] EventCell 缺少 row/col 信息，无法更新在线用户选区', res)
 		}
 	})
 

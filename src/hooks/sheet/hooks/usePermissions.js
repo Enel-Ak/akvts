@@ -59,7 +59,6 @@ export const usePermissions = () => {
 	 */
 	const updatePermissions = (row, col, rowEnd, colEnd) => {
 		if (!sheet || !sheet.config.synergy) return
-		if (sheet.config.auth === 0) return // 无权限模式
 
 		const userId = getCurrentUserId()
 		if (!userId) {
@@ -82,6 +81,31 @@ export const usePermissions = () => {
 			if (user && user.name) {
 				userName = user.name
 			}
+		}
+
+		// ✅ 修复：auth=0 时也需要记录用户选区信息（用于高亮显示），但不进行权限锁定
+		if (sheet.config.auth === 0) {
+			// 无权限模式：只记录用户选区，不锁定
+			const targets = []
+			for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+				for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+					targets.push({row: r, col: c})
+				}
+			}
+
+			sheet.config.permissions[userId] = {
+				type: 'cell', // 默认为单元格级
+				targets,
+				timestamp,
+				userName,
+				noLock: true, // ✅ 标记为不锁定，仅用于高亮显示
+			}
+			console.log('✅ updatePermissions - 无权限模式（仅高亮）:', {
+				userId,
+				userName,
+				targets,
+			})
+			return
 		}
 
 		// 根据权限模式设置锁定
@@ -946,6 +970,7 @@ export const usePermissions = () => {
 							type: 'row',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
 					} else {
@@ -957,6 +982,7 @@ export const usePermissions = () => {
 							type: 'row',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
 				})
@@ -976,6 +1002,7 @@ export const usePermissions = () => {
 						type: 'column',
 						userId,
 						userName,
+						noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 					})
 				})
 			} else if (type === 'cell') {
@@ -997,6 +1024,7 @@ export const usePermissions = () => {
 							type: 'cell',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
 					} else {
@@ -1008,6 +1036,7 @@ export const usePermissions = () => {
 							type: 'cell',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
 				})
@@ -1091,6 +1120,7 @@ export const usePermissions = () => {
 							type: 'row',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
 					} else {
@@ -1102,6 +1132,7 @@ export const usePermissions = () => {
 							type: 'row',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
 				})
@@ -1121,6 +1152,7 @@ export const usePermissions = () => {
 						type: 'column',
 						userId,
 						userName,
+						noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 					})
 				})
 			} else if (type === 'cell') {
@@ -1142,6 +1174,7 @@ export const usePermissions = () => {
 							type: 'cell',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
 					} else {
@@ -1153,6 +1186,7 @@ export const usePermissions = () => {
 							type: 'cell',
 							userId,
 							userName,
+							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
 				})

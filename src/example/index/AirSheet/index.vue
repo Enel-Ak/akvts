@@ -1173,8 +1173,8 @@ onActivated(() => {
 const onClick = () => {}
 const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
 const token = route.query.abc
-	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjAwNjQ1NzUsImV4cCI6MTc2MDIzNjU3NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWUxZjMtNjcwYy00MzA3LTU2NDA0MGJhYzJlYiIsImF1dGhfdGltZSI6MTc2MDA2NDU3NCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX2hyaEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMjIxOCIsInlrei1lbXBsb3llZS1jb2RlIjoiR0VfODg1NjY0ODMzOTM1Nzk0NDkyOSIsInJvbGUiOiLln7rnoYDlip_og70t5rid5b-r5pS_IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inlrei1zZGFnX2hyaCIsImJ1c2luZXNzUm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LThjNmYtY2M5MC0wNzVjY2Y0OTlhMTEiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NjAwNjQ1NzUsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.HjVsGpmayIYIcajAPhdQDhIZBrQNls6aHyWC3YiHB4-ENJJaOF3mgyiOh56crZeztaxnK-nfMEMgMmaqwJfdX1mRAy5CVTJSuCnuOSb6oPwVlB50_JyEa1WRieZ1eljA-PCxKO3Y5UY52gpDpAsxrvsL_1w_AzNm2c79T6wMeON0VyVH8qaXaylba6DLEUSJ04N01R8IOTghzJ6u6K6rsaUDBzc81GH3gjfrKxrFzNWHhNtlzVruWNP9riC7f9BjNDIk7RLr3ExCoo_mSUXlqAWDCFMdq4JsEruruRpUrCMl7_mV9Sh8BqgDaITRyq8z1IrAjZ_M6kKOHoKYRMVIhQ'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjAwNjQ2NzMsImV4cCI6MTc2MDIzNjY3MywiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc2MDA2NDY3MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc2MDA2NDY3Mywic2NvcGUiOlsiYWRkcmVzcyIsImVtYWlsIiwiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvcGVuaWQiLCJwaG9uZSIsInByb2ZpbGUiLCJyb2xlIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbIkF1dGhDb2RlIl19.QBMQqkcS-o5iWref3XzOnvN-6BLYfhJdcLyNfBEy-CIonLqsWTaPOG1n-RGfFQanFpgxg97vdwPG5d87i3DEJGX4ezqACfnD-AzS1FFgP1vyVqatT2_FbMYX-Hux2UYFMxPmj5mffE7Xc1Uc2dQOtgiS0SsEWImkoJlDxHQvwBS63JEflfKJIQm8O62KZwAPFBJDScTIDAEinJC0U3caBt22NW8A1V2vNOpM9L6f5Lu0IWVBD4KL0FBgvZNpDB-e89NoV8qOaDHg4SYT87olypsutZB_pPZ8io9sh7XID-q97tultomiWhMQTAN-0x8oaQUk5zcU4hxWym3cB683YA'
+	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjAzMTc5NjUsImV4cCI6MTc2MDQ4OTk2NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWUxZjMtNjcwYy00MzA3LTU2NDA0MGJhYzJlYiIsImF1dGhfdGltZSI6MTc2MDMxNzk2NCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX2hyaEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMjIxOCIsInlrei1lbXBsb3llZS1jb2RlIjoiR0VfODg1NjY0ODMzOTM1Nzk0NDkyOSIsInJvbGUiOiLln7rnoYDlip_og70t5rid5b-r5pS_IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inlrei1zZGFnX2hyaCIsImJ1c2luZXNzUm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LThjNmYtY2M5MC0wNzVjY2Y0OTlhMTEiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NjAzMTc5NjUsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.fqwI95uKz3KreTs2_E-2u1o1Mp-NVYIPEo9pU2yICfLzk7lOBMDeSmW6xEajmRxfgrBz8Iig4QXX25PEe-TE4vhu0dLi3jeIvUpC2YZ_KKNKaTLtJov2bKX5NPsp_uOiCxZQKpbw8k78R0B7siYZYqDd0tgSCGNuohuTqNR7YW8ueJXEywKHbjWl6h6jLiFQOxd_al4xAYYYXJLpaCusAcbRl4kpZtlkyB8NME1a0OzKDlNN683BVt000Q3szcNbnQv9_tP41EInFT37tBhStHxgg4T46KiIaW8ZAUNrMVVgK1dmAS9yx4WiXrNmOynd7-VpMyZ9oFwN55l-tYbLLw'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjAzMTc3MDMsImV4cCI6MTc2MDQ4OTcwMywiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc2MDAwMTkwMSwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc2MDMxNzcwMywic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.b0n-yAC9SRacrvvdAm5DefoIHe428YuEaJnVqgYthdSQmwy6acOmlzpBxQrlikDiznROZNWsGF9BMDV6cDpYCtZJ64lAfy3obhSsdhuhCkmY5Uol8K3TpHnV3EPbTiX7pjgEjLwp2YIKub6yGlZxR-MLWjzOti8GJ8PHZuPMDwyDxXkGNHPU1QQ6DgGDsudr53d5Kz2m6Nyh3Juu0ejhC_XkiIhu6VtS-w-FBtQyQDjD3gH4SjQn7ggYhWTa6LQlLb7ZXPfRkIzgD7_ftAByTc2xaimLRsj5ydHhJ_Ra6pNAfjQGvY2MMDFGG23FpgGOFU2yNtCxKiPCsiw1o7I8Gw'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1187,6 +1187,7 @@ const beatch = async () => {
 			url: 'http://100.92.2.93:8001/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
+				tableId: tableId.value,
 				sheetId: sheetId.value,
 				skipCount: 0,
 				maxResultCount: 1000,
@@ -1231,6 +1232,24 @@ const getSheetConfig = async () => {
 	return res.data
 }
 
+// ✅ 提取为共享工具函数：解析 JWT token 获取用户信息
+const parseJwtToken = (token) => {
+	try {
+		const base64Url = token.split('.')[1]
+		const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+		const jsonPayload = decodeURIComponent(
+			atob(base64)
+				.split('')
+				.map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+				.join('')
+		)
+		return JSON.parse(jsonPayload)
+	} catch (e) {
+		console.error('解析 JWT token 失败:', e)
+		return null
+	}
+}
+
 const addSheet = (sheet) => {
 	console.log('AddSheet', sheet)
 	sheetRef.value.asyncCreateSheet({
@@ -1240,13 +1259,29 @@ const addSheet = (sheet) => {
 }
 
 const onAsyncEventCell = (range) => {
-	console.log('onAsyncEventCell', range)
+	console.log('🔍 [DEBUG] onAsyncEventCell 被调用', range)
+
+	// ✅ 获取当前用户信息
+	const tokenPayload = parseJwtToken(token)
+	console.log('🔍 [DEBUG] tokenPayload:', tokenPayload)
+
+	const currentUserId = tokenPayload?.sub || tokenPayload?.['ykz-id'] || null
+	const currentUserName = tokenPayload?.name || '未知用户'
+
+	console.log('🔍 [DEBUG] 当前用户信息:', {
+		userId: currentUserId,
+		userName: currentUserName,
+	})
+
 	const eventData = {
 		sheetId: sheetId.value,
 		row: range.r,
 		col: range.c,
 		rowEnd: range.rr, // 传递选区结束行
 		colEnd: range.cc, // 传递选区结束列
+		// ✅ 添加用户身份信息（用于高亮显示）
+		operatorUserId: currentUserId,
+		operatorName: currentUserName,
 	}
 
 	// 如果包含 config（权限配置），一起传递
@@ -1257,6 +1292,10 @@ const onAsyncEventCell = (range) => {
 			eventData.config = JSON.stringify(range.config)
 		}
 	}
+
+	console.log('✅ [发送] 事件数据（包含用户信息）:', eventData)
+	console.log('✅ [发送] sheetRef.value:', sheetRef.value)
+	console.log('✅ [发送] asyncEventCell 方法存在:', typeof sheetRef.value?.asyncEventCell)
 
 	sheetRef.value.asyncEventCell(eventData)
 }
@@ -1284,24 +1323,7 @@ const synergyJoinSheet = async (id, sheet) => {
 	}
 
 	// 设置当前用户ID（用于权限控制）
-	// 从 JWT token 中解析用户ID
-	const parseJwtToken = (token) => {
-		try {
-			const base64Url = token.split('.')[1]
-			const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-			const jsonPayload = decodeURIComponent(
-				atob(base64)
-					.split('')
-					.map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-					.join('')
-			)
-			return JSON.parse(jsonPayload)
-		} catch (e) {
-			console.error('解析 JWT token 失败:', e)
-			return null
-		}
-	}
-
+	// ✅ 使用共享的 parseJwtToken 函数
 	const tokenPayload = parseJwtToken(token)
 	const currentUserId = tokenPayload?.sub || tokenPayload?.['ykz-id'] || null
 	if (currentUserId) {
@@ -1360,7 +1382,7 @@ onActivated(() => {
 
 	axios
 		.request({
-			url: 'http://100.92.2.93:8001/api/online-table/table/3a1ce41d-5893-8938-179c-b831e7959594?autoCreate=true',
+			url: 'http://100.92.2.93:8001/api/online-table/table/3a1ced4c-22c5-cf1e-dd49-add7c0717f88?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
