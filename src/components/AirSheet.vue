@@ -2540,13 +2540,17 @@ watch(
 )
 
 // 配置变化处理
+// ✅ 修复：监听外部传入的配置，而不是内部状态
 watch(
 	() => props.modelValue?.config,
 	(newVal) => {
-		if (sheet.state.formula) {
+		if (!newVal || !sheet || sheet.state.formula) {
 			return
 		}
-		console.log('modelValue config', newVal)
+
+		console.log('配置变化处理:', newVal)
+
+		// ✅ 更新 sheet.config（从外部到内部的单向数据流）
 		// 预防切换sheet时配置错误, 并且保留原始基础配置
 		const clearConfigKeys = [
 			'merged',
@@ -2567,10 +2571,13 @@ watch(
 			}
 		})
 
+		// 更新配置
 		sheet.config = Object.assign(sheet.config, toRaw(newVal))
 
+		// ✅ 处理副作用：应用 merged 和 formulaed
 		const mc = newVal.merged || {}
 		const formulaed = newVal.formulaed || {}
+
 		if (Object.keys(mc).length > 0) {
 			Object.entries(mc).forEach(([key, value]) => {
 				const [r, c] = key.split('-').map(Number)

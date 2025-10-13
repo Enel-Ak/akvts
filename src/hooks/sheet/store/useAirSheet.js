@@ -255,9 +255,24 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 					})
 				}
 
+				// ✅ 修复：使用 try-catch 处理 structuredClone 失败的情况
+				let clonedPublicConfig
+				try {
+					clonedPublicConfig = structuredClone(toRaw(publicConfig))
+				} catch (error) {
+					console.warn('structuredClone 失败，使用 JSON 方式克隆:', error.message)
+					// 后备方案：使用 JSON 方式克隆（会丢失函数、Symbol 等，但至少不会报错）
+					try {
+						clonedPublicConfig = JSON.parse(JSON.stringify(toRaw(publicConfig)))
+					} catch (jsonError) {
+						console.error('JSON 克隆也失败，使用空对象:', jsonError.message)
+						clonedPublicConfig = {}
+					}
+				}
+
 				clone.config = {
 					...clone.config, // defaultSheet 的默认配置
-					...structuredClone(toRaw(publicConfig)), // 公共配置（组件功能配置）
+					...clonedPublicConfig, // 公共配置（组件功能配置）
 					...finalIndependentConfig, // 独立配置（每个 sheet 的数据）
 				}
 
