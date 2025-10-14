@@ -1953,9 +1953,9 @@ const destroy = () => {
 	if (forceUpdateHandler) {
 		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
 	}
-	Object.values(sheet.hooks).forEach((hook) => {
-		hook?.destroy?.()
-	})
+	// Object.values(sheet.hooks).forEach((hook) => {
+	// 	hook?.destroy?.()
+	// })
 }
 
 // 判断是否为移动设备
