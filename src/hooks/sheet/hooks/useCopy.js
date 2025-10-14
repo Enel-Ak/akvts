@@ -566,9 +566,14 @@ export function useCopy() {
 				}),
 			])
 			// ✅ 修复: 移除成功提示，由调用方在权限检查通过后显示
-			console.log(3333, isCut)
 
-			ElMessage.success(isCut ? '剪切成功' : '复制成功')
+			useDebounce(
+				() => {
+					ElMessage.success(isCut ? '剪切成功' : '复制成功')
+				},
+				100,
+				'airSheetCopySuccess'
+			)()
 			return true // 返回成功标志
 		} catch (error) {
 			console.error(isCut ? '剪切失败' : '复制失败:', error)
