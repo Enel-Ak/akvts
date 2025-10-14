@@ -1,5 +1,6 @@
 import {useAirSheetStore} from '../store/useAirSheet'
 import {ElMessage} from 'element-plus'
+import {useDebounce} from '@/hooks'
 
 export function useCopy() {
 	const sheetStore = useAirSheetStore()
@@ -10,10 +11,17 @@ export function useCopy() {
 		// 复制 Ctrl+C / Command+C
 		if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
 			event.preventDefault()
+
 			// ✅ 修复: 等待复制操作完成后显示成功提示
 			const copySuccess = await copySelectedCells()
 			if (copySuccess) {
-				ElMessage.success('复制成功')
+				useDebounce(
+					() => {
+						ElMessage.success('复制成功')
+					},
+					100,
+					'airSheetCopy'
+				)
 			}
 		}
 	}
@@ -449,7 +457,13 @@ export function useCopy() {
 		}
 
 		// ✅ 修复: 所有操作完成后显示成功提示
-		ElMessage.success('粘贴成功')
+		useDebounce(
+			() => {
+				ElMessage.success('粘贴成功')
+			},
+			100,
+			'airSheetPaste'
+		)()
 	}
 
 	// 复制选中单元格到Excel

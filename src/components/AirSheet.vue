@@ -1953,6 +1953,9 @@ const destroy = () => {
 	if (forceUpdateHandler) {
 		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
 	}
+	Object.values(sheet.hooks).forEach((hook) => {
+		hook?.destroy?.()
+	})
 }
 
 // 判断是否为移动设备
@@ -2546,7 +2549,7 @@ watch(
 watch(
 	() => props.modelValue?.config,
 	(newVal) => {
-		if (!newVal || !sheet || sheet.state.formula) {
+		if (!newVal || !sheet || sheet?.state?.formula) {
 			return
 		}
 
@@ -2697,6 +2700,7 @@ defineExpose({
 		sheet.state.msg = msg
 		sheet.state.progress = -1
 	},
+
 	setRange: (...arg) => sheet.hooks.selectionRangeHook.setRange(...arg),
 	setMerge: (...arg) => sheet.hooks.mergeHook.setMerge(...arg),
 	setCellValue: (...arg) => sheet.hooks.editHook.setCellValue(...arg),

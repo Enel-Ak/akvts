@@ -1,6 +1,7 @@
 import {watch} from 'vue'
 import {useAirSheetStore} from '../store/useAirSheet'
 import {ElMessage} from 'element-plus'
+import {useDebounce} from '@/hooks'
 
 /**
  * 权限管理 Hook
@@ -1320,7 +1321,13 @@ export const usePermissions = () => {
 					// 提示用户
 					const modeNames = ['关闭', '行级', '列级', '单元格级']
 					if (newAuth >= 0 && newAuth <= 3) {
-						ElMessage.info(`权限模式已切换为: ${modeNames[newAuth]}`)
+						useDebounce(
+							() => {
+								ElMessage.info(`权限模式已切换为: ${modeNames[newAuth]}`)
+							},
+							100,
+							'airSheetAuthMode'
+						)
 					}
 				}
 			}
