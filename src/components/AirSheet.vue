@@ -45,6 +45,8 @@ const emits = defineEmits([
 	'asyncLeaveSheet',
 	'asyncRemoveSheet',
 	'asyncConfig',
+	'asyncCompleted',
+	'asyncPermissionsChanged',
 ])
 
 // 核心配置参数

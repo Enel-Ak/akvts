@@ -28,7 +28,6 @@ export const useSynergy = () => {
 				if (state === 'error') {
 					signalr = null
 				}
-
 				console.log('synergy state', state)
 				sheet.state.loading = false
 				useSynergyEvent(sheetKey, signalr)

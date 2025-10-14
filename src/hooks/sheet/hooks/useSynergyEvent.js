@@ -15,6 +15,8 @@ const EventMap = {
 	RowDeleted: 'OnRowDeleted', // 删除行
 	ColDeleted: 'OnColDeleted', // 删除列
 	OperationReverted: 'OnOperationReverted', // 撤销行列添加/删除
+	DynamicTableCreated: 'OnDynamicTableCreated', // 动态表创建完成
+	PermissionsChanged: 'OnSheetPermissionsChanged', // 权限变化
 }
 
 export const useSynergyEvent = (sheetId, signalr) => {
@@ -28,6 +30,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = sheetId
 	let sheet = sheetStore.getSheet(sheetKey) // 初始化时就获取 sheet
+	const dynamic = []
 
 	useSynergyEvent.refreshSheet = (id) => {
 		sheetKey = id
@@ -798,6 +801,29 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			}
 		} catch (error) {
 			console.error('处理撤销操作失败:', error)
+		}
+	})
+
+	signalr.on(EventMap.PermissionsChanged, (res) => {
+		sheet?.emits('asyncPermissionsChanged', res)
+	})
+
+	signalr.on(EventMap.DynamicTableCreated, (res) => {
+		if (!dynamic.includes('Row') && res.name === 'Row') {
+			dynamic.push('Row')
+		}
+		if (!dynamic.includes('Col') && res.name === 'Col') {
+			dynamic.push('Col')
+		}
+		if (!dynamic.includes('Cell') && res.name === 'Cell') {
+			dynamic.push('Cell')
+		}
+
+		if (dynamic.includes('Row') && dynamic.includes('Col') && dynamic.includes('Cell')) {
+			dynamic.length = 0
+			sheet.state.loading = false
+			sheet.state.msg = ''
+			sheet?.emits('asyncCompleted')
 		}
 	})
 }
