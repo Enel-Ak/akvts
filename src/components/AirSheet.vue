@@ -1942,20 +1942,9 @@ const init = () => {
 		// 加入拖拽到单元格的监听
 		containerRef.value.addEventListener('cellDragOver', onCellcellDragOver)
 		containerRef.value.addEventListener('drop', onCellDrop)
+
+		hooksEvent().add(containerId)
 	})
-}
-
-// 强制更新可视区域事件处理函数
-let forceUpdateHandler = null
-
-const destroy = () => {
-	window.removeEventListener('resize', updateViewportSize)
-	if (forceUpdateHandler) {
-		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
-	}
-	// Object.values(sheet.hooks).forEach((hook) => {
-	// 	hook?.destroy?.()
-	// })
 }
 
 // 判断是否为移动设备
@@ -2402,6 +2391,40 @@ const onDeleteSheet = (sheetItem) => {
 	console.log('=== onDeleteSheet 结束 ===')
 }
 
+// 强制更新可视区域事件处理函数
+let forceUpdateHandler = null
+const hooksEvent = () => {
+	const add = (containerId) => {
+		if (!sheet) {
+			return
+		}
+		Object.values(sheet.hooks).forEach((hook) => {
+			hook?.addEvent?.(containerId)
+		})
+	}
+
+	const remove = (containerId) => {
+		if (!sheet) {
+			return
+		}
+		Object.values(sheet.hooks).forEach((hook) => {
+			hook?.removeEvent?.(containerId)
+		})
+	}
+
+	return {add, remove}
+}
+
+const destroy = () => {
+	window.removeEventListener('resize', updateViewportSize)
+	if (forceUpdateHandler) {
+		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
+	}
+	// Object.values(sheet.hooks).forEach((hook) => {
+	// 	hook?.destroy?.()
+	// })
+}
+
 watch(
 	() => sheetStore.getSheet(sheetId.value),
 	(newVal) => {
@@ -2687,6 +2710,7 @@ onDeactivated(() => {
 		}
 	}
 	destroy()
+	hooksEvent().remove(containerId)
 })
 
 onUnmounted(() => {

@@ -294,7 +294,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 						styleHook: useStyle().init(key),
 						resizeHook: useResize().init(key),
 						mergeHook: useMerge().init(key),
-						copyHook: useCopy().init(key),
+						copyHook: useCopy().init(key, containerId),
 						toolsHook: useTools().init(key),
 						historyHook: useHistory().init(key),
 						editHook: useEdit().init(key, containerId),

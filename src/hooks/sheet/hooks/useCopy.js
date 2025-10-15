@@ -1,6 +1,7 @@
 import {useAirSheetStore} from '../store/useAirSheet'
 import {ElMessage} from 'element-plus'
 import {useDebounce} from '@/hooks'
+import {onDeactivated, onUnmounted} from 'vue'
 
 export function useCopy() {
 	const sheetStore = useAirSheetStore()
@@ -688,13 +689,20 @@ export function useCopy() {
 		sheet = sheetStore.getSheet(id)
 	}
 
-	const init = (key, containerId) => {
+	const addEvent = (containerId) => {
+		document.addEventListener('keydown', handleKeyDown)
+		document.addEventListener('paste', handlePaste)
+	}
+
+	const removeEvent = () => {
+		document.removeEventListener('keydown', handleKeyDown)
+		document.removeEventListener('paste', handlePaste)
+	}
+
+	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 		setTimeout(() => {
-			document.addEventListener('keydown', handleKeyDown)
-			// 添加paste事件监听
-			document.addEventListener('paste', handlePaste)
 			console.log('installed useCopy')
 		}, 16)
 
@@ -705,6 +713,8 @@ export function useCopy() {
 			destroy,
 
 			refreshSheet,
+			addEvent,
+			removeEvent,
 		}
 	}
 

@@ -1156,11 +1156,7 @@ export const useEdit = () => {
 
 	const destroy = () => {
 		initialized = false
-		container.removeEventListener('mousemove', enterContainer)
-		container.removeEventListener('mouseout', leaveContainer)
-		document.removeEventListener('keydown', startEdit)
 		container = null
-
 		sheet = null
 		sheetKey = null
 	}
@@ -1169,35 +1165,42 @@ export const useEdit = () => {
 		sheet = sheetStore.getSheet(id)
 	}
 
+	const addEvent = (containerId) => {
+		container = document.querySelector(`#${containerId}`)
+		if (!container) {
+			return
+		}
+		container = document.querySelector(`#${containerId}`)
+
+		container.addEventListener('mousemove', enterContainer)
+		container.addEventListener('mouseout', leaveContainer)
+		document.addEventListener('keydown', startEdit)
+	}
+
+	const removeEvent = () => {
+		if (container) {
+			container.removeEventListener('mousemove', enterContainer)
+			container.removeEventListener('mouseout', leaveContainer)
+		}
+		document.removeEventListener('keydown', startEdit)
+	}
+
 	const init = (key, containerId) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(sheetKey)
 
 		watch(
-			() => sheet.state.completed,
-			(bool) => {
-				if (initialized || !containerId || !bool) return
-				initialized = true
-				container = document.querySelector(`#${containerId}`)
-				container.addEventListener('mousemove', enterContainer)
-				container.addEventListener('mouseout', leaveContainer)
-				document.addEventListener('keydown', startEdit)
-				console.log('installed useEdit')
+			() => sheet?.hooks?.selectionRangeHook?.ranged,
+			(newVal) => {
+				const {r, c, rr, cc} = newVal
+				if (r === undefined || c === undefined || r !== rr || c !== cc) {
+					inputValue.value = ''
+					return
+				}
 
-				watch(
-					() => sheet?.hooks.selectionRangeHook.ranged,
-					(newVal) => {
-						const {r, c, rr, cc} = newVal
-						if (r === undefined || c === undefined || r !== rr || c !== cc) {
-							inputValue.value = ''
-							return
-						}
-
-						inputValue.value = getCellValue(r, c)
-					},
-					{deep: true}
-				)
-			}
+				inputValue.value = getCellValue(r, c)
+			},
+			{deep: true}
 		)
 
 		return {
@@ -1220,6 +1223,9 @@ export const useEdit = () => {
 
 			inputCell,
 			refreshSheet,
+
+			addEvent,
+			removeEvent,
 		}
 	}
 

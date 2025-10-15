@@ -85,21 +85,37 @@ export const useContextMenu = () => {
 		sheet = sheetStore.getSheet(id)
 	}
 
+	const addEvent = (containerId) => {
+		container = document.querySelector(`#${containerId}`)
+		if (!container) {
+			return
+		}
+		container.addEventListener('contextmenu', handleContextMenu)
+	}
+
+	const removeEvent = () => {
+		if (container) {
+			container.removeEventListener('contextmenu', handleContextMenu)
+		}
+	}
+
 	const init = (key, containerId) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 
-		setTimeout(() => {
-			container = document.querySelector(`#${containerId}`)
-			if (!container) {
-				return
-			}
-			container.addEventListener('contextmenu', handleContextMenu)
-			console.log('installed useContextMenu')
-		}, 16)
+		// setTimeout(() => {
+		// 	container = document.querySelector(`#${containerId}`)
+		// 	if (!container) {
+		// 		return
+		// 	}
+		// 	container.addEventListener('contextmenu', handleContextMenu)
+		// 	console.log('installed useContextMenu')
+		// }, 16)
 
 		return {
 			destroy,
+			addEvent,
+			removeEvent,
 			contextMenuVisible,
 			contextMenuStyle,
 

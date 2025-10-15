@@ -1408,58 +1408,6 @@ export const useSelectionRange = () => {
 		}
 	}
 
-	const destroy = () => {
-		console.log('🔍 [DEBUG] useSelectionRange.destroy called')
-
-		clear()
-
-		// 清理定时器
-		if (mouseMoveTimer) {
-			clearTimeout(mouseMoveTimer)
-			mouseMoveTimer = null
-		}
-		if (dragMoveTimer) {
-			clearTimeout(dragMoveTimer)
-			dragMoveTimer = null
-		}
-
-		// 清理缓存
-		clearCache()
-
-		// ✅ 使用全局引用清理
-		if (globalContainer) {
-			if (globalWorker) {
-				globalWorker.terminate()
-				globalWorker = null
-			}
-			globalContainer.removeEventListener('mousedown', handleMouseDown)
-			window.removeEventListener('mousemove', handleMouseMove)
-			window.removeEventListener('mouseup', handleMouseUp)
-			document.removeEventListener('mousemove', handleDragMove)
-			document.removeEventListener('mouseup', handleDragEnd)
-			document.removeEventListener('keydown', handleKeyDown)
-			document.removeEventListener('keyup', handleKeyUp)
-			globalContainer = null
-		}
-
-		// 清理局部引用
-		if (container) {
-			container = null
-		}
-		if (worker) {
-			worker = null
-		}
-
-		// 重置状态
-		selecting.value = false
-		dragging.value = false
-		ranged.value = {r: -1, c: -1, rr: -1, cc: -1}
-		selection = {r: -1, c: -1, rr: -1, cc: -1}
-
-		// ✅ 重置初始化标志
-		isInitialized = false
-	}
-
 	// 监听配置变化，清理缓存
 	const watchConfigChanges = () => {
 		if (sheet?.config) {
@@ -1645,29 +1593,102 @@ export const useSelectionRange = () => {
 		}
 	}
 
+	const destroy = () => {
+		console.log('🔍 [DEBUG] useSelectionRange.destroy called')
+
+		clear()
+
+		// 清理定时器
+		if (mouseMoveTimer) {
+			clearTimeout(mouseMoveTimer)
+			mouseMoveTimer = null
+		}
+		if (dragMoveTimer) {
+			clearTimeout(dragMoveTimer)
+			dragMoveTimer = null
+		}
+
+		// 清理缓存
+		clearCache()
+
+		// ✅ 使用全局引用清理
+		if (globalContainer) {
+			if (globalWorker) {
+				globalWorker.terminate()
+				globalWorker = null
+			}
+			globalContainer.removeEventListener('mousedown', handleMouseDown)
+			window.removeEventListener('mousemove', handleMouseMove)
+			window.removeEventListener('mouseup', handleMouseUp)
+			document.removeEventListener('mousemove', handleDragMove)
+			document.removeEventListener('mouseup', handleDragEnd)
+			document.removeEventListener('keydown', handleKeyDown)
+			document.removeEventListener('keyup', handleKeyUp)
+			globalContainer = null
+		}
+
+		// 清理局部引用
+		if (container) {
+			container = null
+		}
+		if (worker) {
+			worker = null
+		}
+
+		// 重置状态
+		selecting.value = false
+		dragging.value = false
+		ranged.value = {r: -1, c: -1, rr: -1, cc: -1}
+		selection = {r: -1, c: -1, rr: -1, cc: -1}
+
+		// ✅ 重置初始化标志
+		isInitialized = false
+	}
+
 	const refreshSheet = (id) => {
 		sheet = sheetStore.getSheet(id)
 		setRange(0, 0, 0, 0)
 	}
 
-	// 初始化
-	const init = (key, containerId) => {
-		// 🔍 调试日志: 追踪 init 调用
-		console.log('🔍 [DEBUG] useSelectionRange.init called', {
-			key,
-			containerId,
-			isInitialized,
-			stack: new Error().stack,
-		})
-
-		// ✅ 如果已经初始化过,先清理旧的事件监听器
-		if (isInitialized) {
-			console.warn(
-				'⚠️ [WARNING] useSelectionRange already initialized, cleaning up old listeners'
-			)
-			destroy()
+	const addEvent = (containerId) => {
+		container = document.querySelector(`#${containerId}`)
+		if (!container) {
+			console.error('请检查是否存在id为' + containerId + '的容器')
+			return
 		}
 
+		console.log('🔍 [DEBUG] Adding event listeners to container:', containerId)
+
+		// ✅ 使用全局引用
+		globalContainer = container
+		// 基本鼠标事件
+		globalContainer.addEventListener('mousedown', handleMouseDown)
+		window.addEventListener('mousemove', handleMouseMove)
+		window.addEventListener('mouseup', handleMouseUp)
+
+		// 拖拽相关事件
+		document.addEventListener('mousemove', handleDragMove)
+		document.addEventListener('mouseup', handleDragEnd)
+
+		// 键盘相关事件
+		document.addEventListener('keydown', handleKeyDown)
+		document.addEventListener('keyup', handleKeyUp)
+	}
+
+	const removeEvent = () => {
+		if (globalContainer) {
+			globalContainer.removeEventListener('mousedown', handleMouseDown)
+		}
+		window.removeEventListener('mousemove', handleMouseMove)
+		window.removeEventListener('mouseup', handleMouseUp)
+		document.removeEventListener('mousemove', handleDragMove)
+		document.removeEventListener('mouseup', handleDragEnd)
+		document.removeEventListener('keydown', handleKeyDown)
+		document.removeEventListener('keyup', handleKeyUp)
+	}
+
+	// 初始化
+	const init = (key) => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 
@@ -1675,40 +1696,13 @@ export const useSelectionRange = () => {
 		watchConfigChanges()
 
 		setTimeout(() => {
-			container = document.querySelector(`#${containerId}`)
-			if (!container) {
-				console.error('请检查是否存在id为' + containerId + '的容器')
-				return
-			}
-
-			console.log('🔍 [DEBUG] Adding event listeners to container:', containerId)
-
-			// ✅ 使用全局引用
-			globalContainer = container
-
 			const blob = new Blob([workerCode], {type: 'application/javascript'})
 			const workerUrl = URL.createObjectURL(blob)
 			worker = new Worker(workerUrl)
 			globalWorker = worker
 			worker.onmessage = (e) => {}
-
-			// 基本鼠标事件
-			globalContainer.addEventListener('mousedown', handleMouseDown)
-			window.addEventListener('mousemove', handleMouseMove)
-			window.addEventListener('mouseup', handleMouseUp)
-
-			// 拖拽相关事件
-			document.addEventListener('mousemove', handleDragMove)
-			document.addEventListener('mouseup', handleDragEnd)
-
-			// 键盘相关事件
-			document.addEventListener('keydown', handleKeyDown)
-			document.addEventListener('keyup', handleKeyUp)
-
 			// ✅ 标记为已初始化
 			isInitialized = true
-
-			console.log('🔍 [DEBUG] Event listeners added successfully')
 		}, 16)
 
 		return {
@@ -1741,6 +1735,8 @@ export const useSelectionRange = () => {
 			destroy,
 
 			refreshSheet,
+			addEvent,
+			removeEvent,
 		}
 	}
 
