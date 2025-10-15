@@ -1,4 +1,4 @@
-import {watch} from 'vue'
+import {watch, toRaw} from 'vue'
 import {useAirSheetStore} from '../store/useAirSheet'
 import {ElMessage} from 'element-plus'
 import {useDebounce} from '@/hooks'
@@ -293,9 +293,13 @@ export const usePermissions = () => {
 			case 3: // 单元格级权限
 				{
 					const newTargets = []
+
 					for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
 						for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
-							newTargets.push({row: r, col: c})
+							newTargets.push({
+								row: r,
+								col: c,
+							})
 						}
 					}
 

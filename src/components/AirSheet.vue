@@ -2907,7 +2907,12 @@ const getDeepPermissionStyle = (range, index) => {
 	// ✅ 修复: 统一所有权限等级的样式（auth=1, 2, 3 都使用虚线边框）
 	// 所有权限类型：使用半透明背景色（10% 透明度），让 CSS 的伪元素虚线边框生效
 	style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
-	style.opacity = 1 // 不使用 opacity，直接在背景色中设置透明度
+	if (sheet.config.auth === 3) {
+		style.opacity = sheet.config.locked[`${r}-${c}`] ? 0 : 1 // 不使用 opacity，直接在背景色中设置透明度
+	} else {
+		style.opacity = 1
+	}
+
 	// 移除 box-shadow，让 CSS 的伪元素虚线边框生效
 	delete style.boxShadow
 
