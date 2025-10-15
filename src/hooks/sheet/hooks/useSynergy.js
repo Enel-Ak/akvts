@@ -133,15 +133,17 @@ export const useSynergy = () => {
 		})
 	}
 
-	const changeCell = (...args) => {
+	const changeCell = async (...args) => {
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
 		}
 
-		signalr.invoke('change-cell', ...args).then(() => {
+		await signalr.invoke('change-cell', ...args).then(() => {
 			console.log('invoke change-cell')
 		})
+
+		return Promise.resolve()
 	}
 
 	const addRow = (...args) => {

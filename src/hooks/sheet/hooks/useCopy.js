@@ -349,15 +349,22 @@ export function useCopy() {
 					变更数量: cellChanges.length,
 					起始位置: `${baseRow},${baseCol}`,
 				})
-				cellChanges.forEach((change) => {
-					sheet.hooks.synergyHook.changeCell({
-						sheetId: sheet?.original?.sheetId || sheet.id,
-						row: change.r,
-						col: change.c,
-						before: change.before,
-						after: change.after,
+				sheet.state.loading = true
+				sheet.state.msg = '正在处理粘贴数据...'
+
+				await Promise.all(
+					cellChanges.map((change) => {
+						return sheet.hooks.synergyHook.changeCell({
+							sheetId: sheet?.original?.sheetId || sheet.id,
+							row: change.r,
+							col: change.c,
+							before: change.before,
+							after: change.after,
+						})
 					})
-				})
+				)
+
+				sheet.state.loading = false
 			}
 
 			// ✅ 修复: 使用 requestAnimationFrame 确保数据更新完成后再更新 deepPermissions

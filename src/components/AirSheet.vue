@@ -1360,6 +1360,7 @@ let textareaHistory = ''
 
 // 跟踪正在编辑的单元格坐标
 let editingCellPosition = null
+let lastInputValue = ''
 const onInput = (e) => {
 	try {
 		// 边界情况检查
@@ -1463,6 +1464,9 @@ const onInput = (e) => {
 				console.error('实时同步公式映射失败:', error)
 			}
 		}
+
+		// 记录失去焦点之前的最后一个值
+		lastInputValue = inputValue
 
 		// 防抖处理公式计算和行高调整（不包含协同同步）
 		useDebounce(
@@ -1707,10 +1711,10 @@ const onTextareaKeydown = (e) => {
 	}
 }
 
-const onInputBlur = () => {
+const onInputBlur = (e) => {
 	try {
 		// 在失去焦点时发送最终的协同消息
-		const inputValue = sheet.hooks.editHook.inputValue
+		const inputValue = lastInputValue || sheet.hooks.editHook.inputValue
 
 		// 确定最终的编辑坐标
 		let finalRow, finalCol
@@ -1878,6 +1882,8 @@ const onInputBlur = () => {
 		} catch (cacheError) {
 			console.error('清理缓存失败:', cacheError)
 		}
+
+		lastInputValue = ''
 	} catch (error) {
 		console.error('onInputBlur 处理失败:', error)
 		// 发生严重错误时，尝试恢复到安全状态
