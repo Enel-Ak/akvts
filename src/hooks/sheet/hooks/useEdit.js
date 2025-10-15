@@ -950,7 +950,7 @@ export const useEdit = () => {
 			c = Math.min(range.c, range.cc)
 		}
 
-		const cellEl = container.querySelector(`[data-cell="${r}-${c}"]`)
+		const cellEl = container?.querySelector(`[data-cell="${r}-${c}"]`)
 
 		if (!cellEl) return
 
