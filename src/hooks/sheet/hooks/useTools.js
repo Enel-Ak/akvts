@@ -1494,6 +1494,8 @@ export const useTools = () => {
 					celldata: celldataArray, // ✅ 新增：包含 celldata
 				})
 			}
+
+			ElMessage.success(`添加 ${addRowCount.value} 行`)
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {

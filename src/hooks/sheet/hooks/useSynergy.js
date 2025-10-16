@@ -1,6 +1,7 @@
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {useSignalr, useSignalrStop} from '@/hooks/useSignalr'
 import {useSynergyEvent} from './useSynergyEvent'
+import {ElMessage} from 'element-plus'
 
 export const useSynergy = () => {
 	const sheetStore = useAirSheetStore()
@@ -64,6 +65,9 @@ export const useSynergy = () => {
 
 		await signalr.invoke('join-sheet-group', ...args).then((res) => {
 			console.log('join-sheet-group', ...args, res, sheetKey)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 			useSynergyEvent.refreshSheet(sheetKey)
 		})
 	}
@@ -84,6 +88,9 @@ export const useSynergy = () => {
 
 		await signalr.invoke('leave-sheet-group', ...args).then((res) => {
 			console.log('leave-sheet-group', ...args, res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -93,6 +100,9 @@ export const useSynergy = () => {
 		}
 		signalr.invoke('create-sheet', ...args).then((res) => {
 			console.log('create-sheet', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 			const lastSheet = sheetStore.getLastSheet
 			if (lastSheet) {
 				const {data} = res
@@ -109,6 +119,9 @@ export const useSynergy = () => {
 		}
 		signalr.invoke('delete-sheet', ...args).then((res) => {
 			console.log('delete-sheet', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -118,6 +131,9 @@ export const useSynergy = () => {
 		}
 		signalr.invoke('update-sheet', ...args).then((res) => {
 			console.log('update-sheet', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -126,7 +142,6 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
-		console.log('event-cell', ...args)
 
 		signalr.invoke('event-cell', ...args).then(() => {
 			console.log('invoke event-cell')
@@ -139,8 +154,11 @@ export const useSynergy = () => {
 			return
 		}
 
-		await signalr.invoke('change-cell', ...args).then(() => {
-			console.log('invoke change-cell')
+		await signalr.invoke('change-cell', ...args).then((res) => {
+			console.log('invoke change-cell', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 
 		return Promise.resolve()
@@ -151,8 +169,11 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
-		signalr.invoke('insert-row', ...args).then(() => {
+		signalr.invoke('insert-row', ...args).then((res) => {
 			console.log('invoke insert-row')
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -162,8 +183,11 @@ export const useSynergy = () => {
 			return
 		}
 
-		signalr.invoke('delete-row', ...args).then(() => {
-			console.log('invoke delete-row')
+		signalr.invoke('delete-row', ...args).then((res) => {
+			console.log('invoke delete-row', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -172,8 +196,11 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
-		signalr.invoke('insert-col', ...args).then(() => {
+		signalr.invoke('insert-col', ...args).then((res) => {
 			console.log('invoke insert-col')
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -182,8 +209,11 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
-		signalr.invoke('delete-col', ...args).then(() => {
-			console.log('invoke delete-col')
+		signalr.invoke('delete-col', ...args).then((res) => {
+			console.log('invoke delete-col', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 
@@ -192,8 +222,11 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
-		signalr.invoke('revert-last-operation', ...args).then(() => {
-			console.log('invoke revert-last-operation')
+		signalr.invoke('revert-last-operation', ...args).then((res) => {
+			console.log('invoke revert-last-operation', res)
+			if (!res.status) {
+				ElMessage.error(res.message)
+			}
 		})
 	}
 

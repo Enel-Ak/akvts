@@ -1171,9 +1171,9 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
+const api = ref('http://10.110.10.126:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
-	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA0OTA2MjgsImV4cCI6MTc2MDY2MjYyOCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MDQ5MDYyNywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjA0OTA2MjgsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.no2sYFRhmQlwBWdxYUCef35YxASG8HZ7PZXYkEdUEwhU7rl_KhuVBdsIXcyuf60F3JOECnvcAyKQafajTbHaGUAMPeHHKcijDv_KPgtlNLiRC0FVUJXG4NeYfjwi6_8Fwpt155liX2Mq_Tp1YcxtMfkauUSr9tlIbXX63v40NyVj4NQfVLZWAQq-WgpikFu94jCjfkY2nI5-qJojDVkvT7eMrgsvziuJzhZCqlAhOri0aFwaTJO1cvu_I3cQUsV9iQvjazrsRUGtFPngL4MavQ6K4yCvodVsCupWMYRoqh_v6Tzs-ewChxEPfNYLtI_oYIaiyCslrqqdOERB4k_lYg'
+	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA1ODQ1ODQsImV4cCI6MTc2MDc1NjU4NCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MDU3OTg4MCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWJkZTMtZTY0ZS02MWExZjNhZWM5OTAiLCJpYXQiOjE3NjA1ODQ1ODQsInNjb3BlIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbInB3ZCJdfQ.efJJBl0ixiYUMXM_ygsKSlPA3qA31VQu8iCGex6HCV4-t-_tadJywb1uSRRyGv3o5dPdVmWTc8M5jShQpcn4oAuM29FU7TeWsAq5uaArQZes_I9fNEkcTIiKxL2pB1lwoFbk55gjytsHkk2_72qojVhA8g85bXhJimis2fAUlD9fiRnp663Wbd5KvkU3-cJIWIytIGBXaC-aGySn6MrwMuQCpGJL8dVzMVhrOCOHc2CmIcLaYIY66I64Rkr2a-LXZjkfOA_qZtZfU0DuWCyUFDsWXJj3IyqHUs_1OCc0dpedsM-V6OU5PY-08albMiNZgvI4i_bm5AE1uAPREo4Sow'
 	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA0OTA1MzYsImV4cCI6MTc2MDY2MjUzNiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc2MDQ5MDUzNiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi57O757uf6L-Q57u05ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc2MDQ5MDUzNiwic2NvcGUiOlsiYWRkcmVzcyIsImVtYWlsIiwiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvcGVuaWQiLCJwaG9uZSIsInByb2ZpbGUiLCJyb2xlIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbIkF1dGhDb2RlIl19.bdWMLUugaj4CaWNn6ByqNVNTzPq7nYY12eqnG-sLaVybA9R60F4GemVnI0AYe4_6nf1NkuPzO0JmEKH4SlyFMVtjX1DlVzKFqIp29FprIKg3U8OGgTr9wIEQuz-M-S78ar7zBM-gGnPE9HVw4kWvyGzToYadjFuFXF1cnLgjq-hnTxuKmwk87gXhVlKepHSJvtiiW9lkMmIN9EhBec3Ub8f-Xfl5J-lDIK5gQPYFYAP5Vao5iiIbpYk-PbKAzwGigHYpK6fRyG59_7Hz8VwXk_2cWmv5hDeL8qSZUCg6DtsH1vgFI5HJAQOoCB9ZzpdvX-iRS2n7FvvayBIq7zoutQ'
 
 const synergyData = ref([])
@@ -1185,7 +1185,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://100.92.2.93:8001/api/online-table/table/cell-data',
+			url: 'http://10.110.10.126:9527/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				tableId: tableId.value,
@@ -1224,7 +1224,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://100.92.2.93:8001/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://10.110.10.126:9527/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1399,7 +1399,7 @@ onActivated(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://100.92.2.93:8001/api/online-table/table/3a1cf7c4-e9fd-2e2f-2d45-d2a009d9e0b3?autoCreate=true',
+			url: 'http://10.110.10.126:9527/api/online-table/table/3a1cfd39-d0a2-edd7-e7a6-28fe63119d13?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1415,7 +1415,7 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://100.92.2.93:8001/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
+			api.value = `http://10.110.10.126:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
