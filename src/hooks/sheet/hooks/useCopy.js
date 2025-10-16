@@ -28,6 +28,7 @@ export function useCopy() {
 	}
 
 	// 处理粘贴事件
+	let pasteTimer = null
 	const handlePaste = (e) => {
 		e.preventDefault()
 
@@ -49,7 +50,8 @@ export function useCopy() {
 			)
 
 			if (permissionCheck.locked) {
-				ElMessage.warning(permissionCheck.reason)
+				clearTimeout(pasteTimer)
+				pasteTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
 				return // 阻止粘贴
 			}
 		}
@@ -491,7 +493,14 @@ export function useCopy() {
 			)
 
 			if (permissionCheck.locked) {
-				ElMessage.warning(`${permissionCheck.reason}，无法${isCut ? '剪切' : '复制'}`)
+				clearTimeout(pasteTimer)
+				pasteTimer = setTimeout(
+					() =>
+						ElMessage.warning(
+							`${permissionCheck.reason}，无法${isCut ? '剪切' : '复制'}`
+						),
+					300
+				)
 				return // 阻止复制/剪切
 			}
 		}
@@ -617,7 +626,11 @@ export function useCopy() {
 			)
 
 			if (permissionCheck.locked) {
-				ElMessage.warning(`${permissionCheck.reason}，无法剪切`)
+				clearTimeout(pasteTimer)
+				pasteTimer = setTimeout(
+					() => ElMessage.warning(`${permissionCheck.reason}，无法剪切`),
+					300
+				)
 				return // 阻止剪切
 			}
 		}

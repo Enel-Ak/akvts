@@ -214,6 +214,7 @@ export const useEdit = () => {
 		return ''
 	}
 
+	let editTimer = null
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
 		// superPermissions 检查 - 优先级最高
 		if (sheet.hooks.superPermissionsHook) {
@@ -240,7 +241,8 @@ export const useEdit = () => {
 			)
 
 			if (permissionCheck.locked) {
-				ElMessage.warning(permissionCheck.reason)
+				clearTimeout(editTimer)
+				editTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
 				return // 阻止编辑
 			}
 		}

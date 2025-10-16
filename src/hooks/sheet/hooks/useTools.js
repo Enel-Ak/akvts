@@ -10,13 +10,13 @@ import {
 	useStringArrayToBuffer,
 	useBufferToStringArray,
 } from './useBuffer'
-import {sassTrue} from 'sass'
 
 export const useTools = () => {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = ''
 	let sheet = null
 
+	let lockTimer = null
 	const isLocked = () => {
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
 		const {r, c, rr, cc} = ranged
@@ -38,7 +38,8 @@ export const useTools = () => {
 			)
 
 			if (permissionCheck.locked) {
-				ElMessage.warning(permissionCheck.reason)
+				clearTimeout(lockTimer)
+				lockTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
 				return true
 			}
 		}

@@ -1400,7 +1400,8 @@ const onInput = (e) => {
 				// 阻止输入并恢复原值
 				e.preventDefault()
 				e.target.value = sheet.hooks.editHook.inputValue || ''
-				ElMessage.warning(permissionCheck.reason)
+				clearTimeout(lockedTimer)
+				lockedTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
 				return
 			}
 		}
@@ -1519,7 +1520,8 @@ const onTextareaFocus = (e) => {
 			if (permissionCheck.locked) {
 				// 阻止编辑并失去焦点
 				e.target.blur()
-				ElMessage.warning(permissionCheck.reason)
+				clearTimeout(lockedTimer)
+				lockedTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
 				return
 			}
 		}
@@ -3912,7 +3914,9 @@ const getSuperPermissionStyle = (range, index) => {
 						:data-no-lock="String(range.noLock === true)"
 						:style="getDeepPermissionStyle(range, index)"
 					>
-						<div class="label">{{ range.userName || '锁定区域' }}</div>
+						<div class="label">
+							<!-- {{ range.userName || '锁定区域' }} -->
+						</div>
 					</div>
 
 					<!-- 权限高亮 (临时锁定,不透明) -->

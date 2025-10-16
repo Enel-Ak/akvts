@@ -9,7 +9,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 1,
+		auth: 0,
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
 		// edit: true,
@@ -1319,7 +1319,7 @@ const synergyJoinSheet = async (id, sheet) => {
 		Object.assign(sheet.config, {
 			...sheetConfig,
 			permissions: {},
-			deepPermissions: sheetConfig.deepPermissions || {},
+			deepPermissions: {}, //sheetConfig.deepPermissions ||
 			// superPermissions: [{r: 2, c: 1, rr: 3, cc: 3, v: '权限区域'}],
 		})
 
@@ -1399,7 +1399,7 @@ onActivated(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.126:9527/api/online-table/table/3a1cfd39-d0a2-edd7-e7a6-28fe63119d13?autoCreate=true',
+			url: 'http://10.110.10.126:9527/api/online-table/table/3a1cfea5-5a95-f6d7-6342-35de4656ae43?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,

@@ -659,6 +659,7 @@ export const useSelectionRange = () => {
 	let mouseDownCallCount = 0
 
 	// 鼠标点击处理
+	let mouseDownTimer = null
 	const handleMouseDown = (e) => {
 		mouseDownCallCount++
 		console.log('🔍 [DEBUG] handleMouseDown triggered', {
@@ -714,8 +715,9 @@ export const useSelectionRange = () => {
 			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(pos.r, pos.c, 1, 1)
 
 			if (permissionCheck.locked) {
+				clearTimeout(mouseDownTimer)
+				mouseDownTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
 				// 被其他用户锁定,直接提示并返回,不触发选区变化
-				ElMessage.warning(permissionCheck.reason)
 				return
 			}
 		}
