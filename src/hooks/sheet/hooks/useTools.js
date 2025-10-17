@@ -1288,30 +1288,30 @@ export const useTools = () => {
 		}
 
 		try {
-			// 移动现有数据为新行腾出空间
-			// 先收集需要移动的数据，避免在遍历时修改导致的问题
-			const dataToMove = new Map()
-			const rowsToDelete = new Set()
+			// ✅ 修复：正确的行移动逻辑
+			// 关键：必须从大到小的顺序移动，避免覆盖
+			const rowsToMove = []
 
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					if (rowIndex >= insertRowIndex) {
 						// 收集需要向下移动的数据
-						dataToMove.set(rowIndex + addRowCount.value, rowData)
-						// 记录需要清除的原位置
-						rowsToDelete.add(rowIndex)
+						rowsToMove.push({
+							oldIndex: rowIndex,
+							newIndex: rowIndex + addRowCount.value,
+							data: rowData,
+						})
 					}
 				}
 			})
 
-			// 清除原位置的数据
-			rowsToDelete.forEach((rowIndex) => {
-				sheet.celldata.delete(rowIndex)
-			})
+			// ✅ 修复：按从大到小的顺序排序，从后向前移动
+			rowsToMove.sort((a, b) => b.oldIndex - a.oldIndex)
 
-			// 设置移动后的数据
-			dataToMove.forEach((rowData, newRowIndex) => {
-				sheet.celldata.set(newRowIndex, rowData)
+			// 从后向前移动数据，避免覆盖
+			rowsToMove.forEach(({oldIndex, newIndex, data}) => {
+				sheet.celldata.set(newIndex, data)
+				sheet.celldata.delete(oldIndex)
 			})
 
 			// 在指定位置插入新的空行
@@ -1497,7 +1497,6 @@ export const useTools = () => {
 		}
 		try {
 			let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
-			console.log(1111, r, asyncData)
 			if (r === undefined) return
 
 			let deleteCount = rr - r + 1
@@ -1830,15 +1829,16 @@ export const useTools = () => {
 				JSON.stringify(sheet.config.superPermissions, null, 2)
 			)
 
+			// ✅ 修复：正确的列插入逻辑
+			// 关键：一次性创建新数组，避免多次 splice 导致的索引偏移
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
-					// 创建新的行数据数组
-					const newRowData = Array.from(rowData || [])
-
-					// 在指定位置插入空值，根据addColumnCount插入多列
-					for (let i = 0; i < addColumnCount.value; i++) {
-						newRowData.splice(insertColIndex + i, 0, '')
-					}
+					// 使用数组切片和展开操作符，一次性创建新数组
+					const newRowData = [
+						...rowData.slice(0, insertColIndex),
+						...Array(addColumnCount.value).fill(''),
+						...rowData.slice(insertColIndex),
+					]
 
 					// 更新到新Map
 					sheet.celldata.set(rowIndex, newRowData)

@@ -412,43 +412,66 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			celldataLength: res.celldata?.length || 0,
 		})
 
-		// 先执行添加行操作
+		// ✅ 修复：先恢复 celldata 数据到临时存储，避免被 addRow 的数据移动覆盖
+		const tempCelldata = new Map()
+		if (res.celldata && Array.isArray(res.celldata)) {
+			console.log('RowInserted 预处理 celldata:', res.celldata.length, '个单元格')
+
+			// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
+			// 注意：这里的行索引是添加行操作之前的索引，需要在 addRow 之后再写入
+			res.celldata.forEach(([row, col, value]) => {
+				if (!tempCelldata.has(row)) {
+					tempCelldata.set(row, new Map())
+				}
+				tempCelldata.get(row).set(col, value)
+			})
+		}
+
+		// 执行添加行操作（会移动 >= startIndex 的所有行）
 		await sheet.hooks.toolsHook.addRow(null, false, false, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
 
-		// ✅ 修复：恢复 celldata 数据
-		if (res.celldata && Array.isArray(res.celldata)) {
-			console.log('RowInserted 恢复 celldata:', res.celldata.length, '个单元格')
+		// ✅ 修复：在 addRow 之后，将临时存储的 celldata 写入正确的位置
+		// 关键：celldata 中的行索引需要根据 startIndex 和 count 进行映射
+		if (tempCelldata.size > 0) {
+			console.log('RowInserted 恢复 celldata 到正确位置')
 
-			// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
-			res.celldata.forEach(([row, col, value]) => {
+			tempCelldata.forEach((colMap, originalRow) => {
+				// ✅ 修复：计算新的行索引
+				// 如果原始行 >= startIndex，需要加上 count（因为 addRow 会移动这些行）
+				const newRow = originalRow >= res.startIndex ? originalRow + res.count : originalRow
+
+				console.log(`RowInserted 行索引映射: ${originalRow} -> ${newRow}`)
+
 				// 确保行存在
-				if (!sheet.celldata.get(row)) {
-					sheet.celldata.set(row, [])
+				if (!sheet.celldata.get(newRow)) {
+					sheet.celldata.set(newRow, [])
 				}
 
-				// 设置单元格值
-				const rowData = sheet.celldata.get(row)
-				rowData[col] = value
+				const rowData = sheet.celldata.get(newRow)
+				colMap.forEach((value, col) => {
+					// 设置单元格值
+					rowData[col] = value
 
-				// 更新 DOM 元素
-				setTimeout(() => {
-					const cellEl = document
-						.querySelector(`#${sheet.containerId}`)
-						?.querySelector(`[data-cell="${row}-${col}"]`)
+					// 更新 DOM 元素
+					setTimeout(() => {
+						const cellEl = document
+							.querySelector(`#${sheet.containerId}`)
+							?.querySelector(`[data-cell="${newRow}-${col}"]`)
 
-					if (cellEl) {
-						cellEl.innerText = value || ''
-					}
+						if (cellEl) {
+							cellEl.innerText = value || ''
+						}
 
-					// 使用 editHook 的方法来正确设置单元格值和行高
-					if (sheet.hooks.editHook) {
-						sheet.hooks.editHook.setCellValue(row, col, value)
-						sheet.hooks.editHook.setRowHeight(row, col, false)
-					}
-				}, 100)
+						// 使用 editHook 的方法来正确设置单元格值和行高
+						if (sheet.hooks.editHook) {
+							sheet.hooks.editHook.setCellValue(newRow, col, value)
+							sheet.hooks.editHook.setRowHeight(newRow, col, false)
+						}
+					}, 100)
+				})
 			})
 		}
 	})
@@ -475,43 +498,67 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			celldataLength: res.celldata?.length || 0,
 		})
 
-		// 先执行添加列操作
+		// ✅ 修复：先恢复 celldata 数据到临时存储，避免被 addColumn 的数据移动覆盖
+		const tempCelldata = new Map()
+		if (res.celldata && Array.isArray(res.celldata)) {
+			console.log('ColInserted 预处理 celldata:', res.celldata.length, '个单元格')
+
+			// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
+			// 注意：这里的列索引是添加列操作之前的索引，需要在 addColumn 之后再写入
+			res.celldata.forEach(([row, col, value]) => {
+				if (!tempCelldata.has(row)) {
+					tempCelldata.set(row, new Map())
+				}
+				tempCelldata.get(row).set(col, value)
+			})
+		}
+
+		// 执行添加列操作（会移动 >= startIndex 的所有列）
 		await sheet.hooks.toolsHook.addColumn(null, false, false, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
 
-		// ✅ 修复：恢复 celldata 数据
-		if (res.celldata && Array.isArray(res.celldata)) {
-			console.log('ColInserted 恢复 celldata:', res.celldata.length, '个单元格')
+		// ✅ 修复：在 addColumn 之后，将临时存储的 celldata 写入正确的位置
+		// 关键：celldata 中的列索引需要根据 startIndex 和 count 进行映射
+		if (tempCelldata.size > 0) {
+			console.log('ColInserted 恢复 celldata 到正确位置')
 
-			// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
-			res.celldata.forEach(([row, col, value]) => {
+			tempCelldata.forEach((colMap, row) => {
 				// 确保行存在
 				if (!sheet.celldata.get(row)) {
 					sheet.celldata.set(row, [])
 				}
 
-				// 设置单元格值
 				const rowData = sheet.celldata.get(row)
-				rowData[col] = value
+				colMap.forEach((originalCol, value) => {
+					// ✅ 修复：计算新的列索引
+					// 如果原始列 >= startIndex，需要加上 count（因为 addColumn 会移动这些列）
+					const newCol =
+						originalCol >= res.startIndex ? originalCol + res.count : originalCol
 
-				// 更新 DOM 元素
-				setTimeout(() => {
-					const cellEl = document
-						.querySelector(`#${sheet.containerId}`)
-						?.querySelector(`[data-cell="${row}-${col}"]`)
+					console.log(`ColInserted 列索引映射: ${originalCol} -> ${newCol}`)
 
-					if (cellEl) {
-						cellEl.innerText = value || ''
-					}
+					// 设置单元格值
+					rowData[newCol] = value
 
-					// 使用 editHook 的方法来正确设置单元格值和行高
-					if (sheet.hooks.editHook) {
-						sheet.hooks.editHook.setCellValue(row, col, value)
-						sheet.hooks.editHook.setRowHeight(row, col, false)
-					}
-				}, 100)
+					// 更新 DOM 元素
+					setTimeout(() => {
+						const cellEl = document
+							.querySelector(`#${sheet.containerId}`)
+							?.querySelector(`[data-cell="${row}-${newCol}"]`)
+
+						if (cellEl) {
+							cellEl.innerText = value || ''
+						}
+
+						// 使用 editHook 的方法来正确设置单元格值和行高
+						if (sheet.hooks.editHook) {
+							sheet.hooks.editHook.setCellValue(row, newCol, value)
+							sheet.hooks.editHook.setRowHeight(row, newCol, false)
+						}
+					}, 100)
+				})
 			})
 		}
 	})
