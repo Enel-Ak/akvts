@@ -285,9 +285,20 @@ export const useHistory = () => {
 							)
 
 							rowsToMove.sort((a, b) => b.oldIndex - a.oldIndex)
-							rowsToMove.forEach(({oldIndex, newIndex, data}) => {
+							const omax = Math.max(...rowsToMove.map((item) => item.oldIndex)) + 1
+							const nmax = Math.max(...rowsToMove.map((item) => item.newIndex)) + 1
+							for (let i = 0; i < r + rs; i++) {
+								// 修复最后一行数据未清除
+								rowsToMove.unshift({
+									oldIndex: omax + i,
+									newIndex: nmax + i,
+									data: [],
+								})
+							}
+
+							rowsToMove.forEach(({oldIndex, newIndex, data}, index) => {
 								sheet.celldata.set(newIndex, data)
-								sheet.celldata.delete(oldIndex)
+								// sheet.celldata.delete(oldIndex)
 							})
 						}
 

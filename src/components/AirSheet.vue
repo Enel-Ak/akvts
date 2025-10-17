@@ -3336,7 +3336,17 @@ const getSuperPermissionStyle = (range, index) => {
 						class="group"
 						:class="{'group-merge': !isMobile()}"
 					>
-						<div class="item" @click="sheet.hooks.toolsHook.addRow($event, false)">
+						<div
+							class="item"
+							@click="sheet.hooks.toolsHook.addRow($event, false)"
+							@mouseover="
+								($event) => {
+									$event.currentTarget.nextElementSibling
+										.querySelector('input')
+										.focus()
+								}
+							"
+						>
 							<Icons name="AddRow"></Icons>
 							<span>添加行</span>
 						</div>
@@ -3347,6 +3357,10 @@ const getSuperPermissionStyle = (range, index) => {
 								type="number"
 								min="1"
 								value="1"
+								@click.stop
+								@keypress.stop
+								@keydown.stop
+								@keyup.stop
 							/>
 						</div>
 					</div>
@@ -3360,6 +3374,13 @@ const getSuperPermissionStyle = (range, index) => {
 							v-if="sheet.config.addColumn"
 							class="item"
 							@click="sheet.hooks.toolsHook.addColumn($event, false)"
+							@mouseover="
+								($event) => {
+									$event.currentTarget.nextElementSibling
+										.querySelector('input')
+										.focus()
+								}
+							"
 						>
 							<Icons name="AddColumn"></Icons>
 							<span>添加列</span>
@@ -3370,6 +3391,10 @@ const getSuperPermissionStyle = (range, index) => {
 								type="number"
 								min="1"
 								value="1"
+								@click.stop
+								@keypress.stop
+								@keydown.stop
+								@keyup.stop
 							/>
 						</div>
 					</div>
