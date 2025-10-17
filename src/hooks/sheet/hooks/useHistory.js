@@ -273,10 +273,8 @@ export const useHistory = () => {
 								sheet.celldata,
 								(rowIndex, rowData) => {
 									// 收集需要向上移动的数据
-									// if (rowIndex > r + rs - 1) {
-									// 	sheet.celldata.set(rowIndex - rs, rowData)
-									// }
-									if (rowIndex > r + rs) {
+
+									if (rowIndex >= r + rs) {
 										rowsToMove.push({
 											oldIndex: rowIndex,
 											newIndex: rowIndex - rs,
