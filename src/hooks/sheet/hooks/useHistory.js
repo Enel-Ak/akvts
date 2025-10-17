@@ -360,31 +360,63 @@ export const useHistory = () => {
 
 				// 撤销删除行
 				if (state.removeRow && state.removeRow.size > 0) {
-					// 创建新的数据结构
 					try {
+						// ✅ 修复：正确处理多行删除的撤销
+						// 转换 buffer 数据
 						state.removeRow.forEach((value, key) => {
 							state.removeRow.set(key, {
 								rowData: useBufferToStringArray(value.rowData),
 								deleteCount: value.deleteCount,
 							})
 						})
+						console.log('撤销删除行', state, sheet.celldata)
 
-						let count = 0
-						await useProcessMapInBatches(
-							sheet.id,
-							sheet.celldata,
-							(rowIndex, rowData) => {
-								const recover = state.removeRow.get(`${rowIndex}`)
-								if (recover) {
-									sheet.celldata.set(rowIndex, recover.rowData)
-									count = recover.deleteCount
-								}
-								sheet.celldata.set(rowIndex + count, rowData)
+						// 找出删除的起始行和行数
+						let minDeletedRow = Infinity
+						let deleteCount = 0
+						state.removeRow.forEach((value, key) => {
+							const rowIndex = parseInt(key)
+							minDeletedRow = Math.min(minDeletedRow, rowIndex)
+							deleteCount = value.deleteCount // 所有被删除的行都有相同的 deleteCount
+						})
+
+						console.log('撤销删除行信息:', {
+							minDeletedRow,
+							deleteCount,
+							deletedRowsCount: state.removeRow.size,
+						})
+
+						// ✅ 关键修复：先移动后续的行，再恢复被删除的行
+						// 这样可以避免覆盖问题
+						// 第一步：移动后续的行（从后向前，避免覆盖）
+						const rowsToMove = []
+						sheet.celldata.forEach((rowData, rowIndex) => {
+							if (typeof rowIndex === 'number' && rowIndex >= minDeletedRow) {
+								rowsToMove.push({
+									oldIndex: rowIndex,
+									newIndex: rowIndex + deleteCount,
+									data: rowData,
+								})
 							}
-						)
+						})
+
+						// 从后向前移动，避免覆盖
+						rowsToMove.sort((a, b) => b.oldIndex - a.oldIndex)
+						rowsToMove.forEach(({oldIndex, newIndex, data}) => {
+							sheet.celldata.set(newIndex, data)
+							sheet.celldata.delete(oldIndex)
+							console.log(`移动行 ${oldIndex} 到 ${newIndex}`)
+						})
+
+						// 第二步：恢复所有被删除的行
+						state.removeRow.forEach((value, key) => {
+							const rowIndex = parseInt(key)
+							sheet.celldata.set(rowIndex, value.rowData)
+							console.log(`恢复被删除的行 ${rowIndex}`)
+						})
 
 						// 更新 sheet.celldata
-						// state.removeRow.clear()
+						state.removeRow.clear()
 
 						// 筛选状态已经在前面恢复，不需要重新筛选
 
