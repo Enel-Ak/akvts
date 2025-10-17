@@ -222,11 +222,13 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+		sheet.state.progress = -1
 		signalr.invoke('revert-last-operation', ...args).then((res) => {
 			console.log('invoke revert-last-operation', res)
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			sheet.state.loading = false
 		})
 	}
 

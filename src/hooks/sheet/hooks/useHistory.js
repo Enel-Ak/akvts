@@ -532,7 +532,7 @@ export const useHistory = () => {
 			} catch (error) {
 				console.error('处理数据时出错:', error)
 			} finally {
-				sheet.state.loading = false
+				// sheet.state.loading = false
 			}
 		}
 	}

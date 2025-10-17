@@ -653,7 +653,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-				} else if (res.rankType === 3) {
+				} else if (res.targetType === 3) {
 					// 撤销删除列 = 插入列
 					console.log('执行撤销删除列操作(插入列)', {
 						startIndex: res.startIndex,
