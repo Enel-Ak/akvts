@@ -413,7 +413,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		})
 
 		// 先执行添加行操作
-		await sheet.hooks.toolsHook.addRow(null, false, true, {
+		await sheet.hooks.toolsHook.addRow(null, false, false, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
@@ -458,7 +458,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			return
 		}
 		console.log('RowDeleted', res)
-		sheet.hooks.toolsHook.removeRow(null, {
+		sheet.hooks.toolsHook.removeRow(null, false, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
@@ -476,7 +476,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		})
 
 		// 先执行添加列操作
-		await sheet.hooks.toolsHook.addColumn(null, false, true, {
+		await sheet.hooks.toolsHook.addColumn(null, false, false, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
@@ -522,7 +522,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			return
 		}
 		console.log('ColDeleted', res)
-		sheet.hooks.toolsHook.removeColumn(null, {
+		sheet.hooks.toolsHook.removeColumn(null, false, {
 			startIndex: res.startIndex,
 			count: res.count,
 		})
@@ -559,42 +559,29 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.OperationReverted, async (res) => {
-		console.log(
-			'OperationReverted 接收到撤销通知:',
-			{
-				sheetId: res.sheetId,
-				actionType: res.actionType,
-				rankType: res.rankType,
-				startIndex: res.startIndex,
-				count: res.count,
-				hasConfig: !!res.config,
-				hasCelldata: !!res.cellData,
-				currentSheet: sheet.original.sheetId,
-			},
-			res
-		)
+		console.log('OperationReverted 接收到撤销通知:', res)
 
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
 
-		// actionType: 0 插入, 1 删除
-		// RankType: 0 行, 1 列
+		// actionType: 1 插入, 3 删除
+		// targetType: 1 cell, row 2, col 3, sheet 4, table 5
 
 		try {
 			// 撤销插入操作 = 执行删除
-			if (res.actionType === 0) {
-				if (res.rankType === 0) {
+			if (res.actionType === 1) {
+				if (res.targetType === 2) {
 					// 撤销插入行 = 删除行
 					console.log('执行撤销插入行操作(删除行)', {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-					await sheet.hooks.toolsHook.removeRow(null, {
+					await sheet.hooks.toolsHook.removeRow(null, false, {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-				} else if (res.rankType === 1) {
+				} else if (res.targetType === 3) {
 					// 撤销插入列 = 删除列
 					console.log('执行撤销插入列操作(删除列)', {
 						startIndex: res.startIndex,
@@ -607,8 +594,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 				}
 			}
 			// 撤销删除操作 = 执行插入
-			else if (res.actionType === 1) {
-				if (res.rankType === 0) {
+			else if (res.actionType === 3) {
+				if (res.targetType === 2) {
 					// 撤销删除行 = 插入行
 					console.log('执行撤销删除行操作(插入行)', {
 						startIndex: res.startIndex,
@@ -618,7 +605,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-				} else if (res.rankType === 1) {
+				} else if (res.rankType === 3) {
 					// 撤销删除列 = 插入列
 					console.log('执行撤销删除列操作(插入列)', {
 						startIndex: res.startIndex,

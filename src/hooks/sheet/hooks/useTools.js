@@ -1322,20 +1322,6 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount += addRowCount.value
 
-			// 🔍 调试日志：添加行操作开始
-			console.log('=== addRow: 开始 ===')
-			console.log('insertRowIndex:', insertRowIndex)
-			console.log('addRowCount:', addRowCount.value)
-			console.log('celldata size (添加前):', sheet.celldata.size)
-			console.log(
-				'deepPermissions (添加前):',
-				JSON.stringify(sheet.config.deepPermissions, null, 2)
-			)
-			console.log(
-				'superPermissions (添加前):',
-				JSON.stringify(sheet.config.superPermissions, null, 2)
-			)
-
 			// ✅ 修复: 添加行后更新 deepPermissions 和 superPermissions
 			// 无论是否开启协同模式或权限等级，只要有权限配置就应该更新
 			// 这样可以避免添加行后权限位置不更新，导致后续删除操作出现行索引错误
@@ -1433,8 +1419,6 @@ export const useTools = () => {
 				)
 			}
 
-			// 🔍 调试日志：检查 celldata 是否正确更新
-			console.log('=== addRow: celldata 检查 ===')
 			const celldataSnapshot = {}
 			sheet.celldata.forEach((rowData, rowIndex) => {
 				if (typeof rowIndex === 'number') {
@@ -1463,7 +1447,7 @@ export const useTools = () => {
 			if (save) {
 				sheet.hooks.historyHook.save(
 					{
-						r: insertRowIndex,
+						r,
 						rs: addRowCount.value,
 					},
 					'addRow'
@@ -1506,32 +1490,23 @@ export const useTools = () => {
 	}
 
 	// 删除行
-	const removeRow = async (_, asyncData = null, callback = null) => {
+	const removeRow = async (_, save = true, asyncData = null, callback = null) => {
 		if (!sheet.config.removeRow) {
 			ElMessage.warning('请先在配置中开启删除行功能')
 			return
 		}
 		try {
 			let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+			console.log(1111, r, asyncData)
 			if (r === undefined) return
 
 			let deleteCount = rr - r + 1
 
 			if (asyncData) {
 				r = asyncData.startIndex
-				rr = asyncData.startIndex + asyncData.count - 1
+				rr = asyncData.startIndex
 				deleteCount = asyncData.count
 			}
-
-			// 🔍 调试日志：删除行操作开始
-			console.log('=== removeRow: 开始 ===')
-			console.log('getRanged():', {r, c, rr, cc})
-			console.log('deleteCount:', deleteCount)
-			console.log('asyncData:', asyncData)
-			console.log(
-				'deepPermissions (删除前):',
-				JSON.stringify(sheet.config.deepPermissions, null, 2)
-			)
 
 			const deletedRows = new Map()
 
@@ -1650,7 +1625,9 @@ export const useTools = () => {
 			console.log('删除后的 celldata (r-1 到 rr+2):', celldataAfterDelete)
 
 			// 保存历史
-			sheet.hooks.historyHook.save(deletedRows, 'removeRow')
+			if (save) {
+				sheet.hooks.historyHook.save(deletedRows, 'removeRow')
+			}
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（删除操作）
 			asyncUpdateConfig(-deleteCount, r, null)
@@ -2051,11 +2028,12 @@ export const useTools = () => {
 	}
 
 	// 删除列
-	const removeColumn = async (_, asyncData = null, callback = null) => {
+	const removeColumn = async (_, save = true, asyncData = null, callback = null) => {
 		if (!sheet.config.removeColumn) {
 			ElMessage.warning('请先在配置中开启删除列功能')
 			return
 		}
+
 		let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
 
@@ -2063,7 +2041,7 @@ export const useTools = () => {
 
 		if (asyncData) {
 			c = asyncData.startIndex
-			cc = asyncData.startIndex + asyncData.count - 1
+			cc = asyncData.startIndex
 			deleteCount = asyncData.count
 		}
 
@@ -2124,7 +2102,9 @@ export const useTools = () => {
 			// 保存历史 - 优化：使用新的紧凑存储结构和异步保存
 			setTimeout(() => {
 				try {
-					sheet.hooks.historyHook.save(deletedColsData, 'removeCol')
+					if (save) {
+						sheet.hooks.historyHook.save(deletedColsData, 'removeCol')
+					}
 				} catch (error) {
 					console.error('保存删除列历史失败:', error)
 				}

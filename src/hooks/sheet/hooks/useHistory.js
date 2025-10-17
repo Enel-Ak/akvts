@@ -162,14 +162,6 @@ export const useHistory = () => {
 				// 撤销修改配置
 				Object.assign(sheet.config, state.config)
 
-				// 🔍 调试日志：记录恢复的权限配置
-				if (state.config.deepPermissions || state.config.superPermissions) {
-					console.log('✅ 撤销操作已恢复权限配置:', {
-						deepPermissions: sheet.config.deepPermissions,
-						superPermissions: sheet.config.superPermissions,
-					})
-				}
-
 				// 恢复筛选状态
 				if (state.filterState) {
 					sheet.config.filtered = Array.isArray(state.filterState.filtered)
@@ -278,11 +270,7 @@ export const useHistory = () => {
 								sheet.id,
 								sheet.celldata,
 								(rowIndex, rowData) => {
-									// 保持和添加时后逻辑一样, 后续修改多行
-									if (rowIndex < r) {
-										// 插入行之前的数据保持不变
-										// newMap.set(rowIndex, rowData)
-									} else if (rowIndex > r + rs - 1) {
+									if (rowIndex > r + rs) {
 										// 插入行之后的数据向上移动
 										sheet.celldata.set(rowIndex - rs, rowData)
 									}
