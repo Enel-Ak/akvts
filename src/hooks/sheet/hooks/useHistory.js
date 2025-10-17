@@ -1,6 +1,7 @@
 import {useProcessMapInBatches} from './useProcessMapInBatches'
 import {useAirSheetStore} from '../store/useAirSheet'
 import {useBufferToMap, useMapToBuffer, useBufferToStringArray} from './useBuffer'
+import {nextTick} from 'vue'
 
 export const useHistory = () => {
 	const sheetStore = useAirSheetStore()
@@ -266,19 +267,31 @@ export const useHistory = () => {
 							}
 						} else {
 							// 正常状态下添加的行，需要移动数据
+							const rowsToMove = []
 							await useProcessMapInBatches(
 								sheet.id,
 								sheet.celldata,
 								(rowIndex, rowData) => {
+									// 收集需要向上移动的数据
+									// if (rowIndex > r + rs - 1) {
+									// 	sheet.celldata.set(rowIndex - rs, rowData)
+									// }
 									if (rowIndex > r + rs) {
-										// 插入行之后的数据向上移动
-										sheet.celldata.set(rowIndex - rs, rowData)
+										rowsToMove.push({
+											oldIndex: rowIndex,
+											newIndex: rowIndex - rs,
+											data: rowData,
+										})
 									}
 								}
 							)
-						}
 
-						sheet.config.rowCount -= rs
+							rowsToMove.sort((a, b) => b.oldIndex - a.oldIndex)
+							rowsToMove.forEach(({oldIndex, newIndex, data}) => {
+								sheet.celldata.set(newIndex, data)
+								sheet.celldata.delete(oldIndex)
+							})
+						}
 
 						// 如果当前处于筛选状态，需要更新筛选数据
 						if (sheet.config.filtered && sheet.config.filtered.length > 0) {
@@ -292,8 +305,10 @@ export const useHistory = () => {
 								sheet?.original?.sheetId || sheet.id
 							)
 						}
-
-						state.addRow = null
+						await nextTick()
+						sheet.config.rowCount -= rs
+						console.log('撤销添加行', state)
+						// state.addRow = null
 					} catch (error) {
 						console.error('撤销添加行失败:', error)
 					}
@@ -307,19 +322,11 @@ export const useHistory = () => {
 							sheet.celldata,
 							(rowIndex, rowData) => {
 								// 更新到新Map
-								sheet.celldata.set(
-									rowIndex,
-									rowData.filter((_, index) => {
-										return (
-											index < state.addCol.c ||
-											index >= state.addCol.c + state.addCol.cs
-										)
-									})
-								)
+								console.log('撤销添加列', state)
+
+								rowData.splice(state.addCol.c, state.addCol.cs)
 							}
 						)
-
-						sheet.config.colCount -= state.addCol.cs
 
 						// 如果当前处于筛选状态，需要更新筛选数据
 						if (sheet.config.filtered && sheet.config.filtered.length > 0) {
@@ -334,7 +341,8 @@ export const useHistory = () => {
 								sheet?.original?.sheetId || sheet.id
 							)
 						}
-
+						await nextTick()
+						sheet.config.colCount -= state.addCol.cs
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)

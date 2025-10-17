@@ -1291,7 +1291,6 @@ export const useTools = () => {
 			// ✅ 修复：正确的行移动逻辑
 			// 关键：必须从大到小的顺序移动，避免覆盖
 			const rowsToMove = []
-
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
 				if (typeof rowIndex === 'number' && Array.isArray(rowData)) {
 					if (rowIndex >= insertRowIndex) {
@@ -1447,7 +1446,7 @@ export const useTools = () => {
 			if (save) {
 				sheet.hooks.historyHook.save(
 					{
-						r,
+						r: insertRowIndex,
 						rs: addRowCount.value,
 					},
 					'addRow'
@@ -1503,7 +1502,7 @@ export const useTools = () => {
 
 			if (asyncData) {
 				r = asyncData.startIndex
-				rr = asyncData.startIndex
+				rr = asyncData.startIndex + asyncData.count - 1
 				deleteCount = asyncData.count
 			}
 
@@ -1815,20 +1814,6 @@ export const useTools = () => {
 		}
 
 		try {
-			// 🔍 调试日志：添加列操作开始
-			console.log('=== addColumn: 开始 ===')
-			console.log('insertColIndex:', insertColIndex)
-			console.log('addColumnCount:', addColumnCount.value)
-			console.log('celldata size (添加前):', sheet.celldata.size)
-			console.log(
-				'deepPermissions (添加前):',
-				JSON.stringify(sheet.config.deepPermissions, null, 2)
-			)
-			console.log(
-				'superPermissions (添加前):',
-				JSON.stringify(sheet.config.superPermissions, null, 2)
-			)
-
 			// ✅ 修复：正确的列插入逻辑
 			// 关键：一次性创建新数组，避免多次 splice 导致的索引偏移
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
@@ -1846,11 +1831,6 @@ export const useTools = () => {
 			})
 
 			sheet.config.colCount += addColumnCount.value
-
-			// 🔍 调试日志：celldata 更新后
-			console.log('=== addColumn: celldata 更新后 ===')
-			console.log('celldata size (更新后):', sheet.celldata.size)
-			console.log('colCount (更新后):', sheet.config.colCount)
 
 			// ✅ 修复: 添加列后更新 deepPermissions 和 superPermissions
 			// 无论是否开启协同模式或权限等级，只要有权限配置就应该更新
@@ -1935,17 +1915,6 @@ export const useTools = () => {
 					}
 					sheet.config.superPermissions = updatedSuperPermissions
 				}
-
-				// 🔍 调试日志：权限更新后
-				console.log('=== addColumn: 权限更新后 ===')
-				console.log(
-					'deepPermissions (添加后):',
-					JSON.stringify(sheet.config.deepPermissions, null, 2)
-				)
-				console.log(
-					'superPermissions (添加后):',
-					JSON.stringify(sheet.config.superPermissions, null, 2)
-				)
 			}
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
@@ -2127,14 +2096,6 @@ export const useTools = () => {
 			// 无论是本地操作还是远程同步，都需要更新权限位置
 			// 这样可以避免权限位置不更新的问题，也避免了依赖 eventCell 事件导致的竞态条件
 			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
-				// 🔍 调试日志：删除列前的权限
-				console.log('=== removeColumn: 权限更新开始 ===')
-				console.log('删除的列范围:', {c, cc, deleteCount})
-				console.log(
-					'deepPermissions (删除前):',
-					JSON.stringify(sheet.config.deepPermissions, null, 2)
-				)
-
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
 					const updatedDeepPermissions = {}
@@ -2294,10 +2255,6 @@ export const useTools = () => {
 					startIndex: c,
 					count: deleteCount,
 				})
-
-				// ✅ 修复: 移除单独的 eventCell 同步权限配置
-				// 因为权限已经在本地和远程都更新了（通过上面的权限更新逻辑）
-				// 不需要再通过 eventCell 同步，避免了竞态条件和覆盖问题
 			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)

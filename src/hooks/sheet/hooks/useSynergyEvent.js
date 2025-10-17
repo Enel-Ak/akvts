@@ -1,4 +1,5 @@
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
+import {focusableStack} from 'element-plus/es/components/focus-trap/index.mjs'
 
 const EventMap = {
 	EventClicked: 'OnEventClicked', // 接收到单元格点击
@@ -634,7 +635,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-					await sheet.hooks.toolsHook.removeColumn(null, {
+					await sheet.hooks.toolsHook.removeColumn(null, false, {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
@@ -648,7 +649,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-					await sheet.hooks.toolsHook.addRow(null, false, true, {
+					await sheet.hooks.toolsHook.addRow(null, false, false, {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
@@ -658,7 +659,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
-					await sheet.hooks.toolsHook.addColumn(null, false, true, {
+					await sheet.hooks.toolsHook.addColumn(null, false, false, {
 						startIndex: res.startIndex,
 						count: res.count,
 					})
