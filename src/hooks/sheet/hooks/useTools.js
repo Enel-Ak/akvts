@@ -1534,21 +1534,13 @@ export const useTools = () => {
 				}
 			})
 
-			// 🔍 调试日志：删除前的 celldata
-			console.log('=== removeRow: celldata 删除前 ===')
-			console.log('maxRowIndex:', maxRowIndex)
-			console.log('要删除的行范围:', {r, rr})
 			const celldataBeforeDelete = {}
 			sheet.celldata.forEach((rowData, rowIndex) => {
 				if (typeof rowIndex === 'number' && rowIndex >= r - 1 && rowIndex <= rr + 2) {
 					celldataBeforeDelete[rowIndex] = rowData.map((cell) => cell?.v || '')
 				}
 			})
-			console.log('删除前的 celldata (r-1 到 rr+2):', celldataBeforeDelete)
 
-			// ✅ 修复：分两步处理，确保删除操作在移动操作之前完成
-			// 第一步：删除被选中的行
-			console.log('=== removeRow: 第一步 - 删除被选中的行 ===')
 			await useProcessMapInBatches(
 				sheet?.original?.sheetId || sheet.id,
 				sheet.celldata,
@@ -1580,10 +1572,6 @@ export const useTools = () => {
 					})
 				}
 			})
-			console.log(
-				'rowsToMove:',
-				rowsToMove.map((r) => ({oldIndex: r.oldIndex, newIndex: r.newIndex}))
-			)
 
 			await useProcessMapInBatches(
 				sheet?.original?.sheetId || sheet.id,
@@ -1598,29 +1586,17 @@ export const useTools = () => {
 				}
 			)
 
-			// ✅ 修复：清除移动后留下的重复数据
-			// 删除操作后，所有 > rr 的行都已经向上移动了 deleteCount 个位置
-			// 例如：删除 row 4 后，row 5-9 移动到 row 4-8
-			// 现在 Map 中有：row 0-3（原来的），row 4-8（移动后的），row 5-9（原来的位置，重复）
-			// 我们需要删除的是原来位置的最后 deleteCount 行：[maxRowIndex - deleteCount + 1, maxRowIndex]
-			// 例如：maxRowIndex=9, deleteCount=1，删除 [9, 9]
-			// 注意：不能删除 [rr + 1, maxRowIndex]，因为这会删除移动后的数据
-			console.log('=== removeRow: 清理重复数据 ===')
-			console.log('清理范围:', {start: maxRowIndex - deleteCount + 1, end: maxRowIndex})
 			for (let i = maxRowIndex - deleteCount + 1; i <= maxRowIndex; i++) {
 				console.log('删除 row', i)
 				sheet.celldata.delete(i)
 			}
 
-			// 🔍 调试日志：删除后的 celldata
-			console.log('=== removeRow: celldata 删除后 ===')
 			const celldataAfterDelete = {}
 			sheet.celldata.forEach((rowData, rowIndex) => {
 				if (typeof rowIndex === 'number' && rowIndex >= r - 1 && rowIndex <= rr + 2) {
 					celldataAfterDelete[rowIndex] = rowData.map((cell) => cell?.v || '')
 				}
 			})
-			console.log('删除后的 celldata (r-1 到 rr+2):', celldataAfterDelete)
 
 			// 保存历史
 			if (save) {
@@ -1633,9 +1609,6 @@ export const useTools = () => {
 			// 更新sheet.celldata
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
 
-			// ✅ 修复: 删除行后更新 deepPermissions 和 superPermissions
-			// 无论是本地操作还是远程同步，都需要更新权限位置
-			// 这样可以避免权限位置不更新的问题，也避免了依赖 eventCell 事件导致的竞态条件
 			if (sheet.config.deepPermissions || sheet.config.superPermissions) {
 				// 更新 deepPermissions
 				if (sheet.config.deepPermissions) {
@@ -1754,10 +1727,6 @@ export const useTools = () => {
 					startIndex: r,
 					count: deleteCount,
 				})
-
-				// ✅ 修复: 移除单独的 eventCell 同步权限配置
-				// 因为权限已经在本地和远程都更新了（通过上面的权限更新逻辑）
-				// 不需要再通过 eventCell 同步，避免了竞态条件和覆盖问题
 			}
 
 			// 优化：延迟触发选区重新计算，避免立即卡顿

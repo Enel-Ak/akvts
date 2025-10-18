@@ -159,6 +159,7 @@ export const useSynergy = () => {
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			sheet.state.loading = false
 		})
 
 		return Promise.resolve()
@@ -169,11 +170,13 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+		sheet.state.progress = -1
 		signalr.invoke('insert-row', ...args).then((res) => {
 			console.log('invoke insert-row')
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			sheet.state.loading = false
 		})
 	}
 
@@ -182,12 +185,13 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
-
+		sheet.state.progress = -1
 		signalr.invoke('delete-row', ...args).then((res) => {
 			console.log('invoke delete-row', res)
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			sheet.state.loading = false
 		})
 	}
 
@@ -196,11 +200,13 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+		sheet.state.progress = -1
 		signalr.invoke('insert-col', ...args).then((res) => {
 			console.log('invoke insert-col')
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			sheet.state.loading = false
 		})
 	}
 
@@ -209,11 +215,13 @@ export const useSynergy = () => {
 			console.error('链接失败')
 			return
 		}
+		sheet.state.progress = -1
 		signalr.invoke('delete-col', ...args).then((res) => {
 			console.log('invoke delete-col', res)
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			sheet.state.loading = false
 		})
 	}
 
