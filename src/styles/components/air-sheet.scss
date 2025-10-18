@@ -171,17 +171,18 @@
 			.freeze-merge {
 				align-items: center;
 				display: flex;
-				height: 22px !important;
-				line-height: 22px;
-				left: calc(50% - 53px);
-				padding-left: 3px;
+				left: calc(50% - 34px);
+				height: 29px !important;
+				padding: 3px;
 				input {
 					border: 1px solid var(--z-line);
 					background-color: var(--z-theme);
 					color: var(--z-font-color);
 					font-size: 12px;
-					padding: 0 0 0 3px;
-					width: 100px;
+					height: 25px;
+					padding: 3px;
+					text-align: center;
+					width: 60px;
 
 					&::-webkit-outer-spin-button,
 					&::-webkit-inner-spin-button {

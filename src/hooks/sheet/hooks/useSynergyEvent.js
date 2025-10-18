@@ -677,28 +677,28 @@ export const useSynergyEvent = (sheetId, signalr) => {
 						sheet.config[key] = config[key]
 					})
 
-					// 如果包含公式配置,需要清除计算值并重新计算
-					if (configKeys.includes('formulaed')) {
-						const formulaedKeys = Object.keys(config.formulaed || {})
-						formulaedKeys.forEach((key) => {
-							const [r, c] = key.split('-').map(Number)
-							const formula = config.formulaed[key]
-							if (formula && formula.startsWith('=')) {
-								// 清除计算值，保留公式
-								if (
-									sheet.celldata.has(r) &&
-									sheet.celldata.get(r)[c] !== undefined
-								) {
-									sheet.celldata.get(r)[c] = formula
-								}
-							}
-						})
+					// // 如果包含公式配置,需要清除计算值并重新计算
+					// if (configKeys.includes('formulaed')) {
+					// 	const formulaedKeys = Object.keys(config.formulaed || {})
+					// 	formulaedKeys.forEach((key) => {
+					// 		const [r, c] = key.split('-').map(Number)
+					// 		const formula = config.formulaed[key]
+					// 		if (formula && formula.startsWith('=')) {
+					// 			// 清除计算值，保留公式
+					// 			if (
+					// 				sheet.celldata.has(r) &&
+					// 				sheet.celldata.get(r)[c] !== undefined
+					// 			) {
+					// 				sheet.celldata.get(r)[c] = formula
+					// 			}
+					// 		}
+					// 	})
 
-						// 重新计算所有公式
-						setTimeout(() => {
-							sheet.hooks.editHook.setFormulaValue()
-						}, 0)
-					}
+					// 	// 重新计算所有公式
+					// 	setTimeout(() => {
+					// 		sheet.hooks.editHook.setFormulaValue()
+					// 	}, 0)
+					// }
 
 					// 如果包含合并单元格配置,需要刷新合并状态
 					if (configKeys.includes('merged')) {
@@ -713,15 +713,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 					// 只有在特定配置更新时才触发公式重新计算
 					// permissions 和 superPermissions 的更新不应该触发公式重新计算
-					const formulaRelatedKeys = [
-						'formulaed',
-						'formulaMap',
-						'merged',
-						'rResize',
-						'cResize',
-						'styled',
-						'locked',
-					]
+					const formulaRelatedKeys = ['formulaed', 'formulaMap']
 					const hasFormulaRelatedUpdate = configKeys.some((key) =>
 						formulaRelatedKeys.includes(key)
 					)

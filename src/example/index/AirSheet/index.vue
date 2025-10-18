@@ -1171,9 +1171,9 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://10.110.10.113:9527/signalr-hubs/onlinetable')
+const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
 const token = route.query.abc
-	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA2NjQyNzAsImV4cCI6MTc2MDgzNjI3MCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MDY2NDI3MCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWJkZTMtZTY0ZS02MWExZjNhZWM5OTAiLCJpYXQiOjE3NjA2NjQyNzAsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.b8Oj7GfLIcyTP3IGn2TyWaMdM9bwwNAmakO8bl3Ig-T4KZSQYJd41IX73JYcqelYXkEHvkNPgBAVL16GlopPA3yK3WmB0RujAQqn1UVE7GYz0uPMS4c8DSIqonGfdyx487iBv-ScW0_wqusLYNCldaN1LupkC43V0EuXlVu2DAu9vzCCogyge0PB_M9TeixvDPnCx__VoWpazWk-n2sIn6JAsCZW3zdhvPo3jfR-PNVS9lXlwP69ZiJamZwLIH_PEoxs18PlUMFV05UB_NkpFwSXRXwC690MYy5BZdvlMUWfry7nxju0ibEtW31SiBubUYO0uVSXbCO_-B-dv_cQXQ'
+	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA3NzAzNDEsImV4cCI6MTc2MDk0MjM0MSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MDc3MDMzNCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWJkZTMtZTY0ZS02MWExZjNhZWM5OTAiLCJpYXQiOjE3NjA3NzAzNDEsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.fpm4IkP1E1MLpIqLFBp2K5PtL10Z-aedeEr9jMM2J_GdjVRH8w3nWHI3k0KHghV17zRHBXu_aRSxro4lXlmIhv7tlSemYz3jPg-0lom799nDtD7ki5VPILMFNFnVRGb2nypUGj8g4eYVGEkwuLbNfl8PkTWwWHSO3Bl6dNBvq3Vc743Uw6nzBAWrEubbnuh844Mva39YFgz0Mh5cb63k22wPFbh0coCSXgeGu5xaQzquGF4g9h7HH-gCQTB_SmbaP2hwA57Hek3AWsrKZIFOVncYWDtFrVeA2tMrkvyEIuoPSGm3AncdjCGdukoKRFfI3K52iR6HVdJcTQVshOi2tQ'
 	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA2NjQyMzYsImV4cCI6MTc2MDgzNjIzNiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MDY2NDIzNiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjA2NjQyMzYsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.tH2ms5Q7sDdQsFDlVt1-GSdrrxFzZ_Whe2ZCekkShwu7Kgtiy2IF_z5dcdkSbMBx6mm6HqMZjKS5e045FoorsszTz_liE5DOOmm9Sevr8DyqHODAwMBjmc6e4cZcn_0Y0uelZM9azpSf3UMmXrkvuCEoZEn5gVQmURFzSovkccWAx_7srnImg1ZPAdeceRvWvKQ1wFGPwo9x36UYBkY8fZ5_OQAP7nfV0_2ybP1afLF44Lb3xZbiMTkVe-LjRvojzpqe8FJ1rOVmMIQXyl37jPVGFrtv5QelDbC25_7PXSibqrn0ym4iUTXBqaRkJbNnl5UAphIL4kLJp7Y8WaKyww'
 
 const synergyData = ref([])
@@ -1185,7 +1185,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://10.110.10.113:9527/api/online-table/table/cell-data',
+			url: 'http://100.92.2.93:8001/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				tableId: tableId.value,
@@ -1224,7 +1224,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://10.110.10.113:9527/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://100.92.2.93:8001/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1399,7 +1399,7 @@ onActivated(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.113:9527/api/online-table/table/3a1d03ab-6f08-4ec6-4092-ecb71601ae6b?autoCreate=true',
+			url: 'http://100.92.2.93:8001/api/online-table/table/3a1d0845-ce7d-38a1-f5d2-33a5276858dc?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1415,7 +1415,7 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://10.110.10.113:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
+			api.value = `http://100.92.2.93:8001/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
