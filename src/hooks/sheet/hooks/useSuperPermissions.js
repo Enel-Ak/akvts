@@ -186,11 +186,17 @@ export const useSuperPermissions = () => {
 			return null
 		}
 
+		// 确保 superPermissions 是数组格式
+		if (!Array.isArray(sheet.config.superPermissions)) {
+			sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
+		}
+
 		// 生成唯一 ID
 		const id = `sp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-		// 添加 superPermission
-		sheet.config.superPermissions[id] = {r, c, rr, cc, v}
+		// 添加 superPermission（使用数组格式）
+		const permission = {id, r, c, rr, cc, v}
+		sheet.config.superPermissions.push(permission)
 
 		console.log('setSuperPermission:', {id, r, c, rr, cc, v})
 
@@ -214,8 +220,13 @@ export const useSuperPermissions = () => {
 			return
 		}
 
-		// 删除 superPermission
-		delete sheet.config.superPermissions[id]
+		// 确保 superPermissions 是数组格式
+		if (!Array.isArray(sheet.config.superPermissions)) {
+			sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
+		}
+
+		// 删除 superPermission（从数组中移除）
+		sheet.config.superPermissions = sheet.config.superPermissions.filter((p) => p.id !== id)
 
 		console.log('removeSuperPermission:', {id})
 
@@ -236,8 +247,8 @@ export const useSuperPermissions = () => {
 			return
 		}
 
-		// 清空所有 superPermissions
-		sheet.config.superPermissions = {}
+		// 清空所有 superPermissions（使用数组格式）
+		sheet.config.superPermissions = []
 
 		console.log('clearSuperPermissions')
 
@@ -274,9 +285,12 @@ export const useSuperPermissions = () => {
 		sheetKey = key
 		sheet = sheetStore.getSheet(key)
 
-		// 确保 superPermissions 对象存在
+		// 确保 superPermissions 数组存在
 		if (!sheet.config.superPermissions) {
-			sheet.config.superPermissions = {}
+			sheet.config.superPermissions = []
+		} else if (!Array.isArray(sheet.config.superPermissions)) {
+			// 如果是对象格式，转换为数组格式
+			sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
 		}
 
 		setTimeout(() => {

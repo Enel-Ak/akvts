@@ -681,6 +681,22 @@ export const useSelectionRange = () => {
 		if (!pos) return
 		if (pos.r > sheet.config.rowCount - 1 || pos.c > sheet.config.colCount - 1) return
 
+		if (sheet.hooks.superPermissionsHook.checkSuperPermission(pos.r, pos.c, 1, 1).locked) {
+			return
+		}
+
+		// ✅ 问题二: 在选中前先检查权限,如果被锁定则直接提示并返回
+		if (sheet.config.synergy && sheet.config.auth > 0 && sheet.hooks.permissionsHook) {
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(pos.r, pos.c, 1, 1)
+
+			if (permissionCheck.locked) {
+				clearTimeout(mouseDownTimer)
+				mouseDownTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
+				// 被其他用户锁定,直接提示并返回,不触发选区变化
+				return
+			}
+		}
+
 		// 如何在设置公式不更新ranged
 		if (sheet.state.formula) {
 			console.log('当前设置公式点击位置', pos)
@@ -708,18 +724,6 @@ export const useSelectionRange = () => {
 
 			sheet.hooks.editHook.setFormulaSelectionCell(range)
 			return
-		}
-
-		// ✅ 问题二: 在选中前先检查权限,如果被锁定则直接提示并返回
-		if (sheet.config.synergy && sheet.config.auth > 0 && sheet.hooks.permissionsHook) {
-			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(pos.r, pos.c, 1, 1)
-
-			if (permissionCheck.locked) {
-				clearTimeout(mouseDownTimer)
-				mouseDownTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
-				// 被其他用户锁定,直接提示并返回,不触发选区变化
-				return
-			}
 		}
 
 		selecting.value = true

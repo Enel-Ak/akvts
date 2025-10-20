@@ -50,6 +50,8 @@ export const useSynergy = () => {
 			return true
 		}
 		console.error('链接失败')
+		sheet.state.loading = true
+		sheet.state.msg = '链接失败'
 		return false
 	}
 

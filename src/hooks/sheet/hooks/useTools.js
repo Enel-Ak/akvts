@@ -1223,6 +1223,10 @@ export const useTools = () => {
 			}
 		}
 
+		if (sheet.config.superPermissions && sheet.config.superPermissions.length) {
+			console.log('111superPermissions', sheet.config.superPermissions)
+		}
+
 		// 协同功能支持 - 使用 nextTick 确保所有本地状态更新完成后再发送协同消息
 		if (sheet.config.synergy) {
 			nextTick(() => {
@@ -1288,6 +1292,16 @@ export const useTools = () => {
 		}
 
 		try {
+			if (save) {
+				sheet.hooks.historyHook.save(
+					{
+						r: insertRowIndex,
+						rs: addRowCount.value,
+					},
+					'addRow'
+				)
+			}
+
 			// ✅ 修复：正确的行移动逻辑
 			// 关键：必须从大到小的顺序移动，避免覆盖
 			const rowsToMove = []
@@ -1367,42 +1381,35 @@ export const useTools = () => {
 
 				// 更新 superPermissions
 				if (sheet.config.superPermissions) {
-					const updatedSuperPermissions = {}
-					for (const [userId, permission] of Object.entries(
-						sheet.config.superPermissions
-					)) {
-						const {type, targets} = permission
-
-						if (type === 'row') {
-							// 行级权限：更新行索引
-							const updatedTargets = targets.map((row) =>
-								row >= insertRowIndex ? row + addRowCount.value : row
-							)
-
-							updatedSuperPermissions[userId] = {
-								...permission,
-								targets: updatedTargets,
-							}
-						} else if (type === 'cell') {
-							// 单元格级权限：更新单元格位置
-							const updatedTargets = targets.map((cell) => ({
-								...cell,
-								row:
-									cell.row >= insertRowIndex
-										? cell.row + addRowCount.value
-										: cell.row,
-							}))
-
-							updatedSuperPermissions[userId] = {
-								...permission,
-								targets: updatedTargets,
-							}
-						} else {
-							// 列级权限：不受添加行影响
-							updatedSuperPermissions[userId] = permission
-						}
+					// 确保 superPermissions 是数组格式
+					if (!Array.isArray(sheet.config.superPermissions)) {
+						sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
 					}
-					sheet.config.superPermissions = updatedSuperPermissions
+
+					// 更新每个权限区域的行坐标
+					sheet.config.superPermissions = sheet.config.superPermissions.map(
+						(permission) => {
+							const {r, rr} = permission
+
+							// 如果权限区域的起始行 >= 插入位置，则向下移动
+							if (r >= insertRowIndex) {
+								return {
+									...permission,
+									r: r + addRowCount.value,
+									rr: rr + addRowCount.value,
+								}
+							}
+							// 如果权限区域的结束行 >= 插入位置，则扩展结束行
+							else if (rr >= insertRowIndex) {
+								return {
+									...permission,
+									rr: rr + addRowCount.value,
+								}
+							}
+							// 否则保持不变
+							return permission
+						}
+					)
 				}
 
 				// 🔍 调试日志：权限更新后
@@ -1441,16 +1448,6 @@ export const useTools = () => {
 				await filterByCheckedSilent(currentFiltered)
 
 				ElMessage.success(`添加了 ${addRowCount.value} 行，筛选数据已更新`)
-			}
-
-			if (save) {
-				sheet.hooks.historyHook.save(
-					{
-						r: insertRowIndex,
-						rs: addRowCount.value,
-					},
-					'addRow'
-				)
 			}
 
 			if (sheet.config.synergy && !asyncData) {
@@ -1603,9 +1600,6 @@ export const useTools = () => {
 				sheet.hooks.historyHook.save(deletedRows, 'removeRow')
 			}
 
-			// 使用 asyncUpdateConfig 统一处理所有配置更新（删除操作）
-			asyncUpdateConfig(-deleteCount, r, null)
-
 			// 更新sheet.celldata
 			sheet.config.rowCount = Math.max(0, sheet.config.rowCount - deleteCount)
 
@@ -1655,45 +1649,72 @@ export const useTools = () => {
 
 				// 更新 superPermissions
 				if (sheet.config.superPermissions) {
-					const updatedSuperPermissions = {}
-					for (const [userId, permission] of Object.entries(
-						sheet.config.superPermissions
-					)) {
-						const {type, targets} = permission
-
-						if (type === 'row') {
-							// 行级权限：更新行索引
-							const updatedTargets = targets
-								.filter((row) => row < r || row > rr) // 移除被删除的行
-								.map((row) => (row > rr ? row - deleteCount : row)) // 更新后面的行索引
-
-							if (updatedTargets.length > 0) {
-								updatedSuperPermissions[userId] = {
-									...permission,
-									targets: updatedTargets,
-								}
-							}
-						} else if (type === 'cell') {
-							// 单元格级权限：更新单元格位置
-							const updatedTargets = targets
-								.filter((cell) => cell.row < r || cell.row > rr) // 移除被删除行中的单元格
-								.map((cell) => ({
-									...cell,
-									row: cell.row > rr ? cell.row - deleteCount : cell.row, // 更新后面的单元格行索引
-								}))
-
-							if (updatedTargets.length > 0) {
-								updatedSuperPermissions[userId] = {
-									...permission,
-									targets: updatedTargets,
-								}
-							}
-						} else {
-							// 列级权限：不受删除行影响
-							updatedSuperPermissions[userId] = permission
-						}
+					// 确保 superPermissions 是数组格式
+					if (!Array.isArray(sheet.config.superPermissions)) {
+						sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
 					}
-					sheet.config.superPermissions = updatedSuperPermissions
+
+					// 更新权限区域：移除被删除行范围内的权限，并调整其他权限的行坐标
+					sheet.config.superPermissions = sheet.config.superPermissions
+						.map((permission) => {
+							const {r: permR, rr: permRr} = permission
+
+							// 检查权限区域是否与删除范围有交集
+							const permStartRow = Math.min(permR, permRr)
+							const permEndRow = Math.max(permR, permRr)
+							const deleteStartRow = Math.min(r, rr)
+							const deleteEndRow = Math.max(r, rr)
+
+							// 权限区域完全在删除范围内，标记为删除
+							if (permStartRow >= deleteStartRow && permEndRow <= deleteEndRow) {
+								return null // 标记为删除
+							}
+
+							// 权限区域完全在删除范围之前，保持不变
+							if (permEndRow < deleteStartRow) {
+								return permission
+							}
+
+							// 权限区域完全在删除范围之后，向上移动
+							if (permStartRow > deleteEndRow) {
+								return {
+									...permission,
+									r: permR - deleteCount,
+									rr: permRr - deleteCount,
+								}
+							}
+
+							// 权限区域与删除范围有部分交集
+							// 调整权限区域的边界
+							let newR = permR
+							let newRr = permRr
+
+							// 如果起始行在删除范围内，调整起始行
+							if (permR >= deleteStartRow && permR <= deleteEndRow) {
+								newR = deleteStartRow
+							} else if (permR > deleteEndRow) {
+								newR = permR - deleteCount
+							}
+
+							// 如果结束行在删除范围内，调整结束行
+							if (permRr >= deleteStartRow && permRr <= deleteEndRow) {
+								newRr = deleteStartRow - 1
+							} else if (permRr > deleteEndRow) {
+								newRr = permRr - deleteCount
+							}
+
+							// 如果调整后的范围无效，标记为删除
+							if (newR > newRr) {
+								return null
+							}
+
+							return {
+								...permission,
+								r: newR,
+								rr: newRr,
+							}
+						})
+						.filter((p) => p !== null) // 移除被删除的权限
 				}
 
 				// 🔍 调试日志：权限更新后
@@ -1731,6 +1752,8 @@ export const useTools = () => {
 
 			// 优化：延迟触发选区重新计算，避免立即卡顿
 			setTimeout(() => {
+				// 使用 asyncUpdateConfig 统一处理所有配置更新（删除操作）
+				asyncUpdateConfig(-deleteCount, r, null)
 				if (sheet.hooks?.selectionRangeHook?.refreshSelection) {
 					sheet.hooks.selectionRangeHook.refreshSelection()
 				}
@@ -1783,6 +1806,17 @@ export const useTools = () => {
 		}
 
 		try {
+			if (save) {
+				// 为每一列分别保存历史记录，确保可以依次撤销
+				sheet.hooks.historyHook.save(
+					{
+						c: insertColIndex,
+						cs: addColumnCount.value,
+					},
+					'addCol'
+				)
+			}
+
 			// ✅ 修复：正确的列插入逻辑
 			// 关键：一次性创建新数组，避免多次 splice 导致的索引偏移
 			await useProcessMapInBatches(sheet.id, sheet.celldata, (rowIndex, rowData) => {
@@ -1847,42 +1881,35 @@ export const useTools = () => {
 
 				// 更新 superPermissions
 				if (sheet.config.superPermissions) {
-					const updatedSuperPermissions = {}
-					for (const [userId, permission] of Object.entries(
-						sheet.config.superPermissions
-					)) {
-						const {type, targets} = permission
-
-						if (type === 'column') {
-							// 列级权限：更新列索引
-							const updatedTargets = targets.map((col) =>
-								col >= insertColIndex ? col + addColumnCount.value : col
-							)
-
-							updatedSuperPermissions[userId] = {
-								...permission,
-								targets: updatedTargets,
-							}
-						} else if (type === 'cell') {
-							// 单元格级权限：更新单元格位置
-							const updatedTargets = targets.map((cell) => ({
-								...cell,
-								col:
-									cell.col >= insertColIndex
-										? cell.col + addColumnCount.value
-										: cell.col,
-							}))
-
-							updatedSuperPermissions[userId] = {
-								...permission,
-								targets: updatedTargets,
-							}
-						} else {
-							// 行级权限：不受添加列影响
-							updatedSuperPermissions[userId] = permission
-						}
+					// 确保 superPermissions 是数组格式
+					if (!Array.isArray(sheet.config.superPermissions)) {
+						sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
 					}
-					sheet.config.superPermissions = updatedSuperPermissions
+
+					// 更新每个权限区域的列坐标
+					sheet.config.superPermissions = sheet.config.superPermissions.map(
+						(permission) => {
+							const {c, cc} = permission
+
+							// 如果权限区域的起始列 >= 插入位置，则向右移动
+							if (c >= insertColIndex) {
+								return {
+									...permission,
+									c: c + addColumnCount.value,
+									cc: cc + addColumnCount.value,
+								}
+							}
+							// 如果权限区域的结束列 >= 插入位置，则扩展结束列
+							else if (cc >= insertColIndex) {
+								return {
+									...permission,
+									cc: cc + addColumnCount.value,
+								}
+							}
+							// 否则保持不变
+							return permission
+						}
+					)
 				}
 			}
 
@@ -1919,17 +1946,6 @@ export const useTools = () => {
 			} else {
 				// 非筛选状态下的正常处理
 				ElMessage.success(`添加了 ${addColumnCount.value} 列`)
-			}
-
-			if (save) {
-				// 为每一列分别保存历史记录，确保可以依次撤销
-				sheet.hooks.historyHook.save(
-					{
-						c: insertColIndex,
-						cs: addColumnCount.value,
-					},
-					'addCol'
-				)
 			}
 
 			if (sheet.config.synergy && !asyncData) {
@@ -2038,18 +2054,9 @@ export const useTools = () => {
 			})
 
 			// 保存历史 - 优化：使用新的紧凑存储结构和异步保存
-			setTimeout(() => {
-				try {
-					if (save) {
-						sheet.hooks.historyHook.save(deletedColsData, 'removeCol')
-					}
-				} catch (error) {
-					console.error('保存删除列历史失败:', error)
-				}
-			}, 0)
-
-			// 使用 asyncUpdateConfig 统一处理所有配置更新（删除列操作）
-			asyncUpdateConfig(-deleteCount, null, c)
+			if (save) {
+				sheet.hooks.historyHook.save(deletedColsData, 'removeCol')
+			}
 
 			// 更新sheet.celldata和其他相关操作
 			sheet.config.colCount = Math.max(0, sheet.config.colCount - deleteCount)
@@ -2119,45 +2126,72 @@ export const useTools = () => {
 
 				// 更新 superPermissions
 				if (sheet.config.superPermissions) {
-					const updatedSuperPermissions = {}
-					for (const [userId, permission] of Object.entries(
-						sheet.config.superPermissions
-					)) {
-						const {type, targets} = permission
-
-						if (type === 'column') {
-							// 列级权限：更新列索引
-							const updatedTargets = targets
-								.filter((col) => col < c || col > cc) // 移除被删除的列
-								.map((col) => (col > cc ? col - deleteCount : col)) // 更新后面的列索引
-
-							if (updatedTargets.length > 0) {
-								updatedSuperPermissions[userId] = {
-									...permission,
-									targets: updatedTargets,
-								}
-							}
-						} else if (type === 'cell') {
-							// 单元格级权限：更新单元格位置
-							const updatedTargets = targets
-								.filter((cell) => cell.col < c || cell.col > cc) // 移除被删除列中的单元格
-								.map((cell) => ({
-									...cell,
-									col: cell.col > cc ? cell.col - deleteCount : cell.col, // 更新后面的单元格列索引
-								}))
-
-							if (updatedTargets.length > 0) {
-								updatedSuperPermissions[userId] = {
-									...permission,
-									targets: updatedTargets,
-								}
-							}
-						} else {
-							// 行级权限：不受删除列影响
-							updatedSuperPermissions[userId] = permission
-						}
+					// 确保 superPermissions 是数组格式
+					if (!Array.isArray(sheet.config.superPermissions)) {
+						sheet.config.superPermissions = Object.values(sheet.config.superPermissions)
 					}
-					sheet.config.superPermissions = updatedSuperPermissions
+
+					// 更新权限区域：移除被删除列范围内的权限，并调整其他权限的列坐标
+					sheet.config.superPermissions = sheet.config.superPermissions
+						.map((permission) => {
+							const {c: permC, cc: permCc} = permission
+
+							// 检查权限区域是否与删除范围有交集
+							const permStartCol = Math.min(permC, permCc)
+							const permEndCol = Math.max(permC, permCc)
+							const deleteStartCol = Math.min(c, cc)
+							const deleteEndCol = Math.max(c, cc)
+
+							// 权限区域完全在删除范围内，标记为删除
+							if (permStartCol >= deleteStartCol && permEndCol <= deleteEndCol) {
+								return null // 标记为删除
+							}
+
+							// 权限区域完全在删除范围之前，保持不变
+							if (permEndCol < deleteStartCol) {
+								return permission
+							}
+
+							// 权限区域完全在删除范围之后，向左移动
+							if (permStartCol > deleteEndCol) {
+								return {
+									...permission,
+									c: permC - deleteCount,
+									cc: permCc - deleteCount,
+								}
+							}
+
+							// 权限区域与删除范围有部分交集
+							// 调整权限区域的边界
+							let newC = permC
+							let newCc = permCc
+
+							// 如果起始列在删除范围内，调整起始列
+							if (permC >= deleteStartCol && permC <= deleteEndCol) {
+								newC = deleteStartCol
+							} else if (permC > deleteEndCol) {
+								newC = permC - deleteCount
+							}
+
+							// 如果结束列在删除范围内，调整结束列
+							if (permCc >= deleteStartCol && permCc <= deleteEndCol) {
+								newCc = deleteStartCol - 1
+							} else if (permCc > deleteEndCol) {
+								newCc = permCc - deleteCount
+							}
+
+							// 如果调整后的范围无效，标记为删除
+							if (newC > newCc) {
+								return null
+							}
+
+							return {
+								...permission,
+								c: newC,
+								cc: newCc,
+							}
+						})
+						.filter((p) => p !== null) // 移除被删除的权限
 				}
 
 				// 🔍 调试日志：删除列后的权限
@@ -2225,6 +2259,10 @@ export const useTools = () => {
 					count: deleteCount,
 				})
 			}
+			setTimeout(() => {
+				// 使用 asyncUpdateConfig 统一处理所有配置更新（删除列操作）
+				asyncUpdateConfig(-deleteCount, null, c)
+			}, 100)
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {

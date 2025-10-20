@@ -786,6 +786,23 @@ const isLockedCell = () => {
 		}
 	}
 
+	// ✅ 检查 superPermissions（超级权限）
+	if (sheet.hooks.superPermissionsHook) {
+		const rowspan = endRow - startRow + 1
+		const colspan = endCol - startCol + 1
+		const superPermCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
+			startRow,
+			startCol,
+			rowspan,
+			colspan
+		)
+
+		if (superPermCheck.locked) {
+			lockedTimer = setTimeout(() => ElMessage.warning(superPermCheck.reason), 300)
+			return true
+		}
+	}
+
 	// 检查权限锁定
 	if (sheet.hooks.permissionsHook && sheet.config.synergy) {
 		const rowspan = endRow - startRow + 1
@@ -961,6 +978,21 @@ const onClickCell = (e, cell) => {
 
 	// 清除之前的定时器
 	clearTimeout(clickTimer)
+
+	// ✅ 检查 superPermissions（超级权限）- 点击时提示
+	if (sheet.hooks.superPermissionsHook) {
+		const superPermCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
+			cell.r,
+			cell.c,
+			1,
+			1
+		)
+
+		if (superPermCheck.locked) {
+			ElMessage.warning(superPermCheck.reason)
+			return
+		}
+	}
 
 	// 检查是否是双击（两次点击间隔小于300ms且点击同一个单元格）
 	if (now - lastClickTime < 300) {

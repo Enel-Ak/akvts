@@ -201,7 +201,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			'🔍 [DEBUG] EventClicked 事件触发，res.sheetId:',
 			res.sheetId,
 			'sheet.original.sheetId:',
-			sheet.original.sheetId
+			sheet.original.sheetId,
+			res
 		)
 
 		// ✅ 修复：isCurrentSheet 返回 true 表示"不是当前 sheet"
