@@ -1253,6 +1253,11 @@ export const useTools = () => {
 			return
 		}
 
+		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('row')) {
+			ElMessage.warning('该区域受权限保护，不可添加')
+			return
+		}
+
 		if (!addRowCount.value) {
 			addRowCount.value = 1
 		}
@@ -1436,7 +1441,9 @@ export const useTools = () => {
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
 			// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
 			if (!isFiltered) {
-				asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
+				setTimeout(() => {
+					asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
+				}, 100)
 			}
 
 			// 如果当前处于筛选状态，重新筛选以包含新行
@@ -1494,6 +1501,11 @@ export const useTools = () => {
 		try {
 			let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 			if (r === undefined) return
+
+			if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('row')) {
+				ElMessage.warning('该区域受权限保护，不可删除')
+				return
+			}
 
 			let deleteCount = rr - r + 1
 
@@ -1774,6 +1786,11 @@ export const useTools = () => {
 			return
 		}
 
+		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('col')) {
+			ElMessage.warning('该区域受权限保护，不可添加')
+			return
+		}
+
 		if (!addColumnCount.value) {
 			addColumnCount.value = 1
 		}
@@ -1914,7 +1931,9 @@ export const useTools = () => {
 			}
 
 			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
-			asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
+			setTimeout(() => {
+				asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
+			}, 100)
 
 			// 如果当前处于筛选状态，需要更新筛选数据
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
@@ -1985,6 +2004,11 @@ export const useTools = () => {
 	const removeColumn = async (_, save = true, asyncData = null, callback = null) => {
 		if (!sheet.config.removeColumn) {
 			ElMessage.warning('请先在配置中开启删除列功能')
+			return
+		}
+
+		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('col')) {
+			ElMessage.warning('该区域受权限保护，不可添加')
 			return
 		}
 

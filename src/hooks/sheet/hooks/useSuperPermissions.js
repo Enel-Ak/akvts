@@ -76,6 +76,140 @@ export const useSuperPermissions = () => {
 		return {locked: false, reason: '', range: null}
 	}
 
+	const checkSuperPermissionRange = (type) => {
+		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		const p = sheet.config.superPermissions
+		if (type === 'row') {
+			return p.some((permission) => {
+				const {r: startRow, rr: endRow} = permission
+				return r >= startRow && rr <= endRow
+			})
+		}
+
+		if (type === 'col') {
+			return p.some((permission) => {
+				const {c: startCol, cc: endCol} = permission
+				return c >= startCol && cc <= endCol
+			})
+		}
+	}
+
+	/**
+	 * ✅ 新增：判断整行是否被 superPermissions 覆盖
+	 * @param {number} row - 行索引
+	 * @returns {Object} {locked: boolean, ranges: Array} 是否被锁定及覆盖的权限区域
+	 */
+	const isRowCoveredBySuperPermission = (row) => {
+		const p = sheet.config.superPermissions
+		const coveredRanges = []
+
+		p.forEach((permission) => {
+			const {r: startRow, c: startCol, rr: endRow, cc: endCol} = permission
+			// 检查该行是否在权限区域的行范围内
+			if (row >= startRow && row <= endRow) {
+				coveredRanges.push(permission)
+			}
+		})
+
+		return {
+			locked: coveredRanges.length > 0,
+			ranges: coveredRanges,
+		}
+	}
+
+	/**
+	 * ✅ 新增：判断整列是否被 superPermissions 覆盖
+	 * @param {number} col - 列索引
+	 * @returns {Object} {locked: boolean, ranges: Array} 是否被锁定及覆盖的权限区域
+	 */
+	const isColCoveredBySuperPermission = (col) => {
+		const p = sheet.config.superPermissions
+		const coveredRanges = []
+
+		p.forEach((permission) => {
+			const {c: startCol, cc: endCol} = permission
+			// 检查该列是否在权限区域的列范围内
+			if (col >= startCol && col <= endCol) {
+				coveredRanges.push(permission)
+			}
+		})
+
+		return {
+			locked: coveredRanges.length > 0,
+			ranges: coveredRanges,
+		}
+	}
+
+	/**
+	 * ✅ 新增：判断行范围是否被 superPermissions 完全覆盖
+	 * @param {number} startRow - 起始行
+	 * @param {number} endRow - 结束行
+	 * @returns {Object} {fullyLocked: boolean, partiallyLocked: boolean, ranges: Array}
+	 */
+	const isRowRangeCoveredBySuperPermission = (startRow, endRow) => {
+		const p = sheet.config.superPermissions
+		const coveredRanges = []
+		let fullyLocked = false
+		let partiallyLocked = false
+
+		p.forEach((permission) => {
+			const {r: permStartRow, rr: permEndRow} = permission
+			// 检查是否有重叠
+			const hasOverlap = !(endRow < permStartRow || startRow > permEndRow)
+
+			if (hasOverlap) {
+				coveredRanges.push(permission)
+				partiallyLocked = true
+
+				// 检查是否完全覆盖
+				if (permStartRow <= startRow && permEndRow >= endRow) {
+					fullyLocked = true
+				}
+			}
+		})
+
+		return {
+			fullyLocked,
+			partiallyLocked,
+			ranges: coveredRanges,
+		}
+	}
+
+	/**
+	 * ✅ 新增：判断列范围是否被 superPermissions 完全覆盖
+	 * @param {number} startCol - 起始列
+	 * @param {number} endCol - 结束列
+	 * @returns {Object} {fullyLocked: boolean, partiallyLocked: boolean, ranges: Array}
+	 */
+	const isColRangeCoveredBySuperPermission = (startCol, endCol) => {
+		const p = sheet.config.superPermissions
+		const coveredRanges = []
+		let fullyLocked = false
+		let partiallyLocked = false
+
+		p.forEach((permission) => {
+			const {c: permStartCol, cc: permEndCol} = permission
+			// 检查是否有重叠
+			const hasOverlap = !(endCol < permStartCol || startCol > permEndCol)
+
+			if (hasOverlap) {
+				coveredRanges.push(permission)
+				partiallyLocked = true
+
+				// 检查是否完全覆盖
+				if (permStartCol <= startCol && permEndCol >= endCol) {
+					fullyLocked = true
+				}
+			}
+		})
+
+		return {
+			fullyLocked,
+			partiallyLocked,
+			ranges: coveredRanges,
+		}
+	}
+
 	/**
 	 * 获取所有 superPermission 区域（用于渲染高亮）
 	 * ✅ 修复问题2: 支持筛选状态下的行号转换
@@ -299,7 +433,13 @@ export const useSuperPermissions = () => {
 
 		return {
 			checkSuperPermission,
+			checkSuperPermissionRange,
 			getSuperPermissionRanges,
+			// ✅ 新增：行列覆盖检查方法
+			isRowCoveredBySuperPermission,
+			isColCoveredBySuperPermission,
+			isRowRangeCoveredBySuperPermission,
+			isColRangeCoveredBySuperPermission,
 			generateColor,
 			setSuperPermission,
 			removeSuperPermission,
