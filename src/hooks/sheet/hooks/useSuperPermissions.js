@@ -79,19 +79,22 @@ export const useSuperPermissions = () => {
 	const checkSuperPermissionRange = (type) => {
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		const p = sheet.config.superPermissions
-		if (type === 'row') {
-			return p.some((permission) => {
-				const {r: startRow, rr: endRow} = permission
-				return r >= startRow && rr <= endRow
-			})
-		}
+		if (p) {
+			if (type === 'row') {
+				return p.some((permission) => {
+					const {r: startRow, rr: endRow} = permission
+					return r >= startRow && rr <= endRow
+				})
+			}
 
-		if (type === 'col') {
-			return p.some((permission) => {
-				const {c: startCol, cc: endCol} = permission
-				return c >= startCol && cc <= endCol
-			})
+			if (type === 'col') {
+				return p.some((permission) => {
+					const {c: startCol, cc: endCol} = permission
+					return c >= startCol && cc <= endCol
+				})
+			}
 		}
+		return false
 	}
 
 	/**
