@@ -77,6 +77,7 @@ const defaultSheet = {
 			r: 0,
 			c: 0,
 		},
+
 		auth: 0, // 0 不设置权限, 1 每行独立, 2 每列独立, 3 单元格独立
 	},
 	history: null, // 历史记录
