@@ -860,10 +860,10 @@ export const useTools = () => {
 		}
 
 		// 处理所有行列格式的配置对象
-		loops(sheet.config.merged)
+		// loops(sheet.config.merged)
 		loops(sheet.config.locked)
 		loops(sheet.config.styled)
-		loops(sheet.config.formulaed)
+		// loops(sheet.config.formulaed)
 		// formulaMap 需要特殊处理，不能使用通用的 loops 函数
 
 		// 处理 rResize（行调整大小）
@@ -1438,14 +1438,6 @@ export const useTools = () => {
 			})
 			console.log('celldata 行数快照:', celldataSnapshot)
 
-			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
-			// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
-			if (!isFiltered) {
-				setTimeout(() => {
-					asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
-				}, 100)
-			}
-
 			// 如果当前处于筛选状态，重新筛选以包含新行
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
 				// 保存当前筛选条件
@@ -1481,6 +1473,14 @@ export const useTools = () => {
 					startIndex: insertRowIndex,
 					celldata: celldataArray, // ✅ 新增：包含 celldata
 				})
+
+				// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
+				// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
+				if (!isFiltered) {
+					setTimeout(() => {
+						asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
+					}, 100)
+				}
 			}
 
 			ElMessage.success(`添加 ${addRowCount.value} 行`)
@@ -1760,16 +1760,16 @@ export const useTools = () => {
 					startIndex: r,
 					count: deleteCount,
 				})
-			}
 
-			// 优化：延迟触发选区重新计算，避免立即卡顿
-			setTimeout(() => {
-				// 使用 asyncUpdateConfig 统一处理所有配置更新（删除操作）
-				asyncUpdateConfig(-deleteCount, r, null)
-				if (sheet.hooks?.selectionRangeHook?.refreshSelection) {
-					sheet.hooks.selectionRangeHook.refreshSelection()
-				}
-			}, 100)
+				// 优化：延迟触发选区重新计算，避免立即卡顿
+				setTimeout(() => {
+					// 使用 asyncUpdateConfig 统一处理所有配置更新（删除操作）
+					asyncUpdateConfig(-deleteCount, r, null)
+					if (sheet.hooks?.selectionRangeHook?.refreshSelection) {
+						sheet.hooks.selectionRangeHook.refreshSelection()
+					}
+				}, 100)
+			}
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
@@ -1930,11 +1930,6 @@ export const useTools = () => {
 				}
 			}
 
-			// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
-			setTimeout(() => {
-				asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
-			}, 100)
-
 			// 如果当前处于筛选状态，需要更新筛选数据
 			if (sheet.config.filtered && sheet.config.filtered.length > 0) {
 				// 更新筛选数据中的列数据，保持现有的筛选行数据
@@ -1991,6 +1986,11 @@ export const useTools = () => {
 					startIndex: insertColIndex,
 					celldata: celldataArray, // ✅ 新增：包含 celldata
 				})
+
+				// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
+				setTimeout(() => {
+					asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
+				}, 100)
 			}
 		} catch (error) {
 			console.error('添加列失败', error)
@@ -2282,11 +2282,11 @@ export const useTools = () => {
 					startIndex: c,
 					count: deleteCount,
 				})
+				setTimeout(() => {
+					// 使用 asyncUpdateConfig 统一处理所有配置更新（删除列操作）
+					asyncUpdateConfig(-deleteCount, null, c)
+				}, 100)
 			}
-			setTimeout(() => {
-				// 使用 asyncUpdateConfig 统一处理所有配置更新（删除列操作）
-				asyncUpdateConfig(-deleteCount, null, c)
-			}, 100)
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {

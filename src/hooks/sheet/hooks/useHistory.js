@@ -38,13 +38,17 @@ export const useHistory = () => {
 				styled: sheet.config.styled ? {...sheet.config.styled} : {},
 				merged: sheet.config.merged ? {...sheet.config.merged} : {},
 				locked: sheet.config.locked ? {...sheet.config.locked} : {},
-				// ✅ 修复: 保存权限配置，确保撤销操作时能够恢复权限区域
-				// 使用 JSON 序列化进行深拷贝，避免 structuredClone 无法克隆某些对象
 				deepPermissions: sheet.config.deepPermissions
 					? JSON.parse(JSON.stringify(sheet.config.deepPermissions))
 					: {},
 				superPermissions: sheet.config.superPermissions
 					? JSON.parse(JSON.stringify(sheet.config.superPermissions))
+					: {},
+				formulaed: sheet.config.formulaed
+					? JSON.parse(JSON.stringify(sheet.config.formulaed))
+					: {},
+				formulaMap: sheet.config.formulaMap
+					? JSON.parse(JSON.stringify(sheet.config.formulaMap))
 					: {},
 			}
 
@@ -311,7 +315,18 @@ export const useHistory = () => {
 
 						if (sheet.config.synergy) {
 							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id
+								sheet?.original?.sheetId || sheet.id,
+								JSON.stringify({
+									merged: sheet.config.merged,
+									locked: sheet.config.locked,
+									styled: sheet.config.styled,
+									formulaed: sheet.config.formulaed,
+									formulaMap: sheet.config.formulaMap,
+									rResize: sheet.config.rResize,
+									cResize: sheet.config.cResize,
+									deepPermissions: sheet.config.deepPermissions,
+									superPermissions: sheet.config.superPermissions,
+								})
 							)
 						}
 						await nextTick()
@@ -347,7 +362,18 @@ export const useHistory = () => {
 						// 协同通知:撤销添加列
 						if (sheet.config.synergy) {
 							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id
+								sheet?.original?.sheetId || sheet.id,
+								JSON.stringify({
+									merged: sheet.config.merged,
+									locked: sheet.config.locked,
+									styled: sheet.config.styled,
+									formulaed: sheet.config.formulaed,
+									formulaMap: sheet.config.formulaMap,
+									rResize: sheet.config.rResize,
+									cResize: sheet.config.cResize,
+									deepPermissions: sheet.config.deepPermissions,
+									superPermissions: sheet.config.superPermissions,
+								})
 							)
 						}
 						await nextTick()
@@ -359,7 +385,6 @@ export const useHistory = () => {
 				}
 
 				// 撤销删除行
-
 				if (state.removeRow && state.removeRow.size > 0) {
 					try {
 						// ✅ 修复：正确处理多行删除的撤销
@@ -429,7 +454,18 @@ export const useHistory = () => {
 						// 协同通知:撤销删除行
 						if (sheet.config.synergy) {
 							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id
+								sheet?.original?.sheetId || sheet.id,
+								JSON.stringify({
+									merged: sheet.config.merged,
+									locked: sheet.config.locked,
+									styled: sheet.config.styled,
+									formulaed: sheet.config.formulaed,
+									formulaMap: sheet.config.formulaMap,
+									rResize: sheet.config.rResize,
+									cResize: sheet.config.cResize,
+									deepPermissions: sheet.config.deepPermissions,
+									superPermissions: sheet.config.superPermissions,
+								})
 							)
 						}
 					} catch (error) {
@@ -508,7 +544,18 @@ export const useHistory = () => {
 						// 协同通知:撤销删除列
 						if (sheet.config.synergy) {
 							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id
+								sheet?.original?.sheetId || sheet.id,
+								JSON.stringify({
+									merged: sheet.config.merged,
+									locked: sheet.config.locked,
+									styled: sheet.config.styled,
+									formulaed: sheet.config.formulaed,
+									formulaMap: sheet.config.formulaMap,
+									rResize: sheet.config.rResize,
+									cResize: sheet.config.cResize,
+									deepPermissions: sheet.config.deepPermissions,
+									superPermissions: sheet.config.superPermissions,
+								})
 							)
 						}
 					} catch (error) {
@@ -523,12 +570,18 @@ export const useHistory = () => {
 					)
 				}
 
+				sheet.history.delete(count)
 				// 协同通知:同步配置更新
-				if (sheet.config.synergy) {
+				if (
+					sheet.config.synergy &&
+					!state.addRow &&
+					!state.addCol &&
+					state.removeRow.size === 0 &&
+					state.removeCol.size === 0
+				) {
 					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 				}
 
-				sheet.history.delete(count)
 				callback?.()
 			} catch (error) {
 				console.error('处理数据时出错:', error)

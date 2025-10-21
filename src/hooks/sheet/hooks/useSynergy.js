@@ -147,6 +147,7 @@ export const useSynergy = () => {
 
 		signalr.invoke('event-cell', ...args).then(() => {
 			console.log('invoke event-cell')
+			sheet.state.loading = false
 		})
 	}
 
@@ -238,6 +239,7 @@ export const useSynergy = () => {
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
+			// sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 			sheet.state.loading = false
 		})
 	}

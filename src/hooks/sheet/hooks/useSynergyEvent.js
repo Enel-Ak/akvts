@@ -197,42 +197,25 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.EventClicked, (res) => {
-		console.log(
-			'🔍 [DEBUG] EventClicked 事件触发，res.sheetId:',
-			res.sheetId,
-			'sheet.original.sheetId:',
-			sheet.original.sheetId,
-			res
-		)
-
-		// ✅ 修复：isCurrentSheet 返回 true 表示"不是当前 sheet"
-		// 所以这里的逻辑是：如果不是当前 sheet，就跳过
 		if (isCurrentSheet(res.sheetId)) {
-			console.log('⚠️ [WARNING] 跳过：不是当前 sheet 的事件')
 			return
 		}
-		console.log('✅ [接收] EventCell 接收到事件（是当前 sheet）:', res)
 
 		// 处理配置同步
 		if (res.config) {
 			const config = JSON.parse(res.config)
 			const configKeys = Object.keys(config)
-			console.log('EventCell 配置键:', configKeys)
+			console.log(
+				'EventCell 配置键:',
+				configKeys,
+				sheet.config,
+				JSON.parse(res.config),
+				config
+			)
 
 			configKeys.forEach((key) => {
-				// Object.assign(sheet.config[key], config[key])
 				sheet.config[key] = config[key]
 			})
-
-			// 同步 permissions 数据
-			if (configKeys.includes('permissions')) {
-				console.log('接收到 permissions 配置更新:', config.permissions)
-			}
-
-			// ✅ 同步 deepPermissions 数据
-			if (configKeys.includes('deepPermissions')) {
-				console.log('✅ 接收到 deepPermissions 配置更新:', config.deepPermissions)
-			}
 
 			if (configKeys.includes('formulaed')) {
 				// 协同同步时，需要清除所有公式单元格的计算值，然后重新计算
@@ -255,17 +238,14 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			}
 
 			if (configKeys.includes('merged')) {
-				console.log('接收到 merged 配置更新:', config.merged)
-				console.log('更新前的 sheet.config.merged:', sheet.config.merged)
 				sheet.hooks.mergeHook.refreshMerge()
-				console.log('更新后的 sheet.config.merged:', sheet.config.merged)
+
 				// 强制触发界面重新渲染，确保合并单元格状态变化立即生效
 				setTimeout(() => {
 					// 触发重新渲染以更新合并单元格的显示状态
 					if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
 						// 通过更新一个无关紧要的状态来触发重新渲染
 						sheet.state.lastMergeUpdate = Date.now()
-						console.log('协同接收：触发界面重新渲染')
 					}
 				}, 0)
 			}
@@ -286,11 +266,6 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			)
 
 			if (hasFormulaRelatedUpdate && Object.keys(sheet.config.formulaed || {}).length > 0) {
-				console.log(
-					'检测到公式相关配置更新，触发公式重新计算:',
-					configKeys.filter((key) => formulaRelatedKeys.includes(key))
-				)
-
 				// 清除所有公式单元格的计算值，确保重新计算
 				const formulaedKeys = Object.keys(sheet.config.formulaed || {})
 				formulaedKeys.forEach((key) => {
@@ -312,27 +287,12 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			}
 		}
 
-		// 更新在线用户的选区信息（无论是否有 config 都需要更新）
-		console.log('🔍 [DEBUG] 检查 row/col 信息:', {
-			hasRow: res.hasOwnProperty('row'),
-			hasCol: res.hasOwnProperty('col'),
-			row: res.row,
-			col: res.col,
-		})
-
 		if (
 			res.hasOwnProperty('row') &&
 			res.hasOwnProperty('col') &&
 			res.row >= 0 &&
 			res.col >= 0
 		) {
-			console.log('✅ [接收] EventCell 更新在线用户选区:', {
-				userId: res[sheet.props.userKeys[0]],
-				row: res.row,
-				col: res.col,
-				rowEnd: res.rowEnd,
-				colEnd: res.colEnd,
-			})
 			useSynergyEvent.groupUsers(res)
 		} else {
 			console.warn('⚠️ [WARNING] EventCell 缺少 row/col 信息，无法更新在线用户选区', res)
@@ -608,7 +568,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.OperationReverted, async (res) => {
-		console.log('OperationReverted 接收到撤销通知:', res)
+		console.log('OperationReverted 接收到撤销通知:', res, isCurrentSheet(res.sheetId))
 
 		if (isCurrentSheet(res.sheetId)) {
 			return
@@ -667,104 +627,9 @@ export const useSynergyEvent = (sheetId, signalr) => {
 				}
 			}
 
-			// 处理配置恢复 (参考 EventClicked 事件处理器)
-			if (res.config) {
-				try {
-					const config = JSON.parse(res.config)
-					const configKeys = Object.keys(config)
-					console.log('OperationReverted 恢复配置:', configKeys)
-
-					configKeys.forEach((key) => {
-						sheet.config[key] = config[key]
-					})
-
-					// // 如果包含公式配置,需要清除计算值并重新计算
-					// if (configKeys.includes('formulaed')) {
-					// 	const formulaedKeys = Object.keys(config.formulaed || {})
-					// 	formulaedKeys.forEach((key) => {
-					// 		const [r, c] = key.split('-').map(Number)
-					// 		const formula = config.formulaed[key]
-					// 		if (formula && formula.startsWith('=')) {
-					// 			// 清除计算值，保留公式
-					// 			if (
-					// 				sheet.celldata.has(r) &&
-					// 				sheet.celldata.get(r)[c] !== undefined
-					// 			) {
-					// 				sheet.celldata.get(r)[c] = formula
-					// 			}
-					// 		}
-					// 	})
-
-					// 	// 重新计算所有公式
-					// 	setTimeout(() => {
-					// 		sheet.hooks.editHook.setFormulaValue()
-					// 	}, 0)
-					// }
-
-					// 如果包含合并单元格配置,需要刷新合并状态
-					if (configKeys.includes('merged')) {
-						sheet.hooks.mergeHook.refreshMerge()
-						// 强制触发界面重新渲染
-						setTimeout(() => {
-							if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
-								sheet.state.lastMergeUpdate = Date.now()
-							}
-						}, 0)
-					}
-
-					// 只有在特定配置更新时才触发公式重新计算
-					// permissions 和 superPermissions 的更新不应该触发公式重新计算
-					const formulaRelatedKeys = ['formulaed', 'formulaMap']
-					const hasFormulaRelatedUpdate = configKeys.some((key) =>
-						formulaRelatedKeys.includes(key)
-					)
-
-					if (
-						hasFormulaRelatedUpdate &&
-						Object.keys(sheet.config.formulaed || {}).length > 0
-					) {
-						console.log(
-							'OperationReverted 检测到公式相关配置更新，触发公式重新计算:',
-							configKeys.filter((key) => formulaRelatedKeys.includes(key))
-						)
-
-						const formulaedKeys = Object.keys(sheet.config.formulaed || {})
-						formulaedKeys.forEach((key) => {
-							const [r, c] = key.split('-').map(Number)
-							const formula = sheet.config.formulaed[key]
-							if (formula && formula.startsWith('=')) {
-								if (
-									sheet.celldata.has(r) &&
-									sheet.celldata.get(r)[c] !== undefined
-								) {
-									sheet.celldata.get(r)[c] = formula
-								}
-							}
-						})
-
-						setTimeout(() => {
-							sheet.hooks.editHook.setFormulaValue()
-						}, 100)
-					} else if (configKeys.length > 0) {
-						console.log(
-							'OperationReverted 检测到非公式相关配置更新，跳过公式重新计算:',
-							configKeys
-						)
-					}
-				} catch (error) {
-					console.error('OperationReverted 解析配置失败:', error)
-				}
-			}
-
 			// 处理单元格数据恢复 (参考 CellDataChanged 事件处理器)
 			if (res.cellData && Array.isArray(res.cellData)) {
 				try {
-					console.log(
-						'OperationReverted 恢复单元格数据:',
-						res.cellData.length,
-						'个单元格'
-					)
-
 					// celldata 格式: [[行索引, 列索引, 值], [行索引, 列索引, 值], ...]
 					res.cellData.forEach(([row, col, value]) => {
 						// 更新 DOM 元素
@@ -781,50 +646,60 @@ export const useSynergyEvent = (sheetId, signalr) => {
 							sheet.celldata.set(row, [])
 						}
 
-						// 使用 setTimeout 确保在正确的时机更新
-						setTimeout(() => {
-							// 使用 editHook 的方法来正确设置单元格值和行高
-							sheet.hooks.editHook.setCellValue(row, col, value)
-							sheet.hooks.editHook.setRowHeight(row, col, false)
-
-							// 检查是否有公式引用了这个单元格
-							let needsFormulaRecalculation = false
-
-							// 遍历所有公式的引用映射
-							Object.keys(sheet.config.formulaMap || {}).forEach((formulaKey) => {
-								const references = sheet.config.formulaMap[formulaKey] || []
-								const isReferenced = references.some(
-									(ref) => ref.r === row && ref.c === col
-								)
-
-								if (isReferenced) {
-									needsFormulaRecalculation = true
-									// 清除引用这个单元格的公式的计算值
-									const [formulaRow, formulaCol] = formulaKey
-										.split('-')
-										.map(Number)
-									const formula = sheet.config.formulaed[formulaKey]
-									if (formula && formula.startsWith('=')) {
-										if (
-											sheet.celldata.has(formulaRow) &&
-											sheet.celldata.get(formulaRow)[formulaCol] !== undefined
-										) {
-											sheet.celldata.get(formulaRow)[formulaCol] = formula
-										}
-									}
-								}
-							})
-
-							// 如果有公式引用了这个单元格，触发重新计算
-							if (needsFormulaRecalculation) {
-								setTimeout(() => {
-									sheet.hooks.editHook.setFormulaValue()
-								}, 50)
-							}
-						}, 120)
+						sheet.celldata.get(row)[col] = value
 					})
 				} catch (error) {
 					console.error('OperationReverted 恢复单元格数据失败:', error)
+				}
+			}
+
+			// 处理配置恢复 (参考 EventClicked 事件处理器)
+			if (res.config) {
+				try {
+					const config = JSON.parse(res.config)
+					const configKeys = Object.keys(config)
+					console.log('OperationReverted 恢复配置:', configKeys, config)
+
+					configKeys.forEach((key) => {
+						sheet.config[key] = config[key]
+					})
+
+					// 如果包含公式配置,需要清除计算值并重新计算
+					if (configKeys.includes('formulaed')) {
+						const formulaedKeys = Object.keys(config.formulaed || {})
+
+						formulaedKeys.forEach((key) => {
+							const [r, c] = key.split('-').map(Number)
+							const formula = config.formulaed[key]
+							if (formula && formula.startsWith('=')) {
+								// 清除计算值，保留公式
+								if (
+									sheet.celldata.has(r) &&
+									sheet.celldata.get(r)[c] !== undefined
+								) {
+									sheet.celldata.get(r)[c] = formula
+								}
+							}
+						})
+
+						// 重新计算所有公式
+						setTimeout(() => {
+							sheet.hooks.editHook.setFormulaValue()
+						}, 0)
+					}
+
+					// 如果包含合并单元格配置,需要刷新合并状态
+					if (configKeys.includes('merged')) {
+						sheet.hooks.mergeHook.refreshMerge()
+						// 强制触发界面重新渲染
+						setTimeout(() => {
+							if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+								sheet.state.lastMergeUpdate = Date.now()
+							}
+						}, 0)
+					}
+				} catch (error) {
+					console.error('OperationReverted 解析配置失败:', error)
 				}
 			}
 		} catch (error) {
