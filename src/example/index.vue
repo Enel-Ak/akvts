@@ -1,7 +1,9 @@
 <script setup>
 import {onMounted, ref, computed} from 'vue'
 import {useKeepAlive} from '@/store/useKeepAlive'
+import {useGlobal} from '@/store/useGlobal'
 
+const globalStore = useGlobal()
 const keepAliveStore = useKeepAlive()
 const includeKeepAlive = computed(() => keepAliveStore.include)
 const containerExpand = ref(true)
@@ -93,6 +95,11 @@ onMounted(() => {
 
 const containerModel = ref('hbf') // habf, ahbf, hbf
 const asideWidth = ref(170)
+
+const cancelItem = () => {
+	console.log('cancelItem')
+	globalStore.setHasLeave(true)
+}
 </script>
 <template>
 	<Akvts :key="Date.now()" code="jLV4CS$&&u98$h"></Akvts>
@@ -131,6 +138,7 @@ const asideWidth = ref(170)
 				:height="30"
 				:navigator="nav"
 				:simple="containerModel === 'hbf'"
+				@cancel-item="cancelItem"
 			></Labels>
 		</template>
 

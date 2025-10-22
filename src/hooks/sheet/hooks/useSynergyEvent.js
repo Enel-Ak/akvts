@@ -558,9 +558,9 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 	signalr.on(EventMap.UserLeaved, (res) => {
 		console.log('OnUserLeaved', res)
-		useSynergyEvent.removeGroupUser(res.userId)
+		// useSynergyEvent.removeGroupUser(res.userId)
 		sheetStore.removeOnlineUser(res.userId)
-
+		console.log('OnUserLeaved', sheetStore.getOnline)
 		// 清理离开用户的权限锁定
 		if (sheet.hooks.permissionsHook) {
 			sheet.hooks.permissionsHook.releasePermissions(res.userId)

@@ -1,8 +1,10 @@
 <script setup name="airsheet">
 import {onActivated, ref, onMounted, watch, nextTick, toRaw, triggerRef, onDeactivated} from 'vue'
 import {useRoute} from 'vue-router'
+import {useGlobal} from '@/store/useGlobal'
 import axios from 'axios'
 
+const globalStore = useGlobal()
 const route = useRoute()
 const sheetRef = ref()
 const config = ref({
@@ -1171,7 +1173,7 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://10.110.10.113:9527/signalr-hubs/onlinetable')
+const api = ref('http://10.110.10.125:9527/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA5NTg1NTEsImV4cCI6MTc2MTEzMDU1MSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MDk1ODU1MCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWQzMmQtYmEzYi02MmM4ZDgyODgzMTMiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYyLWJkZTMtZTY0ZS02MWExZjNhZWM5OTAiLCJpYXQiOjE3NjA5NTg1NTEsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.euSGcgEfru1dA0gTVQM5NdvoUwN3RVwD6UvYVDGn9kn30l8BIyXjJW4twnWA2KlWieAJfCeO2vj1v8qvut0gDVsHTQ_9KuWQYeh4jL_JuALzDfuOzwd7-vjQ2gHy5TZRNwm1FANGfqXyFXiSVirLg_lgKeJEhESvx4HQstYg0AhiHwy3rzon-zRBjbhea_wa-tvN3j5cfzArgFCxQwj9woJNyH-_GTdJQBNIFoCp9fSntlMv2oF-iGt166B0mqdvfHxjDcfnUi5XZeTcgb3fOuvUhZK7Oej8zDkUo3GjsL0u9Z77k6QRGbDexAMP7AcO5o7itqxRQ86yMqkTBlIMmw'
 	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA5NTg1MTQsImV4cCI6MTc2MTEzMDUxNCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MDk1ODUxMywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyJsZWRnZXItc3VwZXItYWRtaW4iLCLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjA5NTg1MTQsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.L9L2lrupzmupS9lUg_SoPFCVcSqLeB77Ar6PNB1h3melT8UdBRTU93BKsw_qsWDtw69QE2YabTtiiuFPVCp1tmG5h9orrX7LXEqWygI9zTCMXMeq_oinYWnYHd4umgYw6EVJMk4MJ_QfXnoj6DJeFtjjt27i2Gw4dLz6RueoQeFs5NJIOsCfCynzbGKpByD9fvOIFnWtDM0MDW8ySGCQ0VdeQ5GXK3Baa8v9po-TZEmMtUbHZZFPZYEOuRoM70Yo4AXiMyjYi3yjwI7si9BKZLf7z5-vy4VWkvz1S03CympP-rqgnL-PjquoHm98OzPvQYsQLIu9CFjf0mAT4t1qhQ'
@@ -1185,7 +1187,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://10.110.10.113:9527/api/online-table/table/cell-data',
+			url: 'http://10.110.10.125:9527/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				tableId: tableId.value,
@@ -1224,7 +1226,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://10.110.10.113:9527/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://10.110.10.125:9527/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1395,11 +1397,22 @@ watch(
 	}
 )
 
+watch(
+	() => globalStore.hasLeave,
+	(value) => {
+		if (value) {
+			if (value && sheetRef.value) {
+				sheetRef.value.signalrStop()
+			}
+		}
+	}
+)
+
 onActivated(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.113:9527/api/online-table/table/3a1d1802-63ee-7c48-fa56-1844d6953165?autoCreate=true',
+			url: 'http://10.110.10.125:9527/api/online-table/table/3a1d1802-63ee-7c48-fa56-1844d6953165?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1415,7 +1428,7 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://10.110.10.113:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
+			api.value = `http://10.110.10.125:9527/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id

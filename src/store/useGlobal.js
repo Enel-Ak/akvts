@@ -17,6 +17,7 @@ export const useGlobal = defineStore('useGlobal', {
 				err: 0,
 			},
 			include: [],
+			hasLeave: false,
 		}
 	},
 	getters: {
@@ -71,6 +72,12 @@ export const useGlobal = defineStore('useGlobal', {
 		},
 		setExclude(name) {
 			this.include = this.include.filter((item) => item !== name)
+		},
+		setHasLeave(bool) {
+			this.hasLeave = bool
+			setTimeout(() => {
+				this.hasLeave = false
+			}, 250)
 		},
 	},
 })
