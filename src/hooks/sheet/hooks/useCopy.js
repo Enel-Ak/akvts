@@ -153,6 +153,10 @@ export function useCopy() {
 
 	// 处理剪贴板数据
 	const processClipboardData = async ({html, text, isHtml}) => {
+		sheet.state.loading = true
+		sheet.state.msg = '正在处理粘贴数据...'
+		sheet.state.progress = -1
+
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
 
@@ -347,13 +351,6 @@ export function useCopy() {
 
 			// 协同编辑: 同步单元格变更到其他用户
 			if (sheet.config.synergy && cellChanges.length > 0) {
-				console.log('粘贴操作协同同步:', {
-					变更数量: cellChanges.length,
-					起始位置: `${baseRow},${baseCol}`,
-				})
-				sheet.state.loading = true
-				sheet.state.msg = '正在处理粘贴数据...'
-
 				await Promise.all(
 					cellChanges.map((change) => {
 						return sheet.hooks.synergyHook.changeCell({
@@ -365,8 +362,6 @@ export function useCopy() {
 						})
 					})
 				)
-
-				sheet.state.loading = false
 			}
 
 			// ✅ 修复: 使用 requestAnimationFrame 确保数据更新完成后再更新 deepPermissions
@@ -467,9 +462,13 @@ export function useCopy() {
 		}
 
 		// ✅ 修复: 所有操作完成后显示成功提示
+		sheet.state.loading = false
 		useDebounce(
 			() => {
 				ElMessage.success('粘贴成功')
+				if (sheet.config.synergy) {
+					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
+				}
 			},
 			100,
 			'airSheetPaste'
@@ -702,7 +701,7 @@ export function useCopy() {
 	// 点击粘贴时处理数据
 	const paste = async () => {
 		const text = await navigator.clipboard.readText()
-		processClipboardData({text, isHtml: false})
+		await processClipboardData({text, isHtml: false})
 	}
 
 	const refreshSheet = (id) => {

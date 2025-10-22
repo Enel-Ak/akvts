@@ -147,7 +147,7 @@ export const useSynergy = () => {
 
 		signalr.invoke('event-cell', ...args).then(() => {
 			console.log('invoke event-cell')
-			sheet.state.loading = false
+			// sheet.state.loading = false
 		})
 	}
 
@@ -162,7 +162,7 @@ export const useSynergy = () => {
 			if (!res.status) {
 				ElMessage.error(res.message)
 			}
-			sheet.state.loading = false
+			// sheet.state.loading = false
 		})
 
 		return Promise.resolve()
