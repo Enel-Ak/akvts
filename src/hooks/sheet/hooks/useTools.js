@@ -990,232 +990,136 @@ export const useTools = () => {
 		// 处理 formulaMap（公式引用映射）- 需要特殊处理
 		const formulaMapKeys = Object.keys(sheet.config.formulaMap)
 		if (formulaMapKeys.length > 0) {
-			const formulaMapUpdates = []
-			const formulaMapDeletes = []
-
+			// 处理 formulaMap（公式引用映射）- 需要特殊处理
 			formulaMapKeys.forEach((key) => {
 				const [r, c] = key.split('-').map(Number)
-				let shouldDelete = false
-				let curRow = r
-				let curCol = c
 
-				// 处理行操作 - 更新公式单元格的位置
-				if (row !== null) {
-					if (isDelete) {
-						if (r >= row && r < row + absCount) {
-							shouldDelete = true
-						} else if (r >= row + absCount) {
-							curRow = r - absCount
-						}
-					} else {
-						if (r >= row) {
-							curRow = r + count
-						}
-					}
-				}
+				const formula = sheet.config.formulaed[key]
+				if (formula && formula.startsWith('=')) {
+					// 计算公式单元格的新位置
+					let newRow = r
+					let newCol = c
+					let needsPositionUpdate = false
 
-				// 处理列操作 - 更新公式单元格的位置
-				if (col !== null) {
-					if (isDelete) {
-						if (c >= col && c < col + absCount) {
-							shouldDelete = true
-						} else if (c >= col + absCount) {
-							curCol = c - absCount
-						}
-					} else {
-						if (c >= col) {
-							curCol = c + count
+					// 处理行操作：更新公式单元格的行坐标
+					if (row !== null) {
+						needsPositionUpdate = true
+						if (isDelete) {
+							// 删除操作
+							if (r >= row && r < row + absCount) {
+								// 公式单元格在被删除范围内，删除该公式
+								delete sheet.config.formulaMap[key]
+								delete sheet.config.formulaed[key]
+								return
+							} else if (r >= row + absCount) {
+								// 公式单元格在被删除范围之后，向前移动
+								newRow = r - absCount
+							}
+						} else {
+							// 添加操作
+							if (r >= row) {
+								newRow = r + count
+							}
 						}
 					}
-				}
 
-				if (shouldDelete) {
-					formulaMapDeletes.push(key)
-				} else {
-					// 更新公式单元格的位置键
-					const newKey = `${curRow}-${curCol}`
-
-					// 更新公式引用的单元格位置
-					const updatedReferences = sheet.config.formulaMap[key]
-						.map((ref) => {
-							let newRefRow = ref.r
-							let newRefCol = ref.c
-							let isRefDeleted = false
-
-							// 处理行操作对引用单元格的影响
-							if (row !== null) {
-								if (isDelete) {
-									if (ref.r >= row && ref.r < row + absCount) {
-										// 被引用的单元格被删除了
-										isRefDeleted = true
-									} else if (ref.r >= row + absCount) {
-										newRefRow = ref.r - absCount
-									}
-								} else {
-									if (ref.r >= row) {
-										newRefRow = ref.r + count
-									}
-								}
+					// 处理列操作：更新公式单元格的列坐标
+					if (col !== null) {
+						needsPositionUpdate = true
+						if (isDelete) {
+							// 删除操作
+							if (c >= col && c < col + absCount) {
+								// 公式单元格在被删除范围内，删除该公式
+								delete sheet.config.formulaMap[key]
+								delete sheet.config.formulaed[key]
+								return
+							} else if (c >= col + absCount) {
+								// 公式单元格在被删除范围之后，向左移动
+								newCol = c - absCount
 							}
-
-							// 处理列操作对引用单元格的影响
-							if (col !== null) {
-								if (isDelete) {
-									if (ref.c >= col && ref.c < col + absCount) {
-										// 被引用的单元格被删除了
-										isRefDeleted = true
-									} else if (ref.c >= col + absCount) {
-										newRefCol = ref.c - absCount
-									}
-								} else {
-									if (ref.c >= col) {
-										newRefCol = ref.c + count
-									}
-								}
+						} else {
+							// 添加操作
+							if (c >= col) {
+								newCol = c + count
 							}
-
-							// 如果引用的单元格被删除，返回null，稍后过滤掉
-							if (isRefDeleted) {
-								return null
-							}
-
-							// 更新引用的range信息
-							const updatedRange = {
-								...ref.range,
-								start: {row: newRefRow, col: newRefCol},
-								end: {row: newRefRow, col: newRefCol},
-							}
-
-							return {
-								r: newRefRow,
-								c: newRefCol,
-								range: updatedRange,
-							}
-						})
-						.filter((ref) => ref !== null) // 过滤掉被删除的引用
-
-					formulaMapUpdates.push({
-						oldKey: key,
-						newKey: newKey,
-						value: updatedReferences,
-					})
-				}
-			})
-
-			// 批量删除和更新
-			formulaMapDeletes.forEach((key) => {
-				delete sheet.config.formulaMap[key]
-				// 同时删除对应的公式
-				delete sheet.config.formulaed[key]
-			})
-
-			formulaMapUpdates.forEach(({oldKey, newKey, value}) => {
-				sheet.config.formulaMap[newKey] = value
-
-				// 如果公式单元格位置发生了变化，需要更新 formulaed
-				if (oldKey !== newKey) {
-					// 移动公式到新位置
-					if (sheet.config.formulaed[oldKey]) {
-						sheet.config.formulaed[newKey] = sheet.config.formulaed[oldKey]
-						delete sheet.config.formulaed[oldKey]
-					}
-					delete sheet.config.formulaMap[oldKey]
-				}
-
-				// 根据更新后的 formulaMap 重建公式字符串
-				if (value.length > 0 && sheet.config.formulaed[newKey]) {
-					const currentFormula = sheet.config.formulaed[newKey]
-					// 提取公式函数名（如 SUM, AVERAGE 等）
-					const formulaMatch = currentFormula.match(/^=([A-Z]+)\(/)
-					if (formulaMatch) {
-						const functionName = formulaMatch[1]
-						// 根据 formulaMap 重建参数列表
-						const cellRefs = value.map((ref) => {
-							const colStr = convertTitle(ref.c)
-							const rowStr = (ref.r + 1).toString()
-							return colStr + rowStr
-						})
-						// 重建公式
-						const newFormula = `=${functionName}(${cellRefs.join(',')})`
-
-						// 调试信息（可通过环境变量控制）
-						if (process.env.NODE_ENV === 'development' || sheet.config.debug) {
-							console.log('公式重建:', {
-								key: newKey,
-								oldFormula: currentFormula,
-								newFormula: newFormula,
-								formulaMapRefs: value,
-								cellRefs: cellRefs,
-							})
-						}
-
-						sheet.config.formulaed[newKey] = newFormula
-
-						// 同时更新 celldata 中的公式
-						const [r, c] = newKey.split('-').map(Number)
-						if (sheet.celldata.has(r)) {
-							if (!sheet.celldata.get(r)) {
-								sheet.celldata.set(r, [])
-							}
-							sheet.celldata.get(r)[c] = newFormula
 						}
 					}
-				}
-			})
-		}
 
-		// 处理公式单元格的引用更新和计算值清除
-		const formulaedKeys = Object.keys(sheet.config.formulaed)
-		if (formulaedKeys.length > 0) {
-			// 注意：不再使用 updateCellReferencesInFormula 进行二次更新
-			// 因为 formulaMap 的处理已经正确更新了公式字符串
-			// 避免双重更新导致的不一致问题
+					// 如果公式单元格位置需要更新
+					if (needsPositionUpdate && (newRow !== r || newCol !== c)) {
+						const newKey = `${newRow}-${newCol}`
 
-			// 对于没有 formulaMap 的公式（如手动输入的公式），仍需要更新引用
-			formulaedKeys.forEach((key) => {
-				// 只有当该公式没有对应的 formulaMap 时，才使用字符串替换方式更新
-				if (!sheet.config.formulaMap[key]) {
-					const formula = sheet.config.formulaed[key]
-					if (formula && formula.startsWith('=')) {
+						// 修复：传入正确的操作位置参数（row, col），而不是公式单元格的坐标（r, c）
 						const updatedFormula = updateCellReferencesInFormula(
 							formula,
 							row,
 							col,
 							count
 						)
-						if (updatedFormula !== formula) {
-							sheet.config.formulaed[key] = updatedFormula
-							// 同时更新 celldata 中的公式
-							const [r, c] = key.split('-').map(Number)
-							if (sheet.celldata.has(r)) {
-								if (!sheet.celldata.get(r)) {
-									sheet.celldata.set(r, [])
+
+						sheet.config.formulaed[newKey] = updatedFormula
+						sheet.config.formulaMap[newKey] = sheet.config.formulaMap[key]
+							.map((item) => {
+								let refRow = item.r
+								let refCol = item.c
+
+								// 处理行操作对引用单元格的影响
+								if (row !== null) {
+									if (isDelete) {
+										// 删除操作
+										if (item.r >= row && item.r < row + absCount) {
+											// 引用的单元格被删除了，返回 null 标记为删除
+											return null
+										} else if (item.r >= row + absCount) {
+											// 引用的单元格在被删除范围之后，向前移动
+											refRow = item.r - absCount
+										}
+									} else {
+										// 添加操作
+										if (item.r >= row) {
+											refRow = item.r + count
+										}
+									}
 								}
-								sheet.celldata.get(r)[c] = updatedFormula
-							}
-						}
+
+								// 处理列操作对引用单元格的影响
+								if (col !== null) {
+									if (isDelete) {
+										// 删除操作
+										if (item.c >= col && item.c < col + absCount) {
+											// 引用的单元格被删除了，返回 null 标记为删除
+											return null
+										} else if (item.c >= col + absCount) {
+											// 引用的单元格在被删除范围之后，向左移动
+											refCol = item.c - absCount
+										}
+									} else {
+										// 添加操作
+										if (item.c >= col) {
+											refCol = item.c + count
+										}
+									}
+								}
+
+								return {
+									r: refRow,
+									c: refCol,
+									range: parseCellRange(`${refRow}-${refCol}`),
+								}
+							})
+							.filter((item) => item !== null) // 过滤掉被删除的引用
+
+						delete sheet.config.formulaMap[key]
+						delete sheet.config.formulaed[key]
 					}
 				}
 			})
 
-			// 清除所有公式单元格的计算值，保留公式
-			formulaedKeys.forEach((key) => {
-				const [r, c] = key.split('-').map(Number)
-				if (sheet.celldata.has(r) && sheet.celldata.get(r)[c] !== undefined) {
-					const formula = sheet.config.formulaed[key]
-					if (formula && formula.startsWith('=')) {
-						sheet.celldata.get(r)[c] = formula
-					}
-				}
-			})
-
-			// 重新计算所有公式（防止重复触发）
 			if (sheet.hooks.editHook && sheet.hooks.editHook.setFormulaValue) {
 				// 清除之前的计算任务，避免重复计算
 				if (sheet.state.formulaRecalcTimer) {
 					clearTimeout(sheet.state.formulaRecalcTimer)
 				}
-
 				sheet.state.formulaRecalcTimer = setTimeout(() => {
 					sheet.hooks.editHook.setFormulaValue()
 					sheet.state.formulaRecalcTimer = null
