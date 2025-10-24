@@ -991,6 +991,11 @@ export const useTools = () => {
 		const formulaMapKeys = Object.keys(sheet.config.formulaMap)
 		if (formulaMapKeys.length > 0) {
 			// 处理 formulaMap（公式引用映射）- 需要特殊处理
+			// 使用临时对象收集所有更新，避免在迭代过程中覆盖数据
+			const formulaUpdates = {} // 存储新的公式数据
+			const formulaedUpdates = {} // 存储新的公式字符串
+			const keysToDelete = new Set() // 存储需要删除的旧 key
+
 			formulaMapKeys.forEach((key) => {
 				const [r, c] = key.split('-').map(Number)
 
@@ -1008,8 +1013,7 @@ export const useTools = () => {
 							// 删除操作
 							if (r >= row && r < row + absCount) {
 								// 公式单元格在被删除范围内，删除该公式
-								delete sheet.config.formulaMap[key]
-								delete sheet.config.formulaed[key]
+								keysToDelete.add(key)
 								return
 							} else if (r >= row + absCount) {
 								// 公式单元格在被删除范围之后，向前移动
@@ -1030,8 +1034,7 @@ export const useTools = () => {
 							// 删除操作
 							if (c >= col && c < col + absCount) {
 								// 公式单元格在被删除范围内，删除该公式
-								delete sheet.config.formulaMap[key]
-								delete sheet.config.formulaed[key]
+								keysToDelete.add(key)
 								return
 							} else if (c >= col + absCount) {
 								// 公式单元格在被删除范围之后，向左移动
@@ -1057,8 +1060,8 @@ export const useTools = () => {
 							count
 						)
 
-						sheet.config.formulaed[newKey] = updatedFormula
-						sheet.config.formulaMap[newKey] = sheet.config.formulaMap[key]
+						// 更新引用坐标
+						const updatedReferences = sheet.config.formulaMap[key]
 							.map((item) => {
 								let refRow = item.r
 								let refCol = item.c
@@ -1109,10 +1112,23 @@ export const useTools = () => {
 							})
 							.filter((item) => item !== null) // 过滤掉被删除的引用
 
-						delete sheet.config.formulaMap[key]
-						delete sheet.config.formulaed[key]
+						// 存储到临时对象，而不是直接修改
+						formulaUpdates[newKey] = updatedReferences
+						formulaedUpdates[newKey] = updatedFormula
+						keysToDelete.add(key)
 					}
 				}
+			})
+
+			// 一次性应用所有更新，避免数据覆盖
+			keysToDelete.forEach((key) => {
+				delete sheet.config.formulaMap[key]
+				delete sheet.config.formulaed[key]
+			})
+
+			Object.entries(formulaUpdates).forEach(([newKey, references]) => {
+				sheet.config.formulaMap[newKey] = references
+				sheet.config.formulaed[newKey] = formulaedUpdates[newKey]
 			})
 
 			if (sheet.hooks.editHook && sheet.hooks.editHook.setFormulaValue) {
