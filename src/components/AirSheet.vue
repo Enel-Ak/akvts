@@ -65,6 +65,8 @@ const props = defineProps({
 	// 缓冲区大小(额外渲染的行数)
 	buffer: {type: Number, default: 5},
 
+	autoAddRows: {type: Number, default: 20},
+
 	// 序号
 	enableNumber: {type: Boolean, default: true},
 	// 序号宽度
@@ -936,10 +938,10 @@ const checkAndAutoAddRows = async (scrollTop) => {
 			isAutoAddingRows = true
 			try {
 				// 设置添加行数为100
-				sheet.hooks.toolsHook.addRowCount = 100
+				sheet.hooks.toolsHook.addRowCount = props.autoAddRows
 
 				// 调用添加行方法，isEnd=true 表示在末尾添加
-				await sheet.hooks.toolsHook.addRow(null, true, true)
+				await sheet.hooks.toolsHook.addRow(null, true, false)
 
 				sheet.hooks.toolsHook.addRowCount = 1
 				console.log('✅ 自动添加100行成功')

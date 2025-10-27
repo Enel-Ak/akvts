@@ -1366,7 +1366,7 @@ export const useTools = () => {
 				// 最终解决方案：使用静默筛选 + 最小化loading状态切换
 				await filterByCheckedSilent(currentFiltered)
 
-				ElMessage.success(`添加了 ${addRowCount.value} 行，筛选数据已更新`)
+				// ElMessage.success(`添加了 ${addRowCount.value} 行，筛选数据已更新`)
 			}
 
 			if (sheet.config.synergy && !asyncData) {
@@ -1384,9 +1384,6 @@ export const useTools = () => {
 					}
 				})
 
-				console.log('=== addRow: 同步数据 ===')
-				console.log('同步的 celldata 数量:', celldataArray.length)
-
 				sheet.hooks.synergyHook.addRow({
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					count: addRowCount.value,
@@ -1398,12 +1395,20 @@ export const useTools = () => {
 				// 注意：只在非筛选状态下更新配置，筛选状态下的配置更新会在筛选重新执行时处理
 				if (!isFiltered) {
 					setTimeout(() => {
+						save &&
+							sheet.hooks.selectionRangeHook.setRange(
+								insertRowIndex,
+								0,
+								insertRowIndex + addRowCount.value - 1,
+								sheet.config.colCount - 1,
+								true
+							)
 						asyncUpdateConfig(addRowCount.value, insertRowIndex, null)
 					}, 100)
 				}
 			}
 
-			ElMessage.success(`添加 ${addRowCount.value} 行`)
+			// ElMessage.success(`添加 ${addRowCount.value} 行`)
 		} catch (error) {
 			console.error('处理数据时出错:', error)
 		} finally {
@@ -1648,17 +1653,6 @@ export const useTools = () => {
 						})
 						.filter((p) => p !== null) // 移除被删除的权限
 				}
-
-				// 🔍 调试日志：权限更新后
-				console.log('=== removeRow: 权限更新后 ===')
-				console.log(
-					'deepPermissions (删除后):',
-					JSON.stringify(sheet.config.deepPermissions, null, 2)
-				)
-				console.log(
-					'superPermissions (删除后):',
-					JSON.stringify(sheet.config.superPermissions, null, 2)
-				)
 			}
 
 			// 如果当前处于筛选状态，需要更新筛选数据和行号映射
@@ -1666,7 +1660,7 @@ export const useTools = () => {
 				// 使用静默模式重新执行筛选，避免闪烁
 				const currentFiltered = [...sheet.config.filtered]
 				await filterByCheckedSilent(currentFiltered)
-				ElMessage.success(`删除了 ${deleteCount} 行，筛选数据已更新`)
+				// ElMessage.success(`删除了 ${deleteCount} 行，筛选数据已更新`)
 			}
 
 			// 优化：删除操作后清理相关缓存，提高后续操作性能
@@ -1876,10 +1870,10 @@ export const useTools = () => {
 					sheet.filterCellData.set(key, value)
 				})
 
-				ElMessage.success(`添加了 ${addColumnCount.value} 列，筛选数据已更新`)
+				// ElMessage.success(`添加了 ${addColumnCount.value} 列，筛选数据已更新`)
 			} else {
 				// 非筛选状态下的正常处理
-				ElMessage.success(`添加了 ${addColumnCount.value} 列`)
+				// ElMessage.success(`添加了 ${addColumnCount.value} 列`)
 			}
 
 			if (sheet.config.synergy && !asyncData) {
@@ -1897,9 +1891,6 @@ export const useTools = () => {
 					}
 				})
 
-				console.log('=== addColumn: 同步数据 ===')
-				console.log('同步的 celldata 数量:', celldataArray.length)
-
 				sheet.hooks.synergyHook.addColumn({
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					count: addColumnCount.value,
@@ -1909,6 +1900,14 @@ export const useTools = () => {
 
 				// 使用 asyncUpdateConfig 统一处理所有配置更新（添加列操作）
 				setTimeout(() => {
+					save &&
+						sheet.hooks.selectionRangeHook.setRange(
+							0,
+							insertColIndex,
+							sheet.config.rowCount - 1,
+							insertColIndex + addColumnCount.value - 1,
+							true
+						)
 					asyncUpdateConfig(addColumnCount.value, null, insertColIndex)
 				}, 100)
 			}
@@ -2025,19 +2024,12 @@ export const useTools = () => {
 						const {type, targets} = permission
 
 						if (type === 'column') {
-							// 🔍 调试日志：列级权限更新
-							console.log('=== 更新列级权限 ===')
-							console.log('userId:', userId)
-							console.log('原始 targets:', targets)
-
 							// 列级权限：更新列索引
 							const filteredTargets = targets.filter((col) => col < c || col > cc) // 移除被删除的列
-							console.log('过滤后的 targets:', filteredTargets)
 
 							const updatedTargets = filteredTargets.map((col) =>
 								col > cc ? col - deleteCount : col
 							) // 更新后面的列索引
-							console.log('更新后的 targets:', updatedTargets)
 
 							if (updatedTargets.length > 0) {
 								updatedDeepPermissions[userId] = {
@@ -2137,17 +2129,6 @@ export const useTools = () => {
 						})
 						.filter((p) => p !== null) // 移除被删除的权限
 				}
-
-				// 🔍 调试日志：删除列后的权限
-				console.log('=== removeColumn: 权限更新完成 ===')
-				console.log(
-					'deepPermissions (删除后):',
-					JSON.stringify(sheet.config.deepPermissions, null, 2)
-				)
-				console.log(
-					'superPermissions (删除后):',
-					JSON.stringify(sheet.config.superPermissions, null, 2)
-				)
 			}
 
 			// 如果当前处于筛选状态，需要更新筛选条件中的列索引
@@ -2174,13 +2155,13 @@ export const useTools = () => {
 				// 如果还有筛选条件，重新执行筛选
 				if (updatedFiltered.length > 0) {
 					await filterByCheckedSilent(updatedFiltered)
-					ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已更新`)
+					// ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已更新`)
 				} else {
 					// 如果没有筛选条件了，清除筛选状态
 					sheet.config.filtered = []
 					sheet.filterCellData.clear()
 					sheet.rowMapping = []
-					ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已清除`)
+					// ElMessage.success(`删除了 ${deleteCount} 列，筛选条件已清除`)
 				}
 
 				// 优化：删除操作后清理相关缓存，提高后续操作性能
