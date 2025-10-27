@@ -695,7 +695,7 @@ export function useCopy() {
 		sheet.hooks?.permissionsHook?.clearDeepPermissions?.(r, c, rr, cc)
 
 		// ✅ 修复: 所有操作完成后显示成功提示
-		ElMessage.success('剪切成功')
+		useDebounce(() => ElMessage.success('剪切成功'), 100, 'airSheetCut')
 	}
 
 	// 点击粘贴时处理数据

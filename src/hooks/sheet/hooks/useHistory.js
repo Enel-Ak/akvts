@@ -260,14 +260,16 @@ export const useHistory = () => {
 					try {
 						const r = state.addRow.r // insertRowIndex
 						const rs = state.addRow.rs
+						// 保存当前的行数（添加行后的行数）
+						const currentRowCount = sheet.config.rowCount + rs
 
 						// 检查是否是在筛选状态下添加的行（添加到末尾）
-						const wasFilteredAdd = r >= sheet.config.rowCount - rs
+						const wasFilteredAdd = r >= currentRowCount - rs
 
 						if (wasFilteredAdd) {
 							// 筛选状态下添加的行，直接删除末尾的行
 							for (let i = 0; i < rs; i++) {
-								sheet.celldata.delete(sheet.config.rowCount - 1 - i)
+								sheet.celldata.delete(currentRowCount - 1 - i)
 							}
 						} else {
 							// 正常状态下添加的行，需要移动数据
@@ -330,7 +332,8 @@ export const useHistory = () => {
 							)
 						}
 						await nextTick()
-						sheet.config.rowCount -= rs
+						// ✅ 修复：Object.assign 已经恢复了 rowCount，不需要再减少
+						// sheet.config.rowCount 已经被恢复到添加行之前的值
 						console.log('撤销添加行', state)
 						// state.addRow = null
 					} catch (error) {
@@ -377,7 +380,8 @@ export const useHistory = () => {
 							)
 						}
 						await nextTick()
-						sheet.config.colCount -= state.addCol.cs
+						// ✅ 修复：Object.assign 已经恢复了 colCount，不需要再减少
+						// sheet.config.colCount 已经被恢复到添加列之前的值
 						state.addCol = null
 					} catch (error) {
 						console.error('撤销添加列失败:', error)
