@@ -778,112 +778,20 @@ export function useCopy() {
 		useDebounce(() => ElMessage.success('剪切成功'), 100, 'airSheetCut')
 	}
 
-	// ✅ 修复: 点击粘贴时处理数据，添加错误处理和降级方案
+	// ✅ 修复: 点击粘贴时处理数据，添加错误处理
 	const paste = async () => {
-		// ✅ 修复: 检查 sheet 对象是否存在
-		if (!sheet) {
-			console.warn('Sheet 对象不存在，跳过粘贴操作')
-			return
-		}
-
 		try {
 			// ✅ 修复: 检查 Clipboard API 是否可用
 			if (!navigator.clipboard || !navigator.clipboard.readText) {
-				console.warn('Clipboard API 不可用，尝试使用降级方案')
-				// 降级方案: 创建隐藏的输入框并模拟粘贴
-				return triggerPasteViaInput()
+				ElMessage.error('剪贴板 API 不可用，请使用 Ctrl+V 粘贴')
+				return
 			}
 
 			const text = await navigator.clipboard.readText()
 			await processClipboardData({text, isHtml: false})
 		} catch (error) {
 			console.error('粘贴失败:', error)
-			console.warn('Clipboard API 失败，尝试使用降级方案')
-			// 降级方案: 创建隐藏的输入框并模拟粘贴
-			return triggerPasteViaInput()
-		}
-	}
-
-	// ✅ 新增: 降级方案 - 通过隐藏输入框触发粘贴
-	const triggerPasteViaInput = () => {
-		try {
-			// 创建一个隐藏的输入框
-			const hiddenInput = document.createElement('textarea')
-			hiddenInput.style.position = 'fixed'
-			hiddenInput.style.left = '-9999px'
-			hiddenInput.style.top = '-9999px'
-			hiddenInput.style.opacity = '0'
-			hiddenInput.style.pointerEvents = 'none'
-			document.body.appendChild(hiddenInput)
-
-			// 聚焦到隐藏输入框
-			hiddenInput.focus()
-
-			// 设置超时，如果5秒内没有粘贴事件，则清理
-			let timeout = null
-
-			// 监听粘贴事件
-			const pasteHandler = (e) => {
-				console.log('✅ 降级方案: 捕获粘贴事件')
-
-				// 清除超时
-				if (timeout) {
-					clearTimeout(timeout)
-				}
-
-				// 获取剪贴板数据
-				const clipboardData = e.clipboardData
-				if (!clipboardData) {
-					console.error('无法获取剪贴板数据')
-					if (document.body.contains(hiddenInput)) {
-						document.body.removeChild(hiddenInput)
-					}
-					return
-				}
-
-				// 优先获取HTML格式
-				const html = clipboardData.getData('text/html')
-				if (html) {
-					processClipboardData({html, isHtml: true})
-					if (document.body.contains(hiddenInput)) {
-						document.body.removeChild(hiddenInput)
-					}
-					return
-				}
-
-				// 降级到纯文本
-				const text = clipboardData.getData('text/plain')
-				if (text) {
-					processClipboardData({text, isHtml: false})
-					if (document.body.contains(hiddenInput)) {
-						document.body.removeChild(hiddenInput)
-					}
-					return
-				}
-
-				console.warn('剪贴板中没有文本或HTML数据')
-				if (document.body.contains(hiddenInput)) {
-					document.body.removeChild(hiddenInput)
-				}
-			}
-
-			// 绑定粘贴事件
-			hiddenInput.addEventListener('paste', pasteHandler, {once: true})
-
-			// 设置超时
-			timeout = setTimeout(() => {
-				hiddenInput.removeEventListener('paste', pasteHandler)
-				if (document.body.contains(hiddenInput)) {
-					document.body.removeChild(hiddenInput)
-				}
-				console.warn('粘贴超时，请检查剪贴板权限')
-				ElMessage.warning('粘贴超时，请使用 Ctrl+V 粘贴或检查剪贴板权限')
-			}, 5000)
-
-			console.log('✅ 降级方案: 已创建隐藏输入框，等待粘贴事件')
-		} catch (error) {
-			console.error('降级方案失败:', error)
-			ElMessage.error('粘贴失败，请使用 Ctrl+V 粘贴或检查剪贴板权限')
+			ElMessage.error('粘贴失败，请重试或使用 Ctrl+V')
 		}
 	}
 
