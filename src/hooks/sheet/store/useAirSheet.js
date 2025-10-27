@@ -46,6 +46,7 @@ const defaultSheet = {
 		formula: true, // 公式
 		copy: true, // 复制
 		paste: true, // 粘贴
+		cut: true, // 剪切
 		zoom: 1, //缩放
 		freeze: false, // 冻结
 		full: true, // 全屏

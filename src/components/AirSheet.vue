@@ -4090,7 +4090,7 @@ const getSuperPermissionStyle = (range, index) => {
 							<span>删除列</span>
 						</div>
 						<div
-							v-if="sheet.config.paste"
+							v-if="sheet.config.cut"
 							class="menu-item"
 							@click="sheet.hooks.copyHook.cutSelectedCells(true)"
 						>
@@ -4099,7 +4099,7 @@ const getSuperPermissionStyle = (range, index) => {
 						</div>
 
 						<div
-							v-if="sheet.config.paste"
+							v-if="sheet.config.copy"
 							class="menu-item"
 							@click="sheet.hooks.copyHook.copySelectedCells(false)"
 						>
@@ -4107,7 +4107,7 @@ const getSuperPermissionStyle = (range, index) => {
 							<span>复制</span>
 						</div>
 						<div
-							v-if="sheet.config.copy"
+							v-if="sheet.config.paste"
 							class="menu-item"
 							@click="sheet.hooks.copyHook.paste"
 						>
