@@ -7,8 +7,15 @@ export function useCopy() {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = ''
 	let sheet = null
+	let isEventBound = false // ✅ 新增: 防止事件监听器重复绑定
 
 	const handleKeyDown = async (event) => {
+		// ✅ 修复: 检查 sheet 对象是否存在
+		if (!sheet) {
+			console.warn('Sheet 对象不存在，跳过复制操作')
+			return
+		}
+
 		// 复制 Ctrl+C / Command+C
 		if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
 			event.preventDefault()
@@ -30,6 +37,12 @@ export function useCopy() {
 	// 处理粘贴事件
 	let pasteTimer = null
 	const handlePaste = (e) => {
+		// ✅ 修复: 检查 sheet 对象是否存在
+		if (!sheet) {
+			console.warn('Sheet 对象不存在，跳过粘贴操作')
+			return
+		}
+
 		e.preventDefault()
 
 		// 权限检查 - 在粘贴前检查目标区域是否有权限
@@ -349,19 +362,24 @@ export function useCopy() {
 
 			sheet.hooks.historyHook.save(oldCellData, 'edit')
 
-			// 协同编辑: 同步单元格变更到其他用户
+			// ✅ 修复: 协同编辑: 同步单元格变更到其他用户，添加错误处理
 			if (sheet.config.synergy && cellChanges.length > 0) {
-				await Promise.all(
-					cellChanges.map((change) => {
-						return sheet.hooks.synergyHook.changeCell({
-							sheetId: sheet?.original?.sheetId || sheet.id,
-							row: change.r,
-							col: change.c,
-							before: change.before,
-							after: change.after,
+				try {
+					await Promise.all(
+						cellChanges.map((change) => {
+							return sheet.hooks.synergyHook.changeCell({
+								sheetId: sheet?.original?.sheetId || sheet.id,
+								row: change.r,
+								col: change.c,
+								before: change.before,
+								after: change.after,
+							})
 						})
-					})
-				)
+					)
+				} catch (error) {
+					console.error('协同同步失败:', error)
+					// 不中断粘贴操作，只记录错误
+				}
 			}
 
 			// ✅ 修复: 使用 requestAnimationFrame 确保数据更新完成后再更新 deepPermissions
@@ -477,8 +495,14 @@ export function useCopy() {
 
 	// 复制选中单元格到Excel
 	const copySelectedCells = async (isCut = false) => {
+		// ✅ 修复: 检查 sheet 对象是否存在
+		if (!sheet) {
+			console.error('Sheet 对象不存在，无法执行复制操作')
+			return false
+		}
+
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
-		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
+		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return false
 
 		// ✅ 新增: 权限检查 - 在复制/剪切前检查源区域是否被锁定
 		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
@@ -571,6 +595,12 @@ export function useCopy() {
 		}
 
 		try {
+			// ✅ 修复: 检查 Clipboard API 是否可用
+			if (!navigator.clipboard) {
+				console.warn('Clipboard API 不可用，使用降级方案')
+				return fallbackCopy(tableHtml, isCut)
+			}
+
 			// 使用现代Clipboard API
 			const htmlBlob = new Blob([tableHtml], {type: 'text/html'})
 			const textBlob = new Blob([plainText], {type: 'text/plain'})
@@ -581,7 +611,6 @@ export function useCopy() {
 					'text/plain': textBlob,
 				}),
 			])
-			// ✅ 修复: 移除成功提示，由调用方在权限检查通过后显示
 
 			useDebounce(
 				() => {
@@ -593,23 +622,69 @@ export function useCopy() {
 			return true // 返回成功标志
 		} catch (error) {
 			console.error(isCut ? '剪切失败' : '复制失败:', error)
-			// 降级方案：使用传统方法
+			console.warn('Clipboard API 失败，尝试使用降级方案')
+			// ✅ 修复: 改进的降级方案
+			return fallbackCopy(tableHtml, isCut)
+		}
+	}
+
+	// ✅ 新增: 改进的降级方案 - 使用传统 document.execCommand
+	const fallbackCopy = (html, isCut = false) => {
+		try {
 			const tempDiv = document.createElement('div')
-			tempDiv.innerHTML = tableHtml
+			tempDiv.innerHTML = html
+			tempDiv.style.position = 'fixed'
+			tempDiv.style.left = '-9999px'
+			tempDiv.style.top = '-9999px'
+			tempDiv.style.opacity = '0'
 			document.body.appendChild(tempDiv)
+
 			const range = document.createRange()
-			range.selectNode(tempDiv)
+			range.selectNodeContents(tempDiv)
 			const selection = window.getSelection()
+			if (!selection) {
+				console.error('无法获取 Selection 对象')
+				document.body.removeChild(tempDiv)
+				return false
+			}
+
 			selection.removeAllRanges()
 			selection.addRange(range)
-			document.execCommand('copy')
+
+			// ✅ 修复: 检查 execCommand 是否成功
+			const success = document.execCommand('copy')
 			document.body.removeChild(tempDiv)
-			return true // 返回成功标志
+
+			if (!success) {
+				console.error('document.execCommand("copy") 返回 false')
+				return false
+			}
+
+			// 显示成功提示
+			useDebounce(
+				() => {
+					ElMessage.success(isCut ? '剪切成功' : '复制成功')
+				},
+				100,
+				'airSheetFallbackCopy'
+			)()
+
+			return true
+		} catch (error) {
+			console.error('降级方案异常:', error)
+			ElMessage.error('复制失败，请重试')
+			return false
 		}
 	}
 
 	// 剪切选中单元格
 	const cutSelectedCells = async () => {
+		// ✅ 修复: 检查 sheet 对象是否存在
+		if (!sheet) {
+			console.error('Sheet 对象不存在，无法执行剪切操作')
+			return
+		}
+
 		// ✅ 新增: 权限检查 - 在剪切前检查源区域是否被锁定
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
@@ -667,21 +742,26 @@ export function useCopy() {
 		}
 		sheet.hooks.historyHook.save(oldCellData, 'edit')
 
-		// 协同编辑: 同步单元格变更到其他用户
+		// ✅ 修复: 协同编辑: 同步单元格变更到其他用户，添加错误处理
 		if (sheet.config.synergy && cellChanges.length > 0) {
 			console.log('剪切操作协同同步:', {
 				变更数量: cellChanges.length,
 				起始位置: `${r},${c}`,
 			})
-			cellChanges.forEach((change) => {
-				sheet.hooks.synergyHook.changeCell({
-					sheetId: sheet?.original?.sheetId || sheet.id,
-					row: change.r,
-					col: change.c,
-					before: change.before,
-					after: change.after,
+			try {
+				cellChanges.forEach((change) => {
+					sheet.hooks.synergyHook.changeCell({
+						sheetId: sheet?.original?.sheetId || sheet.id,
+						row: change.r,
+						col: change.c,
+						before: change.before,
+						after: change.after,
+					})
 				})
-			})
+			} catch (error) {
+				console.error('剪切操作协同同步失败:', error)
+				// 不中断剪切操作，只记录错误
+			}
 		}
 
 		// ✅ 修复: 剪切操作后清除源区域的 deepPermissions（持久锁定）
@@ -698,24 +778,50 @@ export function useCopy() {
 		useDebounce(() => ElMessage.success('剪切成功'), 100, 'airSheetCut')
 	}
 
-	// 点击粘贴时处理数据
+	// ✅ 修复: 点击粘贴时处理数据，添加错误处理
 	const paste = async () => {
-		const text = await navigator.clipboard.readText()
-		await processClipboardData({text, isHtml: false})
+		try {
+			// ✅ 修复: 检查 Clipboard API 是否可用
+			if (!navigator.clipboard || !navigator.clipboard.readText) {
+				ElMessage.error('剪贴板 API 不可用，请使用 Ctrl+V 粘贴')
+				return
+			}
+
+			const text = await navigator.clipboard.readText()
+			await processClipboardData({text, isHtml: false})
+		} catch (error) {
+			console.error('粘贴失败:', error)
+			ElMessage.error('粘贴失败，请重试或使用 Ctrl+V')
+		}
 	}
 
 	const refreshSheet = (id) => {
 		sheet = sheetStore.getSheet(id)
 	}
 
+	// ✅ 修复: 防止事件监听器重复绑定
 	const addEvent = (containerId) => {
+		if (isEventBound) {
+			console.warn('Copy 事件已绑定，跳过重复绑定')
+			return
+		}
+
 		document.addEventListener('keydown', handleKeyDown)
 		document.addEventListener('paste', handlePaste)
+		isEventBound = true
+		console.log('Copy 事件已绑定')
 	}
 
+	// ✅ 修复: 确保正确移除事件监听器
 	const removeEvent = () => {
+		if (!isEventBound) {
+			return
+		}
+
 		document.removeEventListener('keydown', handleKeyDown)
 		document.removeEventListener('paste', handlePaste)
+		isEventBound = false
+		console.log('Copy 事件已移除')
 	}
 
 	const init = (key) => {
