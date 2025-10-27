@@ -184,6 +184,7 @@ export const useHistory = () => {
 					sheet.rowMapping = Array.isArray(state.filterState.rowMapping)
 						? [...state.filterState.rowMapping]
 						: []
+					sheet.state.loading = false
 				}
 
 				// 撤销单元格修改
@@ -250,6 +251,7 @@ export const useHistory = () => {
 						}
 
 						state.celldata.clear()
+						sheet.state.loading = false
 					} catch (error) {
 						console.error('撤销单元格修改失败:', error)
 					}

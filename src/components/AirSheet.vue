@@ -828,6 +828,7 @@ const isLockedCell = () => {
 let scrollTimer = null
 let rafId = null
 const lastScroll = ref(false)
+let isAutoAddingRows = false // 防止重复添加行
 const onScroll = async (e) => {
 	// 清除之前的定时器和动画帧
 	clearTimeout(scrollTimer)
@@ -905,8 +906,53 @@ const onScroll = async (e) => {
 
 			// 确保最后一次滚动后也更新可见范围
 			updateVisibleRange()
+
+			// ✅ 新增：检测是否滚动到最底部，自动添加100行
+			checkAndAutoAddRows(nt)
 		})
 	}, 150)
+}
+
+// ✅ 新增：检测滚动到最底部并自动添加行
+const checkAndAutoAddRows = async (scrollTop) => {
+	try {
+		// 防止重复添加
+		if (isAutoAddingRows) {
+			return
+		}
+
+		// 获取容器的可滚动高度
+		const container = containerRef.value
+		if (!container) return
+
+		const scrollHeight = container.scrollHeight
+		const clientHeight = container.clientHeight
+		const maxScrollTop = scrollHeight - clientHeight
+
+		// 判断是否滚动到最底部（留出50px的缓冲区）
+		const isAtBottom = scrollTop >= maxScrollTop - 50
+
+		if (isAtBottom && sheet.config.addRow) {
+			isAutoAddingRows = true
+			try {
+				// 设置添加行数为100
+				sheet.hooks.toolsHook.addRowCount = 100
+
+				// 调用添加行方法，isEnd=true 表示在末尾添加
+				await sheet.hooks.toolsHook.addRow(null, true, true)
+
+				sheet.hooks.toolsHook.addRowCount = 1
+				console.log('✅ 自动添加100行成功')
+			} catch (error) {
+				console.error('❌ 自动添加行失败:', error)
+			} finally {
+				isAutoAddingRows = false
+			}
+		}
+	} catch (error) {
+		console.error('检测滚动到最底部时出错:', error)
+		isAutoAddingRows = false
+	}
 }
 
 // 恢复滚动位置
