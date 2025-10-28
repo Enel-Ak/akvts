@@ -726,7 +726,7 @@
 
 			.label {
 				&::before {
-					content: '🔐 '; // 使用不同的图标区分超级权限
+					content: '🔒'; // 使用不同的图标区分超级权限
 				}
 				font-weight: bold;
 			}
