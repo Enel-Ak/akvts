@@ -247,7 +247,9 @@ export const useEdit = () => {
 			}
 		}
 
-		const cellEl = document.querySelector(`[data-cell="${cell.r}-${cell.c}"]`)
+		const cellEl = document.querySelector(
+			`#${sheet.containerId} [data-cell="${cell.r}-${cell.c}"]`
+		)
 
 		// 检查是否是公式单元格，如果是则保存原始状态
 		const cellKey = `${cell.r}-${cell.c}`
@@ -1038,7 +1040,7 @@ export const useEdit = () => {
 			settingsCache.set(`${cell.r}-${cell.c}`, cell)
 			// 检查并清理缓存
 			cleanSettingsCache()
-			setTimeout(() => setRowHeight(cell.r, cell.c, false), 0)
+			setTimeout(() => setRowHeight(cell.r, cell.c, false), 128)
 		}
 
 		return html
