@@ -106,7 +106,7 @@ const onDragstart = (e) => {
 	// 获取容器边界
 	containerBounds.value = useContainerBounds(searchElement.value?.closest('.air-sheet-component'))
 
-	dragStart.elementX = rect.left - 15
+	dragStart.elementX = rect.left - containerBounds.value.rect.left
 	dragStart.elementY =
 		containerBounds.value.rect.top > 0
 			? rect.top - rect.height + 25 + (props.searchList.length ? containerHeight + 50 : 0)
