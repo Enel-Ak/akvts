@@ -4038,7 +4038,7 @@ const getSuperPermissionStyle = (range, index) => {
 						:data-no-lock="String(range.noLock === true)"
 						:style="getPermissionStyle(range, index)"
 					>
-						<div class="label">{{ range.userName || '权限区域' }}</div>
+						<div class="label">{{ range.userName }}</div>
 					</div>
 
 					<!-- 超级权限高亮 -->
@@ -4051,7 +4051,7 @@ const getSuperPermissionStyle = (range, index) => {
 						:data-super-permission="true"
 						:style="getSuperPermissionStyle(range, index)"
 					>
-						<div class="label">{{ range.v || '受保护区域' }}</div>
+						<div class="label">{{ range.v }}</div>
 					</div>
 
 					<!-- 右键菜单 -->

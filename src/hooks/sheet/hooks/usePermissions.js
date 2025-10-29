@@ -945,7 +945,7 @@ export const usePermissions = () => {
 		// 遍历所有用户的权限
 		for (const userId in permissions) {
 			// ✅ 新需求: 跳过当前用户自己的 permissions
-			if (userId === currentUserId) {
+			if (userId === currentUserId && sheet.config.auth === 0) {
 				continue
 			}
 
@@ -974,7 +974,7 @@ export const usePermissions = () => {
 							cc: sheet.config.colCount - 1,
 							type: 'row',
 							userId,
-							userName,
+							userName: userId === currentUserId ? '' : userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
@@ -986,7 +986,7 @@ export const usePermissions = () => {
 							cc: sheet.config.colCount - 1,
 							type: 'row',
 							userId,
-							userName,
+							userName: userId === currentUserId ? '' : userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
@@ -1006,7 +1006,7 @@ export const usePermissions = () => {
 						cc: col,
 						type: 'column',
 						userId,
-						userName,
+						userName: userId === currentUserId ? '' : userName,
 						noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 					})
 				})
@@ -1028,7 +1028,7 @@ export const usePermissions = () => {
 							cc: cell.col,
 							type: 'cell',
 							userId,
-							userName,
+							userName: userId === currentUserId ? '' : userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
@@ -1040,7 +1040,7 @@ export const usePermissions = () => {
 							cc: cell.col,
 							type: 'cell',
 							userId,
-							userName,
+							userName: userId === currentUserId ? '' : userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}

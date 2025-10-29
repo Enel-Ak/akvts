@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 1,
+		auth: 2,
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
 		// edit: true,
@@ -1326,7 +1326,7 @@ const synergyJoinSheet = async (id, sheet) => {
 				{r: 2, c: 1, rr: 3, cc: 3, v: '权限区域'},
 				{r: 2, c: 1, rr: 2, cc: 2, v: '权限区域'},
 				{r: 5, c: 3, rr: 6, cc: 6, v: '权限区域'},
-				{r: 0, c: 0, rr: 7, cc: 7, v: '权限区域'},
+				{r: 0, c: 0, rr: 7, cc: 7, v: 'XXX部门查看区域'},
 				{r: 8, c: 0, rr: 9, cc: 1, v: '权限区域'},
 			],
 		})
