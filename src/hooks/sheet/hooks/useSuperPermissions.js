@@ -214,8 +214,41 @@ export const useSuperPermissions = () => {
 	}
 
 	/**
+	 * 检查区域 A 是否完全包含区域 B
+	 * @param {Object} areaA - 区域 A {r, c, rr, cc}
+	 * @param {Object} areaB - 区域 B {r, c, rr, cc}
+	 * @returns {boolean} 是否完全包含
+	 */
+	const isAreaContainedBy = (areaA, areaB) => {
+		return (
+			areaB.r <= areaA.r && areaB.c <= areaA.c && areaB.rr >= areaA.rr && areaB.cc >= areaA.cc
+		)
+	}
+
+	/**
+	 * 过滤被其他区域完全包含的权限区域
+	 * @param {Array} permissions - 权限区域列表
+	 * @returns {Array} 过滤后的权限区域列表
+	 */
+	const filterContainedPermissions = (permissions) => {
+		return permissions.filter((permission, index) => {
+			// 检查当前权限是否被其他任何权限完全包含
+			for (let i = 0; i < permissions.length; i++) {
+				if (i !== index) {
+					// 如果当前权限被其他权限完全包含，则过滤掉
+					if (isAreaContainedBy(permission, permissions[i])) {
+						return false
+					}
+				}
+			}
+			return true
+		})
+	}
+
+	/**
 	 * 获取所有 superPermission 区域（用于渲染高亮）
 	 * ✅ 修复问题2: 支持筛选状态下的行号转换
+	 * ✅ 新增: 过滤被其他区域完全包含的权限区域
 	 * @returns {Array} superPermission 区域列表
 	 */
 	const getSuperPermissionRanges = () => {
@@ -232,6 +265,9 @@ export const useSuperPermissions = () => {
 
 		const validPermissions = permissionList.filter((p) => p && typeof p === 'object')
 
+		// ✅ 新增: 过滤被其他区域完全包含的权限区域
+		const filteredByContainment = filterContainedPermissions(validPermissions)
+
 		// ✅ 修复问题2: 检测筛选状态，构建行号映射
 		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
 		const rowMapping = new Map() // 原始行号 -> 筛选后行号
@@ -242,15 +278,15 @@ export const useSuperPermissions = () => {
 			})
 		}
 
-		// 如果不在筛选状态，直接返回原始权限
+		// 如果不在筛选状态，直接返回过滤后的权限
 		if (!isFiltered) {
-			return validPermissions
+			return filteredByContainment
 		}
 
 		// ✅ 修复问题2: 在筛选状态下，转换行号并过滤不可见的权限
 		const filteredPermissions = []
 
-		for (const permission of validPermissions) {
+		for (const permission of filteredByContainment) {
 			const {r, rr, c, cc, v} = permission
 
 			// 检查权限范围是否与筛选结果有交集
