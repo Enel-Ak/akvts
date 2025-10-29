@@ -3,7 +3,7 @@ import {computed, ref, reactive, watch, nextTick} from 'vue'
 import useDebounce from '@/hooks/useDebounce'
 
 const props = defineProps({
-	modelValue: {
+	sheet: {
 		type: Object,
 		default: () => ({}),
 	},
@@ -17,7 +17,7 @@ const props = defineProps({
 	},
 })
 
-const sheet = computed(() => props.modelValue)
+const sheet = computed(() => props.sheet)
 const emit = defineEmits(['update:show'])
 const ranged = computed(() => {
 	if (!sheet.value) return ''

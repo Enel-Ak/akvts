@@ -4428,8 +4428,8 @@ const getSuperPermissionStyle = (range, index) => {
 			/>
 
 			<AirSheetCellHistory
-				v-model="sheet"
 				v-model:show="sheet.state.cellHistory"
+				:sheet="sheet"
 				:data="cellHistoryData"
 			/>
 		</template>
