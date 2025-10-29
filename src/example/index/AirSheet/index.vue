@@ -1176,7 +1176,7 @@ const onClick = () => {}
 const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjEyOTQzMTIsImV4cCI6MTc2MTQ2NjMxMiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MTI5NDMxMSwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8IiwiZGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1kMzJkLWJhM2ItNjJjOGQ4Mjg4MzEzIiwiYmlnRGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1iZGUzLWU2NGUtNjFhMWYzYWVjOTkwIiwiaWF0IjoxNzYxMjk0MzEyLCJzY29wZSI6WyJhZGRyZXNzIiwiZW1haWwiLCJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciIsIm9wZW5pZCIsInBob25lIiwicHJvZmlsZSIsInJvbGUiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsiQXV0aENvZGUiXX0.BhVX_VRAoPcjBj5MsZpo64bcshI4uoTVYvPOaVpDmlCN0QT4H3LtuvrJIxvG42CUNw40neKqWcQcGY473R0eEwkyGPyiBJNipNWiO0m5FzIp2Rfovm5JHj2ByA_auqJxYFiyEPUNdl9Eoeo97sP_iitaIKZ0VJK6YUcwsynyC8NxIoEcPklU5zRyshL-w4fJ6MDDPWfvNyTCaKOnGTalZxh-blfzubMDh2okoV4YLHA8lv5f6VDjuCy4-oaG9tpN4cpda0ZsD_PWXesKG4Jx0RpkwdADYh7s5dCGpHtefEuPMuWWxDimpRjDGi_aJPycT9zPIsjneYCKlnShZo8Uxg'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjE1MzMxNjQsImV4cCI6MTc2MTcwNTE2NCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MTUzMzE2NCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjE1MzMxNjQsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.WUo9LGINovEZ1M_YFI7go1-KbDJXGBeUeGjK4G-5-bdHqRkx-1ih4ILJWlnTH5k8-w3kskqhDPUKLw0T1X2S_yeJdIc16UlBMPPPhO1l4Xwr-pN4lnYrjL3W5-dWNBwQowBNi91WO-7uCyQHzFYPuFeOFHPEF_8PnnUiDQZ7RiN3eF_81S4y4If4EyUeDKYMP-yu9aBozPxmMtJnyQVJcCY8zfqZA4RX1TBRrI2dgr3wJbk4wCN6pMeh20GxClvFZ0FeVjxDA2vUni4L9M3EfGzWY1xfdgqrBAib5V0tsuuKPMvmoEksjiq80NqIMj9qwSfWUso7M0ki5Z5dar4Eww'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjE3MDgwNjUsImV4cCI6MTc2MTg4MDA2NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MTcwODA2MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjE3MDgwNjUsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.YoAdGL-ZXFKJGvsaHrSu7ruM4Jbp45-HhSeQq4xIrdgNKBGUSjz-JBAmZNKsVRZZxXFM9WsghJAuy5L-MUGOL86HPvUMbkD9ilSEgCLAubnQD8r14Wgy3-dpl1QOLGQ6DKIpDRoR6zMIC2QLkOM1EljBwWiQZ3esT93apL4SuD9J0TI-x50aIj1i0S7dUz999QrNoGys_nNceU8MrLeMi9b0AJOPwi0pIp011EFFttBJkOpPAxkYk_UmGEpBTAXytYoRZRPhQ_yhJsJ2KRsG4eiah15LiZKGcSP-iJQf0wTLCJu3vjNXPHvgyckEbeB17fjN19_z0BafG_SbDVP-kA'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1386,7 +1386,81 @@ const asyncCompleted = () => {
 	synergyJoinSheet(sheetId.value, sheetRef.value.getSheet())
 }
 
+const cellHistoryData = ref([])
+let historyCell = null
+let historyCount = 0
+let historyTotal = 0
+const asyncCellHistory = async (ranged, callback) => {
+	// cellHistoryData.value = cellHistoryData.value.concat([
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// ])
+
+	if (!historyCell || historyCell.r !== ranged.r || historyCell.c !== ranged.c) {
+		historyCell = ranged
+		cellHistoryData.value = []
+		historyCount = 0
+		historyTotal = 0
+	}
+
+	if (cellHistoryData.value.length >= historyTotal && cellHistoryData.value.length > 0) {
+		callback && callback()
+		return
+	}
+
+	const res = await axios.request({
+		url: `http://100.92.2.93:8001/api/online-table/log/cell-log/${tableId.value}/${sheetId.value}/${ranged.r}/${ranged.c}`,
+		method: 'GET',
+		params: {
+			skipCount: historyCount * 10,
+			maxResultCount: 10,
+		},
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	})
+
+	res.data.items.forEach((item) => {
+		const user = JSON.parse(item.operationData)
+		const cell = JSON.parse(item.afterSnapshot)
+		cellHistoryData.value.push({
+			name: `${user.UserName}-${user.BigDepartmentName}-${user.DepartmentName}`,
+			time: item.operationTime,
+			content: cell.CellValue,
+			_raw: JSON.parse(JSON.stringify(item)),
+		})
+	})
+
+	historyCount++
+	historyTotal = res.data.totalCount
+	callback && callback()
+}
+
 const linked = ref(false)
+
 watch(
 	() => linked.value,
 	(value) => {
@@ -1464,6 +1538,7 @@ onDeactivated(() => {
 			:api="api"
 			:token="token"
 			:async-sheet="synergyData"
+			:cellHistoryData="cellHistoryData"
 			@add-sheet="addSheet"
 			@asyncInputCell="asyncInputCell"
 			@asyncEventCell="onAsyncEventCell"
@@ -1472,6 +1547,7 @@ onDeactivated(() => {
 			@asyncLeaveSheet="synergyLeaveSheet"
 			@asyncConfig="asyncConfig"
 			@asyncCompleted="asyncCompleted"
+			@asyncCellHistory="asyncCellHistory"
 		></AirSheet>
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
 	</div>

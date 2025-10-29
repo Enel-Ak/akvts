@@ -21,6 +21,7 @@ import {useColor, useSleep, useDebounce} from '@/hooks'
 import {useSignalrStop} from '@/hooks/useSignalr'
 import AirSheetFilter from './AirSheetFilter.vue'
 import AirSheetSearch from './AirSheetSearch.vue'
+import AirSheetCellHistory from './AirSheetCellHistory.vue'
 
 const stateType = {
 	normal: 0,
@@ -48,6 +49,7 @@ const emits = defineEmits([
 	'asyncConfig',
 	'asyncCompleted',
 	'asyncPermissionsChanged',
+	'asyncCellHistory',
 ])
 
 // 核心配置参数
@@ -94,6 +96,7 @@ const props = defineProps({
 	token: {type: String, default: ''},
 	asyncSheet: {type: Array, default: () => []},
 	userKeys: {type: Array, default: () => ['operatorUserId', 'operatorName']},
+	cellHistoryData: {type: Array, default: () => []},
 })
 
 // 容器
@@ -4114,6 +4117,14 @@ const getSuperPermissionStyle = (range, index) => {
 							<Icons name="Cut"></Icons>
 							<span>剪切</span>
 						</div>
+						<div
+							v-if="sheet.config.cellHistory"
+							class="menu-item"
+							@click="sheet.hooks.toolsHook.cellHistory"
+						>
+							<Icons name="History"></Icons>
+							<span>单元格最近改动</span>
+						</div>
 					</div>
 
 					<!-- 公式菜单 -->
@@ -4414,6 +4425,12 @@ const getSuperPermissionStyle = (range, index) => {
 				@search-previous="sheet.hooks.toolsHook.searchPrevious"
 				@search-next="sheet.hooks.toolsHook.searchNext"
 				@jump-to-cell="onJumpToCell"
+			/>
+
+			<AirSheetCellHistory
+				v-model="sheet"
+				v-model:show="sheet.state.cellHistory"
+				:data="cellHistoryData"
 			/>
 		</template>
 	</div>

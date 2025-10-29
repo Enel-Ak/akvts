@@ -3127,6 +3127,13 @@ export const useTools = () => {
 		}
 	}
 
+	const cellHistory = () => {
+		sheet.state.cellHistory = true
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || c === undefined) return
+		sheet?.emits('asyncCellHistory', {r, c, rr, cc})
+	}
+
 	const clearAll = () => {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || c === undefined) return
@@ -3706,6 +3713,8 @@ export const useTools = () => {
 			refreshSheet,
 			parseCellRange,
 			asyncUpdateConfig,
+
+			cellHistory,
 		}
 	}
 
