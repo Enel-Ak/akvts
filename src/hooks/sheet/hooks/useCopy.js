@@ -488,7 +488,7 @@ export function useCopy() {
 					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 				}
 			},
-			100,
+			150,
 			'airSheetPaste'
 		)()
 	}

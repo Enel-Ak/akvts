@@ -390,6 +390,10 @@
 	box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
 }
 
+.el-upload-list__item-file-name {
+	line-height: 1.5;
+}
+
 body.light {
 	.el-popconfirm__action {
 		button:nth-child(2) {
