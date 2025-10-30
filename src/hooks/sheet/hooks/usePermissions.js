@@ -945,7 +945,7 @@ export const usePermissions = () => {
 		// 遍历所有用户的权限
 		for (const userId in permissions) {
 			// ✅ 新需求: 跳过当前用户自己的 permissions
-			// if (userId === currentUserId ) {
+			// if (userId === currentUserId) {
 			// 	continue
 			// }
 

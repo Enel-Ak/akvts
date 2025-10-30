@@ -1189,15 +1189,16 @@ export const useEdit = () => {
 		document.removeEventListener('keydown', startEdit)
 	}
 
-	const init = (key, containerId) => {
-		sheetKey = key
-		sheet = sheetStore.getSheet(sheetKey)
-
+	const watchSelectionRange = () => {
+		if (!sheet?.hooks?.selectionRangeHook) {
+			return
+		}
 		watch(
-			() => sheet?.hooks?.selectionRangeHook?.ranged,
+			() => sheet.hooks.selectionRangeHook.ranged,
 			(newVal) => {
 				const {r, c, rr, cc} = newVal
-				if (r === undefined || c === undefined || r !== rr || c !== cc) {
+
+				if (r === undefined || c === undefined) {
 					inputValue.value = ''
 					return
 				}
@@ -1206,6 +1207,13 @@ export const useEdit = () => {
 			},
 			{deep: true}
 		)
+	}
+
+	const init = (key, containerId) => {
+		sheetKey = key
+		sheet = sheetStore.getSheet(sheetKey)
+
+		setTimeout(() => watchSelectionRange(), 16)
 
 		return {
 			inputValue,

@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 1,
+		auth: 0,
 
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
@@ -1336,21 +1336,22 @@ const synergyJoinSheet = async (id, sheet) => {
 		console.log('配置已更新:', sheet.config)
 
 		// ✅ 修复：手动同步 merged 配置到 mergedCells Map
-		if (sheet.hooks?.mergeHook?.refreshMerge) {
-			sheet.hooks.mergeHook.refreshMerge()
-			console.log('✅ 合并单元格已同步')
-		}
+		// if (sheet.hooks?.mergeHook?.refreshMerge) {
+		// 	sheet.hooks.mergeHook.refreshMerge()
+		// 	console.log('✅ 合并单元格已同步')
+		// }
 
 		// ✅ 修复：如果有公式配置，重新计算公式
-		if (sheetConfig.formulaed && Object.keys(sheetConfig.formulaed).length > 0) {
-			if (sheet.hooks?.editHook?.setFormulaValue) {
-				sheet.hooks.editHook.setFormulaValue()
-				console.log('✅ 公式已重新计算')
-			}
-		}
+		// if (sheetConfig.formulaed && Object.keys(sheetConfig.formulaed).length > 0) {
+		// 	if (sheet.hooks?.editHook?.setFormulaValue) {
+		// 		sheet.hooks.editHook.setFormulaValue()
+		// 		console.log('✅ 公式已重新计算')
+		// 	}
+		// }
 
 		// 强制渲染
 		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+			sheet.hooks.mergeHook.refreshMerge()
 			sheet.state.lastMergeUpdate = Date.now()
 		}
 	}
