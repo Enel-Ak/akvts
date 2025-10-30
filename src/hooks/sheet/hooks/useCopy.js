@@ -487,11 +487,6 @@ export function useCopy() {
 				if (sheet.config.synergy) {
 					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 				}
-
-				// 强制渲染
-				if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
-					sheet.state.lastMergeUpdate = Date.now()
-				}
 			},
 			150,
 			'airSheetPaste'

@@ -88,9 +88,27 @@ export const usePermissions = () => {
 		if (sheet.config.auth === 0) {
 			// 无权限模式：只记录用户选区，不锁定
 			const targets = []
-			for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
-				for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
-					targets.push({row: r, col: c})
+			const sr = Math.min(row, rowEnd)
+			const er = Math.max(row, rowEnd)
+			const sc = Math.min(col, colEnd)
+			const ec = Math.max(col, colEnd)
+
+			for (let r = sr; r <= er; r++) {
+				for (let c = sc; c <= ec; c++) {
+					const mergeCell = sheet.hooks.mergeHook.findMergedCell(r, c)
+					if (mergeCell) {
+						// 合并单元格，只记录起始单元格
+						if (
+							!targets.some(
+								(item) => item.row === mergeCell.r && item.col === mergeCell.c
+							)
+						) {
+							targets.push({row: mergeCell.r, col: mergeCell.c})
+						}
+						break
+					} else {
+						targets.push({row: r, col: c})
+					}
 				}
 			}
 
