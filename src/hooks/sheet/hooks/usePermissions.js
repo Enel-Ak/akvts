@@ -959,57 +959,58 @@ export const usePermissions = () => {
 
 			if (type === 'row') {
 				// 行级权限：每一行作为一个范围
-				targets.forEach((originalRow) => {
-					// ✅ 修复问题2: 在筛选状态下，转换原始行号为筛选后行号
-					if (isFiltered) {
-						const filteredRow = rowMapping.get(originalRow)
-						// 如果该行不在筛选结果中，跳过
-						if (filteredRow === undefined) {
-							return
-						}
-						ranges.push({
-							r: filteredRow,
-							c: 0,
-							rr: filteredRow,
-							cc: sheet.config.colCount - 1,
-							type: 'row',
-							userId,
-							userName: userId === currentUserId ? '' : userName,
-							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
-							originalRow, // 保留原始行号，用于调试
-						})
-					} else {
-						ranges.push({
-							r: originalRow,
-							c: 0,
-							rr: originalRow,
-							cc: sheet.config.colCount - 1,
-							type: 'row',
-							userId,
-							userName,
-							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
-						})
+				// targets.forEach((originalRow) => {
+				// ✅ 修复问题2: 在筛选状态下，转换原始行号为筛选后行号
+				if (isFiltered) {
+					const filteredRowStart = rowMapping.get(targets[0])
+					const filteredRowEnd = rowMapping.get(targets[targets.length - 1])
+					// 如果该行不在筛选结果中，跳过
+					if (filteredRowStart === undefined || filteredRowEnd === undefined) {
+						return
 					}
-				})
-			} else if (type === 'column') {
-				// 列级权限：每一列作为一个范围
-				// ✅ 修复问题2: 列级权限不需要转换（列号在筛选前后保持不变）
-				// 但需要调整行范围以匹配筛选后的行数
-				targets.forEach((col) => {
-					const maxRow = isFiltered
-						? sheet.filterCellData.size - 1
-						: sheet.config.rowCount - 1
 					ranges.push({
-						r: 0,
-						c: col,
-						rr: maxRow,
-						cc: col,
-						type: 'column',
+						r: filteredRowStart,
+						c: 0,
+						rr: filteredRowEnd,
+						cc: sheet.config.colCount - 1,
+						type: 'row',
+						userId,
+						userName: userId === currentUserId ? '' : userName,
+						noLock: permission.noLock === true, // ✅ 添加 noLock 属性
+						originalRow, // 保留原始行号，用于调试
+					})
+				} else {
+					ranges.push({
+						r: targets[0],
+						c: 0,
+						rr: targets[targets.length - 1],
+						cc: sheet.config.colCount - 1,
+						type: 'row',
 						userId,
 						userName,
 						noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 					})
+				}
+				// })
+			} else if (type === 'column') {
+				// 列级权限：每一列作为一个范围
+				// ✅ 修复问题2: 列级权限不需要转换（列号在筛选前后保持不变）
+				// 但需要调整行范围以匹配筛选后的行数
+				// targets.forEach((col) => {
+				const maxRow = isFiltered
+					? sheet.filterCellData.size - 1
+					: sheet.config.rowCount - 1
+				ranges.push({
+					r: 0,
+					c: targets[0],
+					rr: maxRow,
+					cc: targets[targets.length - 1],
+					type: 'column',
+					userId,
+					userName,
+					noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 				})
+				// })
 			} else if (type === 'cell') {
 				// 单元格级权限：每个单元格作为一个范围
 				targets.forEach((cell) => {

@@ -277,15 +277,15 @@ export const useSelectionRange = () => {
 		if (sheet.config.synergy) {
 			// 修复: 协同模式下，行列级权限需要合并选区
 			if (sheet.config.auth === 1) {
-				expandedRange.r = Math.min(ranged.value.r, r)
-				expandedRange.rr = Math.max(ranged.value.rr, rr)
+				expandedRange.r = finalR
+				expandedRange.rr = finalRR
 				expandedRange.c = 0
 				expandedRange.cc = sheet.config.colCount - 1
 			} else if (sheet.config.auth === 2) {
 				expandedRange.r = 0
 				expandedRange.rr = sheet.config.rowCount - 1
-				expandedRange.c = Math.min(ranged.value.c, c)
-				expandedRange.cc = Math.max(ranged.value.cc, cc)
+				expandedRange.c = finalC
+				expandedRange.cc = finalCC
 			}
 		}
 
@@ -777,13 +777,13 @@ export const useSelectionRange = () => {
 				permR = pos.r
 				permC = pos.c
 				permRR = pos.r
-				permCC = pos.c
+				// permCC = pos.c
 			}
 			// 对于行级权限，只记录实际点击的行
 			else if (sheet.config.auth === 1) {
 				permR = pos.r
 				permC = pos.c
-				permRR = pos.r
+				// permRR = pos.r
 				permCC = pos.c
 			}
 			// 对于单元格级权限，只记录实际点击的单元格
