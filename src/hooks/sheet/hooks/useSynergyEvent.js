@@ -316,11 +316,21 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		// 被查看权限控制的数据不应该被设置和广播,并且需要动态设置superPermissions
 		// superPermissions 在进入sheet的时候在组件外部通过接口获取过一次, 所以不用同步
 		if (res.value === '' && res.isLocked) {
+			if (
+				sheet.config.superPermissions.some(
+					(item) => item.r === res.row && item.c === res.col
+				)
+			) {
+				return
+			}
+
+			const mergeCell = sheet.hooks.mergeHook.findMergedCell(res.row, res.col)
+
 			sheet.config.superPermissions.push({
 				r: res.row,
 				c: res.col,
-				rr: res.row,
-				cc: res.col,
+				rr: mergeCell ? res.row + mergeCell.rs - 1 : res.row,
+				cc: mergeCell ? res.col + mergeCell.cs - 1 : res.col,
 				v: '',
 			})
 			return
