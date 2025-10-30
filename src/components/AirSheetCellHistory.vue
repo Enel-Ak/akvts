@@ -258,7 +258,7 @@ watch(
 		}"
 	>
 		<div class="title df aic">
-			<strong class="red mg-right-5">{{ ranged.sqref.split(':')[0] }}</strong>
+			<strong class="red mg-right-5">{{ ranged?.sqref?.split(':')?.[0] }}</strong>
 			改动记录
 		</div>
 		<div
