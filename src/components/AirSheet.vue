@@ -3052,17 +3052,17 @@ const getSuperPermissionStyle = (range, index) => {
 	}
 
 	// 获取基础样式（自动考虑 zoom、rResize、cResize）
-	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight, false)
 
 	// 返回样式
 	return {
 		...baseStyle,
 		'--z-highlight-color': `rgb(${color})`,
 		'--z-highlight-color-rgb': color,
-		border: `1px solid rgb(${color})`, // ✅ 修复: 改为 1px，与其他权限一致
-		backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
-		zIndex: 3, // 比普通高亮更高的层级
-		pointerEvents: 'none', // 不阻止鼠标事件
+		// border: `1px solid rgb(${color})`, // ✅ 修复: 改为 1px，与其他权限一致
+		// backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
+		// zIndex: 3, // 比普通高亮更高的层级
+		// pointerEvents: 'none', // 不阻止鼠标事件
 	}
 }
 </script>

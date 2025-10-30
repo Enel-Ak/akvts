@@ -230,7 +230,7 @@ export const useSelectionRange = () => {
 	}
 
 	const highlightRanges = new Map()
-	const setHighlightRange = (highlight) => {
+	const setHighlightRange = (highlight, notSuper = true) => {
 		const {id, r, c, rr, cc, value, state} = highlight
 
 		// 获取该用户的权限类型 (如果启用了权限模式)
@@ -274,7 +274,7 @@ export const useSelectionRange = () => {
 		// 扩展范围以包含合并单元格
 		const expandedRange = getExpandedRange(finalR, finalC, finalRR, finalCC, 0)
 
-		if (sheet.config.synergy) {
+		if (sheet.config.synergy && notSuper) {
 			// 修复: 协同模式下，行列级权限需要合并选区
 			if (sheet.config.auth === 1) {
 				expandedRange.r = finalR
