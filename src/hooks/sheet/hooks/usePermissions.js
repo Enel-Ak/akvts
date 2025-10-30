@@ -986,7 +986,7 @@ export const usePermissions = () => {
 							cc: sheet.config.colCount - 1,
 							type: 'row',
 							userId,
-							userName: userId === currentUserId ? '' : userName,
+							userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
@@ -1006,7 +1006,7 @@ export const usePermissions = () => {
 						cc: col,
 						type: 'column',
 						userId,
-						userName: userId === currentUserId ? '' : userName,
+						userName,
 						noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 					})
 				})
@@ -1028,7 +1028,7 @@ export const usePermissions = () => {
 							cc: cell.col,
 							type: 'cell',
 							userId,
-							userName: userId === currentUserId ? '' : userName,
+							userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 							originalRow, // 保留原始行号，用于调试
 						})
@@ -1040,7 +1040,7 @@ export const usePermissions = () => {
 							cc: cell.col,
 							type: 'cell',
 							userId,
-							userName: userId === currentUserId ? '' : userName,
+							userName,
 							noLock: permission.noLock === true, // ✅ 添加 noLock 属性
 						})
 					}
