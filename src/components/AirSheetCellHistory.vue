@@ -404,6 +404,12 @@ watch(
 				margin-left: 10px;
 			}
 
+			.content {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
 			div {
 				flex: none;
 				padding: 10px 0 0 0;

@@ -132,7 +132,8 @@ export const useSelectionRange = () => {
 
 			// 检查选区边界上的合并单元格
 			const checkBoundary = (row, col) => {
-				const mergedCell = sheet.hooks.mergeHook.findMergedCell(row, col)
+				let mergedCell = sheet.hooks.mergeHook.findMergedCell(row, col)
+
 				if (mergedCell) {
 					finalStartRow = Math.min(finalStartRow, mergedCell.r)
 					finalEndRow = Math.max(finalEndRow, mergedCell.r + mergedCell.rs - 1)
@@ -271,7 +272,23 @@ export const useSelectionRange = () => {
 		}
 
 		// 扩展范围以包含合并单元格
-		const expandedRange = getExpandedRange(finalR, finalC, finalRR, finalCC)
+		const expandedRange = getExpandedRange(finalR, finalC, finalRR, finalCC, 0)
+
+		if (sheet.config.synergy) {
+			// 修复: 协同模式下，行列级权限需要合并选区
+			if (sheet.config.auth === 1) {
+				expandedRange.r = Math.min(ranged.value.r, r)
+				expandedRange.rr = Math.max(ranged.value.rr, rr)
+				expandedRange.c = 0
+				expandedRange.cc = sheet.config.colCount - 1
+			} else if (sheet.config.auth === 2) {
+				expandedRange.r = 0
+				expandedRange.rr = sheet.config.rowCount - 1
+				expandedRange.c = Math.min(ranged.value.c, c)
+				expandedRange.cc = Math.max(ranged.value.cc, cc)
+			}
+		}
+
 		const {r: expandedR, c: expandedC, rr: expandedRR, cc: expandedCC} = expandedRange
 
 		// 计算行高（使用扩展后的范围）
@@ -748,13 +765,36 @@ export const useSelectionRange = () => {
 		ranged.value = {...selection}
 
 		// 更新权限锁定
+		// ✅ 修复：对于列级权限，只传递实际点击的列，不受合并单元格影响
 		if (sheet.config.synergy && sheet.hooks.permissionsHook) {
-			sheet.hooks.permissionsHook.updatePermissions(
-				selection.r,
-				selection.c,
-				selection.rr,
-				selection.cc
-			)
+			let permR = selection.r
+			let permC = selection.c
+			let permRR = selection.rr
+			let permCC = selection.cc
+
+			// 对于列级权限，只记录实际点击的列
+			if (sheet.config.auth === 2) {
+				permR = pos.r
+				permC = pos.c
+				permRR = pos.r
+				permCC = pos.c
+			}
+			// 对于行级权限，只记录实际点击的行
+			else if (sheet.config.auth === 1) {
+				permR = pos.r
+				permC = pos.c
+				permRR = pos.r
+				permCC = pos.c
+			}
+			// 对于单元格级权限，只记录实际点击的单元格
+			else if (sheet.config.auth === 3) {
+				permR = pos.r
+				permC = pos.c
+				permRR = pos.r
+				permCC = pos.c
+			}
+
+			sheet.hooks.permissionsHook.updatePermissions(permR, permC, permRR, permCC)
 		}
 
 		if (sheet.config.synergy) {

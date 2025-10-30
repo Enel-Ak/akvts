@@ -219,6 +219,56 @@ export const useMerge = () => {
 		return null
 	}
 
+	// 检查当前列在指定行是否有合并单元格
+	// 用于列级权限检查：返回该列在该行处的完整合并信息
+	// r 为该列内合并的起始行，c 保持不变（传入的列号），rs 为该列内的完整行跨度，cs 保持不变
+	// 例如：isRowMerged(1, 0) 检查第1行第0列，如果第0-2行的第0-1列合并，返回 {r: 0, c: 0, rs: 3, cs: 2}
+	const isRowMerged = (r, c) => {
+		// 检查所有合并单元格
+		for (const [mergedKey, value] of mergedCells.entries()) {
+			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
+			const mergedEndRow = mergedRow + value.rs - 1
+			const mergedEndCol = mergedCol + value.cs - 1
+
+			// 检查该行该列是否在合并单元格范围内
+			if (r >= mergedRow && r <= mergedEndRow && c >= mergedCol && c <= mergedEndCol) {
+				return {
+					r: mergedRow, // 该列内合并的起始行
+					c: c, // 保持不变（传入的列号）
+					rs: value.rs, // 该列内的完整行跨度
+					cs: value.cs, // 保持不变（原合并单元格的列跨度）
+				}
+			}
+		}
+
+		return null
+	}
+
+	// 检查当前行在指定列是否有合并单元格
+	// 用于行级权限检查：返回该行在该列处的完整合并信息
+	// r 保持不变（传入的行号），c 为该行内合并的起始列，rs 保持不变，cs 为该行内的完整列跨度
+	// 例如：isColumnMerged(0, 1) 检查第0行第1列，如果第0行的第0-1列合并，返回 {r: 0, c: 0, rs: 1, cs: 2}
+	const isColumnMerged = (r, c) => {
+		// 检查所有合并单元格
+		for (const [mergedKey, value] of mergedCells.entries()) {
+			const [mergedRow, mergedCol] = mergedKey.split('-').map(Number)
+			const mergedEndRow = mergedRow + value.rs - 1
+			const mergedEndCol = mergedCol + value.cs - 1
+
+			// 检查该行该列是否在合并单元格范围内
+			if (r >= mergedRow && r <= mergedEndRow && c >= mergedCol && c <= mergedEndCol) {
+				return {
+					r: r, // 保持不变（传入的行号）
+					c: mergedCol, // 该行内合并的起始列
+					rs: value.rs, // 保持不变（原合并单元格的行跨度）
+					cs: value.cs, // 该行内的完整列跨度
+				}
+			}
+		}
+
+		return null
+	}
+
 	const refreshMerge = () => {
 		console.log('refreshMerge 开始，当前 merged 配置:', sheet.config.merged)
 		console.log('refreshMerge 之前的 mergedCells:', [...mergedCells.entries()])
@@ -269,6 +319,8 @@ export const useMerge = () => {
 			setMerge,
 			setMergeCells,
 			findMergedCell,
+			isRowMerged,
+			isColumnMerged,
 			clearMergedCells,
 			removeMergedCell,
 

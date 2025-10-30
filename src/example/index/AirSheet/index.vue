@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 2,
+		auth: 1,
 
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
@@ -1347,6 +1347,11 @@ const synergyJoinSheet = async (id, sheet) => {
 				sheet.hooks.editHook.setFormulaValue()
 				console.log('✅ 公式已重新计算')
 			}
+		}
+
+		// 强制渲染
+		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+			sheet.state.lastMergeUpdate = Date.now()
 		}
 	}
 
