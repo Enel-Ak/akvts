@@ -1350,6 +1350,7 @@ const synergyJoinSheet = async (id, sheet) => {
 		// }
 
 		// 强制渲染
+		await nextTick()
 		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
 			sheet.hooks.mergeHook.refreshMerge()
 			sheet.state.lastMergeUpdate = Date.now()
