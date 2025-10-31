@@ -447,15 +447,29 @@ export function useCopy() {
 				sheet.hooks.mergeHook.setMerge(merge.r, merge.c, merge.rs, merge.cs)
 			})
 
-			setTimeout(() => {
-				sheet.hooks.selectionRangeHook.setRange(
-					baseRow,
-					baseCol,
-					baseRow + pasteData.data.length - 1,
-					baseCol + pasteData.data[0].length - 1,
-					true
-				)
-			}, 16.7)
+			// ✅ 修复: 使用 requestAnimationFrame 替代 setTimeout，确保在 DOM 更新后再设置选区
+			// 这样可以避免粘贴后点击单元格时位置计算错误
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					const pasteEndRow = baseRow + pasteData.data.length - 1
+					const pasteEndCol = baseCol + pasteData.data[0].length - 1
+
+					console.log('🔍 [DEBUG] processClipboardData: 设置粘贴后的选区', {
+						baseRow,
+						baseCol,
+						pasteEndRow,
+						pasteEndCol,
+					})
+
+					sheet.hooks.selectionRangeHook.setRange(
+						baseRow,
+						baseCol,
+						pasteEndRow,
+						pasteEndCol,
+						true
+					)
+				})
+			})
 		}
 
 		// 处理高度
@@ -481,9 +495,16 @@ export function useCopy() {
 
 		// ✅ 修复: 所有操作完成后显示成功提示
 		sheet.state.loading = false
+
+		await nextTick()
+		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+			sheet.state.lastMergeUpdate = Date.now()
+		}
+
 		useDebounce(
 			() => {
 				ElMessage.success('粘贴成功')
+
 				if (sheet.config.synergy) {
 					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 				}

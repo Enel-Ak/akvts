@@ -683,7 +683,10 @@ export const useSelectionRange = () => {
 			count: mouseDownCallCount,
 			button: e.button,
 			target: e.target.className,
-			stack: new Error().stack,
+			currentSelection: selection,
+			currentRanged: ranged.value,
+			selecting: selecting.value,
+			dragging: dragging.value,
 		})
 
 		if (e.button !== 0) return // 只处理左键点击
@@ -692,6 +695,17 @@ export const useSelectionRange = () => {
 
 		// 只处理带有cell类的元素
 		if (!e.target.classList.contains('cell')) return
+
+		// ✅ 修复: 在计算位置前，确保 selecting 和 dragging 状态正确
+		// 如果之前有未完成的选择或拖拽操作，先重置状态
+		if (selecting.value || dragging.value) {
+			console.log('🔍 [DEBUG] handleMouseDown: 检测到残留状态，重置中...', {
+				selecting: selecting.value,
+				dragging: dragging.value,
+			})
+			selecting.value = false
+			dragging.value = false
+		}
 
 		const pos = limitRange(getCellPosition(e))
 
@@ -1201,6 +1215,23 @@ export const useSelectionRange = () => {
 				cc,
 			}
 		}
+
+		// ✅ 修复: 同步更新 selection 变量，确保与 ranged.value 保持一致
+		// 这样可以避免粘贴后点击单元格时位置计算错误
+		selection = {...ranged.value}
+
+		// ✅ 修复: 确保 selecting 和 dragging 状态被正确重置
+		// 这样可以避免粘贴后的状态残留影响后续操作
+		selecting.value = false
+		dragging.value = false
+
+		console.log('🔍 [DEBUG] setRange called', {
+			input: {r, c, rr, cc},
+			ranged: ranged.value,
+			selection,
+			selecting: selecting.value,
+			dragging: dragging.value,
+		})
 
 		// 检查当前选中的单元格是否有公式，如果有则重建 formulaMap
 		const cellKey = `${ranged.value.r}-${ranged.value.c}`

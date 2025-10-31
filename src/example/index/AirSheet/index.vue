@@ -1322,9 +1322,52 @@ const synergyJoinSheet = async (id, sheet) => {
 		Object.assign(sheet.config, {
 			...sheetConfig,
 			permissions: {},
-			deepPermissions: sheetConfig.deepPermissions || {}, //
+			deepPermissions: {}, //
 			// superPermissions: [],
-			superPermissions: [{r: 2, c: 1, rr: 3, cc: 2, v: '权限区域'}],
+			// superPermissions: [
+			// 	{
+			// 		r: 0,
+			// 		c: 0,
+			// 		rr: 0,
+			// 		cc: 0,
+			// 		v: '1',
+			// 	},
+			// 	{
+			// 		r: 0,
+			// 		c: 1,
+			// 		rr: 0,
+			// 		cc: 1,
+			// 		v: '2',
+			// 	},
+			// 	{
+			// 		r: 0,
+			// 		c: 2,
+			// 		rr: 0,
+			// 		cc: 2,
+			// 		v: '3',
+			// 	},
+			// 	{
+			// 		r: 0,
+			// 		c: 3,
+			// 		rr: 0,
+			// 		cc: 3,
+			// 		v: '4',
+			// 	},
+			// 	{
+			// 		r: 0,
+			// 		c: 4,
+			// 		rr: 0,
+			// 		cc: 4,
+			// 		v: '5',
+			// 	},
+			// 	{
+			// 		r: 0,
+			// 		c: 5,
+			// 		rr: 0,
+			// 		cc: 5,
+			// 		v: '6',
+			// 	},
+			// ],
 		})
 
 		console.log('配置已更新:', sheet.config)
@@ -1495,7 +1538,7 @@ onActivated(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://100.92.2.93:8001/api/online-table/table/3a1d277f-c0e4-f81f-2310-199ddc36d845?autoCreate=true',
+			url: 'http://100.92.2.93:8001/api/online-table/table/3a1d46fb-2564-2aef-4466-d95e5d2e7d18?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
