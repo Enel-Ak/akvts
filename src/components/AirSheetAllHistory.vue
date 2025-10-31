@@ -333,6 +333,7 @@ watch(
 					bottom: 0,
 					backgroundColor: 'rgba(255, 255, 255, 0.7)',
 					zIndex: 10,
+					pointerEvents: 'none',
 				}"
 			>
 				<LoadingTransition text="正在获取历史记录" />
@@ -361,7 +362,7 @@ watch(
 
 	&.on {
 		display: block;
-		width: 20%;
+		width: 30%;
 	}
 
 	.head {
