@@ -1531,6 +1531,7 @@ const asyncCompleted = () => {
 	synergyJoinSheet(sheetId.value, sheetRef.value.getSheet())
 }
 
+const allHistoryData = ref([])
 const cellHistoryData = ref([])
 let historyCell = null
 let historyCount = 0
@@ -1601,6 +1602,29 @@ const asyncCellHistory = async (ranged, callback) => {
 
 	historyCount++
 	historyTotal = res.data.totalCount
+	callback && callback()
+}
+
+const asyncAllHistory = async (callback) => {
+	allHistoryData.value.push({
+		date: '2025-10-31',
+		list: [
+			{
+				name: '张三',
+				time: '10:58',
+				content: '1234567890',
+				r: 1,
+				c: 1,
+			},
+			{
+				name: '张三',
+				time: '10:58',
+				content: '1234567890',
+				r: 4,
+				c: 5,
+			},
+		],
+	})
 	callback && callback()
 }
 
@@ -1680,9 +1704,11 @@ onDeactivated(() => {
 			ref="sheetRef"
 			v-model="config"
 			v-model:linked="linked"
+			toolbarTabs="start,synergy"
 			:api="api"
 			:token="token"
 			:async-sheet="synergyData"
+			:allHistoryData="allHistoryData"
 			:cellHistoryData="cellHistoryData"
 			@add-sheet="addSheet"
 			@asyncInputCell="asyncInputCell"
@@ -1692,6 +1718,7 @@ onDeactivated(() => {
 			@asyncLeaveSheet="synergyLeaveSheet"
 			@asyncConfig="asyncConfig"
 			@asyncCompleted="asyncCompleted"
+			@asyncAllHistory="asyncAllHistory"
 			@asyncCellHistory="asyncCellHistory"
 		></AirSheet>
 		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->

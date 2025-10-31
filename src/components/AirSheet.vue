@@ -22,6 +22,7 @@ import {useSignalrStop} from '@/hooks/useSignalr'
 import AirSheetFilter from './AirSheetFilter.vue'
 import AirSheetSearch from './AirSheetSearch.vue'
 import AirSheetCellHistory from './AirSheetCellHistory.vue'
+import AirSheetAllHistory from './AirSheetAllHistory.vue'
 
 const stateType = {
 	normal: 0,
@@ -49,6 +50,7 @@ const emits = defineEmits([
 	'asyncConfig',
 	'asyncCompleted',
 	'asyncPermissionsChanged',
+	'asyncAllHistory',
 	'asyncCellHistory',
 ])
 
@@ -99,6 +101,7 @@ const props = defineProps({
 	token: {type: String, default: ''},
 	asyncSheet: {type: Array, default: () => []},
 	userKeys: {type: Array, default: () => ['operatorUserId', 'operatorName']},
+	allHistoryData: {type: Array, default: () => []},
 	cellHistoryData: {type: Array, default: () => []},
 })
 
@@ -165,6 +168,7 @@ watch(
 const Tabs = [
 	{name: 'start', label: '开始'},
 	{name: 'formula', label: '公式'},
+	{name: 'synergy', label: '协同'},
 ]
 const toolbarTabActive = ref(Tabs[0].name)
 const tollbarTabList = computed(() => Tabs.filter((item) => props.toolbarTabs.includes(item.name)))
@@ -3679,6 +3683,17 @@ const getSuperPermissionStyle = (range, index) => {
 
 					<div class="group flx brn"></div>
 				</template>
+
+				<template v-if="toolbarTabActive === 'synergy'">
+					<div class="df jcc w-full">
+						<div class="group" v-if="sheet.config.allHistory">
+							<div class="item" @click="sheet.hooks.toolsHook.allHistory">
+								<Icons name="History"></Icons>
+								<span>历史记录</span>
+							</div>
+						</div>
+					</div>
+				</template>
 			</div>
 
 			<div v-if="sheet.config.edit" class="inputbar">
@@ -4435,6 +4450,12 @@ const getSuperPermissionStyle = (range, index) => {
 				v-model:show="sheet.state.cellHistory"
 				:sheet="sheet"
 				:data="cellHistoryData"
+			/>
+
+			<AirSheetAllHistory
+				v-model:show="sheet.state.allHistory"
+				:sheet="sheet"
+				:data="allHistoryData"
 			/>
 		</template>
 	</div>

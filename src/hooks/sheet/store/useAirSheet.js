@@ -57,6 +57,7 @@ const defaultSheet = {
 		createSheet: true, // 添加新sheet
 		deleteSheet: true, // 删除sheet
 		changeSheetName: true, // 修改表名
+		allHistory: true, // 所有历史
 		cellHistory: true, // 单元格历史
 		online: [], // 协同高亮在线的, 当前sheet的
 		rowCount: 40,
@@ -96,6 +97,7 @@ const defaultSheet = {
 		search: false, // 是否开启查找
 		formula: false, // 是否进入公式状态
 		openformula: false, // 是否打开公式菜单
+		allHistory: false, // 是否打开所有历史
 		cellHistory: false, // 是否打开单元格历史
 		formulaStyle: {},
 

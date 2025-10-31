@@ -3127,6 +3127,11 @@ export const useTools = () => {
 		}
 	}
 
+	const allHistory = () => {
+		sheet.state.allHistory = true
+		sheet?.emits('asyncAllHistory')
+	}
+
 	const cellHistory = () => {
 		sheet.state.cellHistory = true
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
@@ -3714,6 +3719,7 @@ export const useTools = () => {
 			parseCellRange,
 			asyncUpdateConfig,
 
+			allHistory,
 			cellHistory,
 		}
 	}
