@@ -425,6 +425,7 @@ watch(
 			border: 1px solid var(--z-line);
 			border-radius: 5px;
 			background-color: rgba(var(--z-theme-rgb), 1);
+			line-height: 1.5;
 			padding: 10px;
 			margin: 0 5px 10px 5px;
 
