@@ -99,6 +99,7 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * ✅ 新增：判断整行是否被 superPermissions 覆盖
+	 * ✅ 修复：只有当权限覆盖整行的所有列时，才认为该行被覆盖
 	 * @param {number} row - 行索引
 	 * @returns {Object} {locked: boolean, ranges: Array} 是否被锁定及覆盖的权限区域
 	 */
@@ -107,9 +108,10 @@ export const useSuperPermissions = () => {
 		const coveredRanges = []
 
 		p.forEach((permission) => {
-			const {r: startRow, c: startCol, rr: endRow, cc: endCol} = permission
-			// 检查该行是否在权限区域的行范围内
-			if (row >= startRow && row <= endRow) {
+			const {r: startRow, c: startCol, rr: endRow} = permission
+			// ✅ 修复：检查该行是否在权限区域的行范围内，且权限覆盖整行（从第0列到最后一列）
+			// 只有当权限的列范围从0开始且足够宽时，才认为覆盖了整行
+			if (row >= startRow && row <= endRow && startCol === 0) {
 				coveredRanges.push(permission)
 			}
 		})
@@ -122,6 +124,7 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * ✅ 新增：判断整列是否被 superPermissions 覆盖
+	 * ✅ 修复：只有当权限覆盖整列的所有行时，才认为该列被覆盖
 	 * @param {number} col - 列索引
 	 * @returns {Object} {locked: boolean, ranges: Array} 是否被锁定及覆盖的权限区域
 	 */
@@ -130,9 +133,10 @@ export const useSuperPermissions = () => {
 		const coveredRanges = []
 
 		p.forEach((permission) => {
-			const {c: startCol, cc: endCol} = permission
-			// 检查该列是否在权限区域的列范围内
-			if (col >= startCol && col <= endCol) {
+			const {r: startRow, c: startCol, cc: endCol} = permission
+			// ✅ 修复：检查该列是否在权限区域的列范围内，且权限覆盖整列（从第0行到最后一行）
+			// 只有当权限的行范围从0开始且足够高时，才认为覆盖了整列
+			if (col >= startCol && col <= endCol && startRow === 0) {
 				coveredRanges.push(permission)
 			}
 		})
@@ -246,80 +250,8 @@ export const useSuperPermissions = () => {
 	}
 
 	/**
-	 * ✅ 新增：从单元格集合中找出最大的矩形区域（贪心算法）
-	 * @param {Set} cells - 单元格集合，格式为 "r,c"
-	 * @param {Set} visited - 已访问的单元格集合
-	 * @param {number} minRow - 最小行号
-	 * @param {number} minCol - 最小列号
-	 * @param {number} maxRow - 最大行号
-	 * @param {number} maxCol - 最大列号
-	 * @returns {Object|null} 最大矩形区域 {r, c, rr, cc} 或 null
-	 */
-	const findLargestRectangle = (cells, visited, minRow, minCol, maxRow, maxCol) => {
-		let bestRect = null
-		let bestArea = 0
-
-		// 从左上角开始扫描，找到第一个未访问的单元格
-		for (let r = minRow; r <= maxRow; r++) {
-			for (let c = minCol; c <= maxCol; c++) {
-				const cellKey = `${r},${c}`
-				if (!cells.has(cellKey) || visited.has(cellKey)) {
-					continue
-				}
-
-				// 尝试从这个单元格开始扩展矩形
-				// 1. 先向右扩展，找到最大宽度
-				let maxWidth = 1
-				for (let cc = c + 1; cc <= maxCol; cc++) {
-					const key = `${r},${cc}`
-					if (!cells.has(key) || visited.has(key)) {
-						break
-					}
-					maxWidth++
-				}
-
-				// 2. 在最大宽度的约束下，向下扩展
-				let height = 1
-				for (let rr = r + 1; rr <= maxRow; rr++) {
-					// 检查这一行的所有列是否都可用
-					let rowValid = true
-					for (let cc = c; cc < c + maxWidth; cc++) {
-						const key = `${rr},${cc}`
-						if (!cells.has(key) || visited.has(key)) {
-							rowValid = false
-							break
-						}
-					}
-					if (!rowValid) {
-						break
-					}
-					height++
-				}
-
-				// 计算面积
-				const area = maxWidth * height
-				if (area > bestArea) {
-					bestArea = area
-					bestRect = {
-						r: r,
-						c: c,
-						rr: r + height - 1,
-						cc: c + maxWidth - 1,
-					}
-				}
-
-				// 如果找到了一个矩形，立即返回（贪心策略）
-				if (bestRect) {
-					return bestRect
-				}
-			}
-		}
-
-		return bestRect
-	}
-
-	/**
 	 * ✅ 新增：合并单个 id 组的权限对象
+	 * ✅ 修复：不合并不规则的权限区域，直接返回原始权限对象
 	 * @param {Array} permissions - 同一 id 的权限对象列表
 	 * @returns {Array} 合并后的权限对象列表
 	 */
@@ -333,52 +265,10 @@ export const useSuperPermissions = () => {
 			return permissions
 		}
 
-		// 1. 构建单元格集合
-		const cells = new Set()
-		let minRow = Infinity
-		let minCol = Infinity
-		let maxRow = -Infinity
-		let maxCol = -Infinity
-
-		permissions.forEach((perm) => {
-			const {r, c, rr, cc} = perm
-			for (let row = r; row <= rr; row++) {
-				for (let col = c; col <= cc; col++) {
-					cells.add(`${row},${col}`)
-					minRow = Math.min(minRow, row)
-					minCol = Math.min(minCol, col)
-					maxRow = Math.max(maxRow, row)
-					maxCol = Math.max(maxCol, col)
-				}
-			}
-		})
-
-		// 2. 使用贪心算法找出所有矩形区域
-		const result = []
-		const visited = new Set()
-
-		while (visited.size < cells.size) {
-			const rect = findLargestRectangle(cells, visited, minRow, minCol, maxRow, maxCol)
-			if (!rect) {
-				break
-			}
-
-			// 标记已访问的单元格
-			for (let r = rect.r; r <= rect.rr; r++) {
-				for (let c = rect.c; c <= rect.cc; c++) {
-					visited.add(`${r},${c}`)
-				}
-			}
-
-			// 保留原始权限对象的 v 和 id 字段
-			result.push({
-				...rect,
-				v: permissions[0].v,
-				id: permissions[0].id,
-			})
-		}
-
-		return result
+		// ✅ 修复：不合并不规则的权限区域
+		// 直接返回原始权限对象列表，避免错误地扩展权限范围
+		// 例如：r5c2 和 r6c1:c2 不应该被合并成一个大矩形
+		return permissions
 	}
 
 	/**

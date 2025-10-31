@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 3,
+		auth: 0,
 
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
@@ -1177,7 +1177,7 @@ const onClick = () => {}
 const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjE4MTA5NTIsImV4cCI6MTc2MTk4Mjk1MiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MjFkLTEyYmEtOGY5Yi1hZWEyLTE0N2RmNTA5ZWM3OCIsImF1dGhfdGltZSI6MTc2MTgxMDk1MSwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzYxODM4NjU2NkBpbnNwdXIuY29tIiwieWt6LWlkIjoiNDU3NjM5IiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM5NTE2MzY0MDI2OTQxNDQwIiwicm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJwaG9uZV9udW1iZXJfdmVyaWZpZWQiOiJGYWxzZSIsImVtYWlsX3ZlcmlmaWVkIjoiRmFsc2UiLCJuYW1lIjoieWt6LTEzNjE4Mzg2NTY2IiwiYnVzaW5lc3NSb2xlIjoi5Z-656GA5Yqf6IO9Lea4neW_q-aUvyIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjgtOWFmYi1lNjNjLTdhYzI3NmY4YzE0OSIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjgtYWY1ZC00ZThhLTY1NTIyYzZhMDJhYSIsImlhdCI6MTc2MTgxMDk1Miwic2NvcGUiOlsiYWRkcmVzcyIsImVtYWlsIiwiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvcGVuaWQiLCJwaG9uZSIsInByb2ZpbGUiLCJyb2xlIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbIkF1dGhDb2RlIl19.HxMXjRT9P1mv1SLTK-Fw0pwdAvvFijNrsQvkchyTi_u8jdI4RLp3ZAAov2x_5Tcrja5s5wAYzSsPc0XL-bx2PIYKX7anMq3G9VTzO5NYumQkQLLHp9fhkd97LO3BjlHS_cGoPWDkBiz4eji9278FE4JPpaWEGRRd-LTx8fsvAvxBqUcENYoH8xDWPLEI1eaSSeM1zsE5olYLv8j1OtZtZDxTvrvuoX0kOEYeTp4vu1TBi5JhtsXxwlg53m5AhF4b_vW_uO8ysHsAPipqrTa2nhvcsQfz_vXlroD8PW53MdJ6tCF_oaa2SwHGa1W3fYTW-UWZ14RhihFlzW_WYw9mUA'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjE3MDgwNjUsImV4cCI6MTc2MTg4MDA2NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MTcwODA2MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjE3MDgwNjUsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.YoAdGL-ZXFKJGvsaHrSu7ruM4Jbp45-HhSeQq4xIrdgNKBGUSjz-JBAmZNKsVRZZxXFM9WsghJAuy5L-MUGOL86HPvUMbkD9ilSEgCLAubnQD8r14Wgy3-dpl1QOLGQ6DKIpDRoR6zMIC2QLkOM1EljBwWiQZ3esT93apL4SuD9J0TI-x50aIj1i0S7dUz999QrNoGys_nNceU8MrLeMi9b0AJOPwi0pIp011EFFttBJkOpPAxkYk_UmGEpBTAXytYoRZRPhQ_yhJsJ2KRsG4eiah15LiZKGcSP-iJQf0wTLCJu3vjNXPHvgyckEbeB17fjN19_z0BafG_SbDVP-kA'
+	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjE4OTM1NDQsImV4cCI6MTc2MjA2NTU0NCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MTg5MzU0MywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjE4OTM1NDQsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.RsawCzagVbYobwtagfbxcozouoZK-xobrFq4b2ECfCK3jGiwZ8Rq4Z0KrWSblZQY2HGjCZPdqZiT2AG795_DL-seoEbsUvMnYKutPQk9oe1_6w4-bpBMc-_ZQ8H_6ec-4TvfBGRE_MN36Eid_X4Ns79-ZlLcDz1t-YyrLCr2LZQRWPuiDFQi05yxNQB6NUYm5CxduuiC6hA48P6Vt6kq52R1q2istp7Dg2z6chzocfKK7hNB-THeEB3gwHT8auF_VNQncTutozRUCgzwsqF1nXG2adE_GxcnlCHF8Bc9T9YZx-og_vOUAE4dvuABnuNm6uB27oOPhvkxaEmzMP3R8g'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1324,29 +1324,69 @@ const synergyJoinSheet = async (id, sheet) => {
 			permissions: {},
 			deepPermissions: {
 				'3a0b4b62-d135-3903-0589-b7f520734871': {
-					type: 'cell',
-					// targets: [4, 5, 6, 9, 10, 15],
-					targets: [
-						{row: 5, col: 4},
-						{row: 5, col: 5},
-						{row: 5, col: 6},
-						{row: 6, col: 4},
-						{row: 7, col: 4},
-					],
+					type: 'column',
+					targets: [4, 5, 6, 9, 10, 15],
+					// targets: [
+					// 	{row: 5, col: 4},
+					// 	{row: 5, col: 5},
+					// 	{row: 5, col: 6},
+					// 	{row: 6, col: 4},
+					// 	{row: 7, col: 4},
+					// ],
 					timestamp: 1761708065000,
 					userName: 'admin',
 				},
 			}, //
 			// superPermissions: [],
 			superPermissions: [
-				{r: 0, c: 0, rr: 0, cc: 0, v: '1', id: '3a0b4b62-d135-3903-0589-b7f520734871'},
-				{r: 0, c: 1, rr: 0, cc: 1, v: '1', id: '3a0b4b62-d135-3903-0589-b7f520734871'},
-				{r: 1, c: 1, rr: 1, cc: 1, v: '1', id: '3a0b4b62-d135-3903-0589-b7f520734871'},
-				{r: 2, c: 1, rr: 2, cc: 1, v: '1', id: '3a0b4b62-d135-3903-0589-b7f520734871'},
-				{r: 0, c: 2, rr: 0, cc: 2, v: '2', id: '3a0b4b62-d135-3903-0589-b7f520734872'},
-				{r: 0, c: 3, rr: 0, cc: 3, v: '2', id: '3a0b4b62-d135-3903-0589-b7f520734872'},
-				{r: 0, c: 4, rr: 0, cc: 4, v: '2', id: '3a0b4b62-d135-3903-0589-b7f520734872'},
-				{r: 0, c: 5, rr: 0, cc: 5, v: '3', id: '3a0b4b62-d135-3903-0589-b7f520734873'},
+				{
+					r: 1,
+					c: 1,
+					rr: 1,
+					cc: 1,
+					v: '市高法院',
+					id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+				},
+				{
+					r: 5,
+					c: 2,
+					rr: 5,
+					cc: 2,
+					v: '市高法院',
+					id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+				},
+				{
+					r: 5,
+					c: 4,
+					rr: 5,
+					cc: 4,
+					v: '市高法院',
+					id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+				},
+				{
+					r: 6,
+					c: 1,
+					rr: 6,
+					cc: 2,
+					v: '市高法院',
+					id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+				},
+				{
+					r: 6,
+					c: 2,
+					rr: 6,
+					cc: 2,
+					v: '市高法院',
+					id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+				},
+				{
+					r: 6,
+					c: 4,
+					rr: 6,
+					cc: 4,
+					v: '市高法院',
+					id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+				},
 			],
 		})
 

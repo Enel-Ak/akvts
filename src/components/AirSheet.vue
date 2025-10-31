@@ -88,6 +88,9 @@ const props = defineProps({
 
 	limit: {type: Number, default: 30000},
 
+	// 启用多彩颜色
+	multiColor: {type: Boolean, default: false},
+
 	// 配置顶部菜单
 	toolbarTabs: {type: String, default: 'start'}, // formula
 
@@ -1041,7 +1044,7 @@ const onClickCell = (e, cell) => {
 		)
 
 		if (superPermCheck.locked) {
-			ElMessage.warning(superPermCheck.reason)
+			useDebounce(() => ElMessage.warning(superPermCheck.reason), 100, 'airSheetSuperPerm')()
 			return
 		}
 	}
@@ -3057,7 +3060,7 @@ const getSuperPermissionStyle = (range, index) => {
 	// 返回样式
 	return {
 		...baseStyle,
-		'--z-highlight-color': `rgb(${color})`,
+		'--z-highlight-color': props.multiColor ? `rgb(${color})` : `var(--z-main)`,
 		'--z-highlight-color-rgb': color,
 		// border: `1px solid rgb(${color})`, // ✅ 修复: 改为 1px，与其他权限一致
 		// backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
