@@ -250,8 +250,30 @@ export const useSuperPermissions = () => {
 	}
 
 	/**
-	 * ✅ 新增：合并单个 id 组的权限对象
-	 * ✅ 修复：不合并不规则的权限区域，直接返回原始权限对象
+	 * ✅ 新增：检查是否可以垂直合并（相邻行合并）
+	 * @param {Object} current - 当前权限对象
+	 * @param {Object} next - 下一个权限对象
+	 * @returns {boolean} 是否可以垂直合并
+	 */
+	const canMergeVertically = (current, next) => {
+		// 列范围相同，且行相邻
+		return current.c === next.c && current.cc === next.cc && current.rr + 1 === next.r
+	}
+
+	/**
+	 * ✅ 新增：检查是否可以水平合并（相邻列合并）
+	 * @param {Object} current - 当前权限对象
+	 * @param {Object} next - 下一个权限对象
+	 * @returns {boolean} 是否可以水平合并
+	 */
+	const canMergeHorizontally = (current, next) => {
+		// 行范围相同，且列相邻
+		return current.r === next.r && current.rr === next.rr && current.cc + 1 === next.c
+	}
+
+	/**
+	 * ✅ 新增：合并单个 id 组的权限对象（支持水平和垂直合并）
+	 * 使用贪心算法优先合并最大的连续区域
 	 * @param {Array} permissions - 同一 id 的权限对象列表
 	 * @returns {Array} 合并后的权限对象列表
 	 */
@@ -265,10 +287,42 @@ export const useSuperPermissions = () => {
 			return permissions
 		}
 
-		// ✅ 修复：不合并不规则的权限区域
-		// 直接返回原始权限对象列表，避免错误地扩展权限范围
-		// 例如：r5c2 和 r6c1:c2 不应该被合并成一个大矩形
-		return permissions
+		// 按行、列排序
+		const sorted = [...permissions].sort((a, b) => {
+			if (a.r !== b.r) return a.r - b.r
+			if (a.c !== b.c) return a.c - b.c
+			return 0
+		})
+
+		const merged = []
+		let current = sorted[0]
+
+		for (let i = 1; i < sorted.length; i++) {
+			const next = sorted[i]
+
+			// 优先尝试垂直合并（相邻行）
+			if (canMergeVertically(current, next)) {
+				current = {
+					...current,
+					rr: next.rr,
+				}
+			}
+			// 其次尝试水平合并（相邻列）
+			else if (canMergeHorizontally(current, next)) {
+				current = {
+					...current,
+					cc: next.cc,
+				}
+			}
+			// 无法合并，保存当前权限，开始新的权限
+			else {
+				merged.push(current)
+				current = next
+			}
+		}
+		merged.push(current)
+
+		return merged
 	}
 
 	/**
@@ -303,10 +357,43 @@ export const useSuperPermissions = () => {
 	}
 
 	/**
+	 * ✅ 新增：在筛选状态下，按 id 分组并合并相邻的权限
+	 * 处理行号转换后产生的不连续行号问题
+	 * @param {Array} permissions - 转换后的权限列表
+	 * @returns {Array} 合并后的权限列表
+	 */
+	const mergePermissionsAfterFiltering = (permissions) => {
+		if (!permissions || permissions.length === 0) {
+			return []
+		}
+
+		// 按 id 分组
+		const groupedById = {}
+		permissions.forEach((perm) => {
+			const id = perm.id || 'default'
+			if (!groupedById[id]) {
+				groupedById[id] = []
+			}
+			groupedById[id].push(perm)
+		})
+
+		// 对每个组进行合并
+		const merged = []
+		for (const id in groupedById) {
+			const group = groupedById[id]
+			const mergedGroup = mergePermissionGroup(group)
+			merged.push(...mergedGroup)
+		}
+
+		return merged
+	}
+
+	/**
 	 * 获取所有 superPermission 区域（用于渲染高亮）
 	 * ✅ 修复问题2: 支持筛选状态下的行号转换
 	 * ✅ 新增: 过滤被其他区域完全包含的权限区域
-	 * ✅ 新增: 合并相邻的权限区域以减少 DOM 渲染数量
+	 * ✅ 新增: 合并相邻的权限区域以减少 DOM 渲染数量（支持水平和垂直合并）
+	 * ✅ 改进: 在筛选状态下，行号转换后重新合并相邻权限
 	 * @returns {Array} superPermission 区域列表
 	 */
 	const getSuperPermissionRanges = () => {
@@ -323,8 +410,12 @@ export const useSuperPermissions = () => {
 
 		const validPermissions = permissionList.filter((p) => p && typeof p === 'object')
 
+		console.log('🔍 getSuperPermissionRanges - 原始权限数量:', validPermissions.length)
+
 		// ✅ 新增: 过滤被其他区域完全包含的权限区域
 		const filteredByContainment = filterContainedPermissions(validPermissions)
+
+		console.log('🔍 getSuperPermissionRanges - 过滤后权限数量:', filteredByContainment.length)
 
 		// ✅ 修复问题2: 检测筛选状态，构建行号映射
 		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
@@ -338,7 +429,15 @@ export const useSuperPermissions = () => {
 
 		// 如果不在筛选状态，合并相邻权限后返回
 		if (!isFiltered) {
-			return mergeAdjacentPermissions(filteredByContainment)
+			const result = mergeAdjacentPermissions(filteredByContainment)
+			console.log(
+				'🔍 getSuperPermissionRanges - 合并后权限数量:',
+				result.length,
+				'（减少:',
+				filteredByContainment.length - result.length,
+				'个）'
+			)
+			return result
 		}
 
 		// ✅ 修复问题2: 在筛选状态下，转换行号并过滤不可见的权限
@@ -377,8 +476,16 @@ export const useSuperPermissions = () => {
 			}
 		}
 
-		// ✅ 新增: 合并筛选后的相邻权限区域
-		return mergeAdjacentPermissions(filteredPermissions)
+		// ✅ 改进: 在筛选状态下，行号转换后重新合并相邻权限
+		const result = mergePermissionsAfterFiltering(filteredPermissions)
+		console.log(
+			'🔍 getSuperPermissionRanges - 筛选后合并权限数量:',
+			result.length,
+			'（减少:',
+			filteredPermissions.length - result.length,
+			'个）'
+		)
+		return result
 	}
 
 	/**
