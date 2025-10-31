@@ -4025,7 +4025,7 @@ const getSuperPermissionStyle = (range, index) => {
 						:style="getDeepPermissionStyle(range, index)"
 					>
 						<div class="label">
-							<!-- {{ range.userName || '锁定区域' }} -->
+							{{ range.userName }}
 						</div>
 					</div>
 

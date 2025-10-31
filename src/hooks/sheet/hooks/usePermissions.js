@@ -1072,8 +1072,298 @@ export const usePermissions = () => {
 	}
 
 	/**
+	 * ✅ 新增：合并相邻的行号
+	 * 例如：[0, 1, 2, 5, 6] -> [[0, 2], [5, 6]]
+	 * @param {Array} rows - 行号数组
+	 * @returns {Array} 合并后的行范围数组 [[start, end], ...]
+	 */
+	const mergeAdjacentRows = (rows) => {
+		if (!rows || rows.length === 0) return []
+
+		// 排序并去重
+		const sorted = [...new Set(rows)].sort((a, b) => a - b)
+
+		const merged = []
+		let start = sorted[0]
+		let end = sorted[0]
+
+		for (let i = 1; i < sorted.length; i++) {
+			if (sorted[i] === end + 1) {
+				// 继续当前范围
+				end = sorted[i]
+			} else {
+				// 保存当前范围，开始新范围
+				merged.push([start, end])
+				start = sorted[i]
+				end = sorted[i]
+			}
+		}
+
+		// 保存最后一个范围
+		merged.push([start, end])
+
+		return merged
+	}
+
+	/**
+	 * ✅ 新增：合并相邻的列号
+	 * 例如：[0, 1, 2, 5, 6] -> [[0, 2], [5, 6]]
+	 * @param {Array} cols - 列号数组
+	 * @returns {Array} 合并后的列范围数组 [[start, end], ...]
+	 */
+	const mergeAdjacentColumns = (cols) => {
+		if (!cols || cols.length === 0) return []
+
+		// 排序并去重
+		const sorted = [...new Set(cols)].sort((a, b) => a - b)
+
+		const merged = []
+		let start = sorted[0]
+		let end = sorted[0]
+
+		for (let i = 1; i < sorted.length; i++) {
+			if (sorted[i] === end + 1) {
+				// 继续当前范围
+				end = sorted[i]
+			} else {
+				// 保存当前范围，开始新范围
+				merged.push([start, end])
+				start = sorted[i]
+				end = sorted[i]
+			}
+		}
+
+		// 保存最后一个范围
+		merged.push([start, end])
+
+		return merged
+	}
+
+	/**
+	 * ✅ 新增：从单元格集合中找出最大的矩形区域（贪心算法）
+	 * 参考 useSuperPermissions.js 中的实现
+	 * @param {Set} cells - 单元格集合，格式为 "r,c"
+	 * @param {Set} visited - 已访问的单元格集合
+	 * @param {number} minRow - 最小行号
+	 * @param {number} minCol - 最小列号
+	 * @param {number} maxRow - 最大行号
+	 * @param {number} maxCol - 最大列号
+	 * @returns {Object|null} 最大矩形区域 {r, c, rr, cc} 或 null
+	 */
+	const findLargestRectangleForDeepPermissions = (
+		cells,
+		visited,
+		minRow,
+		minCol,
+		maxRow,
+		maxCol
+	) => {
+		let bestRect = null
+		let bestArea = 0
+
+		// 从左上角开始扫描，找到第一个未访问的单元格
+		for (let r = minRow; r <= maxRow; r++) {
+			for (let c = minCol; c <= maxCol; c++) {
+				const cellKey = `${r},${c}`
+				if (!cells.has(cellKey) || visited.has(cellKey)) {
+					continue
+				}
+
+				// 尝试从这个单元格开始扩展矩形
+				// 1. 先向右扩展，找到最大宽度
+				let maxWidth = 1
+				for (let cc = c + 1; cc <= maxCol; cc++) {
+					const key = `${r},${cc}`
+					if (!cells.has(key) || visited.has(key)) {
+						break
+					}
+					maxWidth++
+				}
+
+				// 2. 在最大宽度的约束下，向下扩展
+				let height = 1
+				for (let rr = r + 1; rr <= maxRow; rr++) {
+					// 检查这一行的所有列是否都可用
+					let rowValid = true
+					for (let cc = c; cc < c + maxWidth; cc++) {
+						const key = `${rr},${cc}`
+						if (!cells.has(key) || visited.has(key)) {
+							rowValid = false
+							break
+						}
+					}
+					if (!rowValid) {
+						break
+					}
+					height++
+				}
+
+				// 计算面积
+				const area = maxWidth * height
+				if (area > bestArea) {
+					bestArea = area
+					bestRect = {
+						r: r,
+						c: c,
+						rr: r + height - 1,
+						cc: c + maxWidth - 1,
+					}
+				}
+
+				// 如果找到了一个矩形，立即返回（贪心策略）
+				if (bestRect) {
+					return bestRect
+				}
+			}
+		}
+
+		return bestRect
+	}
+
+	/**
+	 * ✅ 新增：合并相邻的单元格（使用矩形合并算法）
+	 * @param {Array} cells - 单元格数组，格式为 [{row, col}, ...]
+	 * @returns {Array} 合并后的矩形区域数组 [{r, c, rr, cc}, ...]
+	 */
+	const mergeAdjacentCells = (cells) => {
+		if (!cells || cells.length === 0) return []
+
+		// 1. 构建单元格集合
+		const cellSet = new Set()
+		let minRow = Infinity
+		let minCol = Infinity
+		let maxRow = -Infinity
+		let maxCol = -Infinity
+
+		cells.forEach((cell) => {
+			const {row, col} = cell
+			cellSet.add(`${row},${col}`)
+			minRow = Math.min(minRow, row)
+			minCol = Math.min(minCol, col)
+			maxRow = Math.max(maxRow, row)
+			maxCol = Math.max(maxCol, col)
+		})
+
+		// 2. 使用贪心算法找出所有矩形区域
+		const result = []
+		const visited = new Set()
+
+		while (visited.size < cellSet.size) {
+			const rect = findLargestRectangleForDeepPermissions(
+				cellSet,
+				visited,
+				minRow,
+				minCol,
+				maxRow,
+				maxCol
+			)
+			if (!rect) {
+				break
+			}
+
+			// 标记已访问的单元格
+			for (let r = rect.r; r <= rect.rr; r++) {
+				for (let c = rect.c; c <= rect.cc; c++) {
+					visited.add(`${r},${c}`)
+				}
+			}
+
+			result.push(rect)
+		}
+
+		return result
+	}
+
+	/**
+	 * ✅ 新增：合并 deepPermissions 的渲染数据
+	 * 根据 auth 类型调用相应的合并函数
+	 * @param {Array} ranges - 原始的 range 数组
+	 * @param {number} auth - 权限类型 (1=行级, 2=列级, 3=单元格级)
+	 * @returns {Array} 合并后的 range 数组
+	 */
+	const mergeDeepPermissionRanges = (ranges, auth) => {
+		if (!ranges || ranges.length === 0) return []
+
+		// 按 userId 分组
+		const groupedByUser = {}
+		ranges.forEach((range) => {
+			const userId = range.userId
+			if (!groupedByUser[userId]) {
+				groupedByUser[userId] = []
+			}
+			groupedByUser[userId].push(range)
+		})
+
+		const merged = []
+
+		// 对每个用户的权限进行合并
+		for (const userId in groupedByUser) {
+			const userRanges = groupedByUser[userId]
+
+			if (auth === 1) {
+				// 行级权限：合并相邻的行
+				const rows = userRanges.map((r) => r.r)
+				const mergedRows = mergeAdjacentRows(rows)
+
+				mergedRows.forEach(([startRow, endRow]) => {
+					merged.push({
+						r: startRow,
+						c: 0,
+						rr: endRow,
+						cc: sheet.config.colCount - 1,
+						type: 'row',
+						userId,
+						userName: userRanges[0].userName,
+						noLock: userRanges[0].noLock,
+					})
+				})
+			} else if (auth === 2) {
+				// 列级权限：合并相邻的列
+				const cols = userRanges.map((r) => r.c)
+				const mergedCols = mergeAdjacentColumns(cols)
+
+				mergedCols.forEach(([startCol, endCol]) => {
+					const maxRow = sheet.filterCellData
+						? sheet.filterCellData.size - 1
+						: sheet.config.rowCount - 1
+					merged.push({
+						r: 0,
+						c: startCol,
+						rr: maxRow,
+						cc: endCol,
+						type: 'column',
+						userId,
+						userName: userRanges[0].userName,
+						noLock: userRanges[0].noLock,
+					})
+				})
+			} else if (auth === 3) {
+				// 单元格级权限：使用矩形合并算法
+				const cells = userRanges.map((r) => ({row: r.r, col: r.c}))
+				const mergedRects = mergeAdjacentCells(cells)
+
+				mergedRects.forEach((rect) => {
+					merged.push({
+						r: rect.r,
+						c: rect.c,
+						rr: rect.rr,
+						cc: rect.cc,
+						type: 'cell',
+						userId,
+						userName: userRanges[0].userName,
+						noLock: userRanges[0].noLock,
+					})
+				})
+			}
+		}
+
+		return merged
+	}
+
+	/**
 	 * 获取所有 deepPermission 区域（用于渲染高亮）
 	 * ✅ 问题二: deepPermissions 需要排除当前用户自己的
+	 * ✅ 新增: 合并相邻的行/列/单元格以减少 DOM 渲染数量
 	 * @returns {Array} deepPermission 区域列表
 	 */
 	const getDeepPermissionRanges = () => {
@@ -1217,16 +1507,27 @@ export const usePermissions = () => {
 			}
 		}
 
-		console.log('getDeepPermissionRanges 返回:', {
+		console.log('getDeepPermissionRanges 返回（合并前）:', {
 			总数: ranges.length,
 			当前用户: currentUserId,
 			已排除当前用户: true,
 			筛选状态: isFiltered,
+			auth: sheet.config.auth,
 			ranges,
 		})
 
+		// ✅ 新增: 根据 auth 类型合并相邻的行/列/单元格
+		const mergedRanges = mergeDeepPermissionRanges(ranges, sheet.config.auth)
+
+		console.log('getDeepPermissionRanges 返回（合并后）:', {
+			合并前数量: ranges.length,
+			合并后数量: mergedRanges.length,
+			auth: sheet.config.auth,
+			mergedRanges,
+		})
+
 		// 返回副本，避免外部修改
-		return ranges.map((range) => ({...range}))
+		return mergedRanges.map((range) => ({...range}))
 	}
 
 	/**

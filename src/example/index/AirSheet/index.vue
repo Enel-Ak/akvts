@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 2,
+		auth: 3,
 
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
@@ -1322,7 +1322,21 @@ const synergyJoinSheet = async (id, sheet) => {
 		Object.assign(sheet.config, {
 			...sheetConfig,
 			permissions: {},
-			deepPermissions: {}, //
+			deepPermissions: {
+				'3a0b4b62-d135-3903-0589-b7f520734871': {
+					type: 'cell',
+					// targets: [4, 5, 6, 9, 10, 15],
+					targets: [
+						{row: 5, col: 4},
+						{row: 5, col: 5},
+						{row: 5, col: 6},
+						{row: 6, col: 4},
+						{row: 7, col: 4},
+					],
+					timestamp: 1761708065000,
+					userName: 'admin',
+				},
+			}, //
 			// superPermissions: [],
 			superPermissions: [
 				{r: 0, c: 0, rr: 0, cc: 0, v: '1', id: '3a0b4b62-d135-3903-0589-b7f520734871'},
