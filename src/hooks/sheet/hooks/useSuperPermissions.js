@@ -250,30 +250,108 @@ export const useSuperPermissions = () => {
 	}
 
 	/**
-	 * ✅ 新增：检查是否可以垂直合并（相邻行合并）
-	 * @param {Object} current - 当前权限对象
-	 * @param {Object} next - 下一个权限对象
-	 * @returns {boolean} 是否可以垂直合并
+	 * 第一步：水平合并相邻的权限区域
+	 * 按行范围分组，对每一行内的相邻同 id 单元格进行水平合并
+	 * @param {Array} permissions - 权限数组
+	 * @returns {Array} 水平合并后的权限数组
 	 */
-	const canMergeVertically = (current, next) => {
-		// 列范围相同，且行相邻
-		return current.c === next.c && current.cc === next.cc && current.rr + 1 === next.r
+	const mergeHorizontally = (permissions) => {
+		if (!permissions || permissions.length === 0) {
+			return []
+		}
+
+		// 按行范围分组
+		const byRow = {}
+		permissions.forEach((p) => {
+			const key = `${p.r}-${p.rr}`
+			if (!byRow[key]) byRow[key] = []
+			byRow[key].push(p)
+		})
+
+		const merged = []
+
+		// 对每一行进行水平合并
+		Object.values(byRow).forEach((rowGroup) => {
+			const sorted = rowGroup.sort((a, b) => a.c - b.c)
+			let current = sorted[0]
+
+			for (let i = 1; i < sorted.length; i++) {
+				const next = sorted[i]
+
+				// 检查是否可以水平合并：同 id，列相邻
+				if (current.id === next.id && current.cc + 1 === next.c) {
+					current = {
+						...current,
+						cc: next.cc,
+					}
+				} else {
+					merged.push(current)
+					current = next
+				}
+			}
+			merged.push(current)
+		})
+
+		return merged
 	}
 
 	/**
-	 * ✅ 新增：检查是否可以水平合并（相邻列合并）
-	 * @param {Object} current - 当前权限对象
-	 * @param {Object} next - 下一个权限对象
-	 * @returns {boolean} 是否可以水平合并
+	 * 第二步：垂直合并相邻的权限区域
+	 * 按列范围分组，对每一列内的相邻同 id 单元格进行垂直合并
+	 * 注意：只有列范围完全相同的单元格才能进行垂直合并
+	 * 这样可以避免已被水平合并的单元格再进行垂直合并
+	 * @param {Array} permissions - 权限数组
+	 * @returns {Array} 垂直合并后的权限数组
 	 */
-	const canMergeHorizontally = (current, next) => {
-		// 行范围相同，且列相邻
-		return current.r === next.r && current.rr === next.rr && current.cc + 1 === next.c
+	const mergeVertically = (permissions) => {
+		if (!permissions || permissions.length === 0) {
+			return []
+		}
+
+		// 按列范围分组
+		const byCol = {}
+		permissions.forEach((p) => {
+			const key = `${p.c}-${p.cc}`
+			if (!byCol[key]) byCol[key] = []
+			byCol[key].push(p)
+		})
+
+		const merged = []
+
+		// 对每一列进行垂直合并
+		Object.values(byCol).forEach((colGroup) => {
+			const sorted = colGroup.sort((a, b) => a.r - b.r)
+			let current = sorted[0]
+
+			for (let i = 1; i < sorted.length; i++) {
+				const next = sorted[i]
+
+				// 检查是否可以垂直合并：同 id，行相邻，列范围完全相同
+				if (
+					current.id === next.id &&
+					current.rr + 1 === next.r &&
+					current.c === next.c &&
+					current.cc === next.cc
+				) {
+					current = {
+						...current,
+						rr: next.rr,
+					}
+				} else {
+					merged.push(current)
+					current = next
+				}
+			}
+			merged.push(current)
+		})
+
+		return merged
 	}
 
 	/**
-	 * ✅ 新增：合并单个 id 组的权限对象（支持水平和垂直合并）
-	 * 使用贪心算法优先合并最大的连续区域
+	 * 合并单个 id 组的权限对象（支持水平和垂直合并）
+	 * ✅ 改进: 先进行水平合并，再进行垂直合并
+	 * ✅ 关键: 只有列范围完全相同的单元格才能进行垂直合并，避免冲突
 	 * @param {Array} permissions - 同一 id 的权限对象列表
 	 * @returns {Array} 合并后的权限对象列表
 	 */
@@ -282,47 +360,17 @@ export const useSuperPermissions = () => {
 			return []
 		}
 
-		// 如果只有一个权限对象，直接返回
 		if (permissions.length === 1) {
 			return permissions
 		}
 
-		// 按行、列排序
-		const sorted = [...permissions].sort((a, b) => {
-			if (a.r !== b.r) return a.r - b.r
-			if (a.c !== b.c) return a.c - b.c
-			return 0
-		})
+		// 第一步：水平合并
+		const horizontalMerged = mergeHorizontally(permissions)
 
-		const merged = []
-		let current = sorted[0]
+		// 第二步：垂直合并
+		const verticalMerged = mergeVertically(horizontalMerged)
 
-		for (let i = 1; i < sorted.length; i++) {
-			const next = sorted[i]
-
-			// 优先尝试垂直合并（相邻行）
-			if (canMergeVertically(current, next)) {
-				current = {
-					...current,
-					rr: next.rr,
-				}
-			}
-			// 其次尝试水平合并（相邻列）
-			else if (canMergeHorizontally(current, next)) {
-				current = {
-					...current,
-					cc: next.cc,
-				}
-			}
-			// 无法合并，保存当前权限，开始新的权限
-			else {
-				merged.push(current)
-				current = next
-			}
-		}
-		merged.push(current)
-
-		return merged
+		return verticalMerged
 	}
 
 	/**
