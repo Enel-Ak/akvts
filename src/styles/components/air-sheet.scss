@@ -720,9 +720,10 @@
 		&.super-permission {
 			// 1px 边框 + 半透明背景 + 模糊效果
 			pointer-events: none;
-			border: 1px solid var(--z-highlight-color);
+			border: 1px dashed var(--z-highlight-color);
 			background-color: rgba(var(--z-highlight-color-rgb), 0.15);
-			backdrop-filter: blur(2px); // 添加模糊效果
+			backdrop-filter: blur(20px); // 添加模糊效果
+			overflow: hidden;
 			z-index: 3; // 比普通权限更高的层级
 
 			.label {

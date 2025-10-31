@@ -3970,7 +3970,7 @@ const getSuperPermissionStyle = (range, index) => {
 							sheet.hooks?.selectionRangeHook?.selecting ||
 							sheet.hooks?.selectionRangeHook?.ranged
 						"
-						class="selection-box shadow-6"
+						class="selection-box"
 						:class="sheet.hooks?.selectionRangeHook?.rangeClass"
 						:style="sheet.hooks?.selectionRangeHook?.rangeStyle"
 					>
