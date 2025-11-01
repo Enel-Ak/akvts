@@ -19,7 +19,7 @@ export const useSuperPermissions = () => {
 	 * @returns {{locked: boolean, reason: string, range: object|null}} 检查结果
 	 */
 	const checkSuperPermission = (row, col, rowspan = 1, colspan = 1) => {
-		if (!sheet || !sheet.config.superPermissions) {
+		if (!sheet || !sheet.config.superPermissions || !sheet.config.super) {
 			return {locked: false, reason: '', range: null}
 		}
 

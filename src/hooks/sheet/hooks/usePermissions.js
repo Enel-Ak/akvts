@@ -555,7 +555,7 @@ export const usePermissions = () => {
 		}
 
 		// 如果没有被 superPermissions 锁定，继续检查 deepPermissions
-		if (!sheet || !sheet.config.synergy) {
+		if (!sheet || !sheet.config.synergy || sheet.config.super) {
 			return {locked: false, lockedBy: null, reason: ''}
 		}
 

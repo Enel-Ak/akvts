@@ -19,9 +19,9 @@ import {useSignalrStop} from '@/hooks/useSignalr'
 const defaultSheet = {
 	props: {},
 	config: {
+		super: false, // 无视权限设置
 		// 每个sheet公共的配置
-		howHorizontalScreen: true, // 移动端不是横向提醒
-		showPermissionMask: true, // 是否显示权限渲染遮罩
+		showHorizontalScreen: true, // 移动端不是横向提醒
 		showToolBar: true, // 工具栏
 		showstateBar: true, // 状态栏
 		font: true, // 字体

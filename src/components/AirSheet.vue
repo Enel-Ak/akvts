@@ -4043,7 +4043,7 @@ const getSuperPermissionStyle = (range, index) => {
 						<div class="label">{{ range.userName }}</div>
 					</div>
 
-					<template v-if="sheet.cofnig.showPermissionMask">
+					<template v-if="!sheet.cofnig.super">
 						<!-- 深度权限高亮 (持久锁定) -->
 						<div
 							:key="`deep-permission-${index}`"
