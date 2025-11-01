@@ -1533,7 +1533,7 @@ const asyncCompleted = () => {
 	synergyJoinSheet(sheetId.value, sheetRef.value.getSheet())
 }
 
-const allHistoryData = ref([])
+const allHistoryData = ref([{date: '2025-10-31', list: []}])
 const cellHistoryData = ref([])
 let historyCell = null
 let historyCount = 0
@@ -1608,24 +1608,12 @@ const asyncCellHistory = async (ranged, callback) => {
 }
 
 const asyncAllHistory = async (callback) => {
-	allHistoryData.value.push({
-		date: '2025-10-31',
-		list: [
-			{
-				name: '张三',
-				time: '10:58',
-				content: '1234567890',
-				r: 1,
-				c: 1,
-			},
-			{
-				name: '张三',
-				time: '10:58',
-				content: '1234567890',
-				r: 4,
-				c: 5,
-			},
-		],
+	allHistoryData.value[0].list.push({
+		name: '张三',
+		time: '10:58',
+		content: '1234567890',
+		r: 1,
+		c: 1,
 	})
 	callback && callback()
 }

@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref, reactive, watch, nextTick} from 'vue'
+import {computed, ref, reactive, watch, nextTick, onMounted, onUnmounted} from 'vue'
 import useDebounce from '@/hooks/useDebounce'
 
 const props = defineProps({
@@ -25,7 +25,7 @@ const DATE_HEADER_HEIGHT = 23 // 日期头部高度（包含 margin-bottom）
 const LIST_ITEM_HEIGHT = 78 // 单个 list 项高度（包含 margin）
 const ITEM_PADDING_TOP = 10 // item 容器的 padding-top
 const BUFFER_SIZE = 2 // 缓冲区大小（上下各渲染额外的项）
-const CONTAINER_HEIGHT = 500 // 容器高度的估算值，用于计算可见项数量
+const containerHeight = ref(500) // 容器高度（动态获取，默认值作为fallback）
 
 // ==================== 状态管理 ====================
 // 展开/收起状态管理（key: 日期字符串, value: boolean）
@@ -142,7 +142,7 @@ const visibleRange = computed(() => {
 	start = Math.max(0, start - BUFFER_SIZE)
 
 	// 查找结束索引
-	const viewportBottom = scrollTop + CONTAINER_HEIGHT
+	const viewportBottom = scrollTop + containerHeight.value
 	let end = start
 
 	while (end < map.length && map[end].top < viewportBottom) {
@@ -208,6 +208,45 @@ const toggleExpand = (date) => {
 	// 如果状态存在，则切换
 	expandedStates[date] = expandedStates[date] === false ? true : false
 }
+
+// ==================== 容器高度管理 ====================
+/**
+ * 更新容器高度
+ */
+const updateContainerHeight = () => {
+	if (itemsRef.value) {
+		containerHeight.value = itemsRef.value.clientHeight
+	}
+}
+
+/**
+ * 组件挂载时初始化容器高度并监听窗口大小变化
+ */
+onMounted(() => {
+	updateContainerHeight()
+	window.addEventListener('resize', updateContainerHeight)
+})
+
+/**
+ * 组件卸载时清理事件监听
+ */
+onUnmounted(() => {
+	window.removeEventListener('resize', updateContainerHeight)
+})
+
+/**
+ * 监听面板显示状态，打开时更新容器高度
+ */
+watch(
+	() => props.show,
+	(newShow) => {
+		if (newShow) {
+			nextTick(() => {
+				updateContainerHeight()
+			})
+		}
+	}
+)
 
 // ==================== 数据变化响应 ====================
 /**
