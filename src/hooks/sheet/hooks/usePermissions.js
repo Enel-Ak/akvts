@@ -59,7 +59,7 @@ export const usePermissions = () => {
 	 * @param {number} colEnd - 结束列索引
 	 */
 	const updatePermissions = (row, col, rowEnd, colEnd) => {
-		if (!sheet || !sheet.config.synergy) return
+		if (!sheet || !sheet.config.synergy || sheet.config.super) return
 
 		const userId = getCurrentUserId()
 		if (!userId) {
@@ -208,7 +208,7 @@ export const usePermissions = () => {
 	 * @param {number} colEnd - 结束列索引
 	 */
 	const updateDeepPermissions = (row, col, rowEnd, colEnd) => {
-		if (!sheet || !sheet.config.synergy) return
+		if (!sheet || !sheet.config.synergy || sheet.config.super) return
 		if (sheet.config.auth === 0) return // 无权限模式
 
 		const userId = getCurrentUserId()
