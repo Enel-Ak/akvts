@@ -329,7 +329,7 @@ export const useHistory = () => {
 									rResize: sheet.config.rResize,
 									cResize: sheet.config.cResize,
 									deepPermissions: sheet.config.deepPermissions,
-									superPermissions: sheet.config.superPermissions,
+									// superPermissions: sheet.config.superPermissions,
 								})
 							)
 						}
@@ -377,7 +377,7 @@ export const useHistory = () => {
 									rResize: sheet.config.rResize,
 									cResize: sheet.config.cResize,
 									deepPermissions: sheet.config.deepPermissions,
-									superPermissions: sheet.config.superPermissions,
+									// superPermissions: sheet.config.superPermissions,
 								})
 							)
 						}
@@ -470,7 +470,7 @@ export const useHistory = () => {
 									rResize: sheet.config.rResize,
 									cResize: sheet.config.cResize,
 									deepPermissions: sheet.config.deepPermissions,
-									superPermissions: sheet.config.superPermissions,
+									// superPermissions: sheet.config.superPermissions,
 								})
 							)
 						}
@@ -560,7 +560,7 @@ export const useHistory = () => {
 									rResize: sheet.config.rResize,
 									cResize: sheet.config.cResize,
 									deepPermissions: sheet.config.deepPermissions,
-									superPermissions: sheet.config.superPermissions,
+									// superPermissions: sheet.config.superPermissions,
 								})
 							)
 						}
