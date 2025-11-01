@@ -496,6 +496,8 @@ export function useCopy() {
 		useDebounce(
 			() => {
 				ElMessage.success('粘贴成功')
+				sheet.hooks.toolsHook.addRowCount = 1
+				sheet.hooks.toolsHook.addColumnCount = 1
 			},
 			100,
 			'airSheetPaste'
