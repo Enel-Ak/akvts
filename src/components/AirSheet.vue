@@ -2313,6 +2313,9 @@ const onChangeSheet = async (sheetItem, e) => {
 		const id = sheetItem[1]?.original?.sheetId || sheetItem.id
 		sheetId.value = id
 
+		sheet.state.allHistory = false
+		sheet.state.cellHistory = false
+
 		if (sheet.config.synergy) {
 			emits('asyncLeaveSheet', sheet.original.sheetId)
 		}
