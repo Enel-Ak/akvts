@@ -3692,7 +3692,7 @@ const getSuperPermissionStyle = (range, index) => {
 
 				<!-- 协同 -->
 				<template v-if="toolbarTabActive === 'synergy'">
-					<div class="df jcc w-full">
+					<div class="df aic w-full">
 						<div class="group" v-if="sheet.config.allHistory">
 							<div class="item" @click="sheet.hooks.toolsHook.allHistory">
 								<Icons name="History"></Icons>
