@@ -2865,7 +2865,10 @@ defineExpose({
 	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
 	asyncAddRow: (...args) => sheet.hooks.synergyHook.addRow(...args), // 添加行
 	asyncAddColumn: (...args) => sheet.hooks.synergyHook.addColumn(...args), // 添加列
-	signalrStop: (key = '') => useSignalrStop(key),
+	signalrStop: (key = '') => {
+		sheet.emits('update:linked', false)
+		useSignalrStop(key)
+	},
 
 	// 权限相关
 	setCurrentUserId: (userId) => sheetStore.setCurrentUserId(userId), // 设置当前用户ID（用于权限控制）

@@ -1143,10 +1143,6 @@ export const useTools = () => {
 			}
 		}
 
-		if (sheet.config.superPermissions && sheet.config.superPermissions.length) {
-			console.log('111superPermissions', sheet.config.superPermissions)
-		}
-
 		// 协同功能支持 - 使用 nextTick 确保所有本地状态更新完成后再发送协同消息
 		if (sheet.config.synergy) {
 			nextTick(() => {
@@ -1160,7 +1156,7 @@ export const useTools = () => {
 					rResize: sheet.config.rResize,
 					cResize: sheet.config.cResize,
 					deepPermissions: sheet.config.deepPermissions,
-					superPermissions: sheet.config.superPermissions, // ✅ 修复: 添加 superPermissions 同步
+					// superPermissions: sheet.config.superPermissions,
 				})
 			})
 		}
