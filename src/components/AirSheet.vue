@@ -2846,6 +2846,7 @@ defineExpose({
 
 	getSheet: () => sheet,
 	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+	getSignalrKey: () => sheet.signalrKey || null,
 	addSheet: async (sheet) => await sheet.hooks.toolsHook.addSheet(sheet, props, emits),
 
 	luckyToAir: async (config, data) => await sheet.hooks?.toolsHook?.luckyToAir(config, data),

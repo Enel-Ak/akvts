@@ -19,6 +19,7 @@ export const useSynergy = () => {
 		}
 
 		const key = `air-sheet-ws-${Math.random().toString(36).slice(2)}`
+		sheet.signalrKey = key
 		sheet.state.loading = true
 		sheet.state.msg = '正在连接中...'
 		signalr = useSignalr(
