@@ -1150,6 +1150,7 @@ export const useTools = () => {
 		// 协同功能支持 - 使用 nextTick 确保所有本地状态更新完成后再发送协同消息
 		if (sheet.config.synergy) {
 			nextTick(() => {
+				console.log('asyncUpdateConfig - 发送协同消息')
 				sheet?.emits('asyncConfig', {
 					merged: sheet.config.merged,
 					locked: sheet.config.locked,
@@ -1384,7 +1385,7 @@ export const useTools = () => {
 					}
 				})
 
-				sheet.hooks.synergyHook.addRow({
+				await sheet.hooks.synergyHook.addRow({
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					count: addRowCount.value,
 					startIndex: insertRowIndex,
@@ -1891,7 +1892,7 @@ export const useTools = () => {
 					}
 				})
 
-				sheet.hooks.synergyHook.addColumn({
+				await sheet.hooks.synergyHook.addColumn({
 					sheetId: sheet?.original?.sheetId || sheet.id,
 					count: addColumnCount.value,
 					startIndex: insertColIndex,

@@ -168,13 +168,13 @@ export const useSynergy = () => {
 		return Promise.resolve()
 	}
 
-	const addRow = (...args) => {
+	const addRow = async (...args) => {
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
 		}
 		sheet.state.progress = -1
-		signalr.invoke('insert-row', ...args).then((res) => {
+		await signalr.invoke('insert-row', ...args).then((res) => {
 			console.log('invoke insert-row')
 			if (!res.status) {
 				ElMessage.error(res.message)
@@ -198,13 +198,13 @@ export const useSynergy = () => {
 		})
 	}
 
-	const addColumn = (...args) => {
+	const addColumn = async (...args) => {
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
 		}
 		sheet.state.progress = -1
-		signalr.invoke('insert-col', ...args).then((res) => {
+		await signalr.invoke('insert-col', ...args).then((res) => {
 			console.log('invoke insert-col')
 			if (!res.status) {
 				ElMessage.error(res.message)

@@ -36,7 +36,7 @@ export function useCopy() {
 
 	// 处理粘贴事件
 	let pasteTimer = null
-	const handlePaste = (e) => {
+	const handlePaste = async (e) => {
 		// ✅ 修复: 检查 sheet 对象是否存在
 		if (!sheet) {
 			console.warn('Sheet 对象不存在，跳过粘贴操作')
@@ -87,7 +87,7 @@ export function useCopy() {
 		// 优先获取HTML格式
 		const html = clipboardData.getData('text/html')
 		if (html) {
-			processClipboardData({html, isHtml: true})
+			await processClipboardData({html, isHtml: true})
 			return
 		}
 
@@ -99,7 +99,7 @@ export function useCopy() {
 				ElMessage.error('数据量过大，请使用导入功能')
 				return
 			}
-			processClipboardData({text, isHtml: false})
+			await processClipboardData({text, isHtml: false})
 		}
 	}
 
@@ -166,10 +166,6 @@ export function useCopy() {
 
 	// 处理剪贴板数据
 	const processClipboardData = async ({html, text, isHtml}) => {
-		sheet.state.loading = true
-		sheet.state.msg = '正在处理粘贴数据...'
-		sheet.state.progress = -1
-
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
 
@@ -316,15 +312,19 @@ export function useCopy() {
 			if (maxCols > sheet.config.colCount) {
 				const colsToAdd = maxCols - sheet.config.colCount
 				sheet.hooks.toolsHook.addColumnCount = colsToAdd
-				sheet.hooks.toolsHook.addColumn(null, true, false)
+				await sheet.hooks.toolsHook.addColumn(null, true, false)
 			}
 
 			// 检查是否需要添加行
 			if (maxRows > sheet.config.rowCount) {
 				const rowsToAdd = maxRows - sheet.config.rowCount
 				sheet.hooks.toolsHook.addRowCount = rowsToAdd
-				sheet.hooks.toolsHook.addRow(null, true, false)
+				await sheet.hooks.toolsHook.addRow(null, true, false)
 			}
+
+			sheet.state.loading = true
+			sheet.state.msg = '正在处理粘贴数据...'
+			sheet.state.progress = -1
 
 			pasteData.data.forEach((row, rowIndex) => {
 				row.forEach((cell, colIndex) => {
@@ -356,6 +356,8 @@ export function useCopy() {
 					// 替换数据
 					requestAnimationFrame(() => {
 						sheet.celldata.get(targetRow)[targetCol] = cell
+						// sheet.hooks.editHook.setRowHeight(targetRow, targetCol, false)
+						// sheet.hooks.editHook.setColWidth(targetRow, targetCol, false)
 					})
 				})
 			})
@@ -450,41 +452,32 @@ export function useCopy() {
 			// ✅ 修复: 使用 requestAnimationFrame 替代 setTimeout，确保在 DOM 更新后再设置选区
 			// 这样可以避免粘贴后点击单元格时位置计算错误
 			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					const pasteEndRow = baseRow + pasteData.data.length - 1
-					const pasteEndCol = baseCol + pasteData.data[0].length - 1
+				const pasteEndRow = baseRow + pasteData.data.length - 1
+				const pasteEndCol = baseCol + pasteData.data[0].length - 1
 
-					console.log('🔍 [DEBUG] processClipboardData: 设置粘贴后的选区', {
-						baseRow,
-						baseCol,
-						pasteEndRow,
-						pasteEndCol,
-					})
-
-					sheet.hooks.selectionRangeHook.setRange(
-						baseRow,
-						baseCol,
-						pasteEndRow,
-						pasteEndCol,
-						true
-					)
-				})
+				sheet.hooks.selectionRangeHook.setRange(
+					baseRow,
+					baseCol,
+					pasteEndRow,
+					pasteEndCol,
+					true
+				)
 			})
 		}
 
-		// 处理高度
-		if (Object.keys(pasteData.styles.rowHeights).length) {
-			Object.entries(pasteData.styles.rowHeights).forEach(([row, height]) => {
-				sheet.hooks.resizeHook.setRowHeight(Number(row), height)
-			})
-		}
+		// // 处理高度
+		// if (Object.keys(pasteData.styles.rowHeights).length) {
+		// 	Object.entries(pasteData.styles.rowHeights).forEach(([row, height]) => {
+		// 		sheet.hooks.resizeHook.setRowHeight(Number(row), height)
+		// 	})
+		// }
 
-		// 处理宽度
-		if (Object.keys(pasteData.styles.colWidths).length) {
-			Object.entries(pasteData.styles.colWidths).forEach(([col, width]) => {
-				sheet.hooks.resizeHook.setColWidth(Number(col), width)
-			})
-		}
+		// // 处理宽度
+		// if (Object.keys(pasteData.styles.colWidths).length) {
+		// 	Object.entries(pasteData.styles.colWidths).forEach(([col, width]) => {
+		// 		sheet.hooks.resizeHook.setColWidth(Number(col), width)
+		// 	})
+		// }
 
 		// 处理其他样式
 		if (cellCache.size) {
@@ -496,20 +489,15 @@ export function useCopy() {
 		// ✅ 修复: 所有操作完成后显示成功提示
 		sheet.state.loading = false
 
-		await nextTick()
-		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
-			sheet.state.lastMergeUpdate = Date.now()
+		if (sheet.config.synergy) {
+			sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 		}
 
 		useDebounce(
 			() => {
 				ElMessage.success('粘贴成功')
-
-				if (sheet.config.synergy) {
-					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
-				}
 			},
-			150,
+			100,
 			'airSheetPaste'
 		)()
 	}
