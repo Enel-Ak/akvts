@@ -3087,7 +3087,7 @@ const getSuperPermissionStyle = (range, index) => {
 			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
 				<slot name="toolbar-title"></slot>
 				<!-- 在线用户 -->
-				<div v-if="sheet.config.synergy" class="flx df aic mg-left-5">
+				<div v-if="sheet.config.synergy" class="df aic mg-left-5">
 					<!-- <Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" /> -->
 					<template v-for="(user, idx) of onlineUser">
 						<el-tooltip
@@ -3102,18 +3102,20 @@ const getSuperPermissionStyle = (range, index) => {
 						</el-tooltip>
 					</template>
 				</div>
-				<span
-					v-for="item of tollbarTabList"
-					:key="item.name"
-					:class="[item.name === toolbarTabActive ? 'active shadow-12' : '']"
-					class="item"
-					@click="toolbarTabActive = item.name"
-				>
-					{{ item.label }}
-				</span>
-				<span class="flx">
+				<div class="flx df aic jcc">
+					<span
+						v-for="item of tollbarTabList"
+						:key="item.name"
+						:class="[item.name === toolbarTabActive ? 'active shadow-12' : '']"
+						class="item"
+						@click="toolbarTabActive = item.name"
+					>
+						{{ item.label }}
+					</span>
+				</div>
+				<div v-if="$slots.toolbar">
 					<slot name="toolbar"></slot>
-				</span>
+				</div>
 				<Icons
 					name="Back"
 					size="12"
@@ -3684,6 +3686,7 @@ const getSuperPermissionStyle = (range, index) => {
 					<div class="group flx brn"></div>
 				</template>
 
+				<!-- 协同 -->
 				<template v-if="toolbarTabActive === 'synergy'">
 					<div class="df jcc w-full">
 						<div class="group" v-if="sheet.config.allHistory">
