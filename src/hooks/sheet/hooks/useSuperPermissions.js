@@ -79,6 +79,11 @@ export const useSuperPermissions = () => {
 	const checkSuperPermissionRange = (type) => {
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		const p = sheet.config.superPermissions
+
+		if (sheet.config.super) {
+			return false
+		}
+
 		if (p && p?.length) {
 			if (type === 'row') {
 				return p.some((permission) => {
