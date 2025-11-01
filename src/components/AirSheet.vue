@@ -4022,36 +4022,13 @@ const getSuperPermissionStyle = (range, index) => {
 							(() => {
 								const perm = sheet.config?.permissions?.[item.id]
 								const noLock = perm?.noLock === true
-								console.log(
-									'🔍 [DEBUG] 渲染高亮 - item.id:',
-									item.id,
-									'permissions:',
-									perm,
-									'noLock:',
-									noLock,
-									'auth:',
-									sheet.config?.auth
-								)
+
 								return String(noLock)
 							})()
 						"
 						:style="sheet.hooks?.selectionRangeHook?.setHighlightRange(item)"
 					>
 						<div class="label">{{ item.name }}</div>
-					</div>
-
-					<!-- 深度权限高亮 (持久锁定) -->
-					<div
-						:key="`deep-permission-${index}`"
-						v-for="(range, index) of deepPermissionRanges"
-						class="highlight"
-						:data-permission-type="range.type"
-						:data-no-lock="String(range.noLock === true)"
-						:style="getDeepPermissionStyle(range, index)"
-					>
-						<div class="label">
-							{{ range.userName }}
-						</div>
 					</div>
 
 					<!-- 权限高亮 (临时锁定,不透明) -->
@@ -4066,18 +4043,35 @@ const getSuperPermissionStyle = (range, index) => {
 						<div class="label">{{ range.userName }}</div>
 					</div>
 
-					<!-- 超级权限高亮 -->
-					<div
-						:key="`super-${index}`"
-						v-for="(
-							range, index
-						) of sheet.hooks?.superPermissionsHook?.getSuperPermissionRanges() || []"
-						class="highlight super-permission"
-						:data-super-permission="true"
-						:style="getSuperPermissionStyle(range, index)"
-					>
-						<div class="label">{{ range.v }}</div>
-					</div>
+					<template v-if="sheet.cofnig.showPermissionMask">
+						<!-- 深度权限高亮 (持久锁定) -->
+						<div
+							:key="`deep-permission-${index}`"
+							v-for="(range, index) of deepPermissionRanges"
+							class="highlight"
+							:data-permission-type="range.type"
+							:data-no-lock="String(range.noLock === true)"
+							:style="getDeepPermissionStyle(range, index)"
+						>
+							<div class="label">
+								{{ range.userName }}
+							</div>
+						</div>
+
+						<!-- 超级权限高亮 -->
+						<div
+							:key="`super-${index}`"
+							v-for="(
+								range, index
+							) of sheet.hooks?.superPermissionsHook?.getSuperPermissionRanges() ||
+							[]"
+							class="highlight super-permission"
+							:data-super-permission="true"
+							:style="getSuperPermissionStyle(range, index)"
+						>
+							<div class="label">{{ range.v }}</div>
+						</div>
+					</template>
 
 					<!-- 右键菜单 -->
 					<div
