@@ -4059,12 +4059,6 @@ const getSuperPermissionStyle = (range, index) => {
 						<template v-for="(range, index) of deepPermissionRanges">
 							<!-- 深度权限高亮 (持久锁定) -->
 							<div
-								v-if="
-									range.r >= visibleRangeRef.visible.startRow &&
-									range.rr <= visibleRangeRef.visible.endRow &&
-									range.c >= visibleRangeRef.visible.startCol &&
-									range.cc <= visibleRangeRef.visible.endCol
-								"
 								class="highlight"
 								:data-permission-type="range.type"
 								:data-no-lock="String(range.noLock === true)"
