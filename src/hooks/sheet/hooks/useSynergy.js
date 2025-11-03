@@ -9,6 +9,16 @@ export const useSynergy = () => {
 	let sheet = null
 	let signalr = null
 
+	const beforeunload = () => {
+		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+		document
+			.querySelector(`#${sheet.conainerId}`)
+			.querySelector(`[data-cell="${r}-${c}"]`)
+			.blur()
+
+		useSignalrStop(sheet.signalrKey)
+	}
+
 	const connection = async (api, token, callback) => {
 		if (!sheet.config.synergy) {
 			return
@@ -43,6 +53,8 @@ export const useSynergy = () => {
 				sheet.state.msg = '连接已断开, 请刷新页面尝试重新连接'
 			}
 		)
+
+		window.addEventListener('beforeunload', beforeunload)
 		return signalr
 	}
 
