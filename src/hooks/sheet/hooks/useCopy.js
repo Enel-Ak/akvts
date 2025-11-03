@@ -515,6 +515,11 @@ export function useCopy() {
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return false
 
+		if (sheet.hooks.toolsHook.isLocked()) {
+			ElMessage.warning('包含锁定单元格，无法复制')
+			return false
+		}
+
 		// ✅ 新增: 权限检查 - 在复制/剪切前检查源区域是否被锁定
 		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
 			const rowspan = Math.abs(rr - r) + 1
@@ -696,6 +701,11 @@ export function useCopy() {
 			return
 		}
 
+		if (sheet.hooks.toolsHook.isLocked()) {
+			ElMessage.warning('包含锁定单元格，无法剪切')
+			return false
+		}
+
 		// ✅ 新增: 权限检查 - 在剪切前检查源区域是否被锁定
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
@@ -796,6 +806,11 @@ export function useCopy() {
 			if (!navigator.clipboard || !navigator.clipboard.readText) {
 				ElMessage.error('剪贴板 API 不可用，请使用 Ctrl+V 粘贴')
 				return
+			}
+
+			if (sheet.hooks.toolsHook.isLocked()) {
+				ElMessage.warning('包含锁定单元格，无法粘贴')
+				return false
 			}
 
 			const text = await navigator.clipboard.readText()

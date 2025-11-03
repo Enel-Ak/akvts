@@ -26,6 +26,15 @@ export const useTools = () => {
 			return true
 		}
 
+		// 检查传统范围锁定
+		for (let row = r; row <= rr; row++) {
+			for (let col = c; col <= cc; col++) {
+				if (sheet.config.locked[`${row}-${col}`]) {
+					return true
+				}
+			}
+		}
+
 		// 检查权限锁定
 		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
 			const rowspan = Math.abs(rr - r) + 1
@@ -3718,6 +3727,8 @@ export const useTools = () => {
 
 			allHistory,
 			cellHistory,
+
+			isLocked,
 		}
 	}
 

@@ -435,8 +435,7 @@ export const useEdit = () => {
 		}
 
 		// 不允许编辑锁定的单元格
-		if (sheet.config.locked[`${cell.r}-${cell.c}`]) {
-			ElMessage.warning(`单元格已锁定`)
+		if (sheet.hooks.toolsHook.isLocked()) {
 			return
 		}
 
