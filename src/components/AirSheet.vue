@@ -3217,6 +3217,9 @@ const getSuperPermissionStyle = (range, index) => {
 								@change="sheet.hooks.toolsHook.fontColorChanged($event)"
 							/>
 						</div>
+					</div>
+
+					<div class="group group-merge">
 						<div
 							v-if="sheet.config.fill"
 							class="item color"
@@ -3229,6 +3232,12 @@ const getSuperPermissionStyle = (range, index) => {
 								@input="sheet.hooks.toolsHook.setFillColor($event)"
 								@change="sheet.hooks.toolsHook.fillColorChanged($event)"
 							/>
+						</div>
+						<div class="merge unfill-merge shadow-12">
+							<div class="item" @click="sheet.hooks.toolsHook.setUnFillColor()">
+								<Icons name="UnFillColor"></Icons>
+								<span>无填充</span>
+							</div>
 						</div>
 					</div>
 

@@ -166,6 +166,10 @@
 				left: -119px;
 			}
 
+			.unfill-merge {
+				left: calc(100% - 45px);
+			}
+
 			.add-row-merge,
 			.add-column-merge,
 			.freeze-merge {

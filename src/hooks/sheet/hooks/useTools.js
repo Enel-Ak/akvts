@@ -518,6 +518,16 @@ export const useTools = () => {
 	}
 	const fillColorChanged = () => (fillSaved = false)
 
+	const setUnFillColor = () => {
+		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (sheet.config.styled[`${r}-${c}`]) {
+			delete sheet.config.styled[`${r}-${c}`]['bg']
+		}
+		if (sheet.config.synergy) {
+			asyncUpdateConfig(0, null, null)
+		}
+	}
+
 	// 设置边框颜色
 	let borderSaved = false
 	const setBorderColor = (e) => {
@@ -3695,6 +3705,7 @@ export const useTools = () => {
 			setFontColor,
 			fontColorChanged,
 			setFillColor,
+			setUnFillColor,
 			fillColorChanged,
 			setBorderColor,
 			borderColorChanged,
