@@ -21,6 +21,10 @@ export const useTools = () => {
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
 		const {r, c, rr, cc} = ranged
 
+		if (sheet.config.super) {
+			return false
+		}
+
 		// 检查传统锁定
 		if (sheet.config.locked[`${r}-${c}`]) {
 			return true
@@ -35,7 +39,7 @@ export const useTools = () => {
 			}
 		}
 
-		// 检查权限锁定
+		// 检查深度权限锁定
 		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
 			const rowspan = Math.abs(rr - r) + 1
 			const colspan = Math.abs(cc - c) + 1
@@ -49,6 +53,22 @@ export const useTools = () => {
 			if (permissionCheck.locked) {
 				clearTimeout(lockTimer)
 				lockTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
+				return true
+			}
+		}
+
+		// 检查超级权限锁定
+		if (sheet.hooks.superPermissionsHook && sheet.config.synergy) {
+			const superPermissionCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
+				Math.min(r, rr),
+				Math.min(c, cc),
+				Math.abs(rr - r) + 1,
+				Math.abs(cc - c) + 1
+			)
+
+			if (superPermissionCheck.locked) {
+				clearTimeout(lockTimer)
+				lockTimer = setTimeout(() => ElMessage.warning(superPermissionCheck.reason), 300)
 				return true
 			}
 		}

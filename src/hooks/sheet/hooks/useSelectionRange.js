@@ -455,8 +455,11 @@ export const useSelectionRange = () => {
 		}
 
 		highlightRanges.set(id, {
-			top: (totalOffsetTop + modifiedBefore - 0.5) * sheet.config.zoom + 'px',
-			left: (totaloffsetLeft + modifiedColBefore - 0.5) * sheet.config.zoom + 'px',
+			// top: (totalOffsetTop + modifiedBefore - 0.5) * sheet.config.zoom + 'px',
+			// left: (totaloffsetLeft + modifiedColBefore - 0.5) * sheet.config.zoom + 'px',
+			transform: `translateY(${
+				(totalOffsetTop + modifiedBefore - 0.5) * sheet.config.zoom
+			}px) translateX(${(totaloffsetLeft + modifiedColBefore - 0.5) * sheet.config.zoom}px)`,
 			height: (totleHeight + modifiedInRange + 1) * sheet.config.zoom + 'px',
 			width: (totleWidth + modifiedColInRange + 1) * sheet.config.zoom + 'px',
 			'--z-highlight-color': color,

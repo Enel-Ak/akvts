@@ -214,39 +214,7 @@ export const useEdit = () => {
 		return ''
 	}
 
-	let editTimer = null
 	const startEdit = (e, cell = sheet.hooks.selectionRangeHook.getStartCell()) => {
-		// superPermissions 检查 - 优先级最高
-		if (sheet.hooks.superPermissionsHook) {
-			const superPermissionCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
-				cell.r,
-				cell.c,
-				1,
-				1
-			)
-
-			if (superPermissionCheck.locked) {
-				ElMessage.warning(superPermissionCheck.reason)
-				return // 阻止编辑
-			}
-		}
-
-		// permissions 权限检查 - 在开始编辑前检查是否有权限
-		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
-			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
-				cell.r,
-				cell.c,
-				1,
-				1
-			)
-
-			if (permissionCheck.locked) {
-				clearTimeout(editTimer)
-				editTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
-				return // 阻止编辑
-			}
-		}
-
 		const cellEl = document.querySelector(
 			`#${sheet.containerId} [data-cell="${cell.r}-${cell.c}"]`
 		)

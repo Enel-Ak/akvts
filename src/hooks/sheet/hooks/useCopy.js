@@ -19,18 +19,8 @@ export function useCopy() {
 		// 复制 Ctrl+C / Command+C
 		if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
 			event.preventDefault()
-
 			// ✅ 修复: 等待复制操作完成后显示成功提示
-			const copySuccess = await copySelectedCells()
-			if (copySuccess) {
-				useDebounce(
-					() => {
-						ElMessage.success('复制成功')
-					},
-					100,
-					'airSheetCopy'
-				)
-			}
+			await copySelectedCells()
 		}
 	}
 
@@ -512,13 +502,13 @@ export function useCopy() {
 			return false
 		}
 
-		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
-		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return false
-
 		if (sheet.hooks.toolsHook.isLocked()) {
 			ElMessage.warning('包含锁定单元格，无法复制')
 			return false
 		}
+
+		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
+		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return false
 
 		// ✅ 新增: 权限检查 - 在复制/剪切前检查源区域是否被锁定
 		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
@@ -647,6 +637,11 @@ export function useCopy() {
 	// ✅ 新增: 改进的降级方案 - 使用传统 document.execCommand
 	const fallbackCopy = (html, isCut = false) => {
 		try {
+			if (sheet.hooks.toolsHook.isLocked()) {
+				ElMessage.warning('包含锁定单元格，无法复制')
+				return false
+			}
+
 			const tempDiv = document.createElement('div')
 			tempDiv.innerHTML = html
 			tempDiv.style.position = 'fixed'
@@ -710,31 +705,8 @@ export function useCopy() {
 		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (r === undefined || rr === undefined || c === undefined || cc === undefined) return
 
-		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
-			const rowspan = Math.abs(rr - r) + 1
-			const colspan = Math.abs(cc - c) + 1
-			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
-				Math.min(r, rr),
-				Math.min(c, cc),
-				rowspan,
-				colspan
-			)
-
-			if (permissionCheck.locked) {
-				clearTimeout(pasteTimer)
-				pasteTimer = setTimeout(
-					() => ElMessage.warning(`${permissionCheck.reason}，无法剪切`),
-					300
-				)
-				return // 阻止剪切
-			}
-		}
-
 		// 权限检查通过，执行复制到剪贴板
-		const copySuccess = await copySelectedCells(true)
-		if (!copySuccess) {
-			return // 复制失败，不继续执行剪切
-		}
+		await copySelectedCells(true)
 
 		const oldCellData = []
 		const cellChanges = [] // 收集单元格变更用于协同同步
@@ -794,9 +766,6 @@ export function useCopy() {
 
 		// 调用 clearDeepPermissions 清除源区域的持久锁定
 		sheet.hooks?.permissionsHook?.clearDeepPermissions?.(r, c, rr, cc)
-
-		// ✅ 修复: 所有操作完成后显示成功提示
-		useDebounce(() => ElMessage.success('剪切成功'), 100, 'airSheetCut')
 	}
 
 	// ✅ 修复: 点击粘贴时处理数据，添加错误处理

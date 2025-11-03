@@ -69,7 +69,7 @@ const props = defineProps({
 	// 缓冲区大小(额外渲染的行数)
 	buffer: {type: Number, default: 5},
 
-	autoAddRows: {type: Number, default: 20},
+	autoAddRows: {type: Number, default: 50},
 
 	// 序号
 	enableNumber: {type: Boolean, default: true},
@@ -951,14 +951,19 @@ const checkAndAutoAddRows = async (scrollTop) => {
 				sheet.hooks.toolsHook.addRowCount = props.autoAddRows
 
 				// 调用添加行方法，isEnd=true 表示在末尾添加
-				await sheet.hooks.toolsHook.addRow(null, true, false)
-
-				sheet.hooks.toolsHook.addRowCount = 1
+				sheet.hooks.toolsHook.addRow(null, true, false)
 				console.log('✅ 自动添加100行成功')
 			} catch (error) {
 				console.error('❌ 自动添加行失败:', error)
 			} finally {
 				isAutoAddingRows = false
+				useDebounce(
+					() => {
+						sheet.hooks.toolsHook.addRowCount = 1
+					},
+					150,
+					'autoAddRowsReset'
+				)()
 			}
 		}
 	} catch (error) {
@@ -4051,33 +4056,47 @@ const getSuperPermissionStyle = (range, index) => {
 					</div>
 
 					<template v-if="!sheet.config.super">
-						<!-- 深度权限高亮 (持久锁定) -->
-						<div
-							:key="`deep-permission-${index}`"
-							v-for="(range, index) of deepPermissionRanges"
-							class="highlight"
-							:data-permission-type="range.type"
-							:data-no-lock="String(range.noLock === true)"
-							:style="getDeepPermissionStyle(range, index)"
-						>
-							<div class="label">
-								{{ range.userName }}
+						<template v-for="(range, index) of deepPermissionRanges">
+							<!-- 深度权限高亮 (持久锁定) -->
+							<div
+								v-if="
+									range.r >= visibleRangeRef.visible.startRow &&
+									range.rr <= visibleRangeRef.visible.endRow &&
+									range.c >= visibleRangeRef.visible.startCol &&
+									range.cc <= visibleRangeRef.visible.endCol
+								"
+								class="highlight"
+								:data-permission-type="range.type"
+								:data-no-lock="String(range.noLock === true)"
+								:style="getDeepPermissionStyle(range, index)"
+							>
+								<div class="label">
+									{{ range.userName }}
+								</div>
 							</div>
-						</div>
+						</template>
 
-						<!-- 超级权限高亮 -->
-						<div
-							:key="`super-${index}`"
+						<template
 							v-for="(
 								range, index
 							) of sheet.hooks?.superPermissionsHook?.getSuperPermissionRanges() ||
 							[]"
-							class="highlight super-permission"
-							:data-super-permission="true"
-							:style="getSuperPermissionStyle(range, index)"
 						>
-							<div class="label">{{ range.v }}</div>
-						</div>
+							<!-- 超级权限高亮 -->
+							<div
+								v-if="
+									range.r >= visibleRangeRef.visible.startRow &&
+									range.rr <= visibleRangeRef.visible.endRow &&
+									range.c >= visibleRangeRef.visible.startCol &&
+									range.cc <= visibleRangeRef.visible.endCol
+								"
+								class="highlight super-permission"
+								:data-super-permission="true"
+								:style="getSuperPermissionStyle(range, index)"
+							>
+								<div class="label">{{ range.v }}</div>
+							</div>
+						</template>
 					</template>
 
 					<!-- 右键菜单 -->
@@ -4240,6 +4259,7 @@ const getSuperPermissionStyle = (range, index) => {
 						height: visibleRangeRef?.metrics?.totalHeight + 'px',
 					}"
 				></div>
+
 				<!-- 滚动渲染提示, 数据小于限制时显示 -->
 				<div class="scroll-tip" v-if="!lastScroll && sheet.config.rowCount < limit">
 					<Icons name="Loading" class="loading-animation" />

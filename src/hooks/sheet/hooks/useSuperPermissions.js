@@ -1,3 +1,4 @@
+import {toRaw} from 'vue'
 import {useAirSheetStore} from '../store/useAirSheet'
 
 /**
@@ -463,12 +464,8 @@ export const useSuperPermissions = () => {
 
 		const validPermissions = permissionList.filter((p) => p && typeof p === 'object')
 
-		console.log('🔍 getSuperPermissionRanges - 原始权限数量:', validPermissions.length)
-
 		// ✅ 新增: 过滤被其他区域完全包含的权限区域
 		const filteredByContainment = filterContainedPermissions(validPermissions)
-
-		console.log('🔍 getSuperPermissionRanges - 过滤后权限数量:', filteredByContainment.length)
 
 		// ✅ 修复问题2: 检测筛选状态，构建行号映射
 		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
@@ -483,14 +480,7 @@ export const useSuperPermissions = () => {
 		// 如果不在筛选状态，合并相邻权限后返回
 		if (!isFiltered) {
 			const result = mergeAdjacentPermissions(filteredByContainment)
-			console.log(
-				'🔍 getSuperPermissionRanges - 合并后权限数量:',
-				result.length,
-				'（减少:',
-				filteredByContainment.length - result.length,
-				'个）'
-			)
-			return result
+			return toRaw(result)
 		}
 
 		// ✅ 修复问题2: 在筛选状态下，转换行号并过滤不可见的权限
@@ -531,14 +521,8 @@ export const useSuperPermissions = () => {
 
 		// ✅ 改进: 在筛选状态下，行号转换后重新合并相邻权限
 		const result = mergePermissionsAfterFiltering(filteredPermissions)
-		console.log(
-			'🔍 getSuperPermissionRanges - 筛选后合并权限数量:',
-			result.length,
-			'（减少:',
-			filteredPermissions.length - result.length,
-			'个）'
-		)
-		return result
+
+		return toRaw(result)
 	}
 
 	/**
