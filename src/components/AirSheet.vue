@@ -2364,6 +2364,10 @@ const onChangeSheet = async (sheetItem, e) => {
 		Object.values(sheet.hooks).forEach((hook) => {
 			hook?.refreshSheet?.(id)
 		})
+
+		containerRef.value.scrollTop = 0
+		containerRef.value.scrollLeft = 0
+		onScroll()
 	}, 250)
 }
 
