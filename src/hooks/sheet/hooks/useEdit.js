@@ -2,6 +2,7 @@ import {ref, reactive, nextTick, watch, onMounted} from 'vue'
 import {formatMap} from '@/hooks/sheet/define'
 import {ElMessage} from 'element-plus'
 import {useAirSheetStore} from '../store/useAirSheet'
+import {useDebounce} from '@/hooks'
 
 export const useEdit = () => {
 	const sheetStore = useAirSheetStore()
@@ -274,7 +275,43 @@ export const useEdit = () => {
 			sheet.state.openformula = true
 		}
 
+		let reqTimer = null
+		let beforeValue = cellEl.innerText
+		let isAutoSave = false
+		const focus = () => {
+			let lastTime = 0
+			let fn = () => {
+				reqTimer = requestAnimationFrame((time) => {
+					if (time - lastTime >= 1000) {
+						if (isAutoSave && beforeValue !== cellEl.innerText && lastTime !== 0) {
+							console.log('自动保存协同同步:', {
+								sheetId: sheet.original.sheetId || sheet.id,
+								row: cell.r,
+								col: cell.c,
+								before: beforeValue,
+								after: cellEl.innerText,
+							})
+							sheet.hooks.synergyHook.changeCell({
+								sheetId: sheet.original.sheetId || sheet.id,
+								row: cell.r,
+								col: cell.c,
+								before: beforeValue,
+								after: cellEl.innerText,
+							})
+							beforeValue = cellEl.innerText
+						}
+						lastTime = time
+					}
+					fn()
+				})
+			}
+			isAutoSave = true
+
+			fn()
+		}
+
 		const blur = () => {
+			cancelAnimationFrame(reqTimer)
 			if (sheet.state.formula) {
 				cellEl.focus()
 				setTimeout(() => {
@@ -340,6 +377,7 @@ export const useEdit = () => {
 			cellEl.removeAttribute('contenteditable')
 			cellEl.removeEventListener('blur', blur)
 			cellEl.removeEventListener('input', input)
+			cellEl.removeEventListener('focus', focus)
 			editing.value = false
 
 			// 使用延时处理，给公式菜单点击事件留出执行时间
@@ -359,13 +397,17 @@ export const useEdit = () => {
 		}
 
 		const input = () => {
+			cancelAnimationFrame(reqTimer)
+			isAutoSave = false
+			useDebounce(() => focus(), 1000, 'airSheetCellAuto')()
+
 			// 体验优化而已
 			cellEl.style.removeProperty('line-height')
 
-			console.log('input 事件触发', {
-				innerText: cellEl.innerText,
-				startsWithEquals: cellEl.innerText.startsWith('='),
-			})
+			// console.log('input 事件触发', {
+			// 	innerText: cellEl.innerText,
+			// 	startsWithEquals: cellEl.innerText.startsWith('='),
+			// })
 
 			// // 检查是否是公式
 			// if (cellEl.innerText.startsWith('=')) {
@@ -481,7 +523,12 @@ export const useEdit = () => {
 
 		cellEl.innerText = setCellFormat(cellEl.innerText, cell.r, cell.c)
 
+		cellEl.addEventListener('focus', focus)
+		cellEl.addEventListener('input', input)
+		cellEl.addEventListener('blur', blur)
+
 		cellEl.focus()
+
 		editing.value = true
 
 		// 将光标移到文本末尾
@@ -500,9 +547,6 @@ export const useEdit = () => {
 		} else if (cellEl.innerText.startsWith('=')) {
 			setFormula()
 		}
-
-		cellEl.addEventListener('input', input)
-		cellEl.addEventListener('blur', blur)
 	}
 
 	// 单元格输入的时候

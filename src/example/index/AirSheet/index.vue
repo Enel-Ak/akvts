@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 2,
+		auth: 3,
 
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
@@ -1512,6 +1512,7 @@ const synergyJoinSheet = async (id, sheet) => {
 		await nextTick()
 		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
 			sheet.hooks.mergeHook.refreshMerge()
+			sheet.hooks.editHook.setFormulaValue()
 			sheet.state.lastMergeUpdate = Date.now()
 			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
 		}

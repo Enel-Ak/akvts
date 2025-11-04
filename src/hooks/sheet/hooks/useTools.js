@@ -17,9 +17,22 @@ export const useTools = () => {
 	let sheet = null
 
 	let lockTimer = null
-	const isLocked = () => {
+	const isLocked = (row = -1, col = -1, endRow = -1, endCol = -1) => {
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
-		const {r, c, rr, cc} = ranged
+		let {r, c, rr, cc} = ranged
+
+		if (row !== -1) {
+			r = row
+		}
+		if (col !== -1) {
+			c = col
+		}
+		if (endRow !== -1) {
+			rr = endRow
+		}
+		if (endCol !== -1) {
+			cc = endCol
+		}
 
 		if (sheet.config.super) {
 			return false
@@ -27,6 +40,8 @@ export const useTools = () => {
 
 		// 检查传统锁定
 		if (sheet.config.locked[`${r}-${c}`]) {
+			clearTimeout(lockTimer)
+			lockTimer = setTimeout(() => ElMessage.warning('单元格已被锁定'), 300)
 			return true
 		}
 

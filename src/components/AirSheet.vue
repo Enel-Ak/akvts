@@ -1043,19 +1043,8 @@ const onClickCell = (e, cell) => {
 	// 清除之前的定时器
 	clearTimeout(clickTimer)
 
-	// ✅ 检查 superPermissions（超级权限）- 点击时提示
-	if (sheet.hooks.superPermissionsHook) {
-		const superPermCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
-			cell.r,
-			cell.c,
-			1,
-			1
-		)
-
-		if (superPermCheck.locked) {
-			useDebounce(() => ElMessage.warning(superPermCheck.reason), 100, 'airSheetSuperPerm')()
-			return
-		}
+	if (sheet.hooks.toolsHook.isLocked(cell.r, cell.c, cell.r, cell.c)) {
+		return
 	}
 
 	// 检查是否是双击（两次点击间隔小于300ms且点击同一个单元格）

@@ -682,15 +682,6 @@ export const useSelectionRange = () => {
 	let mouseDownTimer = null
 	const handleMouseDown = (e) => {
 		mouseDownCallCount++
-		console.log('🔍 [DEBUG] handleMouseDown triggered', {
-			count: mouseDownCallCount,
-			button: e.button,
-			target: e.target.className,
-			currentSelection: selection,
-			currentRanged: ranged.value,
-			selecting: selecting.value,
-			dragging: dragging.value,
-		})
 
 		if (e.button !== 0) return // 只处理左键点击
 
@@ -702,10 +693,6 @@ export const useSelectionRange = () => {
 		// ✅ 修复: 在计算位置前，确保 selecting 和 dragging 状态正确
 		// 如果之前有未完成的选择或拖拽操作，先重置状态
 		if (selecting.value || dragging.value) {
-			console.log('🔍 [DEBUG] handleMouseDown: 检测到残留状态，重置中...', {
-				selecting: selecting.value,
-				dragging: dragging.value,
-			})
 			selecting.value = false
 			dragging.value = false
 		}
@@ -715,9 +702,13 @@ export const useSelectionRange = () => {
 		if (!pos) return
 		if (pos.r > sheet.config.rowCount - 1 || pos.c > sheet.config.colCount - 1) return
 
-		if (sheet.hooks.superPermissionsHook.checkSuperPermission(pos.r, pos.c, 1, 1).locked) {
+		if (sheet.hooks.toolsHook.isLocked(pos.r, pos.c, pos.r, pos.c)) {
 			return
 		}
+
+		// if (sheet.hooks.superPermissionsHook.checkSuperPermission(pos.r, pos.c, 1, 1).locked) {
+		// 	return
+		// }
 
 		// ✅ 问题二: 在选中前先检查权限,如果被锁定则直接提示并返回
 		if (sheet.config.synergy && sheet.config.auth > 0 && sheet.hooks.permissionsHook) {
