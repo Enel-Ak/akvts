@@ -4056,9 +4056,46 @@ const getSuperPermissionStyle = (range, index) => {
 					</div>
 
 					<template v-if="!sheet.config.super">
+						<!-- 深度权限高亮 (持久锁定) -->
 						<template v-for="(range, index) of deepPermissionRanges">
-							<!-- 深度权限高亮 (持久锁定) -->
 							<div
+								v-if="
+									sheet.config.auth === 1 &&
+									range.r >= visibleRangeRef.visible.startRow &&
+									range.rr <= visibleRangeRef.visible.endRow
+								"
+								class="highlight"
+								:data-permission-type="range.type"
+								:data-no-lock="String(range.noLock === true)"
+								:style="getDeepPermissionStyle(range, index)"
+							>
+								<div class="label">
+									{{ range.userName }}
+								</div>
+							</div>
+							<div
+								v-else-if="
+									sheet.config.auth === 2 &&
+									range.c >= visibleRangeRef.visible.startCol &&
+									range.cc <= visibleRangeRef.visible.endCol
+								"
+								class="highlight"
+								:data-permission-type="range.type"
+								:data-no-lock="String(range.noLock === true)"
+								:style="getDeepPermissionStyle(range, index)"
+							>
+								<div class="label">
+									{{ range.userName }}
+								</div>
+							</div>
+							<div
+								v-else-if="
+									sheet.config.auth === 3 &&
+									range.c >= visibleRangeRef.visible.startCol &&
+									range.cc <= visibleRangeRef.visible.endCol &&
+									range.r >= visibleRangeRef.visible.startRow &&
+									range.rr <= visibleRangeRef.visible.endRow
+								"
 								class="highlight"
 								:data-permission-type="range.type"
 								:data-no-lock="String(range.noLock === true)"
@@ -4070,13 +4107,13 @@ const getSuperPermissionStyle = (range, index) => {
 							</div>
 						</template>
 
+						<!-- 超级权限高亮 -->
 						<template
 							v-for="(
 								range, index
 							) of sheet.hooks?.superPermissionsHook?.getSuperPermissionRanges() ||
 							[]"
 						>
-							<!-- 超级权限高亮 -->
 							<div
 								v-if="
 									range.r >= visibleRangeRef.visible.startRow &&
