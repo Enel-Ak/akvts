@@ -2009,7 +2009,7 @@ const onCellDrop = (event) => {
 	dropCell = null
 }
 
-const init = () => {
+const init = (callback) => {
 	initialData()
 	nextTick(async () => {
 		updateViewportSize()
@@ -2048,6 +2048,7 @@ const init = () => {
 		containerRef.value.addEventListener('drop', onCellDrop)
 
 		hooksEvent().add(containerId)
+		typeof callback === 'function' && callback()
 	})
 }
 
@@ -2771,19 +2772,14 @@ watch(
 		)
 		sheetId.value = newVal[0].id
 		sheetStore?.initSynergySheets(newVal, containerId, props, emits).then(() => {
-			// ✅ 修复: 协同模式下也需要调用 init() 进行组件级别的初始化
-			console.log(
-				'🔍 [DEBUG] initSynergySheets completed, calling init()',
-				newVal[0],
-				containerId
-			)
-			init()
-			if (props.modelValue?.config.synergy) {
-				emits('asyncJoinSheet', sheet.id, sheet)
-				sheet.hooks.synergyHook.connection(props.api, props.token, () => {
-					sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
-				})
-			}
+			init(() => {
+				if (props.modelValue?.config.synergy) {
+					emits('asyncJoinSheet', sheet.id, sheet)
+					sheet.hooks.synergyHook.connection(props.api, props.token)
+				}
+
+				sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+			})
 		})
 	},
 	{deep: true, immediate: true} // ✅ 添加 immediate: true 确保初始化时触发
@@ -2793,20 +2789,11 @@ onBeforeMount(() => {})
 
 // 初始化
 onMounted(() => {
-	// 🔍 调试日志: 追踪 onMounted 调用
-	console.log('🔍 [DEBUG] AirSheet onMounted called', {
-		sheetId: sheetId.value,
-		containerId,
-		stack: new Error().stack,
-	})
-
 	if (!props.modelValue.config.synergy) {
 		sheetStore.init(sheetId.value, containerId, props, emits, () => {
-			console.log('🔍 [DEBUG] sheetStore.init callback executed')
-			init()
-			if (!props.modelValue?.config.synergy) {
+			init(() => {
 				sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
-			}
+			})
 		})
 	}
 })
@@ -2859,6 +2846,7 @@ defineExpose({
 	getSheet: () => sheet,
 	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
 	getSignalrKey: () => sheet.signalrKey || null,
+
 	addSheet: async (sheet) => await sheet.hooks.toolsHook.addSheet(sheet, props, emits),
 
 	luckyToAir: async (config, data) => await sheet.hooks?.toolsHook?.luckyToAir(config, data),
@@ -2877,6 +2865,9 @@ defineExpose({
 	signalrStop: (key = '') => {
 		sheet.emits('update:linked', false)
 		useSignalrStop(key)
+	},
+	signalrReload: () => {
+		sheet.hooks.synergyHook.connection(props.api, props.token)
 	},
 
 	// 权限相关

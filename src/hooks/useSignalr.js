@@ -22,7 +22,7 @@ export const useSignalrStop = (key) => {
 	clearTimeout(signalrTimer)
 }
 
-export const useSignalr = (key, path, token, callback, errorCallback) => {
+export const useSignalr = (key, path, token, callback, connecting, connected, error) => {
 	if (
 		!signalr.hasOwnProperty(key) ||
 		!signalr[key] ||
@@ -39,6 +39,7 @@ export const useSignalr = (key, path, token, callback, errorCallback) => {
 							return signalr[key].token
 						},
 					})
+					.withAutomaticReconnect([0, 2000, 5000, 10000])
 					.build()
 
 				signalr[key].hubConnection
@@ -51,12 +52,22 @@ export const useSignalr = (key, path, token, callback, errorCallback) => {
 						signalr[key].hubConnection = null
 						signalr[key].token = null
 						console.error('Signalr connection failed')
-						typeof errorCallback === 'function' ? errorCallback('error') : null
+						typeof error === 'function' ? error('error') : null
 					})
 
-				signalr[key].hubConnection.onclose((error) => {
-					console.error('Signalr connection close')
-					typeof errorCallback === 'function' ? errorCallback('error') : null
+				signalr[key].hubConnection.onreconnecting(() => {
+					console.log('🔄 尝试重连中...')
+					typeof connecting === 'function' ? connecting('reconnecting') : null
+				})
+
+				signalr[key].hubConnection.onreconnected(() => {
+					console.log('✅ 已重新连接')
+					typeof connected === 'function' ? connected('reconnected') : null
+				})
+
+				signalr[key].hubConnection.onclose(() => {
+					console.log('❌ 连接已关闭')
+					typeof error === 'function' ? error('error') : null
 				})
 			} catch (err) {
 				console.log('signalr error', err)

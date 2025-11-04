@@ -32,6 +32,13 @@ export const useSynergy = () => {
 		sheet.signalrKey = key
 		sheet.state.loading = true
 		sheet.state.msg = '正在连接中...'
+
+		const connectState = (str) => {
+			sheet.state.loading = true
+			sheet.state.progress = -1
+			sheet.state.msg = str
+		}
+
 		signalr = useSignalr(
 			key,
 			api,
@@ -39,18 +46,28 @@ export const useSynergy = () => {
 			(state) => {
 				if (state === 'error') {
 					signalr = null
+					connectState('连接失败')
+					return
 				}
-				console.log('synergy state', state)
+
 				sheet.state.loading = false
 				useSynergyEvent(sheetKey, signalr)
-				sheetStore.setLinked(state === 'success')
+				sheetStore.setLinked(true)
 				typeof callback === 'function' && callback(signalr)
-				sheet.emits('update:linked', state === 'success')
+				sheet.emits('update:linked', true)
 			},
-			(error) => {
-				sheet.state.loading = true
-				sheet.state.progress = -1
-				sheet.state.msg = '连接已断开, 请刷新页面尝试重新连接'
+			(connectingState) => {
+				connectState('正在尝试重新连接...')
+			},
+			(reconnectedState) => {
+				connectState('连接已恢复')
+				setTimeout(() => {
+					sheet.state.loading = false
+				}, 1000)
+			},
+			(errorState) => {
+				connectState('连接已关闭')
+				sheet.emits('update:linked', false)
 			}
 		)
 
