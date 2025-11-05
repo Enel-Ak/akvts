@@ -59,7 +59,7 @@ export const usePermissions = () => {
 	 * @param {number} colEnd - 结束列索引
 	 */
 	const updatePermissions = (row, col, rowEnd, colEnd) => {
-		if (!sheet || !sheet.config.synergy || sheet.config.super) return
+		if (!sheet || !sheet.config.synergy) return
 
 		const userId = getCurrentUserId()
 		if (!userId) {
