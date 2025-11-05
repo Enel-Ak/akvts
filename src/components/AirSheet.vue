@@ -3061,7 +3061,7 @@ const getSuperPermissionStyle = (range, index) => {
 	return {
 		...baseStyle,
 		'--z-highlight-color': props.multiColor ? `rgb(${color})` : `var(--z-main)`,
-		'--z-highlight-color-rgb': color,
+		'--z-highlight-color-rgb': props.multiColor ? `rgb(${color})` : `var(--z-main-rgb)`,
 		// border: `1px solid rgb(${color})`, // ✅ 修复: 改为 1px，与其他权限一致
 		// backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
 		// zIndex: 3, // 比普通高亮更高的层级
