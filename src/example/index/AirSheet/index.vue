@@ -11,7 +11,7 @@ const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 0,
+		auth: 2,
 
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
@@ -1174,7 +1174,7 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://10.110.10.125:8888/signalr-hubs/onlinetable')
+const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjIzMjM1MDMsImV4cCI6MTc2MjQ5NTUwMywiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MjMyMzUwMywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8IiwiZGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1kMzJkLWJhM2ItNjJjOGQ4Mjg4MzEzIiwiYmlnRGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1iZGUzLWU2NGUtNjFhMWYzYWVjOTkwIiwiaWF0IjoxNzYyMzIzNTAzLCJzY29wZSI6WyJhZGRyZXNzIiwiZW1haWwiLCJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciIsIm9wZW5pZCIsInBob25lIiwicHJvZmlsZSIsInJvbGUiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsiQXV0aENvZGUiXX0.NM-gjDWf3B8JZAaNz2bs3D-uJvv1sbutiBdW821Vd4ZSod_5RREK5Ib9DFQKrvLmQkcTQFRg5VZH8Y4Xu5VQ5ZMs27maycQ9f64sAkbN-sZM1bIIlY-VCwdZsgNYl9TXwffylPQZYAc3xUbrujBGtaQVJDR3qTae88JNKsqrHHEnFDVYZ2aGhWWWvGs7Ct3UvRAY28geS-r58gvuMUxdSt8l1SMTcBh605akYTJovXNtx2pKh1SPEG2sS530sZZ5QHYpLCYGkAU76eIbOhb6GCqeEZeYRafv7qhPCiMAFRUmWWSzK7ujeXJbx67dBwE8QZiVFxngs4LhZ_YhIjyFFg'
 	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjIzMjM0OTEsImV4cCI6MTc2MjQ5NTQ5MSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MjI0OTkzMCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7ws5Yy65Y6_5Y-w6LSm6L-Q57u05ZGYLOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjItZDMyZC1iYTNiLTYyYzhkODI4ODMxMyIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLTkwNjItYmRlMy1lNjRlLTYxYTFmM2FlYzk5MCIsImlhdCI6MTc2MjMyMzQ5MSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.ixHmWWTnNAdkMscO9waJk66wE_KpjWyrA04lERSUhUQC5dVc0chmQ12Ihabqj41lbNtHangVEWBUzbyFkVQXkuv9ebNgLMG0nBYlmJOZtY3t4Mpek3otwnRVzCppkylc9WmOUC0dUmG84Vkpfs3t5D3KcFnoXBVNkTyPLobSilypEE4lzcRHFGZH1gsBPryQmMpDsBVZ1HphRZm8qd0ABJxbnByyAYx0-brU-zTPtFg2MY709FNo4uJbdg3qH_dNAW54k8eKlznUVlwF6VDCyEpAZMIuzHnWpgnfdSNotu8Q0QruljwxVfl8hl-WGS_a8AgHzku4UnPFUvbrbqAdYg'
@@ -1189,7 +1189,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://10.110.10.125:8888/api/online-table/table/cell-data',
+			url: 'http://100.92.2.93:8001/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				tableId: tableId.value,
@@ -1228,7 +1228,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://10.110.10.125:8888/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://100.92.2.93:8001/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1615,7 +1615,7 @@ const asyncCellHistory = async (ranged, callback) => {
 	}
 
 	const res = await axios.request({
-		url: `http://10.110.10.125:8888/api/online-table/log/cell-log/${tableId.value}/${sheetId.value}/${ranged.r}/${ranged.c}`,
+		url: `http://100.92.2.93:8001/api/online-table/log/cell-log/${tableId.value}/${sheetId.value}/${ranged.r}/${ranged.c}`,
 		method: 'GET',
 		params: {
 			skipCount: historyCount * 10,
@@ -1682,7 +1682,7 @@ onActivated(() => {
 	// 获取sheets
 	axios
 		.request({
-			url: 'http://10.110.10.125:8888/api/online-table/table/3a1d64cc-a3a0-d33b-9484-d0a0f2bc95ec?autoCreate=true',
+			url: 'http://100.92.2.93:8001/api/online-table/table/3a1d64cc-a3a0-d33b-9484-d0a0f2bc95ec?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1698,7 +1698,7 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://10.110.10.125:8888/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
+			api.value = `http://100.92.2.93:8001/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id

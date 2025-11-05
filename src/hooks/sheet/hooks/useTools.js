@@ -18,6 +18,10 @@ export const useTools = () => {
 
 	let lockTimer = null
 	const isLocked = (row = -1, col = -1, endRow = -1, endCol = -1) => {
+		if (sheet.config.super) {
+			return false
+		}
+
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
 		let {r, c, rr, cc} = ranged
 

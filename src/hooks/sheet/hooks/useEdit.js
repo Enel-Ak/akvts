@@ -445,7 +445,7 @@ export const useEdit = () => {
 		}
 
 		// 不允许编辑锁定的单元格
-		if (sheet.hooks.toolsHook.isLocked()) {
+		if (sheet.hooks.toolsHook.isLocked(cell.r, cell.c, cell.r, cell.c)) {
 			return
 		}
 

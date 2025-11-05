@@ -3935,8 +3935,11 @@ const getSuperPermissionStyle = (range, index) => {
 												...getCellStyle(cell),
 											}"
 											class="cell"
+											@click="onClickCell($event, cell)"
 											@dblclick.stop="
-												sheet.hooks.editHook.startEdit($event, cell)
+												($event) => {
+													sheet.hooks.editHook.startEdit($event, cell)
+												}
 											"
 											@blur="
 												($event) => {
@@ -3960,7 +3963,9 @@ const getSuperPermissionStyle = (range, index) => {
 										}"
 										@click="onClickCell($event, cell)"
 										@dblclick.stop="
-											sheet.hooks.editHook.startEdit($event, cell)
+											($event) => {
+												sheet.hooks.editHook.startEdit($event, cell)
+											}
 										"
 										@blur="
 											($event) => {
