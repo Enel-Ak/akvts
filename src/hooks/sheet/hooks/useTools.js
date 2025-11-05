@@ -906,9 +906,18 @@ export const useTools = () => {
 			})
 
 			// 批量更新位置变化的键
-			keysToUpdate.forEach(({oldKey, newKey, oldRow, oldCol, newRow, newCol, value}) => {
-				obj[newKey] = value
+			// 修复：先删除所有旧键，再设置所有新键，避免键冲突
+			// 问题：如果先设置新键再删除旧键，当多个键连续移动时（如 5-1→6-1, 6-1→7-1），
+			// 会导致新设置的键被后续的删除操作错误删除
+			keysToUpdate.forEach(({oldKey}) => {
 				delete obj[oldKey]
+			})
+
+			keysToUpdate.forEach(({newKey, value}) => {
+				obj[newKey] = value
+			})
+
+			keysToUpdate.forEach(({oldRow, oldCol, newRow, newCol}) => {
 				callback && callback(oldRow, oldCol, newRow, newCol)
 			})
 		}
@@ -1218,13 +1227,13 @@ export const useTools = () => {
 
 	// 添加行
 	const addRowCount = ref(1)
-	const addRow = async (_, isEnd = false, save = true, asyncData = null) => {
+	const addRow = async (_, isEnd = false, save = true, asyncData = null, formSuper = false) => {
 		if (!sheet.config.addRow) {
 			ElMessage.warning('请先在配置中开启添加行功能')
 			return
 		}
 
-		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('row')) {
+		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('row') && !formSuper) {
 			ElMessage.warning('该区域受权限保护，不可添加')
 			return
 		}
@@ -1392,18 +1401,6 @@ export const useTools = () => {
 						sheet.hooks.superPermissionsHook.clearPermissionRangesCache()
 					}
 				}
-
-				// 🔍 调试日志：权限更新后
-				console.log('=== addRow: 权限更新后 ===')
-				console.log('celldata size (添加后):', sheet.celldata.size)
-				console.log(
-					'deepPermissions (添加后):',
-					JSON.stringify(sheet.config.deepPermissions, null, 2)
-				)
-				console.log(
-					'superPermissions (添加后):',
-					JSON.stringify(sheet.config.superPermissions, null, 2)
-				)
 			}
 
 			const celldataSnapshot = {}
@@ -1445,6 +1442,7 @@ export const useTools = () => {
 					count: addRowCount.value,
 					startIndex: insertRowIndex,
 					celldata: celldataArray, // ✅ 新增：包含 celldata
+					super: sheet.config.super,
 				})
 
 				// 使用 asyncUpdateConfig 统一处理所有配置更新（添加行操作）
@@ -1474,7 +1472,7 @@ export const useTools = () => {
 	}
 
 	// 删除行
-	const removeRow = async (_, save = true, asyncData = null, callback = null) => {
+	const removeRow = async (_, save = true, asyncData = null, formSuper = false) => {
 		if (!sheet.config.removeRow) {
 			ElMessage.warning('请先在配置中开启删除行功能')
 			return
@@ -1483,7 +1481,7 @@ export const useTools = () => {
 			let {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
 			if (r === undefined) return
 
-			if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('row')) {
+			if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('row') && !formSuper) {
 				ElMessage.warning('该区域受权限保护，不可删除')
 				return
 			}
@@ -1750,13 +1748,19 @@ export const useTools = () => {
 
 	// 添加列
 	const addColumnCount = ref(1)
-	const addColumn = async (_, isEnd = false, save = true, asyncData = null) => {
+	const addColumn = async (
+		_,
+		isEnd = false,
+		save = true,
+		asyncData = null,
+		formSuper = false
+	) => {
 		if (!sheet.config.addColumn) {
 			ElMessage.warning('请先在配置中开启添加列功能')
 			return
 		}
 
-		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('col')) {
+		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('col') && !formSuper) {
 			ElMessage.warning('该区域受权限保护，不可添加')
 			return
 		}
@@ -1981,13 +1985,13 @@ export const useTools = () => {
 	}
 
 	// 删除列
-	const removeColumn = async (_, save = true, asyncData = null, callback = null) => {
+	const removeColumn = async (_, save = true, asyncData = null, formSuper = false) => {
 		if (!sheet.config.removeColumn) {
 			ElMessage.warning('请先在配置中开启删除列功能')
 			return
 		}
 
-		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('col')) {
+		if (sheet.hooks.superPermissionsHook.checkSuperPermissionRange('col') && !formSuper) {
 			ElMessage.warning('该区域受权限保护，不可添加')
 			return
 		}

@@ -10,6 +10,27 @@ export const useHistory = () => {
 	let count = 0
 	const max = 50
 
+	const asycnUndo = () => {
+		// 协同通知:撤销操作
+		if (sheet.config.synergy) {
+			sheet.hooks.synergyHook.undoRowColumn(
+				sheet?.original?.sheetId || sheet.id,
+				JSON.stringify({
+					merged: sheet.config.merged,
+					locked: sheet.config.locked,
+					styled: sheet.config.styled,
+					formulaed: sheet.config.formulaed,
+					formulaMap: sheet.config.formulaMap,
+					rResize: sheet.config.rResize,
+					cResize: sheet.config.cResize,
+					deepPermissions: sheet.config.deepPermissions,
+					// superPermissions: sheet.config.superPermissions,
+				}),
+				sheet.config.super
+			)
+		}
+	}
+
 	// 准备修改前保存当前状态
 	const save = (data = null, type = 'edit') => {
 		// 优化：根据操作类型选择性保存状态，避免不必要的深拷贝
@@ -317,22 +338,7 @@ export const useHistory = () => {
 							await sheet.hooks.toolsHook.filterByCheckedSilent(currentFiltered)
 						}
 
-						if (sheet.config.synergy) {
-							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id,
-								JSON.stringify({
-									merged: sheet.config.merged,
-									locked: sheet.config.locked,
-									styled: sheet.config.styled,
-									formulaed: sheet.config.formulaed,
-									formulaMap: sheet.config.formulaMap,
-									rResize: sheet.config.rResize,
-									cResize: sheet.config.cResize,
-									deepPermissions: sheet.config.deepPermissions,
-									// superPermissions: sheet.config.superPermissions,
-								})
-							)
-						}
+						asycnUndo()
 						await nextTick()
 						// ✅ 修复：Object.assign 已经恢复了 rowCount，不需要再减少
 						// sheet.config.rowCount 已经被恢复到添加行之前的值
@@ -365,22 +371,7 @@ export const useHistory = () => {
 						}
 
 						// 协同通知:撤销添加列
-						if (sheet.config.synergy) {
-							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id,
-								JSON.stringify({
-									merged: sheet.config.merged,
-									locked: sheet.config.locked,
-									styled: sheet.config.styled,
-									formulaed: sheet.config.formulaed,
-									formulaMap: sheet.config.formulaMap,
-									rResize: sheet.config.rResize,
-									cResize: sheet.config.cResize,
-									deepPermissions: sheet.config.deepPermissions,
-									// superPermissions: sheet.config.superPermissions,
-								})
-							)
-						}
+						asycnUndo()
 						await nextTick()
 						// ✅ 修复：Object.assign 已经恢复了 colCount，不需要再减少
 						// sheet.config.colCount 已经被恢复到添加列之前的值
@@ -458,22 +449,7 @@ export const useHistory = () => {
 						}
 
 						// 协同通知:撤销删除行
-						if (sheet.config.synergy) {
-							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id,
-								JSON.stringify({
-									merged: sheet.config.merged,
-									locked: sheet.config.locked,
-									styled: sheet.config.styled,
-									formulaed: sheet.config.formulaed,
-									formulaMap: sheet.config.formulaMap,
-									rResize: sheet.config.rResize,
-									cResize: sheet.config.cResize,
-									deepPermissions: sheet.config.deepPermissions,
-									// superPermissions: sheet.config.superPermissions,
-								})
-							)
-						}
+						asyncUndo()
 					} catch (error) {
 						console.error('撤销删除行失败:', error)
 					}
@@ -548,22 +524,7 @@ export const useHistory = () => {
 						}
 
 						// 协同通知:撤销删除列
-						if (sheet.config.synergy) {
-							sheet.hooks.synergyHook.undoRowColumn(
-								sheet?.original?.sheetId || sheet.id,
-								JSON.stringify({
-									merged: sheet.config.merged,
-									locked: sheet.config.locked,
-									styled: sheet.config.styled,
-									formulaed: sheet.config.formulaed,
-									formulaMap: sheet.config.formulaMap,
-									rResize: sheet.config.rResize,
-									cResize: sheet.config.cResize,
-									deepPermissions: sheet.config.deepPermissions,
-									// superPermissions: sheet.config.superPermissions,
-								})
-							)
-						}
+						asyncUndo()
 					} catch (error) {
 						console.error('撤销删除列失败:', error)
 					}

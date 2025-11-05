@@ -1,5 +1,6 @@
 import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
 import {focusableStack} from 'element-plus/es/components/focus-trap/index.mjs'
+import {nextTick} from 'vue'
 
 const EventMap = {
 	EventClicked: 'OnEventClicked', // 接收到单元格点击
@@ -414,29 +415,34 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		}
 
 		// 执行添加行操作（会移动 >= startIndex 的所有行）
-		await sheet.hooks.toolsHook.addRow(null, false, false, {
-			startIndex: res.startIndex,
-			count: res.count,
-		})
+		await sheet.hooks.toolsHook.addRow(
+			null,
+			false,
+			false,
+			{
+				startIndex: res.startIndex,
+				count: res.count,
+			},
+			!!res.super
+		)
 
 		// ✅ 修复：在 addRow 之后，将临时存储的 celldata 写入正确的位置
-		// 关键：celldata 中的行索引需要根据 startIndex 和 count 进行映射
+		// 关键：celldata 中的行索引已经是插入后的最终位置，直接使用即可
+
 		if (tempCelldata.size > 0) {
 			console.log('RowInserted 恢复 celldata 到正确位置')
 
-			tempCelldata.forEach((colMap, originalRow) => {
-				// ✅ 修复：计算新的行索引
-				// 如果原始行 >= startIndex，需要加上 count（因为 addRow 会移动这些行）
-				const newRow = originalRow >= res.startIndex ? originalRow + res.count : originalRow
-
-				console.log(`RowInserted 行索引映射: ${originalRow} -> ${newRow}`)
+			tempCelldata.forEach((colMap, row) => {
+				// ✅ 修复：直接使用 celldata 中的行索引，因为它已经是最终位置
+				// 用户A在发送数据前已经完成了数据移动，所以索引是正确的
+				console.log(`RowInserted 使用行索引: ${row}`)
 
 				// 确保行存在
-				if (!sheet.celldata.get(newRow)) {
-					sheet.celldata.set(newRow, [])
+				if (!sheet.celldata.get(row)) {
+					sheet.celldata.set(row, [])
 				}
 
-				const rowData = sheet.celldata.get(newRow)
+				const rowData = sheet.celldata.get(row)
 				colMap.forEach((value, col) => {
 					// 设置单元格值
 					rowData[col] = value
@@ -445,7 +451,7 @@ export const useSynergyEvent = (sheetId, signalr) => {
 					setTimeout(() => {
 						const cellEl = document
 							.querySelector(`#${sheet.containerId}`)
-							?.querySelector(`[data-cell="${newRow}-${col}"]`)
+							?.querySelector(`[data-cell="${row}-${col}"]`)
 
 						if (cellEl) {
 							cellEl.innerText = value || ''
@@ -453,8 +459,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 						// 使用 editHook 的方法来正确设置单元格值和行高
 						if (sheet.hooks.editHook) {
-							sheet.hooks.editHook.setCellValue(newRow, col, value)
-							sheet.hooks.editHook.setRowHeight(newRow, col, false)
+							sheet.hooks.editHook.setCellValue(row, col, value)
+							sheet.hooks.editHook.setRowHeight(row, col, false)
 						}
 					}, 100)
 				})
@@ -467,22 +473,21 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			return
 		}
 		console.log('RowDeleted', res)
-		sheet.hooks.toolsHook.removeRow(null, false, {
-			startIndex: res.startIndex,
-			count: res.count,
-		})
+		sheet.hooks.toolsHook.removeRow(
+			null,
+			false,
+			{
+				startIndex: res.startIndex,
+				count: res.count,
+			},
+			!!res.super
+		)
 	})
 
 	signalr.on(EventMap.ColInserted, async (res) => {
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log('ColInserted 接收到添加列事件:', {
-			startIndex: res.startIndex,
-			count: res.count,
-			hasCelldata: !!res.celldata,
-			celldataLength: res.celldata?.length || 0,
-		})
 
 		// ✅ 修复：先恢复 celldata 数据到临时存储，避免被 addColumn 的数据移动覆盖
 		const tempCelldata = new Map()
@@ -500,13 +505,19 @@ export const useSynergyEvent = (sheetId, signalr) => {
 		}
 
 		// 执行添加列操作（会移动 >= startIndex 的所有列）
-		await sheet.hooks.toolsHook.addColumn(null, false, false, {
-			startIndex: res.startIndex,
-			count: res.count,
-		})
+		await sheet.hooks.toolsHook.addColumn(
+			null,
+			false,
+			false,
+			{
+				startIndex: res.startIndex,
+				count: res.count,
+			},
+			!!res.super
+		)
 
 		// ✅ 修复：在 addColumn 之后，将临时存储的 celldata 写入正确的位置
-		// 关键：celldata 中的列索引需要根据 startIndex 和 count 进行映射
+		// 关键：celldata 中的列索引已经是插入后的最终位置，直接使用即可
 		if (tempCelldata.size > 0) {
 			console.log('ColInserted 恢复 celldata 到正确位置')
 
@@ -517,22 +528,20 @@ export const useSynergyEvent = (sheetId, signalr) => {
 				}
 
 				const rowData = sheet.celldata.get(row)
-				colMap.forEach((originalCol, value) => {
-					// ✅ 修复：计算新的列索引
-					// 如果原始列 >= startIndex，需要加上 count（因为 addColumn 会移动这些列）
-					const newCol =
-						originalCol >= res.startIndex ? originalCol + res.count : originalCol
-
-					console.log(`ColInserted 列索引映射: ${originalCol} -> ${newCol}`)
+				colMap.forEach((value, col) => {
+					// ✅ 修复：直接使用 celldata 中的列索引，因为它已经是最终位置
+					// 用户A在发送数据前已经完成了数据移动，所以索引是正确的
+					// 同时修复了 Map.forEach 参数顺序（应该是 value, key）
+					console.log(`ColInserted 使用列索引: ${col}`)
 
 					// 设置单元格值
-					rowData[newCol] = value
+					rowData[col] = value
 
 					// 更新 DOM 元素
 					setTimeout(() => {
 						const cellEl = document
 							.querySelector(`#${sheet.containerId}`)
-							?.querySelector(`[data-cell="${row}-${newCol}"]`)
+							?.querySelector(`[data-cell="${row}-${col}"]`)
 
 						if (cellEl) {
 							cellEl.innerText = value || ''
@@ -540,8 +549,8 @@ export const useSynergyEvent = (sheetId, signalr) => {
 
 						// 使用 editHook 的方法来正确设置单元格值和行高
 						if (sheet.hooks.editHook) {
-							sheet.hooks.editHook.setCellValue(row, newCol, value)
-							sheet.hooks.editHook.setRowHeight(row, newCol, false)
+							sheet.hooks.editHook.setCellValue(row, col, value)
+							sheet.hooks.editHook.setRowHeight(row, col, false)
 						}
 					}, 100)
 				})
@@ -550,15 +559,18 @@ export const useSynergyEvent = (sheetId, signalr) => {
 	})
 
 	signalr.on(EventMap.ColDeleted, (res) => {
-		console.log('ColDeleted', res)
 		if (isCurrentSheet(res.sheetId)) {
 			return
 		}
-		console.log('ColDeleted', res)
-		sheet.hooks.toolsHook.removeColumn(null, false, {
-			startIndex: res.startIndex,
-			count: res.count,
-		})
+		sheet.hooks.toolsHook.removeColumn(
+			null,
+			false,
+			{
+				startIndex: res.startIndex,
+				count: res.count,
+			},
+			!!res.super
+		)
 	})
 
 	signalr.on(EventMap.OnlineUsered, (res) => {
@@ -606,48 +618,51 @@ export const useSynergyEvent = (sheetId, signalr) => {
 			if (res.actionType === 1) {
 				if (res.targetType === 2) {
 					// 撤销插入行 = 删除行
-					console.log('执行撤销插入行操作(删除行)', {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
-					await sheet.hooks.toolsHook.removeRow(null, false, {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
+					await sheet.hooks.toolsHook.removeRow(
+						null,
+						false,
+						{
+							startIndex: res.startIndex,
+							count: res.count,
+						},
+						!!res.super
+					)
 				} else if (res.targetType === 3) {
-					// 撤销插入列 = 删除列
-					console.log('执行撤销插入列操作(删除列)', {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
-					await sheet.hooks.toolsHook.removeColumn(null, false, {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
+					await sheet.hooks.toolsHook.removeColumn(
+						null,
+						false,
+						{
+							startIndex: res.startIndex,
+							count: res.count,
+						},
+						!!res.super
+					)
 				}
 			}
 			// 撤销删除操作 = 执行插入
 			else if (res.actionType === 3) {
 				if (res.targetType === 2) {
-					// 撤销删除行 = 插入行
-					console.log('执行撤销删除行操作(插入行)', {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
-					await sheet.hooks.toolsHook.addRow(null, false, false, {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
+					await sheet.hooks.toolsHook.addRow(
+						null,
+						false,
+						false,
+						{
+							startIndex: res.startIndex,
+							count: res.count,
+						},
+						!!res.super
+					)
 				} else if (res.targetType === 3) {
-					// 撤销删除列 = 插入列
-					console.log('执行撤销删除列操作(插入列)', {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
-					await sheet.hooks.toolsHook.addColumn(null, false, false, {
-						startIndex: res.startIndex,
-						count: res.count,
-					})
+					await sheet.hooks.toolsHook.addColumn(
+						null,
+						false,
+						false,
+						{
+							startIndex: res.startIndex,
+							count: res.count,
+						},
+						!!res.super
+					)
 				}
 			}
 
