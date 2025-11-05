@@ -276,7 +276,7 @@ export const useEdit = () => {
 		}
 
 		let reqTimer = null
-		let beforeValue = cellEl.innerText
+		let beforeValue = cellEl?.innerText || ''
 		let isAutoSave = false
 		const focus = () => {
 			let lastTime = 0
