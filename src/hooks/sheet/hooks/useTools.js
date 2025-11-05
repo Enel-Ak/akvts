@@ -1386,6 +1386,11 @@ export const useTools = () => {
 							return permission
 						}
 					)
+
+					// ✅ 修复Issue 2: superPermissions 更新后清除缓存
+					if (sheet.hooks.superPermissionsHook?.clearPermissionRangesCache) {
+						sheet.hooks.superPermissionsHook.clearPermissionRangesCache()
+					}
 				}
 
 				// 🔍 调试日志：权限更新后
@@ -1892,6 +1897,11 @@ export const useTools = () => {
 							return permission
 						}
 					)
+
+					// ✅ 修复Issue 2: superPermissions 更新后清除缓存
+					if (sheet.hooks.superPermissionsHook?.clearPermissionRangesCache) {
+						sheet.hooks.superPermissionsHook.clearPermissionRangesCache()
+					}
 				}
 			}
 
@@ -2624,6 +2634,11 @@ export const useTools = () => {
 				合并单元格组数: mergedGroups.length,
 				处理时间: Date.now(),
 			})
+
+			// ✅ 修复Issue 2: 筛选状态变化后清除缓存
+			if (sheet.hooks.superPermissionsHook?.clearPermissionRangesCache) {
+				sheet.hooks.superPermissionsHook.clearPermissionRangesCache()
+			}
 		} catch (error) {
 			console.error('筛选过程中发生错误:', error)
 			ElMessage.error('筛选失败，请重试')
@@ -2772,6 +2787,11 @@ export const useTools = () => {
 
 			// 将行号映射信息存储到sheet中，供前端使用
 			sheet.rowMapping = rowMappingData
+
+			// ✅ 修复Issue 2: 筛选状态变化后清除缓存
+			if (sheet.hooks.superPermissionsHook?.clearPermissionRangesCache) {
+				sheet.hooks.superPermissionsHook.clearPermissionRangesCache()
+			}
 		} catch (error) {
 			console.error('静默筛选过程中发生错误:', error)
 		}

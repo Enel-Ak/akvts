@@ -5,11 +5,48 @@ import {useAirSheetStore} from '../store/useAirSheet'
  * 超级权限管理 Hook
  * 实现高优先级的权限控制功能，优先级高于普通 permissions
  * superPermissions 支持实时同步，通过 asyncConfig 广播给其他用户
+ * ✅ 修复Issue 2: 添加缓存机制以避免冗余重计算
  */
 export const useSuperPermissions = () => {
 	const sheetStore = useAirSheetStore()
 	let sheetKey = null
 	let sheet = null
+
+	// ✅ 修复Issue 2: 缓存机制 - 存储计算结果
+	let permissionRangesCache = null
+	let cacheKey = null
+
+	/**
+	 * 生成缓存键
+	 * 基于 superPermissions 内容、筛选状态和行映射生成唯一键
+	 * @returns {string} 缓存键
+	 */
+	const generateCacheKey = () => {
+		if (!sheet || !sheet.config.superPermissions) {
+			return 'empty'
+		}
+
+		const superPermissions = sheet.config.superPermissions
+		const isFiltered = sheet.config.filtered && sheet.config.filtered.length > 0
+
+		// 生成缓存键: 包含权限数据、筛选状态和行映射
+		const permissionsHash = JSON.stringify(superPermissions)
+		const filteredHash = isFiltered ? JSON.stringify(sheet.config.filtered) : 'no-filter'
+		const rowMappingHash =
+			isFiltered && sheet.rowMapping ? JSON.stringify(sheet.rowMapping) : 'no-mapping'
+
+		return `${permissionsHash}|${filteredHash}|${rowMappingHash}`
+	}
+
+	/**
+	 * 清除缓存
+	 * 在 superPermissions 或筛选状态变化时调用
+	 */
+	const clearPermissionRangesCache = () => {
+		permissionRangesCache = null
+		cacheKey = null
+		console.log('✅ 缓存已清除: getSuperPermissionRanges')
+	}
 
 	/**
 	 * 检查指定位置是否被 superPermissions 锁定
@@ -237,16 +274,20 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * 过滤被其他区域完全包含的权限区域
+	 * ✅ 修复: 将Proxy对象转换为纯对象,避免性能问题
 	 * @param {Array} permissions - 权限区域列表
-	 * @returns {Array} 过滤后的权限区域列表
+	 * @returns {Array} 过滤后的权限区域列表(纯对象)
 	 */
 	const filterContainedPermissions = (permissions) => {
-		return permissions.filter((permission, index) => {
+		// ✅ 修复Issue 1: 使用toRaw解包Proxy对象,确保返回纯对象
+		const rawPermissions = permissions.map((p) => toRaw(p))
+
+		return rawPermissions.filter((permission, index) => {
 			// 检查当前权限是否被其他任何权限完全包含
-			for (let i = 0; i < permissions.length; i++) {
+			for (let i = 0; i < rawPermissions.length; i++) {
 				if (i !== index) {
 					// 如果当前权限被其他权限完全包含，则过滤掉
-					if (isAreaContainedBy(permission, permissions[i])) {
+					if (isAreaContainedBy(permission, rawPermissions[i])) {
 						return false
 					}
 				}
@@ -258,8 +299,9 @@ export const useSuperPermissions = () => {
 	/**
 	 * 第一步：水平合并相邻的权限区域
 	 * 按行范围分组，对每一行内的相邻同 id 单元格进行水平合并
+	 * ✅ 修复: 确保返回纯对象数组
 	 * @param {Array} permissions - 权限数组
-	 * @returns {Array} 水平合并后的权限数组
+	 * @returns {Array} 水平合并后的权限数组(纯对象)
 	 */
 	const mergeHorizontally = (permissions) => {
 		if (!permissions || permissions.length === 0) {
@@ -269,9 +311,11 @@ export const useSuperPermissions = () => {
 		// 按行范围分组
 		const byRow = {}
 		permissions.forEach((p) => {
-			const key = `${p.r}-${p.rr}`
+			// ✅ 修复Issue 1: 使用toRaw确保操作纯对象
+			const rawP = toRaw(p)
+			const key = `${rawP.r}-${rawP.rr}`
 			if (!byRow[key]) byRow[key] = []
-			byRow[key].push(p)
+			byRow[key].push(rawP)
 		})
 
 		const merged = []
@@ -306,8 +350,9 @@ export const useSuperPermissions = () => {
 	 * 按列范围分组，对每一列内的相邻同 id 单元格进行垂直合并
 	 * 注意：只有列范围完全相同的单元格才能进行垂直合并
 	 * 这样可以避免已被水平合并的单元格再进行垂直合并
+	 * ✅ 修复: 确保返回纯对象数组
 	 * @param {Array} permissions - 权限数组
-	 * @returns {Array} 垂直合并后的权限数组
+	 * @returns {Array} 垂直合并后的权限数组(纯对象)
 	 */
 	const mergeVertically = (permissions) => {
 		if (!permissions || permissions.length === 0) {
@@ -317,9 +362,11 @@ export const useSuperPermissions = () => {
 		// 按列范围分组
 		const byCol = {}
 		permissions.forEach((p) => {
-			const key = `${p.c}-${p.cc}`
+			// ✅ 修复Issue 1: 使用toRaw确保操作纯对象
+			const rawP = toRaw(p)
+			const key = `${rawP.c}-${rawP.cc}`
 			if (!byCol[key]) byCol[key] = []
-			byCol[key].push(p)
+			byCol[key].push(rawP)
 		})
 
 		const merged = []
@@ -385,6 +432,7 @@ export const useSuperPermissions = () => {
 	 * @returns {Array} 合并后的权限区域列表
 	 */
 	const mergeAdjacentPermissions = (permissions) => {
+		console.log('permissions', permissions)
 		if (!permissions || permissions.length === 0) {
 			return []
 		}
@@ -448,12 +496,22 @@ export const useSuperPermissions = () => {
 	 * ✅ 新增: 过滤被其他区域完全包含的权限区域
 	 * ✅ 新增: 合并相邻的权限区域以减少 DOM 渲染数量（支持水平和垂直合并）
 	 * ✅ 改进: 在筛选状态下，行号转换后重新合并相邻权限
-	 * @returns {Array} superPermission 区域列表
+	 * ✅ 修复Issue 2: 实现缓存机制,避免冗余重计算
+	 * @returns {Array} superPermission 区域列表(纯对象数组)
 	 */
 	const getSuperPermissionRanges = () => {
 		if (!sheet || !sheet.config.superPermissions) {
 			return []
 		}
+
+		// ✅ 修复Issue 2: 检查缓存
+		const currentCacheKey = generateCacheKey()
+		if (cacheKey === currentCacheKey && permissionRangesCache !== null) {
+			console.log('✅ 使用缓存: getSuperPermissionRanges')
+			return permissionRangesCache
+		}
+
+		console.log('🔄 重新计算: getSuperPermissionRanges')
 
 		const superPermissions = sheet.config.superPermissions
 
@@ -480,7 +538,10 @@ export const useSuperPermissions = () => {
 		// 如果不在筛选状态，合并相邻权限后返回
 		if (!isFiltered) {
 			const result = mergeAdjacentPermissions(filteredByContainment)
-			return toRaw(result)
+			// ✅ 修复Issue 2: 缓存结果
+			permissionRangesCache = result
+			cacheKey = currentCacheKey
+			return result
 		}
 
 		// ✅ 修复问题2: 在筛选状态下，转换行号并过滤不可见的权限
@@ -522,7 +583,10 @@ export const useSuperPermissions = () => {
 		// ✅ 改进: 在筛选状态下，行号转换后重新合并相邻权限
 		const result = mergePermissionsAfterFiltering(filteredPermissions)
 
-		return toRaw(result)
+		// ✅ 修复Issue 2: 缓存结果
+		permissionRangesCache = result
+		cacheKey = currentCacheKey
+		return result
 	}
 
 	/**
@@ -550,6 +614,7 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * 设置 superPermission
+	 * ✅ 修复Issue 2: 添加缓存失效
 	 * @param {number} r - 起始行
 	 * @param {number} c - 起始列
 	 * @param {number} rr - 结束行
@@ -577,6 +642,9 @@ export const useSuperPermissions = () => {
 
 		console.log('setSuperPermission:', {id, r, c, rr, cc, v})
 
+		// ✅ 修复Issue 2: 清除缓存
+		clearPermissionRangesCache()
+
 		// 同步权限配置到其他用户
 		if (sheet.config.synergy) {
 			sheet.emits?.('asyncConfig', {
@@ -589,6 +657,7 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * 删除 superPermission
+	 * ✅ 修复Issue 2: 添加缓存失效
 	 * @param {string} id - permission ID
 	 */
 	const removeSuperPermission = (id) => {
@@ -607,6 +676,9 @@ export const useSuperPermissions = () => {
 
 		console.log('removeSuperPermission:', {id})
 
+		// ✅ 修复Issue 2: 清除缓存
+		clearPermissionRangesCache()
+
 		// 同步权限配置到其他用户
 		if (sheet.config.synergy) {
 			sheet.emits?.('asyncConfig', {
@@ -617,6 +689,7 @@ export const useSuperPermissions = () => {
 
 	/**
 	 * 清空所有 superPermissions
+	 * ✅ 修复Issue 2: 添加缓存失效
 	 */
 	const clearSuperPermissions = () => {
 		if (!sheet || !sheet.config.superPermissions) {
@@ -628,6 +701,9 @@ export const useSuperPermissions = () => {
 		sheet.config.superPermissions = []
 
 		console.log('clearSuperPermissions')
+
+		// ✅ 修复Issue 2: 清除缓存
+		clearPermissionRangesCache()
 
 		// 同步权限配置到其他用户
 		if (sheet.config.synergy) {
@@ -687,6 +763,8 @@ export const useSuperPermissions = () => {
 			setSuperPermission,
 			removeSuperPermission,
 			clearSuperPermissions,
+			// ✅ 修复Issue 2: 暴露缓存清除函数供外部调用
+			clearPermissionRangesCache,
 			refreshSheet,
 			destroy,
 		}
