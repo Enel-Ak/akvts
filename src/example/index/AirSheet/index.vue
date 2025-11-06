@@ -2,6 +2,7 @@
 import {onActivated, ref, onMounted, watch, nextTick, toRaw, triggerRef, onDeactivated} from 'vue'
 import {useRoute} from 'vue-router'
 import {useGlobal} from '@/store/useGlobal'
+import {useBase64} from '@/hooks'
 import axios from 'axios'
 
 const globalStore = useGlobal()
@@ -1234,6 +1235,7 @@ const getSheetConfig = async () => {
 			Authorization: `Bearer ${token}`,
 		},
 	})
+	// return useBase64.decodeCompressed(res.data)
 	return res.data
 }
 
@@ -1680,6 +1682,18 @@ watch(
 
 onActivated(() => {
 	// 获取sheets
+
+	// const arr = {}
+	// for (let i = 0; i < 4000; i++) {
+	// 	arr[`${i}-${i}`] = {
+	// 		bb: 1,
+	// 		bt: 1,
+	// 		br: 1,
+	// 		bl: 1,
+	// 	}
+	// }
+	// console.log(999, useBase64.sendCompressed(JSON.stringify(arr)))
+
 	axios
 		.request({
 			url: 'http://100.92.2.93:8001/api/online-table/table/3a1d64cc-a3a0-d33b-9484-d0a0f2bc95ec?autoCreate=true',

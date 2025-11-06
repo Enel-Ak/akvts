@@ -7,6 +7,7 @@ import useDebounce from './useDebounce'
 import useEval from './useEval'
 import useSleep from './useSleep'
 import useColor from './useColor'
+import useBase64 from './useBase64'
 
 export {
 	useLayout,
@@ -18,4 +19,5 @@ export {
 	useEval,
 	useSleep,
 	useColor,
+	useBase64,
 }

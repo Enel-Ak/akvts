@@ -60,7 +60,8 @@
 		"@vue-office/pdf": "2.0.10",
 		"dagre": "0.8.5",
 		"exceljs": "4.4.0",
-		"gridstack": "11.2.0"
+		"gridstack": "11.2.0",
+		"pako": "2.1.0"
 	},
 	"peerDependencies": {
 		"@element-plus/icons-vue": "2.3.1",

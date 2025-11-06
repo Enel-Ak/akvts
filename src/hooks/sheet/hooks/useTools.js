@@ -10,6 +10,7 @@ import {
 	useStringArrayToBuffer,
 	useBufferToStringArray,
 } from './useBuffer'
+import {useBase64} from '@/hooks'
 
 export const useTools = () => {
 	const sheetStore = useAirSheetStore()
@@ -395,8 +396,28 @@ export const useTools = () => {
 		sheet.config.locked = newLocked
 	}
 
+	const processWithRAF = (array, callback, completedCallback) => {
+		let index = 0
+
+		function process() {
+			const start = performance.now()
+			while (index < array.length && performance.now() - start < 16) {
+				callback?.(array[index])
+				index++
+			}
+
+			if (index < array.length) {
+				requestAnimationFrame(process)
+			} else {
+				completedCallback?.()
+			}
+		}
+
+		requestAnimationFrame(process)
+	}
+
 	// 批量设置单元格样式, 工具栏共用, 设置框选范围样式
-	const setCellStyles = (type, val, fn, save = true) => {
+	const setCellStyles = async (type, val, fn, save = true) => {
 		if (isLocked()) {
 			return
 		}
@@ -408,28 +429,61 @@ export const useTools = () => {
 		const ranged = sheet.hooks.selectionRangeHook.getRanged()
 		const {r, c, rr, cc} = ranged
 
-		for (let i = r; i <= rr; i++) {
-			for (let j = c; j <= cc; j++) {
-				if (fn && typeof fn === 'function') {
-					fn(i, j, {r, c, rr, cc})
-				} else {
-					if (!sheet.config.styled[`${i}-${j}`]) {
-						sheet.config.styled[`${i}-${j}`] = {}
-					}
+		const totalCells = (rr - r + 1) * (cc - c + 1)
+		const THRESHOLD = 5
 
-					if (
-						sheet.config.styled[`${i}-${j}`][type] &&
-						sheet.config.styled[`${i}-${j}`][type] === val
-					) {
-						delete sheet.config.styled[`${i}-${j}`][type]
-						continue
+		if (totalCells <= THRESHOLD) {
+			for (let i = r; i <= rr; i++) {
+				for (let j = c; j <= cc; j++) {
+					if (fn && typeof fn === 'function') {
+						fn(i, j, {r, c, rr, cc})
+					} else {
+						if (!sheet.config.styled[`${i}-${j}`]) {
+							sheet.config.styled[`${i}-${j}`] = {}
+						}
+
+						if (
+							sheet.config.styled[`${i}-${j}`][type] &&
+							sheet.config.styled[`${i}-${j}`][type] === val
+						) {
+							delete sheet.config.styled[`${i}-${j}`][type]
+							continue
+						}
+						sheet.config.styled[`${i}-${j}`][type] = val
 					}
-					sheet.config.styled[`${i}-${j}`][type] = val
 				}
 			}
+			asyncUpdateConfig(0, null, null)
+			return
 		}
 
-		synergyEvent({styled: sheet.config.styled})
+		try {
+			// 收集所有单元格坐标
+			const cells = []
+			for (let i = r; i <= rr; i++) {
+				for (let j = c; j <= cc; j++) {
+					cells.push({row: i, col: j})
+				}
+			}
+
+			// 使用 RAF 异步处理
+			sheet.state.loading = true
+			processWithRAF(
+				cells,
+				(cell) => {
+					sheet.state.msg = `正在处理单元格样式...`
+					fn(cell.row, cell.col, {r, c, rr, cc})
+				},
+				() => {
+					console.log('处理完成')
+					sheet.state.msg = ''
+					sheet.state.progress = -1
+					sheet.state.loading = false
+					asyncUpdateConfig(0, null, null)
+				}
+			)
+		} finally {
+		}
 	}
 
 	// 设置单元格样式, 指定单元格
@@ -446,7 +500,8 @@ export const useTools = () => {
 				sheet.config.styled[`${i}-${j}`][type] = value
 			}
 		}
-		synergyEvent({styled: sheet.config.styled})
+		asyncUpdateConfig(0, null, null)
+		// synergyEvent({styled: sheet.config.styled})
 	}
 
 	// 设置字体
@@ -545,6 +600,36 @@ export const useTools = () => {
 		}
 	}
 
+	const borderColorChanged = () => (borderSaved = false)
+
+	// 合并
+	const setMerge = () => {
+		if (isLocked()) {
+			return
+		}
+
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+
+		if (r === null || r === undefined) return
+
+		console.log('=== useTools.setMerge 开始 ===')
+		console.log('选中范围:', {r, c, rr, cc})
+		console.log('合并前的 merged 配置:', sheet.config.merged)
+
+		sheet.hooks.historyHook.save()
+
+		sheet.hooks.mergeHook.setMerge(r, c, rr - r + 1, cc - c + 1)
+
+		console.log('合并后的 merged 配置:', sheet.config.merged)
+
+		if (sheet.config.synergy) {
+			console.log('协同模式：发送 merged 配置')
+			synergyEvent({merged: sheet.config.merged})
+		}
+
+		console.log('=== useTools.setMerge 结束 ===')
+	}
+
 	// 设置边框颜色
 	let borderSaved = false
 	const setBorderColor = (e) => {
@@ -589,35 +674,6 @@ export const useTools = () => {
 			128,
 			'borderColor'
 		)(e)
-	}
-	const borderColorChanged = () => (borderSaved = false)
-
-	// 合并
-	const setMerge = () => {
-		if (isLocked()) {
-			return
-		}
-
-		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
-
-		if (r === null || r === undefined) return
-
-		console.log('=== useTools.setMerge 开始 ===')
-		console.log('选中范围:', {r, c, rr, cc})
-		console.log('合并前的 merged 配置:', sheet.config.merged)
-
-		sheet.hooks.historyHook.save()
-
-		sheet.hooks.mergeHook.setMerge(r, c, rr - r + 1, cc - c + 1)
-
-		console.log('合并后的 merged 配置:', sheet.config.merged)
-
-		if (sheet.config.synergy) {
-			console.log('协同模式：发送 merged 配置')
-			synergyEvent({merged: sheet.config.merged})
-		}
-
-		console.log('=== useTools.setMerge 结束 ===')
 	}
 
 	// 边框
@@ -665,7 +721,7 @@ export const useTools = () => {
 			Object.entries(sheet.config.styled).forEach(([key, value]) => {
 				const [r, c] = key.split('-').map(Number)
 				if (value.bt || value.bb || value.bl || value.br) {
-					cellMap[`${r}-${c}`] = true
+					cellMap[`${r}-${c}`] = 1
 				}
 			})
 
@@ -678,28 +734,28 @@ export const useTools = () => {
 			// 单边框
 			if (direction) {
 				if (direction === 'top') {
-					sheet.config.styled[`${r}-${c}`].bt = true
+					sheet.config.styled[`${r}-${c}`].bt = 1
 				} else if (direction === 'bottom') {
-					sheet.config.styled[`${r}-${c}`].bb = true
+					sheet.config.styled[`${r}-${c}`].bb = 1
 				} else if (direction === 'left') {
-					sheet.config.styled[`${r}-${c}`].bl = true
+					sheet.config.styled[`${r}-${c}`].bl = 1
 				} else if (direction === 'right') {
-					sheet.config.styled[`${r}-${c}`].br = true
+					sheet.config.styled[`${r}-${c}`].br = 1
 				}
 				return
 			}
 
 			// 设置每个边的边框
 			if (borderTop) {
-				sheet.config.styled[`${r}-${c}`].bt = true
+				sheet.config.styled[`${r}-${c}`].bt = 1
 			}
 
 			if (borderLeft) {
-				sheet.config.styled[`${r}-${c}`].bl = true
+				sheet.config.styled[`${r}-${c}`].bl = 1
 			}
 
-			sheet.config.styled[`${r}-${c}`].br = true
-			sheet.config.styled[`${r}-${c}`].bb = true
+			sheet.config.styled[`${r}-${c}`].br = 1
+			sheet.config.styled[`${r}-${c}`].bb = 1
 		}
 		setCellStyles('', null, (r, c) => handleBorder(r, c), save)
 	}
@@ -1212,7 +1268,7 @@ export const useTools = () => {
 		if (sheet.config.synergy) {
 			nextTick(() => {
 				console.log('asyncUpdateConfig - 发送协同消息')
-				sheet?.emits('asyncConfig', {
+				const config = {
 					merged: sheet.config.merged,
 					locked: sheet.config.locked,
 					styled: sheet.config.styled,
@@ -1222,7 +1278,9 @@ export const useTools = () => {
 					cResize: sheet.config.cResize,
 					deepPermissions: sheet.config.deepPermissions,
 					// superPermissions: sheet.config.superPermissions,
-				})
+				}
+				// const str = useBase64.sendCompressed(config)
+				sheet?.emits('asyncConfig', config)
 			})
 		}
 	}
@@ -3417,15 +3475,15 @@ export const useTools = () => {
 
 								// 设置每个边的边框
 								if (borderTop) {
-									styled[`${r}-${c}`].bt = true
+									styled[`${r}-${c}`].bt = 1
 								}
 
 								if (borderLeft) {
-									styled[`${r}-${c}`].bl = true
+									styled[`${r}-${c}`].bl = 1
 								}
 
-								styled[`${r}-${c}`].br = true
-								styled[`${r}-${c}`].bb = true
+								styled[`${r}-${c}`].br = 1
+								styled[`${r}-${c}`].bb = 1
 
 								// 设置边框颜色（如果需要）
 								if (borderTop || borderRight || borderBottom || borderLeft) {
