@@ -637,6 +637,14 @@ onMounted(() => {
 		box-sizing: border-box;
 		display: flex;
 		align-items: center;
+
+		:deep(.el-checkbox) {
+			align-items: center;
+			display: flex;
+		}
+		:deep(.el-checkbox__label) {
+			line-height: 1.5;
+		}
 	}
 
 	.btns {
