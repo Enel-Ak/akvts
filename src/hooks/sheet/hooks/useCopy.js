@@ -125,7 +125,17 @@ export function useCopy() {
 		} else {
 			const [r, c] = key.split('-').map(Number)
 			console.log('processCellStyle', r, c, style)
-			if (style.borderLeft || style.borderRight || style.borderTop || style.borderBottom) {
+			const bl = style.borderLeft
+			const br = style.borderRight
+			const bt = style.borderTop
+			const bb = style.borderBottom
+			if (
+				(bl || br || bt || bb) &&
+				(!bl.startsWith('0') ||
+					!br.startsWith('0') ||
+					!bt.startsWith('0') ||
+					!bb.startsWith('0'))
+			) {
 				sheet.hooks.toolsHook.setBorder()
 			}
 			if (style.textAlign) {
