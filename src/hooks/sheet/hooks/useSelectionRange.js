@@ -463,7 +463,7 @@ export const useSelectionRange = () => {
 			height: (totleHeight + modifiedInRange + 1) * sheet.config.zoom + 'px',
 			width: (totleWidth + modifiedColInRange + 1) * sheet.config.zoom + 'px',
 			'--z-highlight-color': color,
-			// '--z-highlight-color-rgb': hslToRgb(color),
+			'--z-highlight-color-rgb': hslToRgb(color),
 			'--z-permission-type': permissionType,
 		})
 		return highlightRanges.get(id)
