@@ -472,7 +472,27 @@ export const useTools = () => {
 				cells,
 				(cell) => {
 					sheet.state.msg = `正在处理单元格样式...`
-					fn(cell.row, cell.col, {r, c, rr, cc})
+					if (fn) {
+						fn(cell.row, cell.col, {r, c, rr, cc})
+					} else {
+						if (!sheet.config.styled[`${cell.row}-${cell.col}`]) {
+							sheet.config.styled[`${cell.row}-${cell.col}`] = {}
+						}
+
+						if (val === '' || val === null || val === undefined) {
+							delete sheet.config.styled[`${cell.row}-${cell.col}`][type]
+							return
+						}
+
+						if (
+							sheet.config.styled[`${cell.row}-${cell.col}`][type] &&
+							sheet.config.styled[`${cell.row}-${cell.col}`][type] === val
+						) {
+							delete sheet.config.styled[`${cell.row}-${cell.col}`][type]
+						}
+
+						sheet.config.styled[`${cell.row}-${cell.col}`][type] = val
+					}
 				},
 				() => {
 					console.log('处理完成')
@@ -593,7 +613,7 @@ export const useTools = () => {
 	const setUnFillColor = () => {
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (sheet.config.styled[`${r}-${c}`]) {
-			delete sheet.config.styled[`${r}-${c}`]['bg']
+			setCellStyles('bg', '', null, false)
 		}
 		if (sheet.config.synergy) {
 			asyncUpdateConfig(0, null, null)
