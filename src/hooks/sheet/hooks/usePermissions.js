@@ -208,7 +208,7 @@ export const usePermissions = () => {
 	 * @param {number} colEnd - 结束列索引
 	 */
 	const updateDeepPermissions = (row, col, rowEnd, colEnd) => {
-		if (!sheet || !sheet.config.synergy || sheet.config.super) return
+		if (!sheet || !sheet.config.synergy) return
 		if (sheet.config.auth === 0) return // 无权限模式
 
 		const userId = getCurrentUserId()
@@ -250,8 +250,49 @@ export const usePermissions = () => {
 			case 1: // 行级权限
 				{
 					const newTargets = []
-					for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
-						newTargets.push(r)
+
+					// ✅ 新增: 根据 super 模式决定是否检查重复
+					if (sheet.config.super === true) {
+						// Super 模式: 检查其他用户的 deepPermissions 中是否已存在该 row
+						console.log('🔍 Super 模式 - 检查行级权限重复:', {
+							userId,
+							super: sheet.config.super,
+							allDeepPermissions: sheet.config.deepPermissions,
+						})
+
+						// 收集所有其他用户已锁定的行
+						const existingRows = new Set()
+						for (const [permUserId, permission] of Object.entries(
+							sheet.config.deepPermissions
+						)) {
+							// 跳过当前用户自己的权限
+							if (permUserId === userId) continue
+
+							// 检查权限类型和 targets 是否有效
+							if (
+								permission &&
+								permission.type === 'row' &&
+								Array.isArray(permission.targets)
+							) {
+								permission.targets.forEach((r) => existingRows.add(r))
+							}
+						}
+
+						console.log('🔍 已存在的行:', Array.from(existingRows))
+
+						// 只添加不存在的行
+						for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+							if (!existingRows.has(r)) {
+								newTargets.push(r)
+							} else {
+								console.log(`⚠️ 跳过已存在的行: ${r}`)
+							}
+						}
+					} else {
+						// 非 Super 模式: 直接添加所有行
+						for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+							newTargets.push(r)
+						}
 					}
 
 					// 合并已有的锁定行
@@ -284,8 +325,49 @@ export const usePermissions = () => {
 			case 2: // 列级权限
 				{
 					const newTargets = []
-					for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
-						newTargets.push(c)
+
+					// ✅ 新增: 根据 super 模式决定是否检查重复
+					if (sheet.config.super === true) {
+						// Super 模式: 检查其他用户的 deepPermissions 中是否已存在该 col
+						console.log('🔍 Super 模式 - 检查列级权限重复:', {
+							userId,
+							super: sheet.config.super,
+							allDeepPermissions: sheet.config.deepPermissions,
+						})
+
+						// 收集所有其他用户已锁定的列
+						const existingCols = new Set()
+						for (const [permUserId, permission] of Object.entries(
+							sheet.config.deepPermissions
+						)) {
+							// 跳过当前用户自己的权限
+							if (permUserId === userId) continue
+
+							// 检查权限类型和 targets 是否有效
+							if (
+								permission &&
+								permission.type === 'column' &&
+								Array.isArray(permission.targets)
+							) {
+								permission.targets.forEach((c) => existingCols.add(c))
+							}
+						}
+
+						console.log('🔍 已存在的列:', Array.from(existingCols))
+
+						// 只添加不存在的列
+						for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+							if (!existingCols.has(c)) {
+								newTargets.push(c)
+							} else {
+								console.log(`⚠️ 跳过已存在的列: ${c}`)
+							}
+						}
+					} else {
+						// 非 Super 模式: 直接添加所有列
+						for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+							newTargets.push(c)
+						}
 					}
 
 					let finalTargets = newTargets
@@ -312,12 +394,63 @@ export const usePermissions = () => {
 				{
 					const newTargets = []
 
-					for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
-						for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
-							newTargets.push({
-								row: r,
-								col: c,
-							})
+					// ✅ 新增: 根据 super 模式决定是否检查重复
+					if (sheet.config.super === true) {
+						// Super 模式: 检查其他用户的 deepPermissions 中是否已存在该单元格
+						console.log('🔍 Super 模式 - 检查单元格级权限重复:', {
+							userId,
+							super: sheet.config.super,
+							allDeepPermissions: sheet.config.deepPermissions,
+						})
+
+						// 收集所有其他用户已锁定的单元格
+						const existingCells = new Set()
+						for (const [permUserId, permission] of Object.entries(
+							sheet.config.deepPermissions
+						)) {
+							// 跳过当前用户自己的权限
+							if (permUserId === userId) continue
+
+							// 检查权限类型和 targets 是否有效
+							if (
+								permission &&
+								permission.type === 'cell' &&
+								Array.isArray(permission.targets)
+							) {
+								permission.targets.forEach((cell) => {
+									if (
+										cell &&
+										typeof cell.row === 'number' &&
+										typeof cell.col === 'number'
+									) {
+										existingCells.add(`${cell.row},${cell.col}`)
+									}
+								})
+							}
+						}
+
+						console.log('🔍 已存在的单元格数量:', existingCells.size)
+
+						// 只添加不存在的单元格
+						for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+							for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+								const cellKey = `${r},${c}`
+								if (!existingCells.has(cellKey)) {
+									newTargets.push({row: r, col: c})
+								} else {
+									console.log(`⚠️ 跳过已存在的单元格: (${r}, ${c})`)
+								}
+							}
+						}
+					} else {
+						// 非 Super 模式: 直接添加所有单元格
+						for (let r = Math.min(row, rowEnd); r <= Math.max(row, rowEnd); r++) {
+							for (let c = Math.min(col, colEnd); c <= Math.max(col, colEnd); c++) {
+								newTargets.push({
+									row: r,
+									col: c,
+								})
+							}
 						}
 					}
 
