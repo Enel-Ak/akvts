@@ -124,6 +124,7 @@ export function useCopy() {
 			cellCache.set(key, cell)
 		} else {
 			const [r, c] = key.split('-').map(Number)
+			console.log('processCellStyle', r, c, style)
 			if (style.borderLeft || style.borderRight || style.borderTop || style.borderBottom) {
 				sheet.hooks.toolsHook.setBorder()
 			}
