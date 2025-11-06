@@ -702,7 +702,7 @@ export const useSelectionRange = () => {
 		if (!pos) return
 		if (pos.r > sheet.config.rowCount - 1 || pos.c > sheet.config.colCount - 1) return
 
-		if (sheet.hooks.toolsHook.isLocked(pos.r, pos.c, pos.r, pos.c)) {
+		if (sheet.hooks.toolsHook.isLocked(pos.r, pos.c, pos.r, pos.c, true)) {
 			return
 		}
 

@@ -33,6 +33,10 @@ export function useCopy() {
 			return
 		}
 
+		if (sheet.hooks.toolsHook.isLocked()) {
+			return
+		}
+
 		e.preventDefault()
 
 		// 权限检查 - 在粘贴前检查目标区域是否有权限
@@ -502,7 +506,7 @@ export function useCopy() {
 			return false
 		}
 
-		if (sheet.hooks.toolsHook.isLocked()) {
+		if (sheet.hooks.toolsHook.isLocked(-1, -1, -1, -1, true)) {
 			ElMessage.warning('包含锁定单元格，无法复制')
 			return false
 		}

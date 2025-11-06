@@ -17,7 +17,7 @@ export const useTools = () => {
 	let sheet = null
 
 	let lockTimer = null
-	const isLocked = (row = -1, col = -1, endRow = -1, endCol = -1) => {
+	const isLocked = (row = -1, col = -1, endRow = -1, endCol = -1, excludeLocked = false) => {
 		if (sheet.config.super) {
 			return false
 		}
@@ -38,22 +38,20 @@ export const useTools = () => {
 			cc = endCol
 		}
 
-		if (sheet.config.super) {
-			return false
-		}
+		if (!excludeLocked) {
+			// 检查传统锁定
+			if (sheet.config.locked[`${r}-${c}`]) {
+				clearTimeout(lockTimer)
+				lockTimer = setTimeout(() => ElMessage.warning('单元格已被锁定'), 300)
+				return true
+			}
 
-		// 检查传统锁定
-		if (sheet.config.locked[`${r}-${c}`]) {
-			clearTimeout(lockTimer)
-			lockTimer = setTimeout(() => ElMessage.warning('单元格已被锁定'), 300)
-			return true
-		}
-
-		// 检查传统范围锁定
-		for (let row = r; row <= rr; row++) {
-			for (let col = c; col <= cc; col++) {
-				if (sheet.config.locked[`${row}-${col}`]) {
-					return true
+			// 检查传统范围锁定
+			for (let row = r; row <= rr; row++) {
+				for (let col = c; col <= cc; col++) {
+					if (sheet.config.locked[`${row}-${col}`]) {
+						return true
+					}
 				}
 			}
 		}
