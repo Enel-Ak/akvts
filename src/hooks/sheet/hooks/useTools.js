@@ -787,22 +787,22 @@ export const useTools = () => {
 
 	// 加粗
 	const setBold = () => {
-		setCellStyles('bold', true)
+		setCellStyles('bold', 1)
 	}
 
 	// 斜体
 	const setItalic = () => {
-		setCellStyles('it', true)
+		setCellStyles('it', 1)
 	}
 
 	// 下划线
 	const setUnderline = () => {
-		setCellStyles('un', true)
+		setCellStyles('un', 1)
 	}
 
 	// 删除线
 	const setStrikethrough = () => {
-		setCellStyles('st', true)
+		setCellStyles('st', 1)
 	}
 
 	// 本地的列转换函数

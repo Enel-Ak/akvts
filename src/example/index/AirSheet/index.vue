@@ -1693,6 +1693,7 @@ onActivated(() => {
 	// 	}
 	// }
 	// console.log(999, useBase64.sendCompressed(JSON.stringify(arr)))
+	// console.log(999, JSON.stringify(arr))
 
 	axios
 		.request({

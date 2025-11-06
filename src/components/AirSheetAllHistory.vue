@@ -345,7 +345,7 @@ watch(
 								<span class="time">{{ record.time }}</span>
 								{{ record.name }}
 							</div>
-							<div class="content">
+							<div class="content" :title="record.content">
 								编辑
 								<strong>
 									{{

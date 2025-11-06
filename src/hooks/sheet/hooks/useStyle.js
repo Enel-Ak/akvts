@@ -39,23 +39,23 @@ export const useStyle = () => {
 					style['color'] = value
 					break
 				case 'bg':
-					if (
-						value !== '#ffffff' &&
-						value !== '#181818' &&
-						value !== '#000000' &&
-						!(
-							style?.bb ||
-							style?.bl ||
-							style?.br ||
-							style?.bt ||
-							style?.btc ||
-							style?.bbc ||
-							style?.blc ||
-							style?.brc
-						)
-					) {
-						style['border-color'] = value
-					}
+					// if (
+					// 	value !== '#ffffff' &&
+					// 	value !== '#181818' &&
+					// 	value !== '#000000' &&
+					// 	!(
+					// 		style?.bb ||
+					// 		style?.bl ||
+					// 		style?.br ||
+					// 		style?.bt ||
+					// 		style?.btc ||
+					// 		style?.bbc ||
+					// 		style?.blc ||
+					// 		style?.brc
+					// 	)
+					// ) {
+					// 	style['border-color'] = value
+					// }
 					style['background-color'] = value
 					break
 				case 'align':
