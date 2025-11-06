@@ -3148,7 +3148,6 @@ const getSuperPermissionStyle = (range, index) => {
 		:class="{
 			mobile: isMobile(),
 			full: full,
-			btn: !sheetStore.getSheet(sheetId)?.config.showToolBar,
 		}"
 	>
 		<template v-if="sheet?.state?.completed">
