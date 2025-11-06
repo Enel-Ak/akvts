@@ -2790,6 +2790,10 @@ watch(
 		if (Object.keys(formulaed).length > 0) {
 			sheet.hooks.editHook.setFormulaValue()
 		}
+
+		if (!sheet.config.showToolBar) {
+			isExpandToolbar.value = false
+		}
 	},
 	{deep: true}
 )
