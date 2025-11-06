@@ -786,8 +786,14 @@ const extraMergedCells = computed(() => {
 	for (const merged of mergedCells) {
 		const {r, c, rs, cs} = merged
 
-		// 如果合并单元格的起始行不在可视范围内，需要单独渲染
-		if (r < visible.startRow || r >= visible.endRow) {
+		// ✅ 修复：同时检查起始行和起始列是否在可视范围外
+		// 这样可以正确处理长行合并(水平)和长列合并(垂直)
+		if (
+			r < visible.startRow ||
+			r >= visible.endRow ||
+			c < visible.startCol ||
+			c >= visible.endCol
+		) {
 			// 获取合并单元格的配置
 			const mergedConfig = sheet.config.merged[`${r}-${c}`]
 			if (mergedConfig) {
