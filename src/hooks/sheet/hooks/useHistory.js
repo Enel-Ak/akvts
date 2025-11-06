@@ -10,7 +10,7 @@ export const useHistory = () => {
 	let count = 0
 	const max = 50
 
-	const asycnUndo = () => {
+	const asyncUndo = () => {
 		// 协同通知:撤销操作
 		if (sheet.config.synergy) {
 			sheet.hooks.synergyHook.undoRowColumn(
@@ -339,7 +339,7 @@ export const useHistory = () => {
 							await sheet.hooks.toolsHook.filterByCheckedSilent(currentFiltered)
 						}
 
-						asycnUndo()
+						asyncUndo()
 						await nextTick()
 						// ✅ 修复：Object.assign 已经恢复了 rowCount，不需要再减少
 						// sheet.config.rowCount 已经被恢复到添加行之前的值
@@ -372,7 +372,7 @@ export const useHistory = () => {
 						}
 
 						// 协同通知:撤销添加列
-						asycnUndo()
+						asyncUndo()
 						await nextTick()
 						// ✅ 修复：Object.assign 已经恢复了 colCount，不需要再减少
 						// sheet.config.colCount 已经被恢复到添加列之前的值
