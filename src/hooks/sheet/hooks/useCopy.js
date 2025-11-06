@@ -124,20 +124,37 @@ export function useCopy() {
 			cellCache.set(key, cell)
 		} else {
 			const [r, c] = key.split('-').map(Number)
-			console.log('processCellStyle', r, c, style)
-			const bl = style.borderLeft
-			const br = style.borderRight
-			const bt = style.borderTop
-			const bb = style.borderBottom
-			if (
-				(bl || br || bt || bb) &&
-				(!bl.startsWith('0') ||
-					!br.startsWith('0') ||
-					!bt.startsWith('0') ||
-					!bb.startsWith('0'))
-			) {
-				sheet.hooks.toolsHook.setBorder()
+			// console.log('processCellStyle', r, c, style)
+			// const bl = style.borderLeft
+			// const br = style.borderRight
+			// const bt = style.borderTop
+			// const bb = style.borderBottom
+			// if (
+			// 	(bl || br || bt || bb) &&
+			// 	(!bl.startsWith('0') ||
+			// 		!br.startsWith('0') ||
+			// 		!bt.startsWith('0') ||
+			// 		!bb.startsWith('0'))
+			// ) {
+			// 	sheet.hooks.toolsHook.setBorder()
+			// }
+
+			if (style.borderLeft && !style.borderLeft.startsWith('0')) {
+				sheet.hooks.toolsHook.setCellStyle({type: 'bl', v: 1, r, c})
 			}
+
+			if (style.borderRight && !style.borderRight.startsWith('0')) {
+				sheet.hooks.toolsHook.setCellStyle({type: 'br', v: 1, r, c})
+			}
+
+			if (style.borderTop && !style.borderTop.startsWith('0')) {
+				sheet.hooks.toolsHook.setCellStyle({type: 'bt', v: 1, r, c})
+			}
+
+			if (style.borderBottom && !style.borderBottom.startsWith('0')) {
+				sheet.hooks.toolsHook.setCellStyle({type: 'bb', v: 1, r, c})
+			}
+
 			if (style.textAlign) {
 				sheet.hooks.toolsHook.setCellStyle({
 					type: 'align',
