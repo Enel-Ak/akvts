@@ -254,6 +254,7 @@ export const useHistory = () => {
 									)
 								} else {
 									sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
+									sheet.hooks.permissionsHook.updatePermissions(r, c, r, c)
 								}
 							}
 						)
