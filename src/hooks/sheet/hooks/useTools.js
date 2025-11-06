@@ -526,12 +526,20 @@ export const useTools = () => {
 
 	// 设置字体
 	const setFont = (e) => {
+		if (isLocked()) {
+			return
+		}
+
 		const font = e.target.value
 		setCellStyles('ff', font)
 	}
 
 	// 设置字体大小
 	const setFontSize = (e, containerRef) => {
+		if (isLocked()) {
+			return
+		}
+
 		const size = e.target.value
 		setCellStyles('fs', size)
 		setTimeout(() => {
@@ -563,6 +571,10 @@ export const useTools = () => {
 
 	// 设置单元格格式
 	const setFormat = (e, containerRef) => {
+		if (isLocked()) {
+			return
+		}
+
 		const format = e.target.value
 		setCellStyles('fmt', format)
 
@@ -577,6 +589,9 @@ export const useTools = () => {
 	// 设置字体颜色
 	let fontSaved = false
 	const setFontColor = (e) => {
+		if (isLocked()) {
+			return
+		}
 		useDebounce(
 			(e) => {
 				if (!fontSaved) {
@@ -595,6 +610,9 @@ export const useTools = () => {
 	// 设置单元格背景色
 	let fillSaved = false
 	const setFillColor = (e) => {
+		if (isLocked()) {
+			return
+		}
 		useDebounce(
 			(e) => {
 				if (!fillSaved) {
@@ -611,6 +629,9 @@ export const useTools = () => {
 	const fillColorChanged = () => (fillSaved = false)
 
 	const setUnFillColor = () => {
+		if (isLocked()) {
+			return
+		}
 		const {r, rr, c, cc} = sheet.hooks.selectionRangeHook.getRanged()
 		if (sheet.config.styled[`${r}-${c}`]) {
 			setCellStyles('bg', '', null, false)
@@ -653,6 +674,9 @@ export const useTools = () => {
 	// 设置边框颜色
 	let borderSaved = false
 	const setBorderColor = (e) => {
+		if (isLocked()) {
+			return
+		}
 		useDebounce(
 			(e) => {
 				if (!borderSaved) {
@@ -698,6 +722,9 @@ export const useTools = () => {
 
 	// 边框
 	const setBorder = (border = true, direction = null, save = true) => {
+		if (isLocked()) {
+			return
+		}
 		const handleBorder = (r, c) => {
 			// 删除边框样式
 			if (!border && !direction) {
@@ -782,26 +809,41 @@ export const useTools = () => {
 
 	// 对齐
 	const setAlign = (align) => {
+		if (isLocked()) {
+			return
+		}
 		setCellStyles('align', align)
 	}
 
 	// 加粗
 	const setBold = () => {
+		if (isLocked()) {
+			return
+		}
 		setCellStyles('bold', 1)
 	}
 
 	// 斜体
 	const setItalic = () => {
+		if (isLocked()) {
+			return
+		}
 		setCellStyles('it', 1)
 	}
 
 	// 下划线
 	const setUnderline = () => {
+		if (isLocked()) {
+			return
+		}
 		setCellStyles('un', 1)
 	}
 
 	// 删除线
 	const setStrikethrough = () => {
+		if (isLocked()) {
+			return
+		}
 		setCellStyles('st', 1)
 	}
 
