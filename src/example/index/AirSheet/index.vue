@@ -1332,6 +1332,7 @@ const synergyJoinSheet = async (id, sheet) => {
 		// 更新配置
 		Object.assign(sheet.config, {
 			...sheetConfig,
+			showToolBar: true,
 			super: route.query.abc || route.query.def ? false : true,
 			permissions: {},
 			deepPermissions: {},

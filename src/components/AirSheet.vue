@@ -2790,10 +2790,6 @@ watch(
 		if (Object.keys(formulaed).length > 0) {
 			sheet.hooks.editHook.setFormulaValue()
 		}
-
-		if (!newVal.config.showToolBar) {
-			isExpandToolbar.value = false
-		}
 	},
 	{deep: true}
 )
@@ -2848,6 +2844,13 @@ watch(
 		})
 	},
 	{deep: true, immediate: true} // ✅ 添加 immediate: true 确保初始化时触发
+)
+
+watch(
+	() => sheet?.config?.showToolBar,
+	(newVal) => {
+		isExpandToolbar.value = newVal
+	}
 )
 
 onBeforeMount(() => {})
@@ -3188,6 +3191,7 @@ const getSuperPermissionStyle = (range, index) => {
 					<slot name="toolbar"></slot>
 				</div>
 				<Icons
+					v-if="sheet.config.showToolBar"
 					name="Back"
 					size="12"
 					color="var(--z-font-color)"
