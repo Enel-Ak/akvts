@@ -1490,10 +1490,10 @@ const synergyJoinSheet = async (id, sheet) => {
 			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
 			// 	},
 			// ],
-			// superPermissions: abc.split(',').map((key) => {
-			// 	let [r, c] = key.split('-').map(Number)
-			// 	return {r, c, rr: r, cc: c, v: 'admin', id: '3a1d64cc-a3a0-d33b-9484-d0a0f2bc95ec'}
-			// }),
+			superPermissions: abc.split(',').map((key) => {
+				let [r, c] = key.split('-').map(Number)
+				return {r, c, rr: r, cc: c, v: 'admin', id: '3a1d64cc-a3a0-d33b-9484-d0a0f2bc95ec'}
+			}),
 			colCount: 120,
 			rowCount: 1000,
 		})
