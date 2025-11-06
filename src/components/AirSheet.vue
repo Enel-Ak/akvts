@@ -771,6 +771,72 @@ const isMergedCellStart = (cell) => {
 	return mergedCells.hasOwnProperty(key)
 }
 
+// ✅ 性能优化：获取需要单独渲染的超长合并单元格
+// 这些合并单元格的起始位置不在可视范围内，但延伸到可视范围内
+const extraMergedCells = computed(() => {
+	if (!visibleRangeRef.value || !visibleRangeRef.value.mergedCellsInView) {
+		return []
+	}
+
+	const {visible} = visibleRangeRef.value
+	const mergedCells = visibleRangeRef.value.mergedCellsInView || []
+	const extraCells = []
+
+	// 筛选出起始位置不在可视范围内的合并单元格
+	for (const merged of mergedCells) {
+		const {r, c, rs, cs} = merged
+
+		// 如果合并单元格的起始行不在可视范围内，需要单独渲染
+		if (r < visible.startRow || r >= visible.endRow) {
+			// 获取合并单元格的配置
+			const mergedConfig = sheet.config.merged[`${r}-${c}`]
+			if (mergedConfig) {
+				// 计算合并单元格的尺寸和位置
+				let height = 0
+				for (let i = 0; i < rs; i++) {
+					height += sheet.hooks.resizeHook.getRowHeight(r + i)
+				}
+
+				let width = 0
+				for (let i = 0; i < cs; i++) {
+					width += sheet.hooks.resizeHook.getColWidth(c + i)
+				}
+
+				// 计算偏移位置
+				let top = 0
+				for (let i = 0; i < r; i++) {
+					top += sheet.hooks.resizeHook.getRowHeight(i)
+				}
+
+				let left = 0
+				for (let i = 0; i < c; i++) {
+					left += sheet.hooks.resizeHook.getColWidth(i)
+				}
+
+				// 获取单元格数据
+				const dataSource = currentDataSource.value
+				const rowData = dataSource.get(r)
+				const value = rowData ? rowData[c] : null
+
+				extraCells.push({
+					r,
+					c,
+					rs,
+					cs,
+					h: height,
+					w: width,
+					top,
+					left,
+					v: value,
+					originalR: r,
+				})
+			}
+		}
+	}
+
+	return extraCells
+})
+
 // 判断单元格是否锁定
 let lockedTimer = null
 const isLockedCell = () => {
@@ -3976,6 +4042,46 @@ const getSuperPermissionStyle = (range, index) => {
 										class="cell"
 									></div>
 								</template>
+							</div>
+						</template>
+
+						<!-- ✅ 性能优化：单独渲染超长合并单元格（起始位置不在可视范围内） -->
+						<template
+							v-for="cell of extraMergedCells"
+							:key="`extra-${cell.r}-${cell.c}`"
+						>
+							<div
+								class="cell merged-cell-placeholder"
+								:style="{
+									position: 'absolute',
+									top: `${cell.top - offsetTop}px`,
+									left: `${cell.left - offsetLeft}px`,
+									height: `${cell.h}px`,
+									width: `${cell.w}px`,
+								}"
+							>
+								<div
+									v-html="sheet.hooks.editHook.formattedValue(cell.v, cell)"
+									:data-cell="`${cell.r}-${cell.c}`"
+									:class="getCellClass(cell)"
+									:style="{
+										...getOffsetStyle(cell),
+										...getCellStyle(cell),
+									}"
+									class="cell"
+									@click="onClickCell($event, cell)"
+									@dblclick.stop="
+										($event) => {
+											sheet.hooks.editHook.startEdit($event, cell)
+										}
+									"
+									@blur="
+										($event) => {
+											onCellBlur($event, cell)
+											sheet.hooks.editHook.inputCell($event, cell)
+										}
+									"
+								></div>
 							</div>
 						</template>
 					</div>

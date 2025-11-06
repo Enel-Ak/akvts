@@ -71,18 +71,18 @@ export const workerCode = `
 		for (let i = 0; i < rowCount; i++) {
 			const height = rowHeights[i] || defaultRowHeight
 			totalHeight += height
-			
+
 			if (accHeight <= scrollTop) {
 				startRow = i
 			}
-			
+
 			accHeight += height
-			
+
 			if (accHeight >= scrollTop + viewportHeight && endRow === 0) {
 				endRow = i + 1
 			}
 		}
-		
+
 		// 如果没有找到结束行，设置为最后一行
 		if (endRow === 0) {
 			endRow = rowCount
@@ -97,18 +97,18 @@ export const workerCode = `
 		for (let i = 0; i < colCount; i++) {
 			const width = colWidths[i] || defaultColWidth
 			totalWidth += width
-			
+
 			if (accWidth <= scrollLeft) {
 				startCol = i
 			}
-			
+
 			accWidth += width
-			
+
 			if (accWidth >= scrollLeft + viewportWidth && endCol === 0) {
 				endCol = i + 1
 			}
 		}
-		
+
 		// 如果没有找到结束列，设置为最后一列
 		if (endCol === 0) {
 			endCol = colCount
@@ -116,17 +116,45 @@ export const workerCode = `
 
 		// 计算缓冲区
 		const bufferRange = calculateBufferRange(startRow, endRow, startCol, endCol, buffer)
-		
-		// 扩展可见范围以包含合并单元格
-		const expandedRange = expandRangeForMergedCells(bufferRange, mergedCells, colCount, rowCount, colWidths, defaultColWidth)
+
+		// ✅ 性能优化：保存原始的实际可视范围（用于渲染普通单元格）
+		const actualVisibleRange = {
+			startRow: bufferRange.startRow,
+			endRow: bufferRange.endRow,
+			startCol: bufferRange.startCol,
+			endCol: bufferRange.endCol,
+		}
+
+		// 收集与可视范围有交集的合并单元格信息
+		const mergedCellsInView = []
+		for (const key in mergedCells) {
+			const [row, col] = key.split('-').map(Number)
+			const { rs, cs } = mergedCells[key]
+			const mergeEndRow = row + rs
+			const mergeEndCol = col + cs
+
+			// 检查是否与实际可视范围有交集
+			const rowIntersects = row < bufferRange.endRow && mergeEndRow > bufferRange.startRow
+			const colIntersects = col < bufferRange.endCol && mergeEndCol > bufferRange.startCol
+
+			if (rowIntersects && colIntersects) {
+				mergedCellsInView.push({
+					r: row,
+					c: col,
+					rs: rs,
+					cs: cs,
+					key: key
+				})
+			}
+		}
 
 		return {
-			visible: {
-				startRow: expandedRange.startRow,
-				endRow: expandedRange.endRow,
-				startCol: expandedRange.startCol,
-				endCol: expandedRange.endCol,
-			},
+			// 实际可视范围（用于渲染普通单元格，性能优化）
+			actualVisible: actualVisibleRange,
+			// 合并单元格信息（用于渲染超长合并单元格）
+			mergedCellsInView: mergedCellsInView,
+			// 保持向后兼容，visible 使用实际可视范围
+			visible: actualVisibleRange,
 			metrics: {
 				accHeight,
 				totalHeight,
@@ -136,54 +164,17 @@ export const workerCode = `
 		}
 	}
 	
-	// 扩展可见范围以包含合并单元格
-	const expandRangeForMergedCells = (range, mergedCells, colCount, rowCount, colWidths, defaultColWidth) => {
-		const { startRow, endRow, startCol, endCol } = range
-		let expandedStartCol = startCol
-		let expandedEndCol = endCol
-		
-		// 检查所有合并单元格
-		for (const key in mergedCells) {
-			const [row, col] = key.split('-').map(Number)
-			const { rs, cs } = mergedCells[key]
-
-			// 如果合并单元格的行在可见范围内
-			if (row >= startRow && row < endRow) {
-				// 检查合并单元格是否跨越了左边界
-				if (col < startCol && col + cs > startCol) {
-					expandedStartCol = Math.min(expandedStartCol, col)
-				}
-
-				// 检查合并单元格是否跨越了右边界
-				if (col < endCol && col + cs > endCol) {
-					expandedEndCol = Math.max(expandedEndCol, col + cs)
-				}
-			}
-		}
-		
-		// 确保不超出表格范围
-		expandedStartCol = Math.max(0, expandedStartCol)
-		expandedEndCol = Math.min(colCount, expandedEndCol)
-		
-		return {
-			startRow,
-			endRow,
-			startCol: expandedStartCol,
-			endCol: expandedEndCol
-		}
-	}
+	// ✅ 性能优化：移除 expandRangeForMergedCells 方法
+	// 现在直接在 calculateVisibleRange 中收集合并单元格信息，不再扩展渲染范围
 
 	// 渲染计算
 	const calculateRender = (data) => {
 		const range = calculateVisibleRange(data)
 
 		return {
-			visible: {
-				startRow: range.visible.startRow,
-				endRow: range.visible.endRow,
-				startCol: range.visible.startCol,
-				endCol: range.visible.endCol,
-			},
+			visible: range.visible,
+			actualVisible: range.actualVisible,
+			mergedCellsInView: range.mergedCellsInView,
 			metrics: range.metrics
 		}
 	}
