@@ -2791,7 +2791,7 @@ watch(
 			sheet.hooks.editHook.setFormulaValue()
 		}
 
-		if (!sheet.config.showToolBar) {
+		if (!newVal.config.showToolBar) {
 			isExpandToolbar.value = false
 		}
 	},
