@@ -353,7 +353,7 @@ watch(
 											.parseCellRange(`${record.r}-${record.c}`)
 											?.sqref?.split(':')[0]
 									}} </strong
-								>{{ record.content }}
+								>{{ record.content || '无内容' }}
 							</div>
 						</div>
 					</div>

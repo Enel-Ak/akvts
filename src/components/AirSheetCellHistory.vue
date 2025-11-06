@@ -286,7 +286,9 @@ watch(
 						{{ item.name || '未命名' }}
 					</span>
 					<span class="time">{{ item.time || '未知时间' }}</span>
-					<div class="content">编辑内容: {{ item.content || '无内容' }}</div>
+					<div class="content" :title="item.conten">
+						编辑内容: {{ item.content || '无内容' }}
+					</div>
 				</div>
 
 				<!-- 底部占位符 -->
