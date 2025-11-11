@@ -8,6 +8,7 @@ import useEval from './useEval'
 import useSleep from './useSleep'
 import useColor from './useColor'
 import useBase64 from './useBase64'
+import useProcessWithRAF from './useProcessWithRAF'
 
 export {
 	useLayout,
@@ -20,4 +21,5 @@ export {
 	useSleep,
 	useColor,
 	useBase64,
+	useProcessWithRAF,
 }

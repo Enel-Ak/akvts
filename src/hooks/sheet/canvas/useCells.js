@@ -1,4 +1,4 @@
-const useGird = (ctx, width, height, sheet, renderData) => {
+const useCells = (ctx, width, height, sheet, renderData) => {
 	if (!renderData || !renderData.visibleRangeRef) {
 		// 如果没有渲染数据,绘制默认网格
 		const defaltColWidth = 200
@@ -65,8 +65,8 @@ const useGird = (ctx, width, height, sheet, renderData) => {
 				// 检查水平线：如果这条线在合并单元格内部（不是底边），则跳过
 				// row 是线的位置（在 row 和 row-1 之间的底边）
 				if (
-					row > mergeRow &&
-					row < mergeRow + rowSpan &&
+					row >= mergeRow &&
+					row < mergeRow + rowSpan - 1 &&
 					col >= mergeCol &&
 					col < mergeCol + colSpan
 				) {
@@ -76,8 +76,8 @@ const useGird = (ctx, width, height, sheet, renderData) => {
 				// 检查垂直线：如果这条线在合并单元格内部（不是右边），则跳过
 				// col 是线的位置（在 col 和 col-1 之间的右边）
 				if (
-					col > mergeCol &&
-					col < mergeCol + colSpan &&
+					col >= mergeCol &&
+					col < mergeCol + colSpan - 1 &&
 					row >= mergeRow &&
 					row < mergeRow + rowSpan
 				) {
@@ -454,4 +454,4 @@ const useGird = (ctx, width, height, sheet, renderData) => {
 	}
 }
 
-export default useGird
+export default useCells

@@ -1,7 +1,7 @@
 import {useAirSheetStore} from '../store/useAirSheet'
 import useNumber from './useNumber'
 import useLetter from './useLetter'
-import useGird from './useGird'
+import useCells from './useCells'
 import {useCanvasResize} from './useCanvasResize'
 
 export const useAirSheetCanvas = () => {
@@ -36,7 +36,7 @@ export const useAirSheetCanvas = () => {
 			}
 
 			// 调用各个渲染方法
-			useGird(ctx, canvas.width, canvas.height, sheet, renderData)
+			useCells(ctx, canvas.width, canvas.height, sheet, renderData)
 			useLetter(ctx, canvas.width, canvas.height, sheet, renderData)
 			useNumber(ctx, canvas.width, canvas.height, sheet, renderData)
 
@@ -79,7 +79,7 @@ export const useAirSheetCanvas = () => {
 
 			// 如果有渲染数据,重新渲染
 			if (renderData) {
-				useGird(ctx, canvas.width, canvas.height, sheet, renderData)
+				useCells(ctx, canvas.width, canvas.height, sheet, renderData)
 				useLetter(ctx, canvas.width, canvas.height, sheet, renderData)
 				useNumber(ctx, canvas.width, canvas.height, sheet, renderData)
 
