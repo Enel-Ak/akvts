@@ -163,7 +163,8 @@ export const useResize = () => {
 	}
 
 	// 停止调整
-	const stopResize = () => {
+	const stopResize = async () => {
+		debugger
 		if (isResizing.value) {
 			if (resizingRow.value) {
 				setRowHeight(resizingRow.value.r, resizingRow.value._newHeight)
@@ -173,12 +174,11 @@ export const useResize = () => {
 			sheet.hooks.selectionRangeHook.selecting = true
 		}
 
+		sheet.hooks.selectionRangeHook.modifiedRowsCache(true)
+		sheet.hooks.selectionRangeHook.modifiedColsCache(true)
+
 		if (sheet.config.synergy) {
-			// 同步配置
-			sheet?.emits('asyncConfig', {
-				rResize: sheet.config.rResize,
-				cResize: sheet.config.cResize,
-			})
+			sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
 		}
 
 		isResizing.value = false

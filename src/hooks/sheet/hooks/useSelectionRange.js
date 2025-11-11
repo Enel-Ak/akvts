@@ -189,9 +189,9 @@ export const useSelectionRange = () => {
 	}
 
 	// 缓存修改过的行和列的信息
-	const modifiedRowsCache = () => {
+	const modifiedRowsCache = (force = false) => {
 		const currentVersion = Object.keys(sheet.config.rResize || {}).length
-		if (modifiedRowsCacheData && rowResizeVersion === currentVersion) {
+		if (modifiedRowsCacheData && rowResizeVersion === currentVersion && !force) {
 			return modifiedRowsCacheData
 		}
 
@@ -209,9 +209,9 @@ export const useSelectionRange = () => {
 		return modifiedRowsCacheData
 	}
 
-	const modifiedColsCache = () => {
+	const modifiedColsCache = (force = false) => {
 		const currentVersion = Object.keys(sheet.config.cResize || {}).length
-		if (modifiedColsCacheData && colResizeVersion === currentVersion) {
+		if (modifiedColsCacheData && colResizeVersion === currentVersion && !force) {
 			return modifiedColsCacheData
 		}
 
@@ -1805,6 +1805,8 @@ export const useSelectionRange = () => {
 			refreshSelection,
 			destroy,
 
+			modifiedRowsCache,
+			modifiedColsCache,
 			refreshSheet,
 			addEvent,
 			removeEvent,
