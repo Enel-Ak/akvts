@@ -1,4 +1,4 @@
-import {ref, nextTick, reactive} from 'vue'
+import {ref, nextTick, reactive, toRaw} from 'vue'
 import useGuid from '@/hooks/useGuid'
 import {ElMessage} from 'element-plus'
 import {useAirSheetStore} from '../store/useAirSheet'
@@ -956,6 +956,7 @@ export const useTools = () => {
 		})
 	}
 
+	let lastUpdateConfigStr = ''
 	const asyncUpdateConfig = (count = 0, row = null, col = null, callback = null) => {
 		const isDelete = count < 0
 		const absCount = Math.abs(count)
@@ -1331,18 +1332,23 @@ export const useTools = () => {
 			nextTick(() => {
 				console.log('asyncUpdateConfig - 发送协同消息')
 				const config = {
-					merged: sheet.config.merged,
-					locked: sheet.config.locked,
-					styled: sheet.config.styled,
-					formulaed: sheet.config.formulaed,
-					formulaMap: sheet.config.formulaMap,
-					rResize: sheet.config.rResize,
-					cResize: sheet.config.cResize,
-					deepPermissions: sheet.config.deepPermissions,
+					merged: toRaw(sheet.config.merged),
+					locked: toRaw(sheet.config.locked),
+					styled: toRaw(sheet.config.styled),
+					formulaed: toRaw(sheet.config.formulaed),
+					formulaMap: toRaw(sheet.config.formulaMap),
+					rResize: toRaw(sheet.config.rResize),
+					cResize: toRaw(sheet.config.cResize),
+					deepPermissions: toRaw(sheet.config.deepPermissions),
 					// superPermissions: sheet.config.superPermissions,
 				}
+
 				// const str = useBase64.sendCompressed(config)
-				sheet?.emits('asyncConfig', config)
+				// 减少配置同步次数
+				if (JSON.stringify(config) !== lastUpdateConfigStr) {
+					lastUpdateConfigStr = JSON.stringify(config)
+					sheet?.emits('asyncConfig', config)
+				}
 			})
 		}
 	}

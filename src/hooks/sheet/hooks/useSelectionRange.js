@@ -706,6 +706,14 @@ export const useSelectionRange = () => {
 			return
 		}
 
+		// 优化体验而已
+		if (e.target.childNodes.length === 1) {
+			sheet.hooks.editHook.setRowHeight(pos.r, pos.c)
+			if (sheet.config.synergy) {
+				sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
+			}
+		}
+
 		// if (sheet.hooks.superPermissionsHook.checkSuperPermission(pos.r, pos.c, 1, 1).locked) {
 		// 	return
 		// }

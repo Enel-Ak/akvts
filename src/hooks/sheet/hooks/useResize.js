@@ -164,7 +164,6 @@ export const useResize = () => {
 
 	// 停止调整
 	const stopResize = async () => {
-		debugger
 		if (isResizing.value) {
 			if (resizingRow.value) {
 				setRowHeight(resizingRow.value.r, resizingRow.value._newHeight)
