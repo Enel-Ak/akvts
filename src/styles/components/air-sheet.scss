@@ -479,6 +479,7 @@
 	&-canvas {
 		@extend .sheet;
 		overflow: scroll;
+		margin-left: 35px;
 	}
 
 	canvas {

@@ -34,7 +34,7 @@ export const useCanvasResize = () => {
 		rowOverlay.style.top = `${letterHeight}px`
 		rowOverlay.style.left = '0'
 		rowOverlay.style.width = `${numberWidth}px`
-		rowOverlay.style.height = `calc(100% - ${letterHeight}px)`
+		rowOverlay.style.height = `calc(100% - ${letterHeight + 10}px)`
 		rowOverlay.style.zIndex = '2' // 在 Canvas 上面
 		rowOverlay.style.cursor = 'default'
 		canvasParent.appendChild(rowOverlay)
@@ -44,7 +44,7 @@ export const useCanvasResize = () => {
 		colOverlay.style.position = 'absolute'
 		colOverlay.style.top = '0'
 		colOverlay.style.left = `${numberWidth}px`
-		colOverlay.style.width = `calc(100% - ${numberWidth}px)`
+		colOverlay.style.width = `calc(100% - ${numberWidth + 10}px)`
 		colOverlay.style.height = `${letterHeight}px`
 		colOverlay.style.zIndex = '2' // 在 Canvas 上面
 		colOverlay.style.cursor = 'default'

@@ -1,7 +1,7 @@
 import {useAirSheetStore} from '../store/useAirSheet'
 import useNumber from './useNumber'
 import useLetter from './useLetter'
-import useCells from './useCells'
+import useCells, {clearMergeIndexCache} from './useCells'
 import {useCanvasResize} from './useCanvasResize'
 
 export const useAirSheetCanvas = () => {
@@ -37,8 +37,8 @@ export const useAirSheetCanvas = () => {
 
 			// 调用各个渲染方法
 			useCells(ctx, canvas.width, canvas.height, sheet, renderData)
-			useLetter(ctx, canvas.width, canvas.height, sheet, renderData)
 			useNumber(ctx, canvas.width, canvas.height, sheet, renderData)
+			useLetter(ctx, canvas.width, canvas.height, sheet, renderData)
 
 			// 绘制左上角交叉区域 (序号列和字母行的交叉部分)
 			const zoom = sheet.config.zoom || 1
@@ -80,8 +80,8 @@ export const useAirSheetCanvas = () => {
 			// 如果有渲染数据,重新渲染
 			if (renderData) {
 				useCells(ctx, canvas.width, canvas.height, sheet, renderData)
-				useLetter(ctx, canvas.width, canvas.height, sheet, renderData)
 				useNumber(ctx, canvas.width, canvas.height, sheet, renderData)
+				useLetter(ctx, canvas.width, canvas.height, sheet, renderData)
 
 				// 绘制左上角交叉区域
 				const zoom = sheet.config.zoom || 1
@@ -117,6 +117,8 @@ export const useAirSheetCanvas = () => {
 
 	const refreshSheet = (id) => {
 		sheet = sheetStore.getSheet(id)
+		// 清空合并单元格索引缓存，因为切换到了新的 sheet
+		clearMergeIndexCache()
 	}
 
 	const init = (canvasId, sheetId) => {
@@ -142,6 +144,8 @@ export const useAirSheetCanvas = () => {
 			canvasResize.destroy()
 			canvasResize = null
 		}
+		// 清空合并单元格索引缓存
+		clearMergeIndexCache()
 	}
 
 	return {init, resize, render, clear, getVisibleRange, destroy, refreshSheet}

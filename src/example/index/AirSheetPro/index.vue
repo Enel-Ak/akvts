@@ -10,7 +10,7 @@ const route = useRoute()
 const sheetRef = ref()
 const config = ref({
 	config: {
-		synergy: true,
+		synergy: false,
 		showHorizontalScreen: false,
 		auth: 3,
 

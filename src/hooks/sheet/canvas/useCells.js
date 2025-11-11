@@ -1,69 +1,38 @@
-const useCells = (ctx, width, height, sheet, renderData) => {
-	if (!renderData || !renderData.visibleRangeRef) {
-		// 如果没有渲染数据,绘制默认网格
-		const defaltColWidth = 200
-		const defaltRowHeight = 45
+import {MergedCellIndex} from './MergedCellIndex'
 
-		ctx.strokeStyle = '#eee'
-		ctx.lineWidth = 1
-		ctx.beginPath()
+let globalSheet = null
+// 全局索引实例（在模块级别缓存，避免每次渲染都重建）
+let globalMergeIndex = null
 
-		for (let x = 0; x <= width; x += defaltColWidth) {
-			ctx.moveTo(x + 0.5, 0)
-			ctx.lineTo(x + 0.5, height)
-		}
-
-		for (let y = 0; y <= height; y += defaltRowHeight) {
-			ctx.moveTo(0, y + 0.5)
-			ctx.lineTo(width, y + 0.5)
-		}
-
-		ctx.stroke()
-		return
-	}
-
-	const {visibleRangeRef, scrollTop, scrollLeft, dpr} = renderData
+const getRenderData = (data) => {
+	const {visibleRangeRef, scrollTop, scrollLeft, dpr} = data
 	const {visible} = visibleRangeRef
 
 	if (!visible) return
 
 	const {startRow, endRow, startCol, endCol} = visible
-
-	// 获取缩放比例
-	const zoom = sheet.config.zoom || 1
-	const numberWidth = 35 * zoom // 序号列宽度
-	const letterHeight = 25 * zoom // 字母行高度
-
-	// 计算起始偏移量
-	let offsetTop = 0
-	for (let i = 0; i < startRow; i++) {
-		offsetTop += sheet.hooks?.resizeHook?.getRowHeight(i) || sheet.config.rowHeight * zoom
+	return {
+		scrollTop,
+		scrollLeft,
+		startRow,
+		endRow,
+		startCol,
+		endCol,
+		dpr,
 	}
+}
 
-	let offsetLeft = 0
-	for (let i = 0; i < startCol; i++) {
-		offsetLeft += sheet.hooks?.resizeHook?.getColWidth(i) || sheet.config.colWidth * zoom
-	}
-
-	// 调整偏移量以匹配滚动位置,并加上序号列和字母行的偏移
-	const adjustedOffsetTop = offsetTop - scrollTop + letterHeight
-	const adjustedOffsetLeft = offsetLeft - scrollLeft + numberWidth
-
-	// 获取合并单元格配置（优先使用 merged）
-	const mergeConfig = sheet.config.merged || {}
-
-	// 辅助函数：检查某个位置是否在合并单元格内部（不包括边界）
-	const isInsideMergedCell = (row, col, checkType) => {
+const isInsideMergedCell = (row, col, viewportMerges, checkType) => {
+	// 辅助函数：检查某个位置是否在合并单元格内部（优化版本）
+	// 如果合并区域数量较少，使用原始算法（避免索引开销）
+	const mergeConfig = globalSheet.config.merged || {}
+	if (!globalMergeIndex.shouldUseIndex()) {
 		for (const [key, merge] of Object.entries(mergeConfig)) {
 			const [mergeRow, mergeCol] = key.split('-').map(Number)
-			// rs 和 cs 从 1 开始，表示占据的单元格数量
-			// 例如 rs=2 表示占据 2 个单元格（起始行 + 1 行）
 			const rowSpan = merge.rs || 1
 			const colSpan = merge.cs || 1
 
 			if (checkType === 'horizontal') {
-				// 检查水平线：如果这条线在合并单元格内部（不是底边），则跳过
-				// row 是线的位置（在 row 和 row-1 之间的底边）
 				if (
 					row >= mergeRow &&
 					row < mergeRow + rowSpan - 1 &&
@@ -73,8 +42,6 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 					return true
 				}
 			} else if (checkType === 'vertical') {
-				// 检查垂直线：如果这条线在合并单元格内部（不是右边），则跳过
-				// col 是线的位置（在 col 和 col-1 之间的右边）
 				if (
 					col >= mergeCol &&
 					col < mergeCol + colSpan - 1 &&
@@ -88,28 +55,34 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 		return false
 	}
 
-	// 绘制网格线
+	// 使用索引进行优化查找（只检查视口内的合并区域）
+	return globalMergeIndex.isInsideMerge(row, col, checkType, viewportMerges)
+}
+
+const drawGridLines = (ctx, x, y, width, height, sheet, viewportMerges, renderData) => {
+	const {startRow, endRow, startCol, endCol, dpr} = getRenderData(renderData)
+
 	ctx.save()
 	ctx.strokeStyle = '#e0e0e0'
 	ctx.lineWidth = 1
 	ctx.beginPath()
 
 	// 绘制垂直线(列)
-	let currentX = adjustedOffsetLeft
+	let currentX = x
 	for (let col = startCol; col < endCol; col++) {
 		const colWidth = sheet.hooks?.resizeHook?.getColWidth(col) || sheet.config.colWidth * zoom
 		const x = currentX + colWidth
 
 		// 检查这条垂直线是否需要分段绘制（跳过合并单元格内部）
 		let segmentStartY = 0
-		let currentRowY = adjustedOffsetTop
+		let currentRowY = y
 
 		for (let row = startRow; row < endRow; row++) {
 			const rowHeight =
 				sheet.hooks?.resizeHook?.getRowHeight(row) || sheet.config.rowHeight * zoom
 
 			// 检查当前单元格的右边界是否在合并单元格内部
-			if (isInsideMergedCell(row, col, 'vertical')) {
+			if (isInsideMergedCell(row, col, viewportMerges, 'vertical')) {
 				// 如果之前有累积的线段，先绘制
 				if (segmentStartY < currentRowY * dpr) {
 					ctx.moveTo(x * dpr + 0.5, segmentStartY)
@@ -132,7 +105,7 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 	}
 
 	// 绘制水平线(行)
-	let currentY = adjustedOffsetTop
+	let currentY = y
 	for (let row = startRow; row < endRow; row++) {
 		const rowHeight =
 			sheet.hooks?.resizeHook?.getRowHeight(row) || sheet.config.rowHeight * zoom
@@ -140,14 +113,14 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 
 		// 检查这条水平线是否需要分段绘制（跳过合并单元格内部）
 		let segmentStartX = 0
-		let currentColX = adjustedOffsetLeft
+		let currentColX = x
 
 		for (let col = startCol; col < endCol; col++) {
 			const colWidth =
 				sheet.hooks?.resizeHook?.getColWidth(col) || sheet.config.colWidth * zoom
 
 			// 检查当前单元格的底边界是否在合并单元格内部
-			if (isInsideMergedCell(row, col, 'horizontal')) {
+			if (isInsideMergedCell(row, col, viewportMerges, 'horizontal')) {
 				// 如果之前有累积的线段，先绘制
 				if (segmentStartX < currentColX * dpr) {
 					ctx.moveTo(segmentStartX, y * dpr + 0.5)
@@ -171,8 +144,13 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 
 	ctx.stroke()
 	ctx.restore()
+}
 
-	// 绘制单元格内容
+const drawCellData = (ctx, x, y, width, height, sheet, viewportMerges, renderData) => {
+	const {startRow, endRow, startCol, endCol, dpr} = getRenderData(renderData)
+	const mergeConfig = sheet.config.merged || {}
+	const zoom = sheet.config.zoom
+
 	ctx.save()
 	ctx.textAlign = 'left'
 	ctx.textBaseline = 'middle'
@@ -180,37 +158,42 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 	// 用于跟踪已绘制的合并单元格
 	const drawnMergedCells = new Set()
 
-	currentY = adjustedOffsetTop
+	let currentX = 0
+	let currentY = y
 	for (let row = startRow; row < endRow; row++) {
 		const rowHeight =
 			sheet.hooks?.resizeHook?.getRowHeight(row) || sheet.config.rowHeight * zoom
-		currentX = adjustedOffsetLeft
+		currentX = x
 
 		for (let col = startCol; col < endCol; col++) {
 			const colWidth =
 				sheet.hooks?.resizeHook?.getColWidth(col) || sheet.config.colWidth * zoom
 			const cellKey = `${row}-${col}`
 
-			// 检查是否在合并单元格内（但不是起始单元格）
+			// ========== 性能优化：使用索引检查合并单元格 ==========
 			let isInMergedCell = false
 
-			for (const [key, merge] of Object.entries(mergeConfig)) {
-				const [mergeRow, mergeCol] = key.split('-').map(Number)
-				// rs 和 cs 从 1 开始，表示占据的单元格数量
-				const rowSpan = merge.rs || 1
-				const colSpan = merge.cs || 1
+			if (!globalMergeIndex.shouldUseIndex()) {
+				// 合并区域较少，使用原始算法
+				for (const [key, merge] of Object.entries(mergeConfig)) {
+					const [mergeRow, mergeCol] = key.split('-').map(Number)
+					const rowSpan = merge.rs || 1
+					const colSpan = merge.cs || 1
 
-				// 检查当前单元格是否在合并区域内
-				if (
-					row >= mergeRow &&
-					row < mergeRow + rowSpan &&
-					col >= mergeCol &&
-					col < mergeCol + colSpan &&
-					!(row === mergeRow && col === mergeCol) // 不是起始单元格
-				) {
-					isInMergedCell = true
-					break
+					if (
+						row >= mergeRow &&
+						row < mergeRow + rowSpan &&
+						col >= mergeCol &&
+						col < mergeCol + colSpan &&
+						!(row === mergeRow && col === mergeCol)
+					) {
+						isInMergedCell = true
+						break
+					}
 				}
+			} else {
+				// 使用索引进行优化查找（只检查视口内的合并区域）
+				isInMergedCell = globalMergeIndex.isInMergedCell(row, col, viewportMerges)
 			}
 
 			// 如果在合并单元格内（非起始单元格），跳过绘制
@@ -374,6 +357,93 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 	}
 
 	ctx.restore()
+}
+
+const useCells = (ctx, width, height, sheet, renderData) => {
+	if (!renderData || !renderData.visibleRangeRef) {
+		// 如果没有渲染数据,绘制默认网格
+		const defaltColWidth = 200
+		const defaltRowHeight = 45
+
+		ctx.strokeStyle = '#eee'
+		ctx.lineWidth = 1
+		ctx.beginPath()
+
+		for (let x = 0; x <= width; x += defaltColWidth) {
+			ctx.moveTo(x + 0.5, 0)
+			ctx.lineTo(x + 0.5, height)
+		}
+
+		for (let y = 0; y <= height; y += defaltRowHeight) {
+			ctx.moveTo(0, y + 0.5)
+			ctx.lineTo(width, y + 0.5)
+		}
+
+		ctx.stroke()
+		return
+	}
+
+	const {startRow, endRow, startCol, endCol, scrollTop, scrollLeft, dpr} =
+		getRenderData(renderData)
+
+	// 获取缩放比例
+	const zoom = sheet.config.zoom || 1
+	const numberWidth = 35 * zoom // 序号列宽度
+	const letterHeight = 25 * zoom // 字母行高度
+
+	// 计算起始偏移量
+	let offsetTop = 0
+	for (let i = 0; i < startRow; i++) {
+		offsetTop += sheet.hooks?.resizeHook?.getRowHeight(i) || sheet.config.rowHeight * zoom
+	}
+
+	let offsetLeft = 0
+	for (let i = 0; i < startCol; i++) {
+		offsetLeft += sheet.hooks?.resizeHook?.getColWidth(i) || sheet.config.colWidth * zoom
+	}
+
+	// 调整偏移量以匹配滚动位置,并加上序号列和字母行的偏移
+	const adjustedOffsetTop = offsetTop - scrollTop + letterHeight
+	const adjustedOffsetLeft = offsetLeft - scrollLeft + numberWidth
+
+	globalSheet = sheet
+	const mergeConfig = sheet.config.merged || {}
+
+	// ========== 性能优化：使用空间索引加速合并单元格查找 ==========
+	// 初始化或更新合并单元格索引
+	if (!globalMergeIndex) {
+		globalMergeIndex = new MergedCellIndex()
+	}
+	globalMergeIndex.buildIndex(mergeConfig)
+
+	// 获取视口内的合并单元格（带缓存）
+	const viewportMerges = globalMergeIndex.shouldUseIndex()
+		? globalMergeIndex.getMergesInViewport(startRow, endRow, startCol, endCol)
+		: null
+
+	// 绘制网格线
+	drawGridLines(
+		ctx,
+		adjustedOffsetLeft,
+		adjustedOffsetTop,
+		width,
+		height,
+		sheet,
+		viewportMerges,
+		renderData
+	)
+
+	// 绘制单元格内容
+	drawCellData(
+		ctx,
+		adjustedOffsetLeft,
+		adjustedOffsetTop,
+		width,
+		height,
+		sheet,
+		viewportMerges,
+		renderData
+	)
 
 	// 绘制选中框
 	if (renderData.selectedCell) {
@@ -451,6 +521,13 @@ const useCells = (ctx, width, height, sheet, renderData) => {
 
 			ctx.restore()
 		}
+	}
+}
+
+// 导出清理函数，用于在 sheet 切换或销毁时清空索引缓存
+export const clearMergeIndexCache = () => {
+	if (globalMergeIndex) {
+		globalMergeIndex.clear()
 	}
 }
 
