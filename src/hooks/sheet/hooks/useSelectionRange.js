@@ -708,9 +708,13 @@ export const useSelectionRange = () => {
 
 		// 优化体验而已
 		if (e.target.childNodes.length === 1) {
-			sheet.hooks.editHook.setRowHeight(pos.r, pos.c)
-			if (sheet.config.synergy) {
-				sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
+			const curRowHeight = sheet.hooks.resizeHook.getRowHeight(pos.r)
+			const curChildNodeHeight = e.target.childNodes[0].offsetHeight
+			if (curRowHeight !== curChildNodeHeight && curChildNodeHeight > curRowHeight) {
+				sheet.hooks.resizeHook.setRowHeight(pos.r, curChildNodeHeight)
+				if (sheet.config.synergy) {
+					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
+				}
 			}
 		}
 

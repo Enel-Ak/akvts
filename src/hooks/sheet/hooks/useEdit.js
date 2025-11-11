@@ -524,10 +524,10 @@ export const useEdit = () => {
 		cellEl.innerText = setCellFormat(cellEl.innerText, cell.r, cell.c)
 
 		// 优化体验而已
-		if (cellEl.childNodes.length === 1 && cellEl.childNodes[0].nodeType === 3) {
-			cellEl.innerHTML = `<div>${cellEl.innerText}</div>`
-			setRowHeight(cell.r, cell.c)
-		}
+		// if (cellEl.childNodes.length === 1 && cellEl.childNodes[0].nodeType === 3) {
+		// 	cellEl.innerHTML = `<div>${cellEl.innerText}</div>`
+		// 	setRowHeight(cell.r, cell.c)
+		// }
 
 		cellEl.addEventListener('focus', focus)
 		cellEl.addEventListener('input', input)
