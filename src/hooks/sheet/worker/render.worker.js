@@ -175,7 +175,10 @@ export const workerCode = `
 			visible: range.visible,
 			actualVisible: range.actualVisible,
 			mergedCellsInView: range.mergedCellsInView,
-			metrics: range.metrics
+			metrics: range.metrics,
+			// ✅ 添加滚动位置信息
+			scrollTop: data.scrollTop,
+			scrollLeft: data.scrollLeft
 		}
 	}
 

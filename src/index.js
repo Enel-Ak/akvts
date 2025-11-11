@@ -5,6 +5,7 @@ import Form from './components/Form.vue'
 import FormItem from './components/FormItem.vue'
 import TableV2 from './components/TableV2.vue'
 import AirSheet from './components/AirSheet.vue'
+import AirSheetPro from './components/AirSheetPro.vue'
 import Cascade from './components/Cascade.vue'
 import Dialog from './components/Dialog.vue'
 import Attachment from './components/Attachment.vue'
@@ -38,6 +39,7 @@ const components = {
 	FormItem,
 	TableV2,
 	AirSheet,
+	AirSheetPro,
 	Cascade,
 	Dialog,
 	Attachment,
@@ -79,6 +81,7 @@ export {
 	FormItem,
 	TableV2,
 	AirSheet,
+	AirSheetPro,
 	Cascade,
 	Dialog,
 	Attachment,

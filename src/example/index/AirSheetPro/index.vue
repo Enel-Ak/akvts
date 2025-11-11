@@ -1,15 +1,19 @@
-<script setup name="airsheet">
-import {onActivated, ref, onMounted, watch, nextTick, toRaw, triggerRef} from 'vue'
+<script setup name="airsheetpro">
+import {onActivated, ref, onMounted, watch, nextTick, toRaw, triggerRef, onDeactivated} from 'vue'
 import {useRoute} from 'vue-router'
+import {useGlobal} from '@/store/useGlobal'
+import {useBase64} from '@/hooks'
 import axios from 'axios'
 
+const globalStore = useGlobal()
 const route = useRoute()
 const sheetRef = ref()
 const config = ref({
 	config: {
 		synergy: true,
 		showHorizontalScreen: false,
-		auth: 1,
+		auth: 3,
+
 		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		// showToolbar: false,
 		// edit: true,
@@ -33,7 +37,7 @@ const config = ref({
 	// 		// return undefined
 	// 	})
 	// }),
-	// celldata: [],
+	celldata: [],
 	// fns: [
 	// 	{
 	// 		label: '测试',
@@ -1172,14 +1176,14 @@ onActivated(() => {
 //21025
 const onClick = () => {}
 const api = ref('http://100.92.2.93:8001/signalr-hubs/onlinetable')
-const token = route.query.abc
-	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjAzMTc5NjUsImV4cCI6MTc2MDQ4OTk2NSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWUxZjMtNjcwYy00MzA3LTU2NDA0MGJhYzJlYiIsImF1dGhfdGltZSI6MTc2MDMxNzk2NCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX2hyaEBpbnNwdXIuY29tIiwieWt6LWlkIjoiMjIxOCIsInlrei1lbXBsb3llZS1jb2RlIjoiR0VfODg1NjY0ODMzOTM1Nzk0NDkyOSIsInJvbGUiOiLln7rnoYDlip_og70t5rid5b-r5pS_IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inlrei1zZGFnX2hyaCIsImJ1c2luZXNzUm9sZSI6IuWfuuehgOWKn-iDvS3muJ3lv6vmlL8iLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LThjNmYtY2M5MC0wNzVjY2Y0OTlhMTEiLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC04Zjc1LTc1N2ItYjlmOC00YjcxOTIwODhhNDYiLCJpYXQiOjE3NjAzMTc5NjUsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.fqwI95uKz3KreTs2_E-2u1o1Mp-NVYIPEo9pU2yICfLzk7lOBMDeSmW6xEajmRxfgrBz8Iig4QXX25PEe-TE4vhu0dLi3jeIvUpC2YZ_KKNKaTLtJov2bKX5NPsp_uOiCxZQKpbw8k78R0B7siYZYqDd0tgSCGNuohuTqNR7YW8ueJXEywKHbjWl6h6jLiFQOxd_al4xAYYYXJLpaCusAcbRl4kpZtlkyB8NME1a0OzKDlNN683BVt000Q3szcNbnQv9_tP41EInFT37tBhStHxgg4T46KiIaW8ZAUNrMVVgK1dmAS9yx4WiXrNmOynd7-VpMyZ9oFwN55l-tYbLLw'
-	: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjA0OTA2MjgsImV4cCI6MTc2MDY2MjYyOCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2MDQ5MDYyNywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjA0OTA2MjgsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.no2sYFRhmQlwBWdxYUCef35YxASG8HZ7PZXYkEdUEwhU7rl_KhuVBdsIXcyuf60F3JOECnvcAyKQafajTbHaGUAMPeHHKcijDv_KPgtlNLiRC0FVUJXG4NeYfjwi6_8Fwpt155liX2Mq_Tp1YcxtMfkauUSr9tlIbXX63v40NyVj4NQfVLZWAQq-WgpikFu94jCjfkY2nI5-qJojDVkvT7eMrgsvziuJzhZCqlAhOri0aFwaTJO1cvu_I3cQUsV9iQvjazrsRUGtFPngL4MavQ6K4yCvodVsCupWMYRoqh_v6Tzs-ewChxEPfNYLtI_oYIaiyCslrqqdOERB4k_lYg'
+const token =
+	'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjI3NjY3OTEsImV4cCI6MTc2MjkzODc5MSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNjMzAtODU3MC1jMmE5LTM2M2E5M2U4ZTdmMSIsImF1dGhfdGltZSI6MTc2Mjc2Njc5MCwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk4MzcwMDk2MEBpbnNwdXIuY29tIiwicm9sZSI6WyLliIbnrqHpooblr7wiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5pWw5o2u6ZuG566h55CGIiwi5pWw5o2u6aKG5a-8Il0sInBob25lX251bWJlciI6IjE2NjIzNjYzNjc4IiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjoiRmFsc2UiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6Inljc3Rqc2pnbGciLCJidXNpbmVzc1JvbGUiOiLliIbnrqHpooblr7ws5bel5L2c5Lq65ZGYLOaVsOaNrumihuWvvCzljLrljr_lj7DotKbov5Dnu7TlkZgiLCJkZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLWIzNmMtMGZjNy1kNmRjN2M5Y2YyYTciLCJiaWdEZXBhcnRtZW50SWQiOiIzYTBiNGI1MC05MDYxLTFjZDItYzJjYS1hMmVmMDJmZGIyNmIiLCJpYXQiOjE3NjI3NjY3OTEsInNjb3BlIjpbImFkZHJlc3MiLCJlbWFpbCIsImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIiwib3BlbmlkIiwicGhvbmUiLCJwcm9maWxlIiwicm9sZSIsIm9mZmxpbmVfYWNjZXNzIl0sImFtciI6WyJBdXRoQ29kZSJdfQ.hgODJ2A-s49lYQ5X9HhVYLU2rqSN1zmkL2BHyRsO9x3ciJqiXhAf-BSkKH83AmBY2qvzVEeJHMTqEB-5SRTAAR1oV4HXGaFfnfRaX5pqDiv4_A0BN_PZ1ND8nEcaf7h--T4O7DipBfThY0MiJ-3LTlPgzMPwUfw5mycwXSs41he7x_xAmS4qC7Lrmem3LcbPtcr6jeGoUYm584UfTI2H-FdDXDqkOqSoFpbwLw6r529ka55TgfhL6fewQkS2ehEl_o_fOO2-jbObscpzJlRPAxyDT_81K-J87hJLaIgoWvCXnRFumYQ6mIRQH-sXlGjCMfSWIUDfiBOgjUVCl9EBqQ'
 
 const synergyData = ref([])
 const tableId = ref('')
 const sheetId = ref('')
 const completed = ref(false)
+const rowCount = ref(50)
 
 let data = []
 const beatch = async () => {
@@ -1230,6 +1234,7 @@ const getSheetConfig = async () => {
 			Authorization: `Bearer ${token}`,
 		},
 	})
+	// return useBase64.decodeCompressed(res.data)
 	return res.data
 }
 
@@ -1298,45 +1303,232 @@ const onAsyncEventCell = (range) => {
 	console.log('✅ [发送] sheetRef.value:', sheetRef.value)
 	console.log('✅ [发送] asyncEventCell 方法存在:', typeof sheetRef.value?.asyncEventCell)
 
-	sheetRef.value.asyncEventCell(eventData)
+	// sheetRef.value.asyncEventCell(eventData)
+}
+
+const getSheetPermission = (tableId, sheetId) => {
+	return defHttp.request({
+		url: `http://100.92.2.93:8001/api/online-table/sheet-permissions/${tableId}/${sheetId}`,
+		method: 'GET',
+	})
 }
 
 const synergyJoinSheet = async (id, sheet) => {
-	// if (!completed.value) return
-
+	console.log('synergyJoinSheet', id, sheet)
 	sheetId.value = id
 	await sheetRef.value.asyncJoinSheet(sheetId.value)
-	// config.value.celldata = [[1], [2]]
-	// console.log('config', config.value)
 	sheetRef.value.loading(true, '正在获取最新数据')
 	await beatch()
 	const sheetConfig = await getSheetConfig()
-
-	console.log('sheetConfig', sheetConfig, sheet)
-
+	// await getSheetPermission(tableId.value, sheetId.value).catch((err) => {
+	// 	console.log(err)
+	// })
+	// let abc =
+	// 	'0-0,0-1,0-2,0-3,0-4,0-5,1-0,1-1,1-2,1-3,1-4,1-5,2-0,2-1,2-2,2-3,2-4,2-5,2-6,2-7,2-8,2-9,2-10,3-0,3-1,3-2,3-3,3-4,3-5,3-6,3-7,3-8,3-9,3-10,4-0,4-1,4-2,4-3,4-4,4-5,4-6,4-7,4-8,4-9,4-10,5-0,5-1,5-2,5-3,5-4,5-5,5-6,5-7,5-8,5-9,5-10,6-0,6-1,6-2,6-3,6-4,7-0,7-1,7-2,7-3,7-4,8-0,8-1,8-2,8-3,8-4,9-0,9-1,9-2,9-3,9-4,11-0,11-3,12-0,12-1,12-2,12-3,12-4,12-5,13-0,13-1,13-2,13-3,13-4,13-5,14-0,14-1,14-2,14-3,14-4,14-5,14-6,14-7,14-8,14-9,14-10,15-0,15-1,15-2,15-3,15-4,15-5,15-6,15-7,15-8,15-9,15-10,16-0,16-1,16-2,16-3,16-4,16-5,16-6,16-7,16-8,16-9,16-10,17-0,17-1,17-2,17-3,17-4,17-5,17-6,17-7,17-8,17-9,17-10,18-0,18-1,18-2,18-3,18-4,19-0,19-1,19-2,19-3,19-4,20-0,20-1,20-2,20-3,20-4,21-0,21-1,21-2,21-3,21-4,23-0,23-3,24-0,24-1,24-2,24-3,24-4,24-5,25-0,25-1,25-2,25-3,25-4,25-5,26-0,26-1,26-2,26-3,26-4,26-5,26-6,26-7,26-8,26-9,26-10,27-0,27-1,27-2,27-3,27-4,27-5,27-6,27-7,27-8,27-9,27-10,28-0,28-1,28-2,28-3,28-4,28-5,28-6,28-7,28-8,28-9,28-10,29-0,29-1,29-2,29-3,29-4,29-5,29-6,29-7,29-8,29-9,29-10,30-0,30-1,30-2,30-3,30-4,31-0,31-1,31-2,31-3,31-4,32-0,32-1,32-2,32-3,32-4,33-0,33-1,33-2,33-3,33-4,35-0,35-3,36-0,36-1,36-2,36-3,36-4,36-5,37-0,37-1,37-2,37-3,37-4,37-5,38-0,38-1,38-2,38-3,38-4,38-5,38-6,38-7,38-8,38-9,39-0,39-1,39-2,39-3,39-4,39-5,39-6,39-7,39-8,39-9,40-0,40-1,40-2,40-3,40-4,40-5,40-6,40-7,40-8,40-9,41-0,41-1,41-2,41-3,41-4,41-5,41-6,41-7,41-8,41-9,42-0,42-1,42-2,42-3,42-4,43-0,43-1,43-2,43-3,43-4,44-0,44-1,44-2,44-3,44-4,45-0,45-1,45-2,45-3,45-4,47-0,47-3,48-0,48-1,48-2,48-3,48-4,48-5,49-0,49-1,49-2,49-3,49-4,49-5,50-0,50-1,50-2,50-3,50-4,50-5,50-6,50-7,50-8,50-9,51-0,51-1,51-2,51-3,51-4,51-5,51-6,51-7,51-8,51-9,52-0,52-1,52-2,52-3,52-4,52-5,52-6,52-7,52-8,52-9,53-0,53-1,53-2,53-3,53-4,53-5,53-6,53-7,53-8,53-9,54-0,54-1,54-2,54-3,54-4,55-0,55-1,55-2,55-3,55-4,56-0,56-1,56-2,56-3,56-4,57-0,57-1,57-2,57-3,57-4,59-0,59-3,60-0,60-1,60-2,60-3,60-4,60-5,61-0,61-1,61-2,61-3,61-4,61-5,62-0,62-1,62-2,62-3,62-4,62-5,62-6,62-7,62-8,62-9,63-0,63-1,63-2,63-3,63-4,63-5,63-6,63-7,63-8,63-9,64-0,64-1,64-2,64-3,64-4,64-5,64-6,64-7,64-8,64-9,65-0,65-1,65-2,65-3,65-4,65-5,65-6,65-7,65-8,65-9,66-0,66-1,66-2,66-3,66-4,67-0,67-1,67-2,67-3,67-4,68-0,68-1,68-2,68-3,68-4,69-0,69-1,69-2,69-3,69-4,71-0,71-3,72-0,72-1,72-2,72-3,72-4,72-5,73-0,73-1,73-2,73-3,73-4,73-5,74-0,74-1,74-2,74-3,74-4,74-5,74-6,74-7,74-8,74-9,74-10,75-0,75-1,75-2,75-3,75-4,75-5,75-6,75-7,75-8,75-9,75-10,76-0,76-1,76-2,76-3,76-4,76-5,76-6,76-7,76-8,76-9,76-10,77-0,77-1,77-2,77-3,77-4,77-5,77-6,77-7,77-8,77-9,77-10,78-0,78-1,78-2,78-3,78-4,79-0,79-1,79-2,79-3,79-4,80-0,80-1,80-2,80-3,80-4,81-0,81-1,81-2,81-3,81-4,83-0,83-3,84-0,84-1,84-2,84-3,84-4,84-5,85-0,85-1,85-2,85-3,85-4,85-5,86-0,86-1,86-2,86-3,86-4,86-5,86-6,86-7,86-8,86-9,86-10,87-0,87-1,87-2,87-3,87-4,87-5,87-6,87-7,87-8,87-9,87-10,88-0,88-1,88-2,88-3,88-4,88-5,88-6,88-7,88-8,88-9,88-10,89-0,89-1,89-2,89-3,89-4,89-5,89-6,89-7,89-8,89-9,89-10,90-0,90-1,90-2,90-3,90-4,91-0,91-1,91-2,91-3,91-4,92-0,92-1,92-2,92-3,92-4,93-0,93-1,93-2,93-3,93-4,95-0,95-3,96-0,96-1,96-2,96-3,96-4,96-5,97-0,97-1,97-2,97-3,97-4,97-5,98-0,98-1,98-2,98-3,98-4,98-5,98-6,98-7,98-8,98-9,98-10,99-0,99-1,99-2,99-3,99-4,99-5,99-6,99-7,99-8,99-9,99-10,100-0,100-1,100-2,100-3,100-4,100-5,100-6,100-7,100-8,100-9,100-10,101-0,101-1,101-2,101-3,101-4,101-5,101-6,101-7,101-8,101-9,101-10,102-0,102-1,102-2,102-3,102-4,103-0,103-1,103-2,103-3,103-4,104-0,104-1,104-2,104-3,104-4,105-0,105-1,105-2,105-3,105-4,107-0,107-3,108-0,108-1,108-2,108-3,108-4,108-5,109-0,109-1,109-2,109-3,109-4,109-5,110-0,110-1,110-2,110-3,110-4,110-5,110-6,110-7,110-8,110-9,111-0,111-1,111-2,111-3,111-4,111-5,111-6,111-7,111-8,111-9,112-0,112-1,112-2,112-3,112-4,112-5,112-6,112-7,112-8,112-9,113-0,113-1,113-2,113-3,113-4,113-5,113-6,113-7,113-8,113-9,114-0,114-1,114-2,114-3,114-4,115-0,115-1,115-2,115-3,115-4,116-0,116-1,116-2,116-3,116-4,117-0,117-1,117-2,117-3,117-4,119-0,119-3,120-0,120-1,120-2,120-3,120-4,120-5,121-0,121-1,121-2,121-3,121-4,121-5,122-0,122-1,122-2,122-3,122-4,122-5,122-6,122-7,122-8,122-9,123-0,123-1,123-2,123-3,123-4,123-5,123-6,123-7,123-8,123-9,124-0,124-1,124-2,124-3,124-4,124-5,124-6,124-7,124-8,124-9,125-0,125-1,125-2,125-3,125-4,125-5,125-6,125-7,125-8,125-9,126-0,126-1,126-2,126-3,126-4,127-0,127-1,127-2,127-3,127-4,128-0,128-1,128-2,128-3,128-4,129-0,129-1,129-2,129-3,129-4,131-0,131-3,132-0,132-1,132-2,132-3,132-4,132-5,133-0,133-1,133-2,133-3,133-4,133-5,134-0,134-1,134-2,134-3,134-4,134-5,134-6,134-7,134-8,134-9,135-0,135-1,135-2,135-3,135-4,135-5,135-6,135-7,135-8,135-9,136-0,136-1,136-2,136-3,136-4,136-5,136-6,136-7,136-8,136-9,137-0,137-1,137-2,137-3,137-4,137-5,137-6,137-7,137-8,137-9,138-0,138-1,138-2,138-3,138-4,139-0,139-1,139-2,139-3,139-4,140-0,140-1,140-2,140-3,140-4,141-0,141-1,141-2,141-3,141-4,143-0,143-3'
 	if (sheet) {
 		// 更新配置
 		Object.assign(sheet.config, {
 			...sheetConfig,
+			showToolBar: true,
+			super: route.query.abc || route.query.def ? false : true,
 			permissions: {},
-			deepPermissions: sheetConfig.deepPermissions || {},
-			// superPermissions: [{r: 2, c: 1, rr: 3, cc: 3, v: '权限区域'}],
+			deepPermissions: {},
+			superPermissions: [],
+
+			// deepPermissions: {
+			// 	'3a0b4b62-d135-3903-0589-b7f520734871': {
+			// 		type: 'column',
+			// 		targets: [4, 5, 6, 9, 10, 15],
+			// 		// targets: [
+			// 		// 	{row: 5, col: 4},
+			// 		// 	{row: 5, col: 5},
+			// 		// 	{row: 5, col: 6},
+			// 		// 	{row: 6, col: 4},
+			// 		// 	{row: 7, col: 4},
+			// 		// ],
+			// 		timestamp: 1761708065000,
+			// 		userName: 'admin',
+			// 	},
+			// },
+			//
+			// superPermissions: [
+			// 	{
+			// 		r: 1,
+			// 		c: 1,
+			// 		rr: 1,
+			// 		cc: 1,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 1,
+			// 		c: 2,
+			// 		rr: 1,
+			// 		cc: 2,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 2,
+			// 		c: 1,
+			// 		rr: 2,
+			// 		cc: 1,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 5,
+			// 		c: 2,
+			// 		rr: 5,
+			// 		cc: 2,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 5,
+			// 		c: 4,
+			// 		rr: 5,
+			// 		cc: 4,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 6,
+			// 		c: 1,
+			// 		rr: 6,
+			// 		cc: 2,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 6,
+			// 		c: 2,
+			// 		rr: 6,
+			// 		cc: 2,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 6,
+			// 		c: 4,
+			// 		rr: 6,
+			// 		cc: 4,
+			// 		v: '市高法院',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb442',
+			// 	},
+			// 	{
+			// 		r: 6,
+			// 		c: 6,
+			// 		rr: 6,
+			// 		cc: 6,
+			// 		v: '市高法院2',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 6,
+			// 		c: 7,
+			// 		rr: 6,
+			// 		cc: 7,
+			// 		v: '市高法院2',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 5,
+			// 		c: 7,
+			// 		rr: 5,
+			// 		cc: 7,
+			// 		v: '市高法院2',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+
+			// 	{
+			// 		r: 2,
+			// 		c: 7,
+			// 		rr: 2,
+			// 		cc: 7,
+			// 		v: '市高法院3',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 2,
+			// 		c: 8,
+			// 		rr: 2,
+			// 		cc: 8,
+			// 		v: '市高法院3',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 2,
+			// 		c: 9,
+			// 		rr: 2,
+			// 		cc: 9,
+			// 		v: '市高法院4',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb440',
+			// 	},
+			// 	{
+			// 		r: 3,
+			// 		c: 7,
+			// 		rr: 3,
+			// 		cc: 7,
+			// 		v: '市高法院3',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 50,
+			// 		c: 0,
+			// 		rr: 55,
+			// 		cc: 7,
+			// 		v: '市高法院3',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 56,
+			// 		c: 3,
+			// 		rr: 58,
+			// 		cc: 7,
+			// 		v: '市高法院3',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// 	{
+			// 		r: 59,
+			// 		c: 0,
+			// 		rr: 62,
+			// 		cc: 4,
+			// 		v: '市高法院3',
+			// 		id: '3a0b4b50-8f89-509a-5120-cb52e99cb444',
+			// 	},
+			// ],
+			// superPermissions: abc.split(',').map((key) => {
+			// 	let [r, c] = key.split('-').map(Number)
+			// 	return {r, c, rr: r, cc: c, v: 'admin', id: '3a1d64cc-a3a0-d33b-9484-d0a0f2bc95ec'}
+			// }),
+			colCount: 120,
+			rowCount: 1000,
 		})
 
 		console.log('配置已更新:', sheet.config)
 
 		// ✅ 修复：手动同步 merged 配置到 mergedCells Map
-		if (sheet.hooks?.mergeHook?.refreshMerge) {
-			sheet.hooks.mergeHook.refreshMerge()
-			console.log('✅ 合并单元格已同步')
-		}
+		// if (sheet.hooks?.mergeHook?.refreshMerge) {
+		// 	sheet.hooks.mergeHook.refreshMerge()
+		// 	console.log('✅ 合并单元格已同步')
+		// }
 
 		// ✅ 修复：如果有公式配置，重新计算公式
-		if (sheetConfig.formulaed && Object.keys(sheetConfig.formulaed).length > 0) {
-			if (sheet.hooks?.editHook?.setFormulaValue) {
-				sheet.hooks.editHook.setFormulaValue()
-				console.log('✅ 公式已重新计算')
-			}
+		// if (sheetConfig.formulaed && Object.keys(sheetConfig.formulaed).length > 0) {
+		// 	if (sheet.hooks?.editHook?.setFormulaValue) {
+		// 		sheet.hooks.editHook.setFormulaValue()
+		// 		console.log('✅ 公式已重新计算')
+		// 	}
+		// }
+
+		// 强制渲染
+		await nextTick()
+		if (sheet.hooks.renderHook && sheet.hooks.renderHook.getRenderResult) {
+			sheet.hooks.mergeHook.refreshMerge()
+			sheet.hooks.editHook.setFormulaValue()
+			sheet.state.lastMergeUpdate = Date.now()
+			sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
 		}
 	}
 
@@ -1384,7 +1576,93 @@ const asyncCompleted = () => {
 	synergyJoinSheet(sheetId.value, sheetRef.value.getSheet())
 }
 
+const allHistoryData = ref([{date: '2025-10-31', list: []}])
+const cellHistoryData = ref([])
+let historyCell = null
+let historyCount = 0
+let historyTotal = 0
+const asyncCellHistory = async (ranged, callback) => {
+	// cellHistoryData.value = cellHistoryData.value.concat([
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// 	{name: '张三', time: '2025-10-28 15:34:00', content: '修改了单元格内容'},
+	// ])
+
+	if (!historyCell || historyCell.r !== ranged.r || historyCell.c !== ranged.c) {
+		cellHistoryData.value = []
+		historyCell = ranged
+		historyCount = 0
+		historyTotal = 0
+	}
+
+	if (cellHistoryData.value.length >= historyTotal && cellHistoryData.value.length > 0) {
+		callback && callback()
+		return
+	}
+
+	const res = await axios.request({
+		url: `http://100.92.2.93:8001/api/online-table/log/cell-log/${tableId.value}/${sheetId.value}/${ranged.r}/${ranged.c}`,
+		method: 'GET',
+		params: {
+			skipCount: historyCount * 10,
+			maxResultCount: 10,
+		},
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	})
+
+	res.data.items.forEach((item) => {
+		const user = JSON.parse(item.operationData)
+		const cell = JSON.parse(item.afterSnapshot)
+		cellHistoryData.value.push({
+			name: `${user.UserName}-${user.BigDepartmentName}-${user.DepartmentName}`,
+			time: item.operationTime,
+			content: cell.CellValue,
+			_raw: JSON.parse(JSON.stringify(item)),
+		})
+	})
+
+	historyCount++
+	historyTotal = res.data.totalCount
+	callback && callback()
+}
+
+const asyncAllHistory = async (callback) => {
+	allHistoryData.value[0].list.push({
+		name: '张三',
+		time: '10:58',
+		content: '1234567890',
+		r: 1,
+		c: 1,
+	})
+	callback && callback()
+}
+
 const linked = ref(false)
+
 watch(
 	() => linked.value,
 	(value) => {
@@ -1395,11 +1673,37 @@ watch(
 	}
 )
 
+watch(
+	() => globalStore.hasLeave,
+	(value) => {
+		if (value) {
+			if (value && sheetRef.value) {
+				sheetRef.value.signalrStop()
+			}
+		} else {
+			sheetRef.value.signalrReload()
+		}
+	}
+)
+
 onActivated(() => {
 	// 获取sheets
+
+	// const arr = {}
+	// for (let i = 0; i < 4000; i++) {
+	// 	arr[`${i}-${i}`] = {
+	// 		bb: 1,
+	// 		bt: 1,
+	// 		br: 1,
+	// 		bl: 1,
+	// 	}
+	// }
+	// console.log(999, useBase64.sendCompressed(JSON.stringify(arr)))
+	// console.log(999, JSON.stringify(arr))
+
 	axios
 		.request({
-			url: 'http://100.92.2.93:8001/api/online-table/table/3a1cf7c5-8f12-935a-c5c3-8469f0625963?autoCreate=true',
+			url: 'http://100.92.2.93:8001/api/online-table/table/3a1d6a1c-c47b-02e3-65e3-54d4e5def775?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1435,18 +1739,30 @@ onActivated(() => {
 	// 		})
 	// 	})
 	// }, 5000)
+	// setTimeout(() => {
+	// 	sheetRef.value.signalrStop()
+	// }, 3000)
+
+	// sheetRef.value.signalrReload()
+})
+
+onDeactivated(() => {
+	sheetRef.value.signalrStop()
 })
 </script>
 <template>
 	<div style="height: 100%" class="df">
 		<!-- <button @click="onClick">获取数据</button> -->
-		<AirSheet
+		<AirSheetPro
 			ref="sheetRef"
 			v-model="config"
 			v-model:linked="linked"
+			toolbarTabs="start,synergy"
 			:api="api"
 			:token="token"
 			:async-sheet="synergyData"
+			:allHistoryData="allHistoryData"
+			:cellHistoryData="cellHistoryData"
 			@add-sheet="addSheet"
 			@asyncInputCell="asyncInputCell"
 			@asyncEventCell="onAsyncEventCell"
@@ -1455,14 +1771,15 @@ onActivated(() => {
 			@asyncLeaveSheet="synergyLeaveSheet"
 			@asyncConfig="asyncConfig"
 			@asyncCompleted="asyncCompleted"
-		></AirSheet>
-		<!-- <AirSheet v-model="config2" :row-count="999" :col-count="120"></AirSheet> -->
+			@asyncAllHistory="asyncAllHistory"
+			@asyncCellHistory="asyncCellHistory"
+		></AirSheetPro>
 	</div>
 </template>
 <route>
 	{
 		meta: {
-			title: 'AirSheet2',
+			title: 'AirSheetPro',
 		},
 	}
 </route>

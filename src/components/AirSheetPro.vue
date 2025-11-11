@@ -1,0 +1,4094 @@
+<script setup>
+import {
+	ref,
+	computed,
+	onMounted,
+	onUnmounted,
+	watch,
+	nextTick,
+	onActivated,
+	reactive,
+	onDeactivated,
+	onBeforeMount,
+	markRaw,
+	toRaw,
+} from 'vue'
+
+import {ElMessage} from 'element-plus'
+import {fonts, fontSize, formatMap, formulaMap} from '@/hooks/sheet/define'
+import {useAirSheetStore} from '@/hooks/sheet/store/useAirSheet'
+import {useColor, useSleep, useDebounce} from '@/hooks'
+import {useSignalrStop} from '@/hooks/useSignalr'
+import AirSheetFilter from './AirSheetFilter.vue'
+import AirSheetSearch from './AirSheetSearch.vue'
+import AirSheetCellHistory from './AirSheetCellHistory.vue'
+import AirSheetAllHistory from './AirSheetAllHistory.vue'
+
+const stateType = {
+	normal: 0,
+	loading: 1,
+	error: 2,
+}
+
+const emits = defineEmits([
+	'update:modelValue',
+	'update:linked',
+	'cellClick',
+	'cellBlur',
+	'cellDragOver',
+	'cellDrop',
+
+	'addSheet',
+	'changeSheetName',
+
+	// 协同相关
+	'asyncInputCell',
+	'asyncEventCell',
+	'asyncJoinSheet',
+	'asyncLeaveSheet',
+	'asyncRemoveSheet',
+	'asyncConfig',
+	'asyncCompleted',
+	'asyncPermissionsChanged',
+	'asyncAllHistory',
+	'asyncCellHistory',
+])
+
+// 核心配置参数
+const props = defineProps({
+	modelValue: {type: Object, default: () => {}},
+
+	// 总行数
+	rowCount: {type: Number, default: 40}, // 最大 671087
+	// 总列数
+	colCount: {type: Number, default: 100},
+	// 单元格高度
+	rowHeight: {type: Number, default: 25},
+	// 单元格宽度
+	colWidth: {type: Number, default: 100},
+	// 缓冲区大小(额外渲染的行数)
+	buffer: {type: Number, default: 5},
+
+	autoAddRows: {type: Number, default: 50},
+
+	// 序号
+	enableNumber: {type: Boolean, default: true},
+	// 序号宽度
+	numberWidth: {type: Number, default: 35},
+
+	// 操作列
+	enableFn: {type: Boolean, default: true},
+	// 操作列宽度
+	operateWidth: {type: Number, default: 120},
+	operate: {type: Array, default: () => []},
+
+	height: {type: [Number, String], default: 0},
+
+	// 设置状态遮罩完全就由父组件控制
+	state: {type: Number, default: 0}, // 0: normal, 1: loading, 2: error
+	stateText: {type: String, default: '数据加载中...'},
+
+	limit: {type: Number, default: 30000},
+
+	// 启用多彩颜色
+	multiColor: {type: Boolean, default: false},
+
+	// 配置顶部菜单
+	toolbarTabs: {type: String, default: 'start'}, // formula
+
+	// 协同相关配置
+	api: {type: String, default: ''},
+	token: {type: String, default: ''},
+	asyncSheet: {type: Array, default: () => []},
+	userKeys: {type: Array, default: () => ['operatorUserId', 'operatorName']},
+	allHistoryData: {type: Array, default: () => []},
+	cellHistoryData: {type: Array, default: () => []},
+})
+
+// 容器
+const containerId = `air-sheet-${Math.random().toString(16).slice(2)}`
+const canvasId = `air-sheet-${Math.random().toString(16).slice(2)}`
+const sheetStore = useAirSheetStore()
+const sheetId = ref(containerId)
+const sheets = computed(() => sheetStore.getAllSheet)
+const sheet = reactive({})
+const onlineUser = computed(() => sheetStore.getOnline)
+const isLoading = computed(() => {
+	return (
+		sheet?.state.loading ||
+		sheet?.state.exporting ||
+		sheet?.state.importing ||
+		sheet?.state.scrolling ||
+		props.state === stateType.loading
+	)
+})
+
+// ✅ 临时权限区域（临时锁定）
+// ✅ 修复筛选后权限高亮位置未自动更新的问题：使用 ref + watch
+const permissionRanges = ref([])
+
+// 监听 permissions 和 rowMapping 的变化，更新 permissionRanges
+watch(
+	[
+		() => sheet.config?.permissions,
+		() => sheet.rowMapping, // 监听筛选状态的变化
+		() => sheet.config?.filtered, // 监听筛选条件的变化
+	],
+	() => {
+		permissionRanges.value = sheet.hooks?.permissionsHook?.getPermissionRanges() || []
+		console.log('✅ permissionRanges 已更新:', {
+			筛选状态: sheet.config?.filtered?.length > 0,
+			权限数量: permissionRanges.value.length,
+		})
+	},
+	{deep: true, immediate: true}
+)
+
+// ✅ 新增: 深度权限区域(持久锁定)
+// ✅ 修复问题1: 使用 ref 存储，通过 watch 监听变化
+const deepPermissionRanges = ref([])
+
+// ✅ 修复筛选后权限高亮位置未自动更新的问题
+// 监听 deepPermissions 和 rowMapping 的变化，更新 deepPermissionRanges
+watch(
+	[
+		() => sheet.config?.deepPermissions,
+		() => sheet.rowMapping, // 监听筛选状态的变化
+		() => sheet.config?.filtered, // 监听筛选条件的变化
+	],
+	() => {
+		deepPermissionRanges.value = sheet.hooks?.permissionsHook?.getDeepPermissionRanges() || []
+		console.log('✅ deepPermissionRanges 已更新:', {
+			筛选状态: sheet.config?.filtered?.length > 0,
+			权限数量: deepPermissionRanges.value.length,
+			ranges: deepPermissionRanges.value,
+		})
+	},
+	{deep: true, immediate: true}
+)
+const Tabs = [
+	{name: 'start', label: '开始'},
+	{name: 'formula', label: '公式'},
+	{name: 'synergy', label: '协同'},
+]
+const toolbarTabActive = ref(Tabs[0].name)
+const tollbarTabList = computed(() => Tabs.filter((item) => props.toolbarTabs.includes(item.name)))
+const isExpandToolbar = ref(true)
+
+const filterEl = ref(null)
+const filterCol = ref([])
+const filterColIndex = ref(-1)
+
+// 搜索状态管理
+const searchList = ref([])
+
+// 筛选状态管理
+const isFiltered = computed(() => {
+	return sheet.config?.filtered && sheet.config.filtered.length > 0
+})
+
+const hasFilteredData = computed(() => {
+	return sheet.filterCellData && sheet.filterCellData.size > 0
+})
+
+// 筛选过渡状态管理 - 防止数据交替显示
+const isFilterTransitioning = ref(false)
+const previousDataSource = ref(null)
+const previousRowCount = ref(0)
+
+// 当前数据源管理 - 优化版本，防止筛选过程中的数据交替
+const currentDataSource = computed(() => {
+	// 边界情况处理：确保sheet对象存在
+	if (!sheet || !sheet.celldata) {
+		return new Map()
+	}
+
+	// 如果正在筛选过渡中，保持使用之前的数据源
+	if (isFilterTransitioning.value && previousDataSource.value) {
+		return previousDataSource.value
+	}
+
+	// 如果有筛选条件且有筛选数据，使用筛选数据
+	if (isFiltered.value && hasFilteredData.value) {
+		return sheet.filterCellData
+	}
+	// 否则使用原始数据
+	return sheet.celldata
+})
+
+// 当前数据行数 - 优化版本，防止筛选过程中的数据交替
+const currentRowCount = computed(() => {
+	// 边界情况处理：确保sheet对象存在
+	if (!sheet || !sheet.config) {
+		return 0
+	}
+
+	// 如果正在筛选过渡中，保持使用之前的行数
+	if (isFilterTransitioning.value && previousRowCount.value > 0) {
+		return previousRowCount.value
+	}
+
+	if (isFiltered.value && hasFilteredData.value) {
+		return sheet.filterCellData ? sheet.filterCellData.size : 0
+	}
+	return sheet.config.rowCount || 0
+})
+
+// 行号映射机制
+const rowMapping = computed(() => {
+	const mapping = {
+		filteredToOriginal: new Map(), // 筛选后行号 -> 原始行号
+		originalToFiltered: new Map(), // 原始行号 -> 筛选后行号
+	}
+
+	if (isFiltered.value && hasFilteredData.value && sheet.rowMapping) {
+		// 使用从filterByChecked方法中生成的行号映射数据
+		sheet.rowMapping.forEach((item) => {
+			mapping.filteredToOriginal.set(item.filteredIndex, item.originalIndex)
+			mapping.originalToFiltered.set(item.originalIndex, item.filteredIndex)
+		})
+	}
+
+	return mapping
+})
+
+// 获取原始行号的辅助函数
+const getOriginalRowIndex = (filteredRowIndex) => {
+	// 边界情况处理：确保参数有效
+	if (typeof filteredRowIndex !== 'number' || filteredRowIndex < 0) {
+		return 0
+	}
+
+	if (!isFiltered.value) return filteredRowIndex
+	return rowMapping.value.filteredToOriginal.get(filteredRowIndex) ?? filteredRowIndex
+}
+
+// 获取筛选后行号的辅助函数
+const getFilteredRowIndex = (originalRowIndex) => {
+	if (!isFiltered.value) return originalRowIndex
+	return rowMapping.value.originalToFiltered.get(originalRowIndex) ?? -1
+}
+
+// 获取行数据的辅助函数，确保在筛选状态下获取正确的数据
+const getRowData = (row) => {
+	const dataSource = currentDataSource.value
+	const dataRowIndex = row.filteredR !== undefined ? row.filteredR : row.r
+	return dataSource.get(dataRowIndex)
+}
+
+// 检查行是否在当前筛选结果中可见
+const isRowVisible = (originalRowIndex) => {
+	if (!isFiltered.value) return true
+	return getFilteredRowIndex(originalRowIndex) !== -1
+}
+
+// 样式操作辅助函数：确保在筛选状态下操作正确的行号
+const applyStyleToRow = (displayRow, styleFunction) => {
+	// displayRow 是当前显示的行对象，包含 r（原始行号）和 filteredR（筛选行号）
+	const originalRowIndex = displayRow.r // 这已经是原始行号了
+
+	// 调用样式函数，传入原始行号
+	return styleFunction(originalRowIndex)
+}
+
+// 获取单元格操作的正确行号
+const getCellOperationRowIndex = (displayRow) => {
+	// 返回原始行号，确保样式等操作应用到正确的位置
+	return displayRow.r
+}
+
+// 移动端设置宽高/框选范围
+const selectionSize = ref({w: 0, h: 0})
+const selectionRange = ref({
+	r: 0,
+	c: 0,
+	rr: 0,
+	cc: 0,
+})
+
+const containerHeight = computed(() => {
+	if (typeof props.height === 'number') {
+		if (props.height === 0) {
+			return '100%'
+		}
+		return `${props.height}px`
+	} else {
+		if (!props.height.includes('px')) {
+			return props.height + 'px'
+		}
+		return props.height.replace(/\D+/g, 'px')
+	}
+})
+const initialized = ref(false)
+const containerRef = ref()
+const alphabetRef = ref()
+const numberRef = ref()
+const fnRef = ref()
+
+const full = ref(false)
+
+// 滚动位置
+const scrollTop = ref(0)
+const scrollLeft = ref(0)
+
+// 计算可视区域大小
+const viewportHeight = ref(0)
+const viewportWidth = ref(0)
+
+// 保存滚动位置
+const savedScrollPosition = ref({top: 0, left: 0})
+
+// 初始数据处理
+const initialData = (data = []) => {
+	if (!props.modelValue?.celldata) return
+
+	if (props.modelValue?.celldata) {
+		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)
+		sheet.config.colCount = props.modelValue.celldata
+			.map((d) => d.length)
+			.reduce((a, b) => Math.max(a, b), props.colCount)
+	} else {
+		sheet.config.rowCount = Math.min(props.rowCount, 671087)
+		sheet.config.colCount = Math.min(props.colCount, 240)
+	}
+
+	let celldata = []
+	if (sheet.state.changeSheet) {
+		for (const v of sheet.celldata.values()) {
+			celldata.push(v)
+		}
+	} else {
+		celldata = props.modelValue.celldata
+	}
+
+	if (data.length) {
+		celldata = data
+	}
+
+	const total = celldata.length || sheet.config.rowCount
+
+	let processed = 0
+	const batchSize = 3000
+
+	sheet.state.loading = true
+	sheet.state.msg = '正在加载数据'
+
+	const cellMap = new Map()
+
+	function processBatch() {
+		const start = performance.now()
+		let count = 0
+
+		while (processed < total && count < batchSize && performance.now() - start < 16) {
+			const row = celldata[processed]
+			if (row) {
+				const result = row.map((x) => x || (x === 0 && '0'))
+				cellMap.set(processed, toRaw(result))
+			}
+			processed++
+			count++
+		}
+		sheet.state.progress = Math.floor((processed / total) * 100)
+
+		if (processed < total) {
+			requestAnimationFrame(processBatch)
+		} else {
+			sheet.state.progress = 100
+
+			sheetStore.$patch((state) => {
+				state.sheets.get(sheet.id).celldata = markRaw(cellMap)
+			})
+			useSleep(250).then(() => {
+				sheet.state.loading = false
+				sheet.state.changeSheet = false
+				sheet.hooks.editHook.setFormulaValue()
+			})
+		}
+	}
+	requestAnimationFrame(processBatch)
+}
+
+// 单元格选中后激活该单元格已有样式
+const setActiveTool = computed(() => {
+	return (styleKey) => {
+		const {r, c, rr, cc} = sheet.hooks.selectionRangeHook.getRanged()
+
+		const data = {
+			value: null,
+			active: false,
+			lock: false,
+			fx: false,
+			fxVal: '',
+		}
+
+		if (r === undefined || r === null) {
+			return data
+		}
+
+		const cellstyle = sheet.config.styled[`${r}-${c}`]
+		const isLock = sheet.config.locked[`${r}-${c}`]
+		const isFx = sheet.config.formulaed[`${r}-${c}`]
+
+		data.lock = isLock
+		data.fx = !!isFx
+		data.fxVal = isFx
+
+		if ((r !== rr && c !== cc) || !styleKey || !cellstyle) {
+			return data
+		}
+
+		data.value = cellstyle[styleKey]
+		data.active = Object.keys(cellstyle).includes(styleKey)
+
+		return data
+	}
+})
+
+// 可见范围的响应式引用
+const visibleRangeRef = ref({
+	startRow: 0,
+	endRow: 0,
+	startCol: 0,
+	endCol: 0,
+	buffer: {
+		startRow: 0,
+		endRow: 0,
+		startCol: 0,
+		endCol: 0,
+	},
+})
+
+// 更新可见范围
+let updateVisibleRangeTimeout = null
+let updateTimer = null
+const updateVisibleRange = async () => {
+	try {
+		// 修复：统一使用 sheet.config.zoom
+		const currentZoom = sheet.config.zoom || 1
+
+		const rowHeights = {}
+		const colWidths = {}
+
+		for (const [index, height] of Object.entries(sheet.config.rResize)) {
+			rowHeights[index] = height * currentZoom
+		}
+
+		for (const [index, width] of Object.entries(sheet.config.cResize)) {
+			colWidths[index] = width * currentZoom
+		}
+
+		// 确保滚动位置与缩放比例匹配
+		const renderData = {
+			scrollTop: scrollTop.value,
+			scrollLeft: scrollLeft.value,
+			viewportHeight: viewportHeight.value,
+			viewportWidth: viewportWidth.value,
+			// 在筛选状态下使用筛选后的行数，否则使用原始行数
+			rowCount: currentRowCount.value,
+			colCount: sheet.config.colCount,
+			buffer: props.buffer,
+			defaultRowHeight: props.rowHeight * currentZoom,
+			defaultColWidth: props.colWidth * currentZoom,
+			rowHeights,
+			colWidths,
+			mergedCells: JSON.parse(JSON.stringify(sheet.config.merged)),
+			zoom: currentZoom,
+		}
+
+		const result = await sheet.hooks.renderHook.getRenderResult(renderData)
+
+		if (result) {
+			visibleRangeRef.value = result
+			updateVisibleRangeTimeout = setTimeout(() => {
+				updateTimer = Date.now()
+			}, 100)
+		}
+	} catch (error) {
+		console.error('计算可见范围失败:', error)
+	}
+}
+
+// 生成可视行数据
+const visibleRows = computed(() => {
+	const rows = []
+
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return rows
+	const {startRow, endRow} = visibleRangeRef.value.visible
+
+	const start = Math.max(0, startRow)
+
+	// 根据是否筛选使用不同的行数限制
+	const totalRowCount =
+		isFiltered.value && hasFilteredData.value ? currentRowCount.value : sheet.config.rowCount
+	const end = Math.min(totalRowCount, endRow)
+
+	for (let i = start; i < end; i++) {
+		// 在筛选状态下，i是筛选后的行索引
+		// 需要获取对应的原始行号来获取正确的行高
+		const originalRowIndex =
+			isFiltered.value && hasFilteredData.value ? getOriginalRowIndex(i) : i
+		let row = {
+			r: originalRowIndex, // 显示原始行号，不是筛选后的行号
+			filteredR: i, // 筛选后的行索引，用于数据获取
+			originalR: originalRowIndex, // 原始行号，保持兼容性
+			h: sheet.hooks.resizeHook.getRowHeight(originalRowIndex),
+			config: {},
+		}
+		rows.push(row)
+	}
+	return rows
+})
+
+// 生成可视列数据
+const visibleCells = (row) => {
+	const cells = []
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return cells
+	const {startCol, endCol} = visibleRangeRef.value.visible
+
+	const start = Math.max(0, startCol)
+	const end = Math.min(sheet.config.colCount, endCol)
+
+	// 确定要使用的数据源和行索引
+	const dataSource = currentDataSource.value
+	// 在筛选状态下，使用filteredR来获取数据，否则使用r
+	const dataRowIndex =
+		isFiltered.value && hasFilteredData.value && row.filteredR !== undefined
+			? row.filteredR
+			: isFiltered.value && hasFilteredData.value
+			? 0
+			: row.r
+
+	// 获取行数据
+	const rowData = dataSource.get(dataRowIndex)
+
+	// if (!rowData) {
+	// 	return cells
+	// }
+
+	for (let i = start; i < end; i++) {
+		// 在筛选状态下，需要使用原始行号来检查合并单元格
+		const checkRowIndex = row.originalR !== undefined ? row.originalR : row.r
+		const mergedCell = sheet.hooks.mergeHook.findMergedCell(checkRowIndex, i)
+
+		let value = null
+		let inMerged = false
+
+		if (mergedCell) {
+			// 由于后端筛选逻辑已确保合并单元格完整性，这里可以简化处理
+			if (mergedCell.r === checkRowIndex && mergedCell.c === i) {
+				// 合并单元格起始位置，显示数据
+				value = rowData?.[i] || ''
+			} else {
+				// 合并单元格内部，不显示数据但保持合并状态
+				value = ''
+				inMerged = true
+			}
+		} else {
+			// 普通单元格，从行数据中取值
+			value = rowData?.[i] || ''
+		}
+
+		cells.push({
+			r: row.r, // 始终使用原始行号，确保样式系统正常工作
+			filteredR: row.filteredR, // 筛选后的行索引，用于数据获取
+			originalR: row.originalR, // 原始行号，保持兼容性
+			h: row.h,
+			c: i,
+			w: sheet.hooks.resizeHook.getColWidth(i),
+			v: value,
+			config: {
+				key: sheet.config.keys?.[i],
+			},
+			inMerged,
+		})
+	}
+
+	return cells
+}
+
+// 监听视口大小变化
+let observer = null
+let observerTimer = null
+const observeView = () => {
+	observer = new ResizeObserver((entries) => {
+		if (observerTimer) {
+			clearTimeout(observerTimer)
+		}
+		observerTimer = setTimeout(() => {
+			entries.forEach((entry) => {
+				viewportHeight.value = entry.contentRect.height
+				viewportWidth.value = entry.contentRect.width
+				lastScroll.value = true
+				sheet.hooks.canvasHook.resize()
+				updateVisibleRange()
+			})
+		}, 16)
+	})
+
+	observer.observe(containerRef.value)
+}
+
+// 计算偏移量
+const offsetTop = ref(0)
+const offsetLeft = ref(0)
+
+// 滚动条宽度补偿
+const scrollbarWidth = ref(0)
+const updateOffset = async (type, value) => {
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible || !visibleRangeRef.value.metrics)
+		return
+
+	if (type === 'offsetTop') {
+		let height = 0
+		const startRow = Math.min(visibleRangeRef.value.visible.startRow, sheet.config.rowCount)
+		for (let i = 0; i < startRow; i++) {
+			height += sheet.hooks.resizeHook.getRowHeight(i)
+		}
+		offsetTop.value = height
+	} else {
+		let width = 0
+		const startCol = Math.min(visibleRangeRef.value.visible.startCol, sheet.config.colCount)
+		for (let i = 0; i < startCol; i++) {
+			width += sheet.hooks.resizeHook.getColWidth(i)
+		}
+		offsetLeft.value = width
+	}
+}
+
+watch(
+	() => visibleRangeRef.value?.visible?.startRow,
+	() => updateOffset('offsetTop', 'startRow')
+)
+
+watch(
+	() => visibleRangeRef.value?.visible?.startCol,
+	() => updateOffset('offsetLeft', 'startCol')
+)
+
+// 监听可见范围变化,触发 canvas 渲染
+watch(
+	() => visibleRangeRef.value,
+	(newVal) => {
+		if (newVal) {
+			// 使用 visibleRangeRef 中已经包含的 scrollTop 和 scrollLeft
+			// 这些值是在 updateVisibleRange 中计算可见范围时使用的值,确保一致性
+			const currentScrollTop = newVal.scrollTop || 0
+			const currentScrollLeft = newVal.scrollLeft || 0
+
+			// 获取当前选中的单元格
+			const selectedCell = sheet.hooks?.selectionRangeHook?.getRanged()
+			// 每次可见范围变化都触发渲染,确保滚动时实时更新
+			sheet.hooks.canvasHook.render(newVal, currentScrollTop, currentScrollLeft, selectedCell)
+		}
+	},
+	{deep: true}
+)
+
+// 监听选中单元格变化,立即触发 canvas 重绘（提高响应速度）
+watch(
+	() => sheet.hooks?.selectionRangeHook?.ranged,
+	(newVal) => {
+		if (newVal && visibleRangeRef.value) {
+			const selectedCell = sheet.hooks?.selectionRangeHook?.getRanged()
+			const currentScrollTop = visibleRangeRef.value.scrollTop || 0
+			const currentScrollLeft = visibleRangeRef.value.scrollLeft || 0
+
+			// 立即触发 canvas 重绘
+			sheet.hooks.canvasHook.render(
+				visibleRangeRef.value,
+				currentScrollTop,
+				currentScrollLeft,
+				selectedCell
+			)
+		}
+	},
+	{deep: true}
+)
+
+// 生成列标题（A-Z, AA-AZ等）, 字母缓存
+const titleCache = new Map()
+const getTitle = (index) => {
+	if (titleCache.has(index)) {
+		return titleCache.get(index)
+	}
+
+	let title = ''
+	let num = index
+	while (num >= 0) {
+		title = String.fromCharCode(65 + (num % 26)) + title
+		num = Math.floor(num / 26) - 1
+		if (num === -1) break
+	}
+	titleCache.set(index, title)
+	return title
+}
+
+// 计算当前可见的列标题
+const visibleTitles = computed(() => {
+	const titles = []
+	if (!visibleRangeRef.value || !visibleRangeRef.value.visible) return titles
+
+	const {startCol, endCol} = visibleRangeRef.value.visible
+	const start = Math.max(0, startCol)
+	const end = Math.min(sheet.config.colCount, endCol)
+
+	for (let i = start; i < end; i++) {
+		titles.push({
+			c: i,
+			w: sheet.hooks.resizeHook.getColWidth(i),
+			t: getTitle(i),
+		})
+	}
+	return titles
+})
+
+const getCellStyle = computed(() => {
+	return (cell) => {
+		const cellstyle = sheet.config.styled[`${cell.r}-${cell.c}`]
+		if (cellstyle) {
+			const visibleDom = containerRef.value?.querySelector(
+				`[data-cell="${cell.r}-${cell.c}"]`
+			)
+			if (visibleDom) {
+				const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+				const style = sheet.hooks.styleHook.getStyle(cellstyle)
+				return style
+			}
+		}
+		return {}
+	}
+})
+
+// 计算自定义列偏移量（与内容完全对齐）
+const getOffsetStyle = (cell) => {
+	const style = sheet.hooks?.mergeHook?.getCellStyle(cell, {
+		offsetLeft: offsetLeft.value,
+		offsetTop: offsetTop.value,
+	})
+
+	return style
+}
+
+const getCellClass = (cell) => {
+	const isLocked = sheet.config.locked[`${cell.r}-${cell.c}`]
+	const style = sheet.config.styled[`${cell.r}-${cell.c}`]
+	const formula = sheet.config.formulaed[`${cell.r}-${cell.c}`]
+
+	let fmtClass = ''
+	switch (style?.fmt) {
+		case formatMap.ShortDate:
+			fmtClass = 'short-date'
+			break
+		case formatMap.LongDate:
+			fmtClass = 'long-date'
+			break
+		case formatMap.Time:
+			fmtClass = 'time'
+			break
+		case formatMap.RMB:
+			fmtClass = 'rmb'
+			break
+		default:
+			fmtClass = ''
+			break
+	}
+	return {
+		lock: isLocked,
+		fmt: style?.fmt,
+		formula: !!formula,
+		[fmtClass]: !!fmtClass,
+		merged: isMergedCellStart(cell),
+	}
+}
+
+const isMergedCellStart = (cell) => {
+	const mergedCells = sheet.config.merged
+	if (Object.keys(mergedCells).length === 0) {
+		return false
+	}
+	// 在筛选状态下，使用原始行号来检查合并单元格
+	const checkRowIndex = cell.originalR !== undefined ? cell.originalR : cell.r
+	const key = `${checkRowIndex}-${cell.c}`
+
+	return mergedCells.hasOwnProperty(key)
+}
+
+// ✅ 性能优化：获取需要单独渲染的超长合并单元格
+// 这些合并单元格的起始位置不在可视范围内，但延伸到可视范围内
+const extraMergedCells = computed(() => {
+	if (!visibleRangeRef.value || !visibleRangeRef.value.mergedCellsInView) {
+		return []
+	}
+
+	const {visible} = visibleRangeRef.value
+	const mergedCells = visibleRangeRef.value.mergedCellsInView || []
+	const extraCells = []
+
+	// 筛选出起始位置不在可视范围内的合并单元格
+	for (const merged of mergedCells) {
+		const {r, c, rs, cs} = merged
+
+		// ✅ 修复：同时检查起始行和起始列是否在可视范围外
+		// 这样可以正确处理长行合并(水平)和长列合并(垂直)
+		if (
+			r < visible.startRow ||
+			r >= visible.endRow ||
+			c < visible.startCol ||
+			c >= visible.endCol
+		) {
+			// 获取合并单元格的配置
+			const mergedConfig = sheet.config.merged[`${r}-${c}`]
+			if (mergedConfig) {
+				// 计算合并单元格的尺寸和位置
+				let height = 0
+				for (let i = 0; i < rs; i++) {
+					height += sheet.hooks.resizeHook.getRowHeight(r + i)
+				}
+
+				let width = 0
+				for (let i = 0; i < cs; i++) {
+					width += sheet.hooks.resizeHook.getColWidth(c + i)
+				}
+
+				// 计算偏移位置
+				let top = 0
+				for (let i = 0; i < r; i++) {
+					top += sheet.hooks.resizeHook.getRowHeight(i)
+				}
+
+				let left = 0
+				for (let i = 0; i < c; i++) {
+					left += sheet.hooks.resizeHook.getColWidth(i)
+				}
+
+				// 获取单元格数据
+				const dataSource = currentDataSource.value
+				const rowData = dataSource.get(r)
+				const value = rowData ? rowData[c] : null
+
+				extraCells.push({
+					r,
+					c,
+					rs,
+					cs,
+					h: height,
+					w: width,
+					top,
+					left,
+					v: value,
+					originalR: r,
+				})
+			}
+		}
+	}
+
+	return extraCells
+})
+
+// 判断单元格是否锁定
+let lockedTimer = null
+const isLockedCell = () => {
+	clearTimeout(lockedTimer)
+	// 不允许编辑
+	if (!sheet.config.edit) {
+		lockedTimer = setTimeout(() => ElMessage.warning('当前表格不支持编辑'), 300)
+		return true
+	}
+
+	const ranged = sheet.hooks.selectionRangeHook.getRanged()
+	if (!ranged) return true
+
+	const startRow = Math.min(ranged.r, ranged.rr)
+	const startCol = Math.min(ranged.c, ranged.cc)
+	const endRow = Math.max(ranged.r, ranged.rr)
+	const endCol = Math.max(ranged.c, ranged.cc)
+
+	// 检查传统锁定
+	for (let row = startRow; row <= endRow; row++) {
+		for (let col = startCol; col <= endCol; col++) {
+			if (sheet.config.locked[`${row}-${col}`]) {
+				lockedTimer = setTimeout(() => ElMessage.warning(`单元格已锁定`), 300)
+				return true
+			}
+		}
+	}
+
+	// ✅ 检查 superPermissions（超级权限）
+	if (sheet.hooks.superPermissionsHook) {
+		const rowspan = endRow - startRow + 1
+		const colspan = endCol - startCol + 1
+		const superPermCheck = sheet.hooks.superPermissionsHook.checkSuperPermission(
+			startRow,
+			startCol,
+			rowspan,
+			colspan
+		)
+
+		if (superPermCheck.locked) {
+			lockedTimer = setTimeout(() => ElMessage.warning(superPermCheck.reason), 300)
+			return true
+		}
+	}
+
+	// 检查权限锁定
+	if (sheet.hooks.permissionsHook && sheet.config.synergy) {
+		const rowspan = endRow - startRow + 1
+		const colspan = endCol - startCol + 1
+		const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+			startRow,
+			startCol,
+			rowspan,
+			colspan
+		)
+
+		if (permissionCheck.locked) {
+			lockedTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
+			return true
+		}
+	}
+
+	return false
+}
+
+// 滚动处理 - 更新记录的可见行列
+let scrollTimer = null
+let rafId = null
+const lastScroll = ref(false)
+let isAutoAddingRows = false // 防止重复添加行
+const onScroll = async (e) => {
+	// 清除之前的定时器和动画帧
+	clearTimeout(scrollTimer)
+	if (rafId) {
+		cancelAnimationFrame(rafId)
+	}
+
+	if (sheet.config.rowCount >= props.limit) {
+		sheet.state.scrolling = true
+		sheet.state.progress = -1
+		sheet.state.msg = '数据量较大, 请稍后...'
+	}
+
+	const newScrollTop = containerRef.value.scrollTop
+	const newScrollLeft = containerRef.value.scrollLeft
+
+	// 在滚动时重置记录的行列位置，这样下次缩放会基于新的位置
+	originalFirstVisibleRow = -1
+	originalFirstVisibleCol = -1
+
+	const alphabet = alphabetRef.value
+	const number = numberRef.value
+	const fn = fnRef.value
+
+	lastScroll.value = false
+
+	// 使用 requestAnimationFrame 进行滚动同步
+	rafId = requestAnimationFrame(async () => {
+		scrollTop.value = newScrollTop
+		scrollLeft.value = newScrollLeft
+
+		if (number) {
+			number.scrollTop = newScrollTop
+		}
+
+		if (alphabet) {
+			alphabet.scrollLeft = newScrollLeft
+		}
+
+		if (fn) {
+			fn.scrollTop = newScrollTop
+		}
+
+		// 在RAF中立即更新可见范围，提高响应速度
+		await updateVisibleRange()
+
+		// 注意: canvas 渲染由 watch 监听 visibleRangeRef 变化自动触发
+		// 不需要在这里手动调用 sheet.hooks.canvasHook.render(),避免重复渲染
+	})
+
+	// 使用防抖处理最后一次滚动位置
+	scrollTimer = setTimeout(() => {
+		lastScroll.value = true
+		const nt = containerRef.value.scrollTop
+		const nl = containerRef.value.scrollLeft
+
+		rafId = requestAnimationFrame(async () => {
+			scrollTop.value = nt
+			scrollLeft.value = nl
+
+			if (alphabet) {
+				alphabet.scrollLeft = nl
+			}
+
+			if (number) {
+				number.scrollTop = nt
+			}
+
+			if (fn) {
+				fn.scrollTop = nt
+			}
+
+			savedScrollPosition.value = {top: nt, left: nl}
+
+			if (sheet.config.rowCount >= props.limit) {
+				sheet.state.scrolling = false
+			}
+
+			// 确保最后一次滚动后也更新可见范围
+			await updateVisibleRange()
+
+			// 注意: canvas 渲染由 watch 监听 visibleRangeRef 变化自动触发
+			// 不需要在这里手动调用 sheet.hooks.canvasHook.render(),避免重复渲染
+
+			// ✅ 新增：检测是否滚动到最底部，自动添加100行
+			checkAndAutoAddRows(nt)
+		})
+	}, 150)
+}
+
+// ✅ 新增：检测滚动到最底部并自动添加行
+const checkAndAutoAddRows = async (scrollTop) => {
+	try {
+		// 防止重复添加
+		if (isAutoAddingRows) {
+			return
+		}
+
+		// 获取容器的可滚动高度
+		const container = containerRef.value
+		if (!container) return
+
+		const scrollHeight = container.scrollHeight
+		const clientHeight = container.clientHeight
+		const maxScrollTop = scrollHeight - clientHeight
+
+		// 判断是否滚动到最底部（留出50px的缓冲区）
+		const isAtBottom = scrollTop >= maxScrollTop - 50
+
+		if (isAtBottom && sheet.config.addRow) {
+			isAutoAddingRows = true
+			try {
+				// 设置添加行数为100
+				sheet.hooks.toolsHook.addRowCount = props.autoAddRows
+
+				// 调用添加行方法，isEnd=true 表示在末尾添加
+				sheet.hooks.toolsHook.addRow(null, true, false)
+				console.log('✅ 自动添加100行成功')
+			} catch (error) {
+				console.error('❌ 自动添加行失败:', error)
+			} finally {
+				isAutoAddingRows = false
+				useDebounce(
+					() => {
+						sheet.hooks.toolsHook.addRowCount = 1
+					},
+					150,
+					'autoAddRowsReset'
+				)()
+			}
+		}
+	} catch (error) {
+		console.error('检测滚动到最底部时出错:', error)
+		isAutoAddingRows = false
+	}
+}
+
+// 恢复滚动位置
+const restoreScrollPosition = () => {
+	if (!containerRef.value) return
+
+	const container = containerRef.value
+	const alphabet = alphabetRef.value
+	const number = numberRef.value
+	const fn = fnRef.value
+
+	const {top, left} = savedScrollPosition.value
+
+	if (top !== undefined && left !== undefined) {
+		container.scrollTop = top
+		container.scrollLeft = left
+
+		if (alphabet) {
+			alphabet.scrollLeft = left
+		}
+
+		if (number) {
+			number.scrollTop = top
+		}
+
+		if (fn) {
+			fn.scrollTop = top
+		}
+
+		scrollTop.value = top
+		scrollLeft.value = left
+	}
+	lastScroll.value = true
+}
+
+// 监听容器大小变化
+const updateViewportSize = () => {
+	if (!containerRef.value) {
+		return
+	}
+
+	// 确保获取到真实的容器尺寸
+	const rect = containerRef.value.getBoundingClientRect()
+	viewportHeight.value = rect.height
+	viewportWidth.value = rect.width
+}
+
+// 点击序号
+const onClickNumber = (e, row) => {
+	// 在筛选状态下，我们需要选择原始行号
+	// 这样样式操作会应用到正确的原始行上
+	// 当清除筛选后，样式会保持在正确的位置
+	const rowIndex = row.r // 使用原始行号
+
+	sheet.hooks.selectionRangeHook.setRange(rowIndex, 0, rowIndex, sheet.config.colCount - 1, true)
+}
+
+// 点击字母
+const onClickAlphabet = async (e, col) => {
+	const target = e.target.closest('.alphabet-cell')
+	const colIndex = Number(target.getAttribute('data-col'))
+	sheet.hooks.selectionRangeHook.setRange(0, colIndex, sheet.config.rowCount - 1, colIndex, true)
+}
+
+// 单元格点击
+let clickTimer = null
+let lastClickTime = 0
+const onClickCell = (e, cell) => {
+	const now = Date.now()
+
+	// 清除之前的定时器
+	clearTimeout(clickTimer)
+
+	if (sheet.hooks.toolsHook.isLocked(cell.r, cell.c, cell.r, cell.c)) {
+		return
+	}
+
+	// 检查是否是双击（两次点击间隔小于300ms且点击同一个单元格）
+	if (now - lastClickTime < 300) {
+		// 双击时不触发点击事件，并重置状态
+		lastClickTime = 0
+		return
+	}
+
+	// 记录本次点击
+	lastClickTime = now
+
+	// 使用定时器延迟触发点击事件
+	clickTimer = setTimeout(() => {
+		emits('cellClick', cell)
+		// 确保在事件触发后重置状态
+		if (now === lastClickTime) {
+			lastClickTime = 0
+		}
+	}, 300)
+}
+
+// 单元格编辑失去焦点后
+const onCellBlur = (event, cell) => {
+	const oldVal = cell.v
+
+	useSleep(16).then(() => {
+		const val = sheet.celldata.get(cell.r)?.[cell.c]
+		if (val !== oldVal) {
+			sheet.hooks.historyHook.save(cell)
+		}
+	})
+}
+
+// 改变缩放比例时
+let zoomTimer = null
+let originalFirstVisibleRow = -1
+let originalFirstVisibleCol = -1
+let lastZoom = 1
+
+const onZoomInput = async () => {
+	const currentZoom = sheet.config.zoom || 1
+
+	// 如果是第一次缩放，记录当前可视区域的第一行和第一列
+	if (originalFirstVisibleRow === -1) {
+		// 获取当前可视区域的第一行
+		if (visibleRangeRef.value?.visible) {
+			originalFirstVisibleRow = visibleRangeRef.value.visible.startRow
+			originalFirstVisibleCol = visibleRangeRef.value.visible.startCol
+		} else {
+			// 如果没有可视区域信息，通过滚动位置计算
+			const currentScrollTop = containerRef.value.scrollTop
+			const currentScrollLeft = containerRef.value.scrollLeft
+			const oldZoom = lastZoom || 1
+
+			// 计算在原始缩放下的滚动位置
+			const originalScrollTop = currentScrollTop / oldZoom
+			const originalScrollLeft = currentScrollLeft / oldZoom
+
+			// 根据滚动位置计算行列号
+			let accumulatedHeight = 0
+			let accumulatedWidth = 0
+
+			// 计算第一个可见行
+			for (let i = 0; i < sheet.config.rowCount; i++) {
+				const rowHeight = sheet.hooks.resizeHook.getRowHeight(i) || props.rowHeight
+				if (accumulatedHeight + rowHeight > originalScrollTop) {
+					originalFirstVisibleRow = i
+					break
+				}
+				accumulatedHeight += rowHeight
+			}
+
+			// 计算第一个可见列
+			for (let i = 0; i < sheet.config.colCount; i++) {
+				const colWidth = sheet.hooks.resizeHook.getColWidth(i) || props.colWidth
+				if (accumulatedWidth + colWidth > originalScrollLeft) {
+					originalFirstVisibleCol = i
+					break
+				}
+				accumulatedWidth += colWidth
+			}
+		}
+	}
+
+	// 根据目标行列号计算新的滚动位置
+	let newScrollTop = 0
+	let newScrollLeft = 0
+
+	// 计算到目标行的累积高度
+	for (let i = 0; i < originalFirstVisibleRow && i < sheet.config.rowCount; i++) {
+		const rowHeight = (sheet.hooks.resizeHook.getRowHeight(i) || props.rowHeight) * currentZoom
+		newScrollTop += rowHeight
+	}
+
+	// 计算到目标列的累积宽度
+	for (let i = 0; i < originalFirstVisibleCol && i < sheet.config.colCount; i++) {
+		const colWidth = (sheet.hooks.resizeHook.getColWidth(i) || props.colWidth) * currentZoom
+		newScrollLeft += colWidth
+	}
+
+	lastScroll.value = false
+
+	// 等待DOM更新后再设置滚动位置
+	await nextTick()
+
+	// 计算最大滚动位置，防止超出边界
+	const maxScrollTop = Math.max(
+		0,
+		containerRef.value.scrollHeight - containerRef.value.clientHeight
+	)
+	const maxScrollLeft = Math.max(
+		0,
+		containerRef.value.scrollWidth - containerRef.value.clientWidth
+	)
+
+	newScrollTop = Math.min(newScrollTop, maxScrollTop)
+	newScrollLeft = Math.min(newScrollLeft, maxScrollLeft)
+
+	requestAnimationFrame(async () => {
+		// 同步设置所有滚动容器的位置
+		if (containerRef.value) {
+			containerRef.value.scrollTop = newScrollTop
+			containerRef.value.scrollLeft = newScrollLeft
+		}
+
+		if (numberRef.value) {
+			numberRef.value.scrollTop = newScrollTop
+		}
+
+		if (alphabetRef.value) {
+			alphabetRef.value.scrollLeft = newScrollLeft
+		}
+
+		if (fnRef.value) {
+			fnRef.value.scrollTop = newScrollTop
+		}
+
+		// 更新内部滚动状态
+		scrollTop.value = newScrollTop
+		scrollLeft.value = newScrollLeft
+
+		// 更新偏移量
+		await updateOffset('offsetTop', 'startRow')
+		await updateOffset('offsetLeft', 'startCol')
+
+		// 更新可视区域
+		await updateVisibleRange()
+
+		// 更新最后的缩放比例
+		lastZoom = currentZoom
+		lastScroll.value = true
+	})
+}
+
+const onZoomChange = () => {
+	// 缩放结束后重置记录的行列位置，为下次缩放做准备
+	setTimeout(() => {
+		originalFirstVisibleRow = -1
+		originalFirstVisibleCol = -1
+	}, 100)
+}
+
+const onZoomSize = (size) => {
+	const currentZoom = sheet.config.zoom || 1
+
+	// 在改变缩放前记录当前的第一个可见行列
+	if (originalFirstVisibleRow === -1) {
+		if (visibleRangeRef.value?.visible) {
+			originalFirstVisibleRow = visibleRangeRef.value.visible.startRow
+			originalFirstVisibleCol = visibleRangeRef.value.visible.startCol
+		}
+	}
+
+	let newZoom = currentZoom + size
+
+	// 限制缩放比例在 0.5~3 之间
+	if (newZoom < 0.5) {
+		newZoom = 0.5
+	} else if (newZoom > 3) {
+		newZoom = 3
+	}
+
+	sheet.config.zoom = newZoom
+	onZoomInput()
+}
+
+const onZoomReset = async () => {
+	const currentZoom = sheet.config.zoom || 1
+
+	// 在重置前记录当前的第一个可见行列
+	if (originalFirstVisibleRow === -1) {
+		if (visibleRangeRef.value?.visible) {
+			originalFirstVisibleRow = visibleRangeRef.value.visible.startRow
+			originalFirstVisibleCol = visibleRangeRef.value.visible.startCol
+		}
+	}
+
+	sheet.config.zoom = 1
+	await onZoomInput()
+
+	// 重置完成后清除记录的位置
+	setTimeout(() => {
+		originalFirstVisibleRow = -1
+		originalFirstVisibleCol = -1
+		lastZoom = 1
+	}, 200)
+}
+
+// 公式格式检测和验证
+const isFormulaFormat = (input) => {
+	if (!input || typeof input !== 'string') return false
+
+	// 检查是否以 = 开头
+	if (!input.startsWith('=')) return false
+
+	// 基本格式验证：=FUNCTION(args) 格式
+	const basicFormulaRegex = /^=([A-Za-z]+)\((.*?)\)$/
+	return basicFormulaRegex.test(input)
+}
+
+// 公式模式状态管理
+const manageFormulaState = (inputValue, cellKey) => {
+	if (inputValue && inputValue.startsWith('=')) {
+		if (isFormulaFormat(inputValue)) {
+			// 启用公式模式
+			if (!sheet.state.formula) {
+				sheet.state.formula = true
+				console.log('启用公式模式:', cellKey)
+			}
+			return true
+		} else {
+			// 输入以 = 开头但格式不正确，暂时保持公式模式但不处理
+			return false
+		}
+	} else {
+		// 不是公式输入，清除公式模式
+		if (sheet.state.formula) {
+			sheet.state.formula = false
+			// 清除当前单元格的公式映射
+			if (sheet.config.formulaMap[cellKey]) {
+				sheet.config.formulaMap[cellKey] = []
+			}
+			console.log('清除公式模式:', cellKey)
+		}
+		return false
+	}
+}
+
+// 确保状态一致性的检查函数
+const ensureStateConsistency = (cellKey, inputValue) => {
+	try {
+		// 检查 formulaed 和 formulaMap 的一致性
+		const hasFormulaed = !!sheet.config.formulaed[cellKey]
+		const hasFormulaMap = !!(
+			sheet.config.formulaMap[cellKey] && sheet.config.formulaMap[cellKey].length > 0
+		)
+		const isFormulaInput = inputValue && inputValue.startsWith('=')
+
+		// 如果输入是公式但没有 formulaed 配置，或者相反，需要同步
+		if (isFormulaInput && !hasFormulaed && isFormulaFormat(inputValue)) {
+			sheet.config.formulaed[cellKey] = inputValue
+		} else if (!isFormulaInput && hasFormulaed) {
+			delete sheet.config.formulaed[cellKey]
+		}
+
+		// 确保 formulaMap 与公式状态一致
+		if (!isFormulaInput && hasFormulaMap) {
+			sheet.config.formulaMap[cellKey] = []
+		}
+
+		// 确保 sheet.state.formula 与实际公式状态一致
+		const hasAnyFormula = Object.keys(sheet.config.formulaed).length > 0
+		if (!hasAnyFormula && sheet.state.formula) {
+			sheet.state.formula = false
+		}
+
+		return true
+	} catch (error) {
+		console.error('状态一致性检查失败:', error)
+		return false
+	}
+}
+
+// 验证公式中的单元格引用是否合法
+const validateCellReferences = (formula) => {
+	try {
+		// 基本安全检查：长度限制
+		if (!formula || formula.length > 1000) {
+			console.warn('公式长度超出限制')
+			return false
+		}
+
+		// 解析公式，提取参数
+		const match = formula.match(/^=([A-Za-z]+)\((.*?)\)$/)
+		if (!match) return false
+
+		const [, func, args] = match
+
+		// 检查函数名长度和字符
+		if (func.length > 20 || !/^[A-Za-z]+$/.test(func)) {
+			console.warn('函数名格式不正确')
+			return false
+		}
+
+		// 检查函数名是否支持
+		const supportedFunctions = ['SUM', 'AVERAGE', 'MAX', 'MIN']
+		if (!supportedFunctions.includes(func.toUpperCase())) {
+			console.warn('不支持的函数:', func)
+			return false
+		}
+
+		// 如果没有参数，返回true（允许空参数）
+		if (!args.trim()) return true
+
+		// 参数长度检查
+		if (args.length > 500) {
+			console.warn('参数长度超出限制')
+			return false
+		}
+
+		// 解析参数中的单元格引用
+		const argsList = args.split(',').map((arg) => arg.trim())
+
+		// 参数数量限制
+		if (argsList.length > 50) {
+			console.warn('参数数量超出限制')
+			return false
+		}
+
+		for (const arg of argsList) {
+			// 空参数检查
+			if (!arg) continue
+
+			// 参数长度检查
+			if (arg.length > 20) {
+				console.warn('单个参数长度超出限制:', arg)
+				return false
+			}
+
+			// 检查单个单元格引用（如 A1）
+			if (/^[A-Z]+\d+$/.test(arg)) {
+				// 验证列和行的合理范围
+				const colMatch = arg.match(/^([A-Z]+)/)
+				const rowMatch = arg.match(/(\d+)$/)
+				if (colMatch && rowMatch) {
+					const colStr = colMatch[1]
+					const rowNum = parseInt(rowMatch[1])
+					// 限制列数（最多到ZZ列，即701列）和行数（最多100万行）
+					if (colStr.length > 2 || rowNum > 1000000 || rowNum < 1) {
+						console.warn('单元格引用超出范围:', arg)
+						return false
+					}
+				}
+				continue
+			}
+
+			// 检查范围引用（如 A1:B2）
+			if (/^[A-Z]+\d+:[A-Z]+\d+$/.test(arg)) {
+				const [start, end] = arg.split(':')
+				// 递归验证范围的起始和结束单元格
+				if (
+					!validateCellReferences(`=SUM(${start})`) ||
+					!validateCellReferences(`=SUM(${end})`)
+				) {
+					return false
+				}
+				continue
+			}
+
+			// 检查数字（包括小数和负数）
+			if (/^-?\d+(\.\d+)?$/.test(arg)) {
+				const num = parseFloat(arg)
+				// 数字范围检查
+				if (!isFinite(num) || Math.abs(num) > 1e15) {
+					console.warn('数字超出范围:', arg)
+					return false
+				}
+				continue
+			}
+
+			// 如果都不匹配，说明有无效的引用
+			console.warn('无效的参数格式:', arg)
+			return false
+		}
+
+		return true
+	} catch (error) {
+		console.error('公式验证失败:', error)
+		return false
+	}
+}
+
+// 文本框输入
+const inputCache = new Map()
+const inputCacheCell = []
+let textareaHistory = ''
+
+// 跟踪正在编辑的单元格坐标
+let editingCellPosition = null
+let lastInputValue = ''
+const onInput = (e) => {
+	try {
+		// 边界情况检查
+		if (!e || !e.target) {
+			console.warn('onInput: 无效的事件对象')
+			return
+		}
+
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		console.log('onInput 开始 - 获取选区信息:', {
+			ranged,
+			isFormulaMode: sheet.state.formula,
+			rangedValue: sheet.hooks.selectionRangeHook.ranged.value,
+			inputValue: e.target.value,
+		})
+
+		if (!ranged || typeof ranged.r !== 'number' || typeof ranged.c !== 'number') {
+			console.warn('onInput: 无效的选区信息', ranged)
+			return
+		}
+
+		const {r, c, rr, cc} = ranged
+		const inputValue = e.target.value
+
+		// 权限检查
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const rowspan = Math.abs(rr - r) + 1
+			const colspan = Math.abs(cc - c) + 1
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(
+				Math.min(r, rr),
+				Math.min(c, cc),
+				rowspan,
+				colspan
+			)
+
+			if (permissionCheck.locked) {
+				// 阻止输入并恢复原值
+				e.preventDefault()
+				e.target.value = sheet.hooks.editHook.inputValue || ''
+				clearTimeout(lockedTimer)
+				lockedTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
+				return
+			}
+		}
+
+		// 输入长度限制
+		if (inputValue && inputValue.length > 1000) {
+			console.warn('输入内容过长，已截断')
+			e.target.value = inputValue.substring(0, 1000)
+			return
+		}
+
+		for (let i = r; i <= r; i++) {
+			for (let j = c; j <= c; j++) {
+				if (!inputCache.has(`${i}-${j}`)) {
+					if (!sheet.celldata.get(i)) {
+						sheet.celldata.set(i, [])
+					}
+					const v = sheet.celldata.get(i)[j]
+
+					inputCache.set(`${i}-${j}`, v)
+					inputCacheCell.push({
+						c: j,
+						r: i,
+						v,
+					})
+				}
+
+				// 安全地设置单元格值
+				try {
+					sheet.hooks.editHook.setCellValue(i, j, inputValue)
+				} catch (error) {
+					console.error('设置单元格值失败:', error, {r: i, c: j, value: inputValue})
+				}
+			}
+		}
+
+		// 管理公式模式状态
+		const cellKey = `${r}-${c}`
+		let isValidFormula = false
+
+		try {
+			// 如果开始输入公式，保存原始状态
+			if (inputValue && inputValue.startsWith('=') && !sheet.state.formula) {
+				if (sheet.hooks.editHook.saveOriginalFormulaState) {
+					sheet.hooks.editHook.saveOriginalFormulaState({r, c})
+				}
+			}
+
+			isValidFormula = manageFormulaState(inputValue, cellKey)
+		} catch (error) {
+			console.error('公式状态管理失败:', error)
+			// 发生错误时清除公式状态
+			sheet.state.formula = false
+		}
+
+		// 如果是有效的公式，进行实时同步
+		if (isValidFormula && sheet.hooks.selectionRangeHook.syncFormulaMapRealtime) {
+			try {
+				sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(cellKey, inputValue)
+			} catch (error) {
+				console.error('实时同步公式映射失败:', error)
+			}
+		}
+
+		// 记录失去焦点之前的最后一个值
+		lastInputValue = inputValue
+
+		// 防抖处理公式计算和行高调整（不包含协同同步）
+		useDebounce(
+			(row, col) => {
+				try {
+					console.log('onInput 处理（不同步）:', {
+						row,
+						col,
+						inputValue,
+						isFormulaMode: sheet.state.formula,
+						editingCellPosition,
+					})
+
+					// 只有在公式模式下或有公式配置时才重新计算公式
+					if (sheet.state.formula || Object.keys(sheet.config.formulaed).length > 0) {
+						sheet.hooks.editHook.setFormulaValue()
+					}
+					sheet.hooks.editHook.setRowHeight(null, null)
+				} catch (error) {
+					console.error('防抖处理失败:', error)
+				}
+			},
+			500,
+			'onInputTextarea'
+		)(r, c)
+	} catch (error) {
+		console.error('onInput 处理失败:', error)
+		// 发生严重错误时，尝试恢复到安全状态
+		try {
+			sheet.state.formula = false
+			inputCache.clear()
+			inputCacheCell.length = 0
+		} catch (recoveryError) {
+			console.error('错误恢复失败:', recoveryError)
+		}
+	}
+}
+
+// textarea 获取焦点事件处理
+const onTextareaFocus = (e) => {
+	try {
+		const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+		const cellKey = `${r}-${c}`
+		const inputValue = sheet.hooks.editHook.inputValue
+
+		// 权限检查 - 在获得焦点时检查是否有编辑权限
+		if (sheet.hooks.permissionsHook && sheet.config.synergy && sheet.config.auth > 0) {
+			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(r, c, 1, 1)
+
+			if (permissionCheck.locked) {
+				// 阻止编辑并失去焦点
+				e.target.blur()
+				clearTimeout(lockedTimer)
+				lockedTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)
+				return
+			}
+		}
+
+		// 设置正在编辑的单元格坐标
+		editingCellPosition = {r, c}
+		console.log('textarea 获取焦点，设置编辑坐标:', {r, c, inputValue})
+
+		textareaHistory = inputValue
+
+		// 检查当前内容是否为公式，或者当前单元格是否已配置为公式
+		const hasFormulaConfig = !!sheet.config.formulaed[cellKey]
+		const isFormulaInput = inputValue && inputValue.startsWith('=')
+
+		if (isFormulaInput || hasFormulaConfig) {
+			// 保存原始状态（如果还没有保存的话）
+			if (sheet.hooks.editHook.saveOriginalFormulaState) {
+				sheet.hooks.editHook.saveOriginalFormulaState({r, c})
+			}
+
+			// 如果输入内容是公式格式，或者单元格已配置为公式
+			if ((isFormulaInput && isFormulaFormat(inputValue)) || hasFormulaConfig) {
+				// 开启公式模式
+				sheet.state.formula = true
+
+				// 使用输入内容或已配置的公式
+				const formulaToUse = isFormulaInput ? inputValue : sheet.config.formulaed[cellKey]
+				console.log('检测到公式内容，已开启公式模式:', formulaToUse)
+
+				// 重建 formulaMap 以显示高亮
+				if (sheet.hooks.selectionRangeHook.syncFormulaMapRealtime && formulaToUse) {
+					try {
+						sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(cellKey, formulaToUse)
+					} catch (error) {
+						console.error('重建公式映射失败:', error)
+					}
+				}
+			} else if (isFormulaInput) {
+				console.log('检测到不完整的公式，暂不开启公式模式:', inputValue)
+			}
+		} else {
+			// 不是公式内容，确保公式模式关闭
+			if (sheet.state.formula) {
+				sheet.state.formula = false
+				console.log('非公式内容，已关闭公式模式')
+			}
+		}
+	} catch (error) {
+		console.error('textarea focus 事件处理失败:', error)
+	}
+}
+
+// textarea 键盘事件处理
+const onTextareaKeydown = (e) => {
+	try {
+		// 方向键和其他编辑相关的键应该阻止冒泡，避免触发单元格切换
+		const editingKeys = [
+			'ArrowUp',
+			'ArrowDown',
+			'ArrowLeft',
+			'ArrowRight',
+			'Home',
+			'End',
+			'PageUp',
+			'PageDown',
+		]
+		if (editingKeys.includes(e.key)) {
+			e.stopPropagation() // 阻止冒泡，但允许默认行为（移动光标）
+		}
+
+		// 公式模式下的特殊键处理
+		if (sheet.state.formula && (e.key === 'Enter' || e.key === 'Escape')) {
+			e.preventDefault()
+			e.stopPropagation()
+
+			const {r, c} = sheet.hooks.selectionRangeHook.getRanged()
+			const cellKey = `${r}-${c}`
+			const inputValue = sheet.hooks.editHook.inputValue
+
+			console.log('公式模式键盘事件:', e.key, inputValue)
+
+			if (e.key === 'Escape') {
+				// ESC键：还原公式到原始状态
+				try {
+					if (sheet.hooks.editHook.restoreOriginalFormulaState) {
+						sheet.hooks.editHook.restoreOriginalFormulaState()
+					} else {
+						// 如果没有还原函数，手动清除公式状态
+						sheet.state.formula = false
+						if (sheet.config.formulaed[cellKey]) {
+							delete sheet.config.formulaed[cellKey]
+						}
+						if (sheet.config.formulaMap[cellKey]) {
+							sheet.config.formulaMap[cellKey] = []
+						}
+						// 清空输入框
+						sheet.hooks.editHook.inputValue = ''
+					}
+					console.log('ESC键：已还原公式状态')
+				} catch (error) {
+					console.error('还原公式状态失败:', error)
+					// 发生错误时至少清除公式模式
+					sheet.state.formula = false
+				}
+			} else if (e.key === 'Enter') {
+				// Enter键：确认公式并退出公式模式
+				try {
+					// 发送协同消息（回车键确认）
+					let finalRow, finalCol
+					if (editingCellPosition) {
+						finalRow = editingCellPosition.r
+						finalCol = editingCellPosition.c
+					} else {
+						finalRow = r
+						finalCol = c
+					}
+
+					if (inputValue !== textareaHistory) {
+						console.log('Enter键 发送协同消息:', {
+							finalRow,
+							finalCol,
+							inputValue,
+							textareaHistory,
+						})
+
+						emits('asyncInputCell', textareaHistory, inputValue, {
+							sheetId: sheet.original.sheetId,
+							r: finalRow,
+							c: finalCol,
+						})
+						textareaHistory = inputValue
+
+						// 同步配置更新
+						if (sheet.config.synergy) {
+							console.log('Enter键 同步配置更新')
+							emits('asyncConfig', {
+								formulaed: sheet.config.formulaed,
+								formulaMap: sheet.config.formulaMap,
+							})
+						}
+					}
+
+					if (inputValue && inputValue.startsWith('=')) {
+						if (isFormulaFormat(inputValue) && validateCellReferences(inputValue)) {
+							// 保存公式
+							sheet.config.formulaed[cellKey] = inputValue
+
+							// 确保 formulaMap 已正确构建
+							if (sheet.hooks.selectionRangeHook.syncFormulaMapRealtime) {
+								sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(
+									cellKey,
+									inputValue
+								)
+							}
+
+							// 清除原始状态（确认编辑）
+							if (sheet.hooks.editHook.clearOriginalFormulaState) {
+								sheet.hooks.editHook.clearOriginalFormulaState()
+							}
+
+							console.log('Enter键：已确认公式', inputValue)
+						} else {
+							console.warn('Enter键：公式格式不正确，无法确认', inputValue)
+						}
+					}
+
+					// 退出公式模式
+					sheet.state.formula = false
+				} catch (error) {
+					console.error('确认公式失败:', error)
+					// 发生错误时至少清除公式模式
+					sheet.state.formula = false
+				}
+			}
+
+			// 让 textarea 失去焦点，触发 blur 事件完成编辑
+			const textarea = e.target
+			if (textarea && typeof textarea.blur === 'function') {
+				setTimeout(() => {
+					textarea.blur()
+				}, 10)
+			}
+		}
+		// 其他键盘事件允许正常处理
+	} catch (error) {
+		console.error('textarea 键盘事件处理失败:', error)
+		// 发生严重错误时清除公式状态
+		sheet.state.formula = false
+	}
+}
+
+const onInputBlur = (e) => {
+	try {
+		// 在失去焦点时发送最终的协同消息
+		const inputValue = lastInputValue || sheet.hooks.editHook.inputValue
+
+		// 确定最终的编辑坐标
+		let finalRow, finalCol
+		if (editingCellPosition) {
+			finalRow = editingCellPosition.r
+			finalCol = editingCellPosition.c
+			console.log('onInputBlur 使用 editingCellPosition:', editingCellPosition)
+		} else {
+			const ranged = sheet.hooks.selectionRangeHook.getRanged()
+			if (ranged && typeof ranged.r === 'number' && typeof ranged.c === 'number') {
+				finalRow = ranged.r
+				finalCol = ranged.c
+				console.log('onInputBlur 使用当前选区:', {r: finalRow, c: finalCol})
+			} else {
+				console.warn('onInputBlur: 无法确定编辑坐标')
+				editingCellPosition = null
+				return
+			}
+		}
+
+		// 发送协同消息
+		if (inputValue !== textareaHistory) {
+			console.log('onInputBlur 发送协同消息:', {
+				finalRow,
+				finalCol,
+				inputValue,
+				textareaHistory,
+			})
+
+			emits('asyncInputCell', textareaHistory, inputValue, {
+				sheetId: sheet.original.sheetId,
+				r: finalRow,
+				c: finalCol,
+			})
+			textareaHistory = inputValue
+
+			// 同步配置更新
+			if (sheet.config.synergy) {
+				console.log('onInputBlur 同步配置更新')
+				emits('asyncConfig', {
+					formulaed: sheet.config.formulaed,
+					formulaMap: sheet.config.formulaMap,
+					// permissions 在选中单元格时通过 useSelectionRange 同步，不在这里同步
+				})
+			}
+		}
+
+		// 清除正在编辑的单元格坐标
+		console.log('textarea 失去焦点，清除编辑坐标:', editingCellPosition)
+		editingCellPosition = null
+
+		// 边界情况检查
+		const ranged = sheet.hooks.selectionRangeHook.getRanged()
+		if (!ranged || typeof ranged.r !== 'number' || typeof ranged.c !== 'number') {
+			console.warn('onInputBlur: 无效的选区信息')
+			return
+		}
+
+		const {r, c} = ranged
+
+		// 输入值安全检查
+		if (inputValue && typeof inputValue !== 'string') {
+			console.warn('onInputBlur: 输入值类型不正确')
+			return
+		}
+
+		const cellKey = `${r}-${c}`
+
+		// 在失去焦点时最终确认公式模式
+		if (inputValue && inputValue.startsWith('=')) {
+			try {
+				if (isFormulaFormat(inputValue) && validateCellReferences(inputValue)) {
+					// 设置公式模式
+					sheet.state.formula = true
+
+					// 保存公式到 formulaed 配置
+					sheet.config.formulaed[cellKey] = inputValue
+
+					// 确保 formulaMap 已正确构建
+					if (sheet.hooks.selectionRangeHook.syncFormulaMapRealtime) {
+						try {
+							sheet.hooks.selectionRangeHook.syncFormulaMapRealtime(
+								cellKey,
+								inputValue
+							)
+						} catch (syncError) {
+							console.error('同步公式映射失败:', syncError)
+						}
+					}
+
+					// 同步 inputValue 到 editHook，保持与现有逻辑一致
+					sheet.hooks.editHook.inputValue = inputValue
+				} else {
+					// 公式格式不正确，清除公式状态
+					sheet.state.formula = false
+					// 清除相关的公式配置
+					try {
+						if (sheet.config.formulaed[cellKey]) {
+							delete sheet.config.formulaed[cellKey]
+						}
+						if (sheet.config.formulaMap[cellKey]) {
+							sheet.config.formulaMap[cellKey] = []
+						}
+					} catch (cleanupError) {
+						console.error('清理公式配置失败:', cleanupError)
+					}
+					console.warn('公式格式不正确:', inputValue)
+				}
+			} catch (formulaError) {
+				console.error('公式处理失败:', formulaError)
+				// 发生错误时安全地清除公式状态
+				sheet.state.formula = false
+			}
+		} else {
+			// 不是公式，确保清除公式状态和相关配置
+			try {
+				sheet.state.formula = false
+				if (sheet.config.formulaed[cellKey]) {
+					delete sheet.config.formulaed[cellKey]
+				}
+				if (sheet.config.formulaMap[cellKey]) {
+					sheet.config.formulaMap[cellKey] = []
+				}
+			} catch (cleanupError) {
+				console.error('清理非公式状态失败:', cleanupError)
+			}
+		}
+
+		// 确保状态一致性
+		try {
+			ensureStateConsistency(cellKey, inputValue)
+		} catch (consistencyError) {
+			console.error('状态一致性检查失败:', consistencyError)
+		}
+
+		// 确保真正退出编辑模式和公式模式
+		try {
+			// 清除公式高亮
+			if (sheet.hooks.selectionRangeHook.setFormulaHighlightRange) {
+				sheet.hooks.selectionRangeHook.setFormulaHighlightRange([])
+			}
+
+			// 确保公式模式已关闭
+			sheet.state.formula = false
+
+			// 设置编辑状态为 false
+			if (sheet.hooks.editHook.editing) {
+				sheet.hooks.editHook.editing.value = false
+			}
+		} catch (exitError) {
+			console.error('退出编辑模式失败:', exitError)
+		}
+
+		// 原有的历史记录保存逻辑
+		try {
+			sheet.hooks.historyHook.save(inputCacheCell.filter(Boolean))
+		} catch (historyError) {
+			console.error('保存历史记录失败:', historyError)
+		}
+
+		// 清理缓存
+		try {
+			inputCache.clear()
+			inputCacheCell.length = 0
+		} catch (cacheError) {
+			console.error('清理缓存失败:', cacheError)
+		}
+
+		lastInputValue = ''
+	} catch (error) {
+		console.error('onInputBlur 处理失败:', error)
+		// 发生严重错误时，尝试恢复到安全状态
+		try {
+			sheet.state.formula = false
+			inputCache.clear()
+			inputCacheCell.length = 0
+		} catch (recoveryError) {
+			console.error('错误恢复失败:', recoveryError)
+		}
+	}
+}
+
+// 拖拽到单元格时
+let dropCell = null
+const onCellcellDragOver = (event) => {
+	event.preventDefault()
+	dropCell = sheet.hooks.selectionRangeHook.getRangeByMouse(event)
+	emits('cellDragOver', dropCell)
+}
+
+const onCellDrop = (event) => {
+	event.preventDefault()
+	emits('cellDrop', dropCell)
+	dropCell = null
+}
+
+const init = (callback) => {
+	initialData()
+	nextTick(async () => {
+		updateViewportSize()
+		await nextTick()
+		await updateVisibleRange()
+		await updateOffset('offsetTop', 'startRow')
+		await updateOffset('offsetLeft', 'startCol')
+
+		// 初始化后触发 canvas 渲染
+		if (visibleRangeRef.value) {
+			sheet.hooks.canvasHook.render(visibleRangeRef.value, scrollTop.value, scrollLeft.value)
+		}
+
+		restoreScrollPosition()
+		window.addEventListener('resize', updateViewportSize)
+
+		// 监听强制更新可视区域事件（用于Excel导入后的渲染更新）
+		forceUpdateHandler = () => {
+			console.log('AirSheet - 接收到强制更新可视区域事件')
+			updateVisibleRange()
+		}
+		document.addEventListener('forceUpdateVisibleRange', forceUpdateHandler)
+
+		observeView()
+		initialized.value = true
+
+		// 计算滚动条宽度
+		const outer = document.createElement('div')
+		outer.style.visibility = 'hidden'
+		outer.style.overflow = 'scroll'
+		document.body.appendChild(outer)
+
+		const inner = document.createElement('div')
+		outer.appendChild(inner)
+
+		scrollbarWidth.value = outer.offsetWidth - inner.offsetWidth
+		outer.parentNode.removeChild(outer)
+
+		// 加入拖拽到单元格的监听
+		containerRef.value.addEventListener('cellDragOver', onCellcellDragOver)
+		containerRef.value.addEventListener('drop', onCellDrop)
+
+		hooksEvent().add(containerId)
+		typeof callback === 'function' && callback()
+	})
+}
+
+// 判断是否为移动设备
+const isMobile = () => {
+	// 检查是否支持触摸事件
+	const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+	// 检查屏幕宽度是否小于768px（平板/手机）
+	const isSmallScreen = window.innerWidth < 768
+
+	// 检查userAgent是否包含移动设备标识
+	const ua = navigator.userAgent.toLowerCase()
+	const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|windows phone/.test(ua)
+
+	return hasTouchSupport && (isSmallScreen || isMobileUA)
+}
+
+// 移动端设置框选
+const mobileRCReadOnly = computed(() => {
+	const {r, c, rr, cc} = selectionRange.value
+	return !(r === rr && c === cc)
+})
+
+const setSelectionRange = () => {
+	const {r, rr, c, cc} = selectionRange.value
+	if (r > rr) {
+		ElMessage.error('开始行不能大于结束行')
+		return
+	}
+
+	if (rr < r) {
+		ElMessage.error('结束行不能小于开始行')
+		return
+	}
+
+	if (c > cc) {
+		ElMessage.error('开始列不能大于结束列')
+		return
+	}
+
+	if (cc < c) {
+		ElMessage.error('结束列不能小于开始列')
+		return
+	}
+
+	if (r < 1) {
+		ElMessage.error('开始行不能小于1')
+		return
+	}
+
+	if (rr > sheet.config.rowCount) {
+		ElMessage.error('结束行不能大于总行数')
+		return
+	}
+
+	if (c < 1) {
+		ElMessage.error('开始列不能小于1')
+		return
+	}
+
+	if (cc > sheet.config.colCount) {
+		ElMessage.error('结束列不能大于总列数')
+		return
+	}
+
+	if (!r || !rr || !c || !cc) {
+		return
+	}
+
+	sheet.hooks.selectionRangeHook.setRange(r - 1, c - 1, rr - 1, cc - 1, true)
+}
+
+const mobileSetRowHeight = (e) => {
+	const {r, c} = selectionRange.value
+	sheet.hooks.resizeHook.setRowHeight(r, e.target.value)
+
+	// useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
+}
+
+const mobileSetColWidth = (e) => {
+	const {r, c} = selectionRange.value
+	sheet.hooks.resizeHook.setColWidth(c, e.target.value)
+	// useSelectionRangeHook.setRange(r - 1, c - 1, r - 1, c - 1, true)
+}
+
+// 判断移动端是否横向
+const isLandscape = () => {
+	if (isMobile()) {
+		return window.innerWidth > window.innerHeight
+	}
+	return false
+}
+
+let originalParent = null
+let originalSheet = null
+const onFull = async () => {
+	// 在全屏切换前保存当前滚动位置
+	if (containerRef.value) {
+		savedScrollPosition.value = {
+			top: containerRef.value.scrollTop,
+			left: containerRef.value.scrollLeft,
+		}
+		console.log('AirSheet - 全屏切换前保存滚动位置:', savedScrollPosition.value)
+	}
+
+	full.value = !full.value
+
+	if (full.value) {
+		// 进入全屏模式
+		const sheetComponentEl = containerRef.value.closest('.air-sheet-component')
+		if (sheetComponentEl) {
+			originalSheet = sheetComponentEl
+			originalParent = sheetComponentEl.parentNode
+			document.body.appendChild(sheetComponentEl)
+		}
+	} else if (originalParent && originalSheet) {
+		// 退出全屏模式
+		originalParent.appendChild(originalSheet)
+		originalParent = null
+		originalSheet = null
+	}
+
+	// 等待DOM更新完成后恢复滚动位置
+	await nextTick()
+
+	// 恢复滚动位置到所有相关容器
+	restoreScrollPosition()
+
+	console.log('AirSheet - 全屏切换完成，滚动位置已恢复')
+}
+
+// 筛选确认处理 - 带过渡状态管理
+const onFilterConfirm = async (checked) => {
+	if (!sheet?.hooks?.toolsHook?.filterByChecked) {
+		return
+	}
+
+	// 开始筛选过渡状态
+	isFilterTransitioning.value = true
+
+	// 保存当前数据源和行数
+	previousDataSource.value = currentDataSource.value
+	previousRowCount.value = currentRowCount.value
+
+	try {
+		// 执行筛选操作
+		await sheet.hooks.toolsHook.filterByChecked(checked)
+	} finally {
+		// 筛选完成后，结束过渡状态
+		await nextTick()
+		isFilterTransitioning.value = false
+		previousDataSource.value = null
+		previousRowCount.value = 0
+	}
+}
+
+const onFilter = async (e, alphabet) => {
+	// console.log('AirSheet - 筛选面板打开:', {
+	// 	列信息: alphabet,
+	// 	列索引: alphabet.c,
+	// 	当前筛选状态: sheet?.config?.filtered || [],
+	// })
+
+	filterEl.value = e.target.closest('.touch-filter')
+	filterCol.value.length = 0
+	filterCol.value = await sheet.hooks.toolsHook.filterCol(alphabet)
+	filterColIndex.value = alphabet.c
+
+	// console.log('AirSheet - 筛选数据获取完成:', {
+	// 	列索引: filterColIndex.value,
+	// 	筛选数据数量: filterCol.value?.length || 0,
+	// })
+}
+
+// 搜索事件处理
+const onSearchAll = async (keyword) => {
+	try {
+		// 检查搜索关键字
+		if (!keyword || typeof keyword !== 'string' || !keyword.trim()) {
+			ElMessage.warning('请输入搜索关键字')
+			searchList.value = []
+			return
+		}
+
+		const results = await sheet.hooks.toolsHook.searchAll(keyword.trim())
+		searchList.value = results || []
+
+		if (searchList.value.length === 0) {
+			ElMessage.info('没有找到匹配的结果')
+		} else {
+			ElMessage.success(`找到 ${searchList.value.length} 个匹配项`)
+		}
+
+		console.log('搜索完成，找到结果:', searchList.value.length, '个')
+	} catch (error) {
+		console.error('搜索失败:', error)
+		ElMessage.error('搜索失败，请重试')
+		searchList.value = []
+	}
+}
+
+// 跳转到指定单元格
+const onJumpToCell = async (row, col) => {
+	try {
+		if (sheet.hooks?.toolsHook?.scrollToCellAndSelect) {
+			await sheet.hooks.toolsHook.scrollToCellAndSelect(row, col)
+		} else {
+			console.warn('scrollToCellAndSelect方法不可用')
+		}
+	} catch (error) {
+		console.error('跳转到单元格失败:', error)
+	}
+}
+
+const onAddSheet = async () => {
+	console.log('=== onAddSheet 开始 ===')
+	console.log('添加 sheet:', {isSynergy: sheet.config.synergy})
+
+	// 如果是协同模式，先通知服务器创建，等待服务器返回 ID
+	if (sheet.config.synergy) {
+		console.log('协同模式：通知服务器创建 sheet')
+		const key = `air-sheet-${Math.random().toString(16).slice(2)}`
+		const tempName = `Sheet${sheetStore.getAllSheet.length + 1}`
+
+		// 先添加本地 sheet（临时 ID）
+		await sheet.hooks.toolsHook.addSheet(key, props, emits)
+		const newSheet = sheetStore.getLastSheet
+
+		console.log('本地 sheet 已添加（临时）:', newSheet?.name, newSheet?.id)
+
+		// 通知服务器创建（服务器会广播给所有用户，包括自己）
+		// sheet.hooks.synergyHook.createSheet({
+		// 	sheetId: newSheet.id,
+		// 	sheetName: tempName,
+		// })
+
+		// 触发外部事件
+		emits('addSheet', newSheet)
+	} else {
+		// 非协同模式：直接添加本地 sheet
+		const key = `air-sheet-${Math.random().toString(16).slice(2)}`
+		await sheet.hooks.toolsHook.addSheet(key, props, emits)
+		const newSheet = sheetStore.getLastSheet
+
+		console.log('本地 sheet 已添加:', newSheet?.name, newSheet?.id)
+
+		// 触发外部事件
+		emits('addSheet', newSheet)
+	}
+
+	console.log('=== onAddSheet 结束 ===')
+}
+
+let dbTimer = null
+let isDbClickSheet = false
+const onChangeSheet = async (sheetItem, e) => {
+	clearTimeout(dbTimer)
+	dbTimer = setTimeout(() => {
+		if (
+			isDbClickSheet ||
+			e?.target?.getAttribute?.('contenteditable') ||
+			sheet?.original?.sheetId === sheetItem[1]?.original?.sheetId
+		) {
+			isDbClickSheet = false
+			return
+		}
+		const id = sheetItem[1]?.original?.sheetId || sheetItem.id
+		sheetId.value = id
+
+		sheet.state.allHistory = false
+		sheet.state.cellHistory = false
+
+		if (sheet.config.synergy) {
+			emits('asyncLeaveSheet', sheet.original.sheetId)
+		}
+
+		// 获取目标 sheet
+		const targetSheet = sheetStore.getSheet(id)
+
+		// 保存需要保留的引用（celldata, filterCellData, history, hooks）
+		const preservedCelldata = sheet.celldata
+		const preservedFilterCellData = sheet.filterCellData
+		const preservedHistory = sheet.history
+		const preservedHooks = sheet.hooks
+
+		// 清空旧数据
+		for (const key in sheet) {
+			delete sheet[key]
+		}
+
+		// 赋值新数据（使用浅拷贝）
+		Object.assign(sheet, targetSheet)
+
+		// 恢复保留的引用，并清空数据
+		sheet.celldata = preservedCelldata
+		sheet.filterCellData = preservedFilterCellData
+		sheet.history = preservedHistory
+		sheet.hooks = preservedHooks
+
+		// 清空 celldata，等待从接口获取最新数据
+		sheet.celldata.clear()
+		sheet.filterCellData.clear()
+
+		// 清空 inputCache 和编辑状态，避免数据污染
+		inputCache.clear()
+		inputCacheCell.length = 0
+		editingCellPosition = null
+
+		// 重置公式状态
+		sheet.state.formula = false
+
+		sheet.state.changeSheet = true
+
+		if (sheet.config.synergy) {
+			emits('asyncJoinSheet', sheet.original.sheetId, sheet)
+		}
+
+		Object.values(sheet.hooks).forEach((hook) => {
+			hook?.refreshSheet?.(id)
+		})
+
+		containerRef.value.scrollTop = 0
+		containerRef.value.scrollLeft = 0
+		onScroll()
+	}, 250)
+}
+
+const onDbClickSheet = (e, sheetItem) => {
+	if (!sheet.config.changeSheetName) return
+	const id = sheetItem[1]?.original?.sheetId || sheetItem.id
+	e.target.setAttribute('contenteditable', true)
+	e.target.focus()
+	isDbClickSheet = true
+	const blur = () => {
+		if (!e.target.textContent) {
+			ElMessage.error('Sheet表名称不能为空')
+			e.target.focus()
+			return
+		}
+
+		if (sheet.config.synergy) {
+			sheet.hooks.synergyHook.changeSheetName(id, {
+				sheetName: e.target.textContent,
+			})
+		}
+		sheetStore.setSheetName(id, e.target.textContent)
+		e.target.removeAttribute('contenteditable')
+		e.target.removeEventListener('blur', blur)
+		e.target.removeEventListener('keydown', keydown)
+		emits('changeSheetName', e.target.textContent, sheet)
+	}
+
+	const keydown = (event) => {
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			blur()
+		}
+	}
+
+	e.target.addEventListener('blur', blur)
+	e.target.addEventListener('keydown', keydown)
+}
+
+// 用于记录删除时的目标 sheet（供 watch 使用）
+let pendingSwitchTarget = null
+
+const onDeleteSheet = (sheetItem) => {
+	const deleteId = sheetItem[1]?.original?.sheetId || sheetItem[1]?.id || sheetItem.id
+	const currentSheetId = sheet?.original?.sheetId || sheetId.value
+
+	console.log('=== onDeleteSheet 开始 ===')
+	console.log('删除参数:', {
+		sheetItem,
+		deleteId,
+		currentSheetId,
+		isCurrentSheet: deleteId === currentSheetId,
+		isSynergy: sheet.config.synergy,
+	})
+
+	// 判断是否删除的是当前选中的 sheet
+	const isDeletingCurrentSheet = deleteId === currentSheetId
+
+	// 如果删除的是当前 sheet，需要智能切换
+	let targetSheetId = null
+	if (isDeletingCurrentSheet) {
+		// 获取所有 sheet 的数组
+		const allSheets = sheetStore.getAllSheet
+
+		console.log(
+			'所有 sheets:',
+			allSheets.map(([k, v]) => ({
+				key: k,
+				id: v.id,
+				sheetId: v.original?.sheetId,
+				name: v.name,
+			}))
+		)
+
+		// 找到被删除 sheet 的索引
+		const deleteIndex = allSheets.findIndex(
+			([_, value]) => value.id === deleteId || value.original.sheetId === deleteId
+		)
+
+		console.log('被删除 sheet 的索引:', deleteIndex, '总数:', allSheets.length)
+
+		if (deleteIndex !== -1) {
+			// 判断后面是否还有 sheet
+			if (deleteIndex < allSheets.length - 1) {
+				// 有后续 sheet，切换到下一个
+				const nextSheet = allSheets[deleteIndex + 1]
+				targetSheetId = nextSheet[1]?.original?.sheetId || nextSheet[1]?.id
+				console.log('切换到下一个 sheet:', targetSheetId, nextSheet[1]?.name)
+			} else if (deleteIndex > 0) {
+				// 没有后续 sheet，切换到前一个
+				const prevSheet = allSheets[deleteIndex - 1]
+				targetSheetId = prevSheet[1]?.original?.sheetId || prevSheet[1]?.id
+				console.log('切换到前一个 sheet:', targetSheetId, prevSheet[1]?.name)
+			} else {
+				// 只剩一个 sheet，不允许删除
+				console.warn('不能删除最后一个 sheet')
+				ElMessage.warning('至少需要保留一个 Sheet')
+				return
+			}
+		}
+
+		// 记录目标 sheet，供 watch 使用
+		pendingSwitchTarget = targetSheetId
+		console.log('已设置 pendingSwitchTarget:', pendingSwitchTarget)
+	}
+
+	// 执行删除操作
+	console.log('执行删除操作:', {
+		deleteId,
+		targetSheetId,
+		pendingSwitchTarget,
+		isSynergy: sheet.config.synergy,
+	})
+
+	// 触发删除事件（用于外部监听和协同通知）
+	emits('asyncRemoveSheet', deleteId)
+
+	// 非协同模式：立即删除本地 sheet
+	if (!sheet.config.synergy) {
+		console.log('非协同模式：立即删除本地 sheet')
+		sheetStore.deleteSheet(deleteId)
+		console.log('删除完成，等待 watch 触发切换')
+	} else {
+		console.log('协同模式：等待服务器响应后会触发 OnSheetDeleted 事件')
+	}
+
+	console.log('=== onDeleteSheet 结束 ===')
+}
+
+// 强制更新可视区域事件处理函数
+let forceUpdateHandler = null
+const hooksEvent = () => {
+	const add = (containerId) => {
+		if (!sheet) {
+			return
+		}
+		Object.values(sheet.hooks).forEach((hook) => {
+			hook?.addEvent?.(containerId)
+		})
+	}
+
+	const remove = (containerId) => {
+		if (!sheet) {
+			return
+		}
+		Object.values(sheet.hooks).forEach((hook) => {
+			hook?.removeEvent?.(containerId)
+		})
+	}
+
+	return {add, remove}
+}
+
+const destroy = () => {
+	window.removeEventListener('resize', updateViewportSize)
+	if (forceUpdateHandler) {
+		document.removeEventListener('forceUpdateVisibleRange', forceUpdateHandler)
+	}
+	// Object.values(sheet.hooks).forEach((hook) => {
+	// 	hook?.destroy?.()
+	// })
+}
+
+watch(
+	() => sheetStore.getSheet(sheetId.value),
+	(newVal) => {
+		if (sheet.hooks?.resizeHook?.isResizing || !newVal) return
+
+		Object.assign(sheet, newVal)
+		useDebounce(
+			() => {
+				console.log('updated AirSheet', newVal)
+				updateVisibleRange()
+			},
+			150,
+			'airSheetLogs'
+		)()
+	},
+	{deep: true}
+)
+
+// 监听当前 sheet 是否被删除，如果被删除则自动切换
+watch(
+	() => sheetStore.getAllSheet,
+	(allSheets) => {
+		console.log('watch 触发：检查 sheet 列表变化', {
+			allSheetsCount: allSheets?.length,
+			currentSheetId: sheetId.value,
+			pendingSwitchTarget,
+		})
+
+		if (!allSheets || allSheets.length === 0) {
+			console.log('watch: 没有可用的 sheets，跳过')
+			return
+		}
+
+		const currentSheetId = sheetId.value
+		// 检查当前 sheet 是否还存在
+		const currentSheetExists = allSheets.some(
+			([_, value]) => value.id === currentSheetId || value.original.sheetId === currentSheetId
+		)
+
+		console.log('watch: 当前 sheet 是否存在:', currentSheetExists)
+
+		if (!currentSheetExists) {
+			console.log('检测到当前 sheet 已被删除，自动切换到其他 sheet')
+
+			// 优先使用预设的目标 sheet，否则使用第一个
+			let targetSheetId = pendingSwitchTarget
+			let targetSheet = null
+
+			if (targetSheetId) {
+				targetSheet = sheetStore.getSheet(targetSheetId)
+				console.log('使用预设的目标 sheet:', targetSheetId, targetSheet?.name)
+			}
+
+			if (!targetSheet) {
+				// 如果预设的目标不存在，使用第一个可用的 sheet
+				targetSheet = allSheets[0][1]
+				targetSheetId = targetSheet.original?.sheetId || targetSheet.id
+				console.log(
+					'预设目标不存在，使用第一个可用的 sheet:',
+					targetSheetId,
+					targetSheet.name
+				)
+			}
+
+			console.log('自动切换到:', targetSheetId, targetSheet.name)
+
+			// 清除预设目标
+			pendingSwitchTarget = null
+
+			// 更新 sheetId（这会触发 UI 更新）
+			sheetId.value = targetSheetId
+			console.log('已更新 sheetId.value 为:', targetSheetId)
+
+			// 发送离开旧 sheet 的事件（如果是协同模式）
+			if (sheet.config.synergy) {
+				console.log('发送 asyncLeaveSheet 事件:', currentSheetId)
+				emits('asyncLeaveSheet', currentSheetId)
+			}
+
+			// 保存需要保留的引用（celldata, filterCellData, history, hooks）
+			const preservedCelldata = sheet.celldata
+			const preservedFilterCellData = sheet.filterCellData
+			const preservedHistory = sheet.history
+			const preservedHooks = sheet.hooks
+
+			// 清空旧数据
+			for (const key in sheet) {
+				delete sheet[key]
+			}
+
+			// 赋值新数据
+			Object.assign(sheet, targetSheet)
+
+			// 恢复保留的引用，并清空数据
+			sheet.celldata = preservedCelldata
+			sheet.filterCellData = preservedFilterCellData
+			sheet.history = preservedHistory
+			sheet.hooks = preservedHooks
+
+			// 清空 celldata，等待从接口获取最新数据
+			sheet.celldata.clear()
+			sheet.filterCellData.clear()
+
+			// 清空 inputCache 和编辑状态，避免数据污染
+			inputCache.clear()
+			inputCacheCell.length = 0
+			editingCellPosition = null
+
+			// 重置公式状态
+			sheet.state.formula = false
+
+			// 确保 config 属性存在
+			if (!sheet.config.rResize) sheet.config.rResize = {}
+			if (!sheet.config.cResize) sheet.config.cResize = {}
+			if (!sheet.config.merged) sheet.config.merged = {}
+			if (!sheet.config.locked) sheet.config.locked = {}
+			if (!sheet.config.styled) sheet.config.styled = {}
+			if (!sheet.config.formulaed) sheet.config.formulaed = {}
+			if (!sheet.config.formulaMap) sheet.config.formulaMap = {}
+			if (!sheet.config.filtered) sheet.config.filtered = {}
+			if (!sheet.config.permissions) sheet.config.permissions = {}
+			if (!sheet.config.superPermissions) sheet.config.superPermissions = {}
+
+			// 触发切换状态
+			sheet.state.changeSheet = true
+
+			// 发送加入新 sheet 的事件（如果是协同模式）
+			if (sheet.config.synergy) {
+				console.log('发送 asyncJoinSheet 事件:', targetSheetId)
+				emits('asyncJoinSheet', targetSheetId, sheet)
+			}
+
+			// 刷新所有 hooks
+			Object.values(sheet.hooks || {}).forEach((hook) => {
+				hook?.refreshSheet?.(targetSheetId)
+			})
+
+			console.log('自动切换完成，当前 sheet:', sheet.name)
+		}
+	},
+	{deep: false}
+)
+
+// 配置变化处理
+// ✅ 修复：监听外部传入的配置，而不是内部状态
+watch(
+	() => props.modelValue?.config,
+	(newVal) => {
+		if (!newVal || !sheet || sheet?.state?.formula) {
+			return
+		}
+
+		console.log('配置变化处理:', newVal)
+
+		// ✅ 更新 sheet.config（从外部到内部的单向数据流）
+		// 预防切换sheet时配置错误, 并且保留原始基础配置
+		const clearConfigKeys = [
+			'merged',
+			'formulaed',
+			'formulaMap',
+			'styled',
+			'locked',
+			'rResize',
+			'cResize',
+			'filtered',
+			'permissions',
+			'deepPermissions',
+			'superPermissions',
+		]
+		clearConfigKeys.forEach((key) => {
+			if (sheet.config[key]) {
+				sheet.config[key] = {}
+			}
+		})
+
+		// 更新配置
+		sheet.config = Object.assign(sheet.config, toRaw(newVal))
+
+		// ✅ 处理副作用：应用 merged 和 formulaed
+		const mc = newVal.merged || {}
+		const formulaed = newVal.formulaed || {}
+
+		if (Object.keys(mc).length > 0) {
+			Object.entries(mc).forEach(([key, value]) => {
+				const [r, c] = key.split('-').map(Number)
+				const {rs, cs} = value
+				sheet.hooks.mergeHook.setMerge(r, c, rs, cs, false)
+			})
+		}
+
+		if (Object.keys(formulaed).length > 0) {
+			sheet.hooks.editHook.setFormulaValue()
+		}
+	},
+	{deep: true}
+)
+
+watch(
+	() => props.modelValue?.celldata,
+	(newVal) => {
+		initialData(newVal)
+	}
+)
+
+// 监听合并单元格状态变化，确保界面及时更新
+watch(
+	() => sheet.state?.lastMergeUpdate,
+	() => {
+		// 当合并单元格状态发生变化时，强制重新渲染
+		if (sheet.state?.lastMergeUpdate) {
+			nextTick(() => {
+				// 触发重新计算可见区域和单元格渲染
+				updateVisibleRange()
+			})
+		}
+	}
+)
+
+// 协同数据变化
+watch(
+	() => props.asyncSheet,
+	(newVal) => {
+		if (!newVal || !newVal.length || !props.modelValue?.config.synergy) {
+			return
+		}
+
+		console.log(
+			'🔍 [DEBUG] asyncSheet changed, initializing synergy sheets',
+			{
+				sheetsCount: newVal.length,
+				synergy: props.modelValue?.config.synergy,
+			},
+			newVal
+		)
+		sheetId.value = newVal[0].id
+		sheetStore?.initSynergySheets(newVal, containerId, props, emits).then(() => {
+			init(() => {
+				sheet.hooks.canvasHook.init(canvasId, sheetId.value)
+				if (props.modelValue?.config.synergy) {
+					emits('asyncJoinSheet', sheet.id, sheet)
+					sheet.hooks.synergyHook.connection(props.api, props.token)
+				}
+
+				sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+			})
+		})
+	},
+	{deep: true, immediate: true} // ✅ 添加 immediate: true 确保初始化时触发
+)
+
+watch(
+	() => sheet?.config?.showToolBar,
+	(newVal) => {
+		isExpandToolbar.value = newVal
+	}
+)
+
+onBeforeMount(() => {})
+
+// 初始化
+onMounted(() => {
+	if (!props.modelValue.config.synergy) {
+		sheetStore.init(sheetId.value, containerId, props, emits, () => {
+			init(() => {
+				sheet.hooks.canvasHook.init(canvasId, sheetId.value)
+				sheet.hooks.selectionRangeHook.setRange(0, 0, 0, 0)
+			})
+		})
+	}
+})
+
+onActivated(() => {})
+
+onDeactivated(() => {
+	if (containerRef.value) {
+		savedScrollPosition.value = {
+			top: containerRef.value.scrollTop,
+			left: containerRef.value.scrollLeft,
+		}
+	}
+	destroy()
+	hooksEvent().remove(containerId)
+})
+
+onUnmounted(() => {
+	destroy()
+})
+
+defineExpose({
+	destroy,
+	loading: (value, msg) => {
+		sheet.state.loading = value
+		sheet.state.msg = msg
+		sheet.state.progress = -1
+	},
+
+	setRange: (...arg) => sheet.hooks.selectionRangeHook.setRange(...arg),
+	setMerge: (...arg) => sheet.hooks.mergeHook.setMerge(...arg),
+	setCellValue: (...arg) => sheet.hooks.editHook.setCellValue(...arg),
+	setLocked: (...arg) => sheet.hooks.toolsHook.setLocked(...arg),
+	setUnlocked: (...arg) => sheet.hooks.toolsHook.setUnlocked(...arg),
+
+	importExcel: (...arg) => sheet.hooks.toolsHook.readExcelFile(...arg),
+	exportExcel: (...arg) => sheet.hooks.toolsHook.exportExcel(...arg),
+
+	setCellBackground: (row, col, rowspan, colspan, color) => {
+		sheet.hooks.toolsHook.setCellStyle({
+			type: 'bg',
+			value: color,
+			row,
+			col,
+			rowspan,
+			colspan,
+		})
+	},
+
+	getSheet: () => sheet,
+	getSheetData: () => JSON.parse(JSON.stringify([...sheet.celldata])),
+	getSignalrKey: () => sheet.signalrKey || null,
+
+	addSheet: async (sheet) => await sheet.hooks.toolsHook.addSheet(sheet, props, emits),
+
+	luckyToAir: async (config, data) => await sheet.hooks?.toolsHook?.luckyToAir(config, data),
+	airToLucky: async () => await sheet.hooks?.toolsHook?.airToLucky(sheet),
+
+	// 协同相关
+	asyncJoinSheet: async (...args) => sheet.hooks.synergyHook.joinSheet(...args), // 加入sheet
+	asyncLeaveSheet: (...args) => sheet.hooks.synergyHook.leaveSheet(...args), // 离开sheet
+	asyncCreateSheet: (...args) => sheet.hooks.synergyHook.createSheet(...args), // 创建sheet
+	asyncRemoveSheet: (...args) => sheet.hooks.synergyHook.removeSheet(...args), // 删除sheet
+	asyncEventCell: (...args) => sheet.hooks.synergyHook.eventCell(...args), // 点击单元格
+	asyncInputCell: (...args) => sheet.hooks.synergyHook.changeCell(...args), // 单元格输入
+	asyncConfig: (...args) => sheet.hooks.synergyHook.asyncConfig(...args), // 协同配置
+	asyncAddRow: (...args) => sheet.hooks.synergyHook.addRow(...args), // 添加行
+	asyncAddColumn: (...args) => sheet.hooks.synergyHook.addColumn(...args), // 添加列
+	signalrStop: (key = '') => {
+		sheet.emits('update:linked', false)
+		useSignalrStop(key)
+	},
+	signalrReload: () => {
+		sheet.hooks.synergyHook.connection(props.api, props.token)
+	},
+
+	// 权限相关
+	setCurrentUserId: (userId) => sheetStore.setCurrentUserId(userId), // 设置当前用户ID（用于权限控制）
+})
+
+// 计算 permission 区域的样式
+// ✅ 新需求: permissions 不透明,显示其他用户的临时锁定
+const getPermissionStyle = (range, index) => {
+	if (!range || !sheet.hooks?.selectionRangeHook) return {}
+
+	const {r, c, rr, cc} = range
+
+	// ✅ 基于 userId 生成一致的颜色
+	const generatePermissionColor = (userId) => {
+		const colors = [
+			'hsl(0, 75%, 55%)', // 红色
+			'hsl(30, 75%, 55%)', // 橙色
+			'hsl(60, 75%, 55%)', // 黄色
+			'hsl(120, 75%, 45%)', // 绿色
+			'hsl(180, 75%, 45%)', // 青色
+			'hsl(210, 75%, 55%)', // 蓝色
+			'hsl(270, 75%, 55%)', // 紫色
+			'hsl(300, 75%, 55%)', // 粉色
+			'hsl(330, 75%, 55%)', // 玫红
+			'hsl(45, 75%, 50%)', // 金色
+		]
+
+		// 基于 userId 生成一致的颜色索引
+		let hash = 0
+		const userIdStr = String(userId || index)
+		for (let i = 0; i < userIdStr.length; i++) {
+			hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const colorIndex = Math.abs(hash) % colors.length
+
+		return colors[colorIndex]
+	}
+
+	// 生成权限区域的颜色
+	const permissionColor = generatePermissionColor(range.userId)
+
+	// 使用 selectionRangeHook 的方法计算位置和大小
+	const tempHighlight = {
+		id: `permission-${range.userId || index}`,
+		r,
+		c,
+		rr,
+		cc,
+		color: permissionColor,
+	}
+
+	// 获取基础样式
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
+
+	// ✅ 修复: 根据权限类型调整样式
+	const style = {
+		...baseStyle,
+		opacity: 1, // 不透明
+		zIndex: 2,
+		// ✅ 修复: 设置 CSS 变量，供伪元素使用
+		'--permission-color': permissionColor,
+	}
+
+	// ✅ 修复: 行级和列级权限使用半透明背景色，让 CSS 的伪元素虚线边框生效
+	if (range.type === 'row' || range.type === 'column') {
+		// 行级和列级权限：使用半透明背景色（10% 透明度）
+		style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
+		// 移除 border，让 CSS 的伪元素虚线边框生效
+		delete style.border
+		delete style.borderTop
+		delete style.borderRight
+		delete style.borderBottom
+		delete style.borderLeft
+	}
+
+	return style
+}
+
+// ✅ 新增: 计算 deepPermission 区域的样式
+const getDeepPermissionStyle = (range, index) => {
+	if (!range || !sheet.hooks?.selectionRangeHook) return {}
+
+	const {r, c, rr, cc} = range
+
+	// 生成深度权限区域的颜色
+	const generatePermissionColor = (userId) => {
+		const colors = [
+			'hsl(0, 75%, 55%)', // 红色
+			'hsl(30, 75%, 55%)', // 橙色
+			'hsl(60, 75%, 55%)', // 黄色
+			'hsl(120, 75%, 45%)', // 绿色
+			'hsl(180, 75%, 45%)', // 青色
+			'hsl(270, 75%, 55%)', // 紫色
+			'hsl(300, 75%, 55%)', // 粉色
+			'hsl(330, 75%, 55%)', // 玫红
+			'hsl(45, 75%, 50%)', // 金色
+		]
+
+		let hash = 0
+		const userIdStr = String(userId || index)
+		for (let i = 0; i < userIdStr.length; i++) {
+			hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const colorIndex = Math.abs(hash) % colors.length
+
+		return colors[colorIndex]
+	}
+
+	const permissionColor = generatePermissionColor(range.userId)
+
+	// 使用 selectionRangeHook 的方法计算位置和大小
+	const tempHighlight = {
+		id: `deep-permission-${range.userId || index}`,
+		r,
+		c,
+		rr,
+		cc,
+		color: permissionColor,
+	}
+
+	// 获取基础样式
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight)
+
+	// ✅ 修复问题4: 使用 box-shadow 代替 border，避免重叠时边框变厚
+	// 移除 border 相关样式
+	const {border, borderTop, borderRight, borderBottom, borderLeft, ...styleWithoutBorder} =
+		baseStyle
+
+	// ✅ 修复: 根据权限类型调整样式
+	const style = {
+		...styleWithoutBorder,
+		zIndex: 2, // ✅ 修复问题4: 高于临时权限 (permissions 的 z-index 是 2)
+		// ✅ 修复: 设置 CSS 变量，供伪元素使用
+		'--permission-color': permissionColor,
+	}
+
+	// ✅ 修复: 统一所有权限等级的样式（auth=1, 2, 3 都使用虚线边框）
+	// 所有权限类型：使用半透明背景色（10% 透明度），让 CSS 的伪元素虚线边框生效
+	style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度
+	if (sheet.config.auth === 3) {
+		style.opacity = sheet.config.locked[`${r}-${c}`] ? 0 : 1 // 不使用 opacity，直接在背景色中设置透明度
+	} else {
+		style.opacity = 1
+	}
+
+	// 移除 box-shadow，让 CSS 的伪元素虚线边框生效
+	delete style.boxShadow
+
+	return style
+}
+
+// 计算 superPermission 区域的样式
+const getSuperPermissionStyle = (range, index) => {
+	if (!range || !sheet.hooks?.selectionRangeHook) return {}
+
+	const {r, c, rr, cc} = range
+
+	// ✅ 基于 userId 生成一致的颜色
+	const generateSuperPermissionColor = (userId) => {
+		const colors = [
+			'25, 118, 210', // 主蓝（明亮但不浅）
+			'30, 136, 229', // 天蓝偏亮
+			'21, 101, 192', // 深蓝（主色偏深）
+			'13, 71, 161', // 靛蓝
+			'3, 169, 244', // 青蓝（清爽对比色）
+			'2, 136, 209', // 稍暗的青蓝
+			'41, 121, 255', // 鲜蓝
+			'100, 181, 246', // 柔和蓝（中间层）
+			'77, 182, 172', // 蓝绿冷色调
+			'0, 121, 107', // 冷青色（深色压轴）
+		]
+
+		// 基于 userId 生成一致的颜色索引
+		let hash = 0
+		const userIdStr = String(userId || index)
+		for (let i = 0; i < userIdStr.length; i++) {
+			hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash)
+		}
+		const colorIndex = Math.abs(hash) % colors.length
+
+		return colors[colorIndex]
+	}
+
+	// 生成超级权限区域的颜色
+	const color = generateSuperPermissionColor(range.userId)
+
+	// ✅ 修复: 使用 selectionRangeHook 的方法计算位置和大小（自动考虑 zoom）
+	const tempHighlight = {
+		id: `super-permission-${range.userId || index}`,
+		r,
+		c,
+		rr,
+		cc,
+		color: `rgb(${color})`,
+	}
+
+	// 获取基础样式（自动考虑 zoom、rResize、cResize）
+	const baseStyle = sheet.hooks.selectionRangeHook.setHighlightRange(tempHighlight, false)
+
+	// 返回样式
+	return {
+		...baseStyle,
+		'--z-highlight-color': props.multiColor ? `rgb(${color})` : `var(--z-primary)`,
+		'--z-highlight-color-rgb': props.multiColor ? `rgb(${color})` : `var(--z-primary-rgb)`,
+		// border: `1px solid rgb(${color})`, // ✅ 修复: 改为 1px，与其他权限一致
+		// backgroundColor: `rgba(${color}, 0.15)`, // 透明背景色
+		// zIndex: 3, // 比普通高亮更高的层级
+		// pointerEvents: 'none', // 不阻止鼠标事件
+	}
+}
+</script>
+<template>
+	<div
+		class="air-sheet-component"
+		:style="{height: containerHeight}"
+		:class="{
+			mobile: isMobile(),
+			full: full,
+		}"
+	>
+		<template v-if="sheet?.state?.completed">
+			<div class="change-toolbar" :class="{expand: isExpandToolbar}">
+				<slot name="toolbar-title"></slot>
+				<!-- 在线用户 -->
+				<div v-if="sheet.config.synergy" class="df aic mg-left-5">
+					<!-- <Icons name="OnlineUser" color="var(--z-main)" class="mg-right-10" /> -->
+					<template v-for="(user, idx) of onlineUser">
+						<el-tooltip
+							class="box-item"
+							effect="light"
+							:content="user.name"
+							placement="top"
+						>
+							<span v-if="idx < 10" class="online-user">
+								{{ user.name.slice(0, 1) }}
+							</span>
+						</el-tooltip>
+					</template>
+				</div>
+				<div class="flx df aic jcc">
+					<span
+						v-for="item of tollbarTabList"
+						:key="item.name"
+						:class="[item.name === toolbarTabActive ? 'active shadow-12' : '']"
+						class="item"
+						@click="toolbarTabActive = item.name"
+					>
+						{{ item.label }}
+					</span>
+				</div>
+				<div v-if="$slots.toolbar">
+					<slot name="toolbar"></slot>
+				</div>
+				<Icons
+					v-if="sheet.config.showToolBar"
+					name="Back"
+					size="12"
+					color="var(--z-font-color)"
+					class="expand-toolbar"
+					:class="{expand: isExpandToolbar}"
+					@click="isExpandToolbar = !isExpandToolbar"
+				/>
+			</div>
+			<!-- 工具栏 -->
+			<div
+				v-if="
+					sheet.config.showToolBar &&
+					((isMobile() && isLandscape()) ||
+						!isMobile() ||
+						!sheet.config.showHorizontalScreen)
+				"
+				class="toolbar"
+				:class="{mobile: isMobile(), expand: isExpandToolbar}"
+				:style="{}"
+			>
+				<!-- 开始 -->
+				<template v-if="toolbarTabActive === 'start'">
+					<div v-if="sheet.config.font" class="group font-layout h-full">
+						<div class="item font">
+							<div>
+								<!-- 字体 -->
+								<select
+									:value="setActiveTool('ff').value || 'FZSSJW, sans-serif'"
+									@change="sheet.hooks.toolsHook.setFont($event)"
+								>
+									<option
+										v-for="[key, value] of Object.entries(fonts)"
+										:key="value"
+										:value="value"
+									>
+										{{ key }}
+									</option>
+								</select>
+								<!-- 字号 -->
+								<select
+									:value="setActiveTool('fs').value || 13"
+									@change="
+										sheet.hooks.toolsHook.setFontSize($event, containerRef)
+									"
+								>
+									<option v-for="size in fontSize" :key="size" :value="size">
+										{{ size }}
+									</option>
+								</select>
+							</div>
+							<!-- 格式 -->
+							<select
+								:value="setActiveTool('fmt').value || formatMap.Normal"
+								@change.stop="
+									($event) => {
+										sheet.hooks.toolsHook.setFormat($event, containerRef)
+									}
+								"
+							>
+								<option
+									v-for="[key, value] of Object.entries(formatMap)"
+									:key="key"
+									:value="value"
+								>
+									{{ value }}
+								</option>
+							</select>
+						</div>
+					</div>
+
+					<div v-if="sheet.config.color || sheet.config.fill" class="group">
+						<div
+							v-if="sheet.config.color"
+							class="item color"
+							:class="{active: setActiveTool('fc').active}"
+						>
+							<Icons name="Font"></Icons>
+							<span>颜色</span>
+							<input
+								type="color"
+								@input="sheet.hooks.toolsHook.setFontColor($event)"
+								@change="sheet.hooks.toolsHook.fontColorChanged($event)"
+							/>
+						</div>
+					</div>
+
+					<div class="group group-merge">
+						<div
+							v-if="sheet.config.fill"
+							class="item color"
+							:class="{active: setActiveTool('bg').active}"
+						>
+							<Icons name="FillColor"></Icons>
+							<span class="fill-color">填充</span>
+							<input
+								type="color"
+								@input="sheet.hooks.toolsHook.setFillColor($event)"
+								@change="sheet.hooks.toolsHook.fillColorChanged($event)"
+							/>
+						</div>
+						<div class="merge unfill-merge shadow-12">
+							<div class="item" @click="sheet.hooks.toolsHook.setUnFillColor()">
+								<Icons name="UnFillColor"></Icons>
+								<span>无填充</span>
+							</div>
+						</div>
+					</div>
+
+					<div
+						class="group"
+						v-if="
+							sheet.config.bold ||
+							sheet.config.italic ||
+							sheet.config.underline ||
+							sheet.config.strikethrough
+						"
+					>
+						<div
+							v-if="sheet.config.bold"
+							class="item"
+							:class="{active: setActiveTool('bold').active}"
+							@click="sheet.hooks.toolsHook.setBold"
+						>
+							<Icons name="Bold"></Icons>
+							<span>加粗</span>
+						</div>
+						<div
+							v-if="sheet.config.italic"
+							class="item"
+							:class="{active: setActiveTool('it').active}"
+							@click="sheet.hooks.toolsHook.setItalic"
+						>
+							<Icons name="Italic"></Icons>
+							<span>倾斜</span>
+						</div>
+						<div
+							v-if="sheet.config.underline"
+							class="item"
+							:class="{active: setActiveTool('un').active}"
+							@click="sheet.hooks.toolsHook.setUnderline"
+						>
+							<Icons name="Underline"></Icons>
+							<span>下划线</span>
+						</div>
+						<div
+							v-if="sheet.config.strikethrough"
+							class="item"
+							:class="{active: setActiveTool('st').active}"
+							@click="sheet.hooks.toolsHook.setStrikethrough"
+						>
+							<Icons name="Strikethrough"></Icons>
+							<span>删除线</span>
+						</div>
+					</div>
+
+					<div class="group" v-if="sheet.config.align">
+						<div
+							class="item"
+							:class="{active: setActiveTool('align').value === 'left'}"
+							@click="sheet.hooks.toolsHook.setAlign('left')"
+						>
+							<Icons name="AlignLeft"></Icons>
+							<span>左对齐</span>
+						</div>
+						<div
+							class="item"
+							:class="{active: setActiveTool('align').value === 'center'}"
+							@click="sheet.hooks.toolsHook.setAlign('center')"
+						>
+							<Icons name="AlignCenter"></Icons>
+							<span>居中</span>
+						</div>
+						<div
+							class="item"
+							:class="{active: setActiveTool('align').value === 'right'}"
+							@click="sheet.hooks.toolsHook.setAlign('right')"
+						>
+							<Icons name="AlignRight"></Icons>
+							<span>右对齐</span>
+						</div>
+					</div>
+
+					<div class="group" v-if="sheet.config.merged">
+						<div class="item" @click="sheet.hooks.toolsHook.setMerge()">
+							<Icons name="Merge"></Icons>
+							<span>合并</span>
+						</div>
+					</div>
+
+					<!-- 边框 -->
+					<template v-if="!isMobile()">
+						<div class="group group-merge" v-if="sheet.config.border">
+							<div
+								class="item"
+								:class="{
+									active:
+										setActiveTool('bl').active ||
+										setActiveTool('bt').active ||
+										setActiveTool('br').active ||
+										setActiveTool('bb').active,
+								}"
+								@click="sheet.hooks.toolsHook.setBorder()"
+							>
+								<Icons name="Border"></Icons>
+								<span>边框</span>
+							</div>
+							<div class="merge border-merge shadow-12">
+								<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
+									<Icons name="UnBorder"></Icons>
+									<span>无边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('bt').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'top')"
+								>
+									<Icons name="BorderTop"></Icons>
+									<span>上边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('bb').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'bottom')"
+								>
+									<Icons name="BorderBottom"></Icons>
+									<span>下边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('bl').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'left')"
+								>
+									<Icons name="BorderLeft"></Icons>
+									<span>左边框</span>
+								</div>
+								<div
+									class="item"
+									:class="{
+										active: setActiveTool('br').active,
+									}"
+									@click="sheet.hooks.toolsHook.setBorder(null, 'right')"
+								>
+									<Icons name="BorderRight"></Icons>
+									<span>右边框</span>
+								</div>
+								<div
+									class="item border-color"
+									@click="sheet.hooks.toolsHook.setBorderColor"
+								>
+									<Icons name="BorderColor"></Icons>
+									<span>颜色</span>
+									<input
+										type="color"
+										@input="sheet.hooks.toolsHook.setBorderColor($event)"
+										@change="sheet.hooks.toolsHook.borderColorChanged"
+									/>
+								</div>
+							</div>
+						</div>
+					</template>
+					<template v-else>
+						<div class="group" v-if="sheet.config.border">
+							<div class="item" @click="sheet.hooks.toolsHook.setBorder()">
+								<Icons name="Border"></Icons>
+								<span>边框</span>
+							</div>
+
+							<div class="item" @click="sheet.hooks.toolsHook.setBorder(false)">
+								<Icons name="UnBorder"></Icons>
+								<span>无边框</span>
+							</div>
+							<div class="item" @click="sheet.hooks.toolsHook.setBorder(null, 'top')">
+								<Icons name="BorderTop"></Icons>
+								<span>上边框</span>
+							</div>
+							<div
+								class="item"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'bottom')"
+							>
+								<Icons name="BorderBottom"></Icons>
+								<span>下边框</span>
+							</div>
+							<div
+								class="item"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'left')"
+							>
+								<Icons name="BorderLeft"></Icons>
+								<span>左边框</span>
+							</div>
+							<div
+								class="item"
+								@click="sheet.hooks.toolsHook.setBorder(null, 'right')"
+							>
+								<Icons name="BorderRight"></Icons>
+								<span>右边框</span>
+							</div>
+							<div
+								class="item border-color"
+								@click="sheet.hooks.toolsHook.setBorderColor"
+							>
+								<Icons name="BorderColor"></Icons>
+								<span>颜色</span>
+								<input
+									type="color"
+									@input="sheet.hooks.toolsHook.setBorderColor($event)"
+									@change="sheet.hooks.toolsHook.borderColorChanged"
+								/>
+							</div>
+						</div>
+					</template>
+
+					<div
+						v-if="sheet.config.addRow"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div
+							class="item"
+							@click="sheet.hooks.toolsHook.addRow($event, false)"
+							@mouseover="
+								($event) => {
+									$event.currentTarget.nextElementSibling
+										.querySelector('input')
+										.focus()
+								}
+							"
+						>
+							<Icons name="AddRow"></Icons>
+							<span>添加行</span>
+						</div>
+
+						<div v-if="!isMobile()" class="merge add-row-merge shadow-12">
+							<input
+								v-model.number="sheet.hooks.toolsHook.addRowCount"
+								type="number"
+								min="1"
+								value="1"
+								@click.stop
+								@keypress.stop
+								@keydown.stop
+								@keyup.stop
+							/>
+						</div>
+					</div>
+
+					<div
+						v-if="sheet.config.addColumn"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div
+							v-if="sheet.config.addColumn"
+							class="item"
+							@click="sheet.hooks.toolsHook.addColumn($event, false)"
+							@mouseover="
+								($event) => {
+									$event.currentTarget.nextElementSibling
+										.querySelector('input')
+										.focus()
+								}
+							"
+						>
+							<Icons name="AddColumn"></Icons>
+							<span>添加列</span>
+						</div>
+						<div v-if="!isMobile()" class="merge add-column-merge shadow-12">
+							<input
+								v-model.number="sheet.hooks.toolsHook.addColumnCount"
+								type="number"
+								min="1"
+								value="1"
+								@click.stop
+								@keypress.stop
+								@keydown.stop
+								@keyup.stop
+							/>
+						</div>
+					</div>
+
+					<div class="group" v-if="sheet.config.removeRow || sheet.config.removeColumn">
+						<div
+							v-if="sheet.config.removeRow"
+							class="item"
+							@click="sheet.hooks.toolsHook.removeRow"
+						>
+							<Icons name="RemoveRow"></Icons>
+							<span>删除行</span>
+						</div>
+						<div
+							v-if="sheet.config.removeColumn"
+							class="item"
+							@click="sheet.hooks.toolsHook.removeColumn"
+						>
+							<Icons name="RemoveColumn"></Icons>
+							<span>删除列</span>
+						</div>
+					</div>
+
+					<div class="group" v-if="sheet.config.import || sheet.config.export">
+						<div v-if="sheet.config.import" class="item import">
+							<Icons name="Import"></Icons>
+							<span>导入</span>
+							<input type="file" @change="sheet.hooks.toolsHook.importExcel" />
+						</div>
+						<div
+							v-if="sheet.config.export"
+							class="item"
+							@click="sheet.hooks.toolsHook.exportExcel"
+						>
+							<Icons name="Export"></Icons>
+							<span>导出</span>
+						</div>
+					</div>
+
+					<!-- 锁定解锁 -->
+					<div class="group" v-if="sheet.config.lock || sheet.config.unlock">
+						<div
+							v-if="sheet.config.lock"
+							class="item"
+							:class="{active: setActiveTool('lock').lock}"
+							@click="sheet.hooks.toolsHook.setLocked"
+						>
+							<Icons name="lock"></Icons>
+							<span>锁定</span>
+						</div>
+						<div
+							v-if="sheet.config.unlock"
+							class="item"
+							@click="sheet.hooks.toolsHook.setUnlocked"
+						>
+							<Icons name="CellUnlock"></Icons>
+							<span>解锁</span>
+						</div>
+					</div>
+
+					<!-- 公式 -->
+					<div
+						class="group"
+						v-if="sheet.config.formulaed"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" :class="{active: setActiveTool('formula').fx}">
+							<Icons name="Sum"></Icons>
+							<span>公式</span>
+						</div>
+						<div v-if="!isMobile()" class="merge formula-merge shadow-12">
+							<div
+								class="item"
+								:class="{active: setActiveTool('formula').fxVal?.includes('SUM')}"
+								@click="sheet.hooks.editHook.setCellFormula('SUM')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>求和</span>
+							</div>
+							<div
+								class="item"
+								:class="{
+									active: setActiveTool('formula').fxVal?.includes('AVERAGE'),
+								}"
+								@click="sheet.hooks.editHook.setCellFormula('AVERAGE')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>平均值</span>
+							</div>
+							<div
+								class="item"
+								:class="{active: setActiveTool('formula').fxVal?.includes('MAX')}"
+								@click="sheet.hooks.editHook.setCellFormula('MAX')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>最大值</span>
+							</div>
+							<div
+								class="item"
+								:class="{active: setActiveTool('formula').fxVal?.includes('MIN')}"
+								@click="sheet.hooks.editHook.setCellFormula('MIN')"
+							>
+								<Icons name="Fx"></Icons>
+								<span>最小值</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- 筛选、查找 -->
+					<div class="group" v-if="sheet.config.filter || sheet.config.find">
+						<div
+							class="item"
+							:class="{active: sheet.state.filter}"
+							@click="sheet.hooks.toolsHook.setFilter"
+						>
+							<Icons name="Filter"></Icons>
+							<span>筛选</span>
+						</div>
+						<div
+							class="item"
+							:class="{active: sheet.state.search}"
+							@click="sheet.hooks.toolsHook.setSearch"
+						>
+							<Icons name="Search"></Icons>
+							<span>查找</span>
+						</div>
+					</div>
+
+					<!-- 全屏 -->
+					<div
+						v-if="sheet.config.full"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" @click="onFull">
+							<Icons :name="full ? 'FullExit' : 'Full'"></Icons>
+							<span>{{ full ? '退出' : '全屏' }}</span>
+						</div>
+					</div>
+
+					<!-- 冻结 -->
+					<div
+						v-if="sheet.config.freeze"
+						class="group"
+						:class="{'group-merge': !isMobile()}"
+					>
+						<div class="item" @click="sheet.hooks.toolsHook.setFreeze">
+							<Icons name="Freeze"></Icons>
+							<span>冻结</span>
+						</div>
+						<div v-if="!isMobile()" class="merge freeze-merge shadow-12">
+							<span>行</span>
+							<input
+								type="number"
+								v-model.number="sheet.hooks.toolsHook.freezeRow.value"
+							/>
+							&nbsp;
+							<span>列</span>
+							<input
+								type="number"
+								v-model.number="sheet.hooks.toolsHook.freezeCol.value"
+							/>
+						</div>
+					</div>
+
+					<div class="group">
+						<div class="item" @click="sheet.hooks.toolsHook.clearAll">
+							<Icons name="Clear3"></Icons>
+							<span>清除</span>
+						</div>
+					</div>
+
+					<div class="group" v-if="sheet.config.undo">
+						<div
+							class="item"
+							@click="
+								() => {
+									sheet.hooks.historyHook.undo(() => {
+										sheet.hooks.editHook.setFormulaValue()
+									})
+								}
+							"
+							:style="{
+								opacity: !sheet.hooks.historyHook.canUndo() ? 0.3 : 1,
+								cursor: !sheet.hooks.historyHook.canUndo()
+									? 'not-allowed'
+									: 'pointer',
+							}"
+						>
+							<Icons name="Undo"></Icons>
+							<span>撤销</span>
+						</div>
+					</div>
+
+					<div class="group flx brn"></div>
+				</template>
+
+				<!-- 协同 -->
+				<template v-if="toolbarTabActive === 'synergy'">
+					<div class="df aic w-full">
+						<div class="group" v-if="sheet.config.allHistory">
+							<div class="item" @click="sheet.hooks.toolsHook.allHistory">
+								<Icons name="History"></Icons>
+								<span>历史记录</span>
+							</div>
+						</div>
+					</div>
+				</template>
+			</div>
+
+			<div v-if="sheet.config.edit" class="inputbar">
+				<textarea
+					v-model="sheet.hooks.editHook.inputValue"
+					:disabled="setActiveTool('lock').lock"
+					@input="onInput"
+					@blur="onInputBlur"
+					@focus="onTextareaFocus"
+					@keydown="onTextareaKeydown"
+					@keyup.stop
+					@paste.stop
+				/>
+			</div>
+
+			<!-- Sheet -->
+			<div class="sheet" :style="{height: containerHeight}">
+				<canvas :id="canvasId" />
+				<div class="sheet-canvas" ref="containerRef" :id="containerId" @scroll="onScroll">
+					<!-- 虚拟滚动占位 -->
+					<div
+						class="virtual-phantom"
+						:style="{
+							height: visibleRangeRef?.metrics?.totalHeight + 'px',
+							width: visibleRangeRef?.metrics?.totalWidth + 'px',
+						}"
+					></div>
+				</div>
+			</div>
+
+			<!-- 移动端设置框选 -->
+			<div
+				v-if="isMobile() && sheet.config.edit"
+				class="mobile-selection"
+				@keydown.stop
+				@click.stop
+			>
+				<div>
+					行高
+					<input
+						:disabled="mobileRCReadOnly"
+						type="number"
+						v-model="selectionSize.h"
+						@change="mobileSetRowHeight"
+					/>
+				</div>
+				<div style="border-right: 1px solid var(--z-line)">
+					列宽
+					<input
+						:disabled="mobileRCReadOnly"
+						type="number"
+						v-model="selectionSize.w"
+						@change="mobileSetColWidth"
+					/>
+				</div>
+
+				<div>
+					开始行<input
+						type="number"
+						v-model="selectionRange.r"
+						@change="setSelectionRange"
+					/>
+				</div>
+				<div>
+					结束行<input
+						type="number"
+						v-model="selectionRange.rr"
+						@change="setSelectionRange"
+					/>
+				</div>
+				<div>
+					开始列<input
+						type="number"
+						v-model="selectionRange.c"
+						@change="setSelectionRange"
+					/>
+				</div>
+				<div>
+					结束列<input
+						type="number"
+						v-model="selectionRange.cc"
+						@change="setSelectionRange"
+					/>
+				</div>
+			</div>
+
+			<!-- sheet栏 -->
+			<div class="sheetbar">
+				<Icons
+					v-if="!sheets.length && sheet.config.synergy"
+					name="Loading2"
+					size="14px"
+					class="loading-animation mg-right-10"
+				/>
+				<template v-for="(sheetItem, idx) of sheets">
+					<span
+						class="sheet-item"
+						:data-id="sheetItem[1].id"
+						:class="{
+							active:
+								sheetItem[1].id === sheetId ||
+								sheetItem[1].original.sheetId === sheetId,
+							'shadow-12':
+								sheetItem[1].id === sheetId ||
+								sheetItem[1].original.sheetId === sheetId,
+						}"
+						@keypress.stop
+						@keyup.stop
+						@keydown.stop
+						@paste.stop
+						@click="onChangeSheet(sheetItem, $event)"
+						@dblclick="onDbClickSheet($event, sheetItem)"
+					>
+						{{ sheetItem[1].name }}
+						<el-popconfirm
+							v-if="idx > 0 && sheet.config.deleteSheet"
+							title="确定删除吗？"
+							@confirm="onDeleteSheet(sheetItem)"
+						>
+							<template #reference>
+								<Icons name="Clear2" size="14" class="close-sheet" @click.stop />
+							</template>
+						</el-popconfirm>
+					</span>
+				</template>
+
+				<span v-if="sheet.config.createSheet" class="new-sheet" @click="onAddSheet">
+					<Icons name="Add"></Icons>
+				</span>
+			</div>
+
+			<!-- 状态栏 -->
+			<div
+				v-if="
+					sheet.config.showstateBar &&
+					((isMobile() && isLandscape()) ||
+						!isMobile() ||
+						!sheet.config.showHorizontalScreen)
+				"
+				class="statebar"
+				:class="{mobile: isMobile()}"
+				:style="{}"
+			>
+				<div class="zoom">
+					<span>
+						<small>{{ Math.round(sheet.config.zoom * 100) }}%</small>
+					</span>
+					<Icons name="Remove" @click="onZoomSize(-0.1)"></Icons>
+					<input
+						v-model.number="sheet.config.zoom"
+						type="range"
+						min="0.5"
+						max="3"
+						step="0.1"
+						@input="onZoomInput"
+						@change="onZoomChange"
+					/>
+					<Icons name="Add" @click="onZoomSize(0.1)"></Icons>
+					<Icons name="Restore" @click="onZoomReset"></Icons>
+				</div>
+				<div class="flx"></div>
+				<div class="statistics">
+					<span>行 = </span>
+					{{ sheet.config.rowCount }}
+				</div>
+				<div class="statistics">
+					<span>列 = </span>
+					{{ sheet.config.colCount }}
+				</div>
+				<div class="statistics">
+					<span>最小值 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.min }}
+				</div>
+				<div class="statistics">
+					<span>最大值 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.max }}
+				</div>
+				<div class="statistics">
+					<span>求和 = </span>{{ sheet.hooks.selectionRangeHook.statistics.sum }}
+				</div>
+				<div class="statistics">
+					<span>平均值 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.average }}
+				</div>
+				<div class="statistics">
+					<span>计数 = </span>
+					{{ sheet.hooks.selectionRangeHook.statistics.count }}
+				</div>
+			</div>
+
+			<!-- 遮罩 -->
+			<div
+				class="mask"
+				:class="{
+					active: isLoading,
+				}"
+			>
+				<div>
+					<Icons name="Loading2" class="loading-animation"></Icons>
+					<span>
+						{{ isLoading ? sheet.state.msg : stateText }}
+					</span>
+					<span v-if="sheet.state.progress !== -1 && isLoading">
+						{{ sheet.state.progress }}%
+					</span>
+				</div>
+			</div>
+
+			<!-- 移动端不是横向提醒 -->
+			<div
+				class="mobile-landscape-notice"
+				v-if="sheet.config.showHorizontalScreen && isMobile() && !isLandscape()"
+			>
+				<Icons name="Rotate" size="58px" color="#fff"></Icons>
+				<span>此操作需要横向屏幕</span>
+			</div>
+
+			<AirSheetFilter
+				v-model="filterEl"
+				v-model:show="sheet.state.filter"
+				:colIndex="filterColIndex"
+				:filterCol="filterCol"
+				:currentFiltered="
+					Array.isArray(sheet?.config?.filtered) ? sheet.config.filtered : []
+				"
+				@confirm="onFilterConfirm"
+				@confirmOnly="onFilterConfirm"
+			/>
+
+			<AirSheetSearch
+				v-model:show="sheet.state.search"
+				:searchList="searchList"
+				@search-all="onSearchAll"
+				@search-previous="sheet.hooks.toolsHook.searchPrevious"
+				@search-next="sheet.hooks.toolsHook.searchNext"
+				@jump-to-cell="onJumpToCell"
+			/>
+
+			<AirSheetCellHistory
+				v-model:show="sheet.state.cellHistory"
+				:sheet="sheet"
+				:data="cellHistoryData"
+			/>
+
+			<AirSheetAllHistory
+				v-model:show="sheet.state.allHistory"
+				:sheet="sheet"
+				:data="allHistoryData"
+			/>
+		</template>
+	</div>
+</template>
+<style scoped lang="scss">
+@use '@/styles/components/air-sheet.scss';
+</style>

@@ -15,6 +15,7 @@ import {useSynergy} from '../hooks/useSynergy'
 import {usePermissions} from '../hooks/usePermissions'
 import {useSuperPermissions} from '../hooks/useSuperPermissions'
 import {useSignalrStop} from '@/hooks/useSignalr'
+import {useAirSheetCanvas} from '../canvas/useAirSheetCanvas'
 
 const defaultSheet = {
 	props: {},
@@ -311,6 +312,7 @@ export const useAirSheetStore = defineStore(`AirSheet${Math.random().toString(36
 						synergyHook: useSynergy().init(key),
 						permissionsHook: usePermissions().init(key),
 						superPermissionsHook: useSuperPermissions().init(key),
+						canvasHook: useAirSheetCanvas(),
 					}
 				} else {
 					console.log('🔍 [DEBUG] Reusing hooks from existing sheet')

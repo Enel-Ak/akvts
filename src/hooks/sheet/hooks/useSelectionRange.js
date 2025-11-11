@@ -47,8 +47,13 @@ export const useSelectionRange = () => {
 	// 获取单元格位置
 	const getCellPosition = (e) => {
 		const rect = container.getBoundingClientRect()
-		const x = e.clientX - rect.left + container.scrollLeft
-		const y = e.clientY - rect.top + container.scrollTop
+		const zoom = sheet.config.zoom || 1
+		const letterHeight = 25 * zoom // 字母行高度
+		const numberWidth = 35 * zoom // 序号列宽度
+
+		// 减去字母行和序号列的偏移
+		const x = e.clientX - rect.left + container.scrollLeft - numberWidth
+		const y = e.clientY - rect.top + container.scrollTop - letterHeight
 
 		// 检查是否处于筛选状态
 		const isFiltered = sheet.config?.filtered && sheet.config.filtered.length > 0
@@ -688,7 +693,7 @@ export const useSelectionRange = () => {
 		mouseDownPos = {x: e.clientX, y: e.clientY}
 
 		// 只处理带有cell类的元素
-		if (!e.target.classList.contains('cell')) return
+		// if (!e.target.classList.contains('cell')) return
 
 		// ✅ 修复: 在计算位置前，确保 selecting 和 dragging 状态正确
 		// 如果之前有未完成的选择或拖拽操作，先重置状态

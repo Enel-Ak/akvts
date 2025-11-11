@@ -476,6 +476,19 @@
 	position: relative;
 	width: 100%;
 
+	&-canvas {
+		@extend .sheet;
+		overflow: scroll;
+	}
+
+	canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 1; // 确保 Canvas 在滚动容器上面
+		pointer-events: none; // 让鼠标事件穿透，由覆盖层处理行列调整
+	}
+
 	.main-content {
 		flex: 1;
 		position: relative;
