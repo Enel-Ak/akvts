@@ -101,15 +101,26 @@ export const useBufferToStringArray = (buffer) => {
 	const view = new DataView(buffer)
 	let offset = 0
 
+	// 必须至少有 4 字节用于读取 size
+	if (offset + 4 > buffer.byteLength) return []
+
 	const size = view.getUint32(offset)
 	offset += 4
 
 	const arr = []
 	for (let i = 0; i < size; i++) {
+		// 先检查是否还能读出 len
+		if (offset + 4 > buffer.byteLength) break
+
 		const len = view.getUint32(offset)
 		offset += 4
+
+		// 再检查是否有足够的数据
+		if (offset + len > buffer.byteLength) break
+
 		const bytes = new Uint8Array(buffer, offset, len)
 		offset += len
+
 		arr.push(decoder.decode(bytes))
 	}
 
