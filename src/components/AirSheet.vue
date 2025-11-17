@@ -3388,10 +3388,10 @@ const getSuperPermissionStyle = (range, index) => {
 								class="item"
 								:class="{
 									active:
-										setActiveTool('bl').active ||
-										setActiveTool('bt').active ||
-										setActiveTool('br').active ||
-										setActiveTool('bb').active,
+										!!setActiveTool('bl').active ||
+										!!setActiveTool('bt').active ||
+										!!setActiveTool('br').active ||
+										!!setActiveTool('bb').active,
 								}"
 								@click="sheet.hooks.toolsHook.setBorder()"
 							>
