@@ -4165,7 +4165,9 @@ const getSuperPermissionStyle = (range, index) => {
 						:data-no-lock="String(range.noLock === true)"
 						:style="getPermissionStyle(range, index)"
 					>
-						<div class="label">{{ range.userName }}</div>
+						<div class="label">
+							{{ range.userName }}
+						</div>
 					</div>
 
 					<template v-if="!sheet.config.super">

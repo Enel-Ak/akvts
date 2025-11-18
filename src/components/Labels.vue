@@ -105,6 +105,7 @@ const onCloseLabelAll = () => {
 }
 
 const onCancelItem = (item) => {
+	const cancelItem = JSON.parse(JSON.stringify(item))
 	const index = items.value.findIndex((i) => i[props.keys[0]] === item[props.keys[0]])
 	items.value.splice(index, 1)
 
@@ -123,7 +124,7 @@ const onCancelItem = (item) => {
 			})
 		}
 		save()
-		emits('cancelItem', current.value)
+		emits('cancelItem', current.value, cancelItem)
 		nextTick(() => setBar())
 	})
 }
