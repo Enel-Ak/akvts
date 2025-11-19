@@ -10,9 +10,6 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import akvts from '../index.js'
-
-// import 'element-plus/dist/index.css'
-// import '@/styles/element/index.scss'
 import '@/styles/main.scss'
 
 import {useSystemTheme} from '@/hooks/useSystemTheme'

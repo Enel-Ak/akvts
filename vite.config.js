@@ -45,7 +45,9 @@ export default ({mode, command}) => {
 			// 自动导入 Vue API，比如 ref、computed、defineProps 等
 			// AutoImport({
 			// 	imports: ['vue', 'vue-router'],
-			// 	resolvers: [ElementPlusResolver()],
+			// 	resolvers: [ElementPlusResolver({
+			// 			importStyle: 'sass', // 推荐使用 'sass'，以利用 vite 的 sass 编译缓存, 或者false
+			// 		})],
 			// 	dts: 'src/auto-imports.d.ts',
 			// }),
 
@@ -53,7 +55,7 @@ export default ({mode, command}) => {
 			// Components({
 			// 	resolvers: [
 			// 		ElementPlusResolver({
-			// 			importStyle: 'sass', // 推荐使用 'sass'，以利用 vite 的 sass 编译缓存
+			// 			importStyle: 'sass', // 推荐使用 'sass'，以利用 vite 的 sass 编译缓存, 或者false
 			// 		}),
 			// 	],
 			// 	dts: 'src/components.d.ts',
