@@ -29,8 +29,9 @@ export default ({mode, command}) => {
 				scss: {
 					api: 'modern-compiler', // or 'modern'
 					additionalData: `
-						@use '@/styles/lib/_mixin.scss' as *;
-					`,
+							@use '@/styles/lib/_mixin.scss' as *;
+							@use '@/styles/element/index.scss' as *;
+						`,
 				},
 			},
 		},

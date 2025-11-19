@@ -2428,9 +2428,11 @@ const onChangeSheet = async (sheetItem, e) => {
 			emits('asyncJoinSheet', sheet.original.sheetId, sheet)
 		}
 
-		Object.values(sheet.hooks).forEach((hook) => {
-			hook?.refreshSheet?.(id)
-		})
+		if (sheet?.hooks) {
+			Object.values(sheet.hooks).forEach((hook) => {
+				hook?.refreshSheet?.(id)
+			})
+		}
 
 		containerRef.value.scrollTop = 0
 		containerRef.value.scrollLeft = 0
@@ -2568,7 +2570,7 @@ const onDeleteSheet = (sheetItem) => {
 let forceUpdateHandler = null
 const hooksEvent = () => {
 	const add = (containerId) => {
-		if (!sheet) {
+		if (!sheet || !sheet.hooks) {
 			return
 		}
 		Object.values(sheet.hooks).forEach((hook) => {
@@ -2577,7 +2579,7 @@ const hooksEvent = () => {
 	}
 
 	const remove = (containerId) => {
-		if (!sheet) {
+		if (!sheet || !sheet.hooks) {
 			return
 		}
 		Object.values(sheet.hooks).forEach((hook) => {
@@ -2931,6 +2933,7 @@ defineExpose({
 	asyncAddRow: (...args) => sheet.hooks.synergyHook.addRow(...args), // 添加行
 	asyncAddColumn: (...args) => sheet.hooks.synergyHook.addColumn(...args), // 添加列
 	signalrStop: (key = '') => {
+		if (!sheet?.hooks?.synergyHook || !sheet || !sheet.emits) return
 		sheet.emits('update:linked', false)
 		useSignalrStop(key)
 	},

@@ -4,14 +4,15 @@ import {router} from '@/router'
 import {directives} from '@/directive/index'
 
 import App from './App.vue'
+import 'element-plus/dist/index.css'
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import akvts from '../index.js'
 
-import 'element-plus/dist/index.css'
-import '@/styles/element/index.scss'
+// import 'element-plus/dist/index.css'
+// import '@/styles/element/index.scss'
 import '@/styles/main.scss'
 
 import {useSystemTheme} from '@/hooks/useSystemTheme'
