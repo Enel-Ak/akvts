@@ -10,7 +10,8 @@
 	}
 }
 
-.el-virtual-scrollbar {
+.el-virtual-scrollbar,
+.el-scrollbar__bar.is-vertical > div {
 	width: 4px !important;
 }
 
