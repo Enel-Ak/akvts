@@ -365,7 +365,7 @@ watch(
 				v-if="isUpdatingData"
 				class="df aic jcc w-full h-full"
 				:style="{
-					position: 'absolute',
+					position: 'fixed',
 					top: 0,
 					left: 0,
 					right: 0,
