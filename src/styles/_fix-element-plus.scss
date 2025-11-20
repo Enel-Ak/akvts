@@ -10,6 +10,16 @@
 	}
 }
 
+.el-virtual-scrollbar {
+	width: 4px !important;
+
+	.el-scrollbar__thumb,
+	.el-scrollbar__thumb:hover {
+		background-color: rgba(203, 203, 203, 0.9) !important;
+		opacity: 1 !important;
+	}
+}
+
 .el-menu-item:hover,
 .el-sub-menu__title:hover {
 	background-color: rgba($color: var(--z-nav-hover-rgb), $alpha: 0.2) !important;
