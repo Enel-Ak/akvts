@@ -405,6 +405,7 @@ watch(
 	}
 
 	.head {
+		background: rgba(var(--z-theme-rgb), 0.8);
 		border-bottom: 1px solid var(--z-line);
 		padding: 10px;
 		.title {
