@@ -2462,7 +2462,7 @@ const onDbClickSheet = (e, sheetItem) => {
 		e.target.removeAttribute('contenteditable')
 		e.target.removeEventListener('blur', blur)
 		e.target.removeEventListener('keydown', keydown)
-		emits('changeSheetName', e.target.textContent, sheet)
+		emits('changeSheetName', e.target.textContent, id)
 	}
 
 	const keydown = (event) => {
