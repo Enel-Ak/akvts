@@ -64,6 +64,10 @@ export const useSynergy = () => {
 	}
 
 	const isLinked = () => {
+		if (!sheet.config.synergy) {
+			return
+		}
+
 		if (sheetStore.getLinked) {
 			return true
 		}
@@ -79,6 +83,10 @@ export const useSynergy = () => {
 	}
 
 	const joinSheet = async (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
+
 		if (!isLinked()) {
 			return
 		}
@@ -93,6 +101,10 @@ export const useSynergy = () => {
 	}
 
 	const leaveSheet = async (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
+
 		if (!isLinked()) {
 			return
 		}
@@ -115,6 +127,9 @@ export const useSynergy = () => {
 	}
 
 	const createSheet = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			return
 		}
@@ -134,6 +149,9 @@ export const useSynergy = () => {
 	}
 
 	const removeSheet = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			return
 		}
@@ -146,6 +164,9 @@ export const useSynergy = () => {
 	}
 
 	const changeSheetName = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			return
 		}
@@ -158,6 +179,10 @@ export const useSynergy = () => {
 	}
 
 	const eventCell = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
+
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -170,6 +195,9 @@ export const useSynergy = () => {
 	}
 
 	const changeCell = async (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -187,6 +215,9 @@ export const useSynergy = () => {
 	}
 
 	const addRow = async (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -202,6 +233,9 @@ export const useSynergy = () => {
 	}
 
 	const removeRow = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -217,6 +251,9 @@ export const useSynergy = () => {
 	}
 
 	const addColumn = async (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -232,6 +269,9 @@ export const useSynergy = () => {
 	}
 
 	const removeColumn = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -247,6 +287,9 @@ export const useSynergy = () => {
 	}
 
 	const undoRowColumn = (...args) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		if (!isLinked()) {
 			console.error('链接失败')
 			return
@@ -263,6 +306,9 @@ export const useSynergy = () => {
 	}
 
 	const refreshSheet = (id) => {
+		if (!sheet.config.synergy) {
+			return
+		}
 		sheetKey = id
 		sheet = sheetStore.getSheet(id)
 		useSynergyEvent?.refreshSheet?.(id)

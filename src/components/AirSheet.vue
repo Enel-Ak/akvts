@@ -4491,10 +4491,6 @@ const getSuperPermissionStyle = (range, index) => {
 								sheetItem[1].id === sheetId ||
 								sheetItem[1].original.sheetId === sheetId,
 						}"
-						@keypress.stop
-						@keyup.stop
-						@keydown.stop
-						@paste.stop
 						@click="onChangeSheet(sheetItem, $event)"
 						@dblclick="onDbClickSheet($event, sheetItem)"
 					>

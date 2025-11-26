@@ -1369,6 +1369,8 @@ export const useSelectionRange = () => {
 
 	// 键盘事件
 	const handleKeyDown = (e) => {
+		if (e.target.closest('.sheetbar')) return
+
 		const editing = container.querySelector('[contenteditable="true"]')
 		if (editing || !ranged.value) return
 

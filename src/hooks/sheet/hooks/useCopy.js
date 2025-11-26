@@ -9,7 +9,8 @@ export function useCopy() {
 	let sheet = null
 	let isEventBound = false // ✅ 新增: 防止事件监听器重复绑定
 
-	const handleKeyDown = async (event) => {
+	let isSheetBar = false
+	const handleKeyDown = async (e) => {
 		// ✅ 修复: 检查 sheet 对象是否存在
 		if (!sheet) {
 			console.warn('Sheet 对象不存在，跳过复制操作')
@@ -17,8 +18,14 @@ export function useCopy() {
 		}
 
 		// 复制 Ctrl+C / Command+C
-		if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
-			event.preventDefault()
+		if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+			if (e.target.closest('.sheetbar')) {
+				isSheetBar = true
+				return
+			}
+			isSheetBar = false
+
+			e.preventDefault()
 			// ✅ 修复: 等待复制操作完成后显示成功提示
 			await copySelectedCells()
 		}
@@ -34,6 +41,22 @@ export function useCopy() {
 		}
 
 		if (sheet.hooks.toolsHook.isLocked()) {
+			return
+		}
+
+		const clipboardData = e.clipboardData || window.clipboardData
+
+		if (e.target.closest('.sheetbar')) {
+			e.preventDefault()
+			e.target.childNodes[0].nodeValue = clipboardData.getData('text/plain')
+			return
+		}
+
+		if (isSheetBar) {
+			const text = clipboardData.getData('text/plain')
+			if (text) {
+				await processClipboardData({text, isHtml: false})
+			}
 			return
 		}
 
@@ -62,8 +85,6 @@ export function useCopy() {
 				return // 阻止粘贴
 			}
 		}
-
-		const clipboardData = e.clipboardData || window.clipboardData
 
 		// 快速检查数据大小
 		const items = clipboardData.items
@@ -490,7 +511,9 @@ export function useCopy() {
 
 		useDebounce(
 			() => {
-				ElMessage.success('粘贴成功')
+				if ((!pasteData.data.length && text) || pasteData.data.length) {
+					ElMessage.success('粘贴成功')
+				}
 				sheet.hooks.toolsHook.addRowCount = 1
 				sheet.hooks.toolsHook.addColumnCount = 1
 			},
@@ -774,7 +797,7 @@ export function useCopy() {
 	}
 
 	// ✅ 修复: 点击粘贴时处理数据，添加错误处理
-	const paste = async () => {
+	const paste = async (e) => {
 		try {
 			// ✅ 修复: 检查 Clipboard API 是否可用
 			if (!navigator.clipboard || !navigator.clipboard.readText) {
