@@ -51,7 +51,7 @@ const cascadeProps = ref(props.oneSelectProps)
 
 const _options = ref(props.options)
 
-const onFormItemChange = (val, item, index, init = true, isDefault = false) => {
+const onFormItemChange = async (val, item, index, init = true, isDefault = false) => {
 	const nextIndex = index + 1
 	const next = props.options[nextIndex]
 
@@ -70,7 +70,7 @@ const onFormItemChange = (val, item, index, init = true, isDefault = false) => {
 		if (props.static) {
 			next.options = item.options.find((i) => i.value === val)?.children ?? []
 		} else if (form.value[item.prop] && init && item.cascadeUrl) {
-			initOptions(next, nextIndex)
+			await initOptions(next, nextIndex)
 		}
 	}
 
@@ -108,11 +108,11 @@ const setDefaultData = async (val) => {
 			const isInit = !!form.value[item.prop]
 
 			if (props.static || isInit) {
-				onFormItemChange(item.value || form.value[item.prop], item, i, isInit, true)
+				await onFormItemChange(item.value || form.value[item.prop], item, i, isInit, true)
 			}
 
 			if (item.hasOwnProperty('value')) {
-				onFormItemChange(item.value, item, i, false)
+				await onFormItemChange(item.value, item, i, false)
 			}
 		}
 	}
@@ -180,7 +180,7 @@ const onBlur = () => {
 	emits('blur')
 }
 
-const initOptions = (item, level = 0) => {
+const initOptions = async (item, level = 0) => {
 	if (!item.cascadeUrl) {
 		return
 	}
@@ -193,7 +193,7 @@ const initOptions = (item, level = 0) => {
 				params: item.cascadeParams || {},
 				data: item.cascadeData || {},
 				headers: {
-					Urlkey: 'org',
+					...item?.headers,
 				},
 			})
 			.then((res) => {

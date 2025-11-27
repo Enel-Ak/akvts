@@ -5,12 +5,17 @@ const cascadeOneSelect = ref([
 	'3a0b4b50-9061-26e0-d633-12bb0dc27ac7',
 	'3a0e01e0-102e-3e04-8fbf-5c6db34cf063',
 ])
+const token =
+	'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjQyMzY3MzksImV4cCI6MTc2NDQwODczOSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc2NDIzNTIzOSwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLlnKjnur_loavmiqUiLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc2NDIzNjczOSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.tghekac1OYLuOyLK4JtKoqN57b8McoZbiettrb6bhuaERqQb_qgnLgRfKwqTZy-T9G4PSdeKp4DAz0UFFg_oKVRuKQPySEfTtb9K50dkIFo_oJIoTLsCGX8QCRG5pvWYq_fxGSWkgk8rzJon_Ycy7puKpNoZTDoUX0fKU31rJrrhTHMNvWr3-CL9HRtJWWVFrvKRqIQ_fzeEZ3CjTjzHCkOW0nWLGqhWykqVJnWbdkNjahbEG1MfVQWtwyutQsyWaynR7M6AjIkuS-Mubnc5rUEU0S39FiatdOWgZxeUJ3smewNbUNW841s7JLblKAIy0QMC56Y18Y1uBRn0rFbkjw'
 const cascade = ref({first: 2, second: 21, three: 211})
 const onsSelectProps = ref({
 	lazy: true,
 	url: '/api/platform/department/user-management-department-list',
 	method: 'GET',
 	multiple: false,
+	headers: {
+		Authorization: `Bearer ${token}`,
+	},
 	beforeCompleted: (node, data, query) => {
 		query = {
 			parentId: node.value,
@@ -44,52 +49,45 @@ const options = ref([
 ])
 
 const abc = ref({
-	first: 'bf393e50e26249e8a97bf72019555fe6',
-	second: 'c02c0d1a73f344d19ce150636781038d',
-	three: '',
+	first: '3a0b36e8-d60d-88f6-c379-6024376da7c8',
+	second: '3a0b36e8-d60d-f439-a5ef-b5ae838dd26c',
+	three: '3a0b36e8-d60d-2865-8ed8-ab633add58a4',
 })
 const options2 = ref([
 	{
 		prop: 'first',
 		label: '远程联动1',
 		type: 'select',
-		method: 'GET',
-		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+
+		cascadeUrl: 'http://100.92.2.93:8081/api/platform/department/my-region-names',
 		cascadeParams: {},
-		beforeInitOptions: (val, next, item) => {
-			next.cascadeParams.systematicType = 2
-			next.cascadeParams.parentId = val
+		headers: {
+			Authorization: `Bearer ${token}`,
 		},
-		options: [
-			{
-				label: '党的建设',
-				value: 'bf393e50e26249e8a97bf72019555fe6',
-			},
-			{
-				label: '经济发展',
-				value: 'b426adcfb10e417d94fd44647b5061fb',
-			},
-			{
-				label: '民生服务',
-				value: 'dae6c0c7006d4962adb655d7bceab6b6',
-			},
-			{
-				label: '平安法治',
-				value: '04a2b2a6bf3a436480d99bd086330384',
-			},
-		],
+		beforeInitOptions: (val, next, item) => {
+			const id = item.options.find((o) => o.value === val)?.raw.id
+			if (id) {
+				next.cascadeParams = {guid: id}
+			}
+		},
+		options: [],
 	},
 	{
 		prop: 'second',
 		type: 'select',
 		label: '远程联动2',
 		placeholder: '请选择上一级',
-		method: 'GET',
-		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+
+		cascadeUrl: 'http://100.92.2.93:8081/api/platform/department/my-region-names',
 		cascadeParams: {},
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
 		beforeInitOptions: (val, next, item) => {
-			next.cascadeParams.systematicType = 2
-			next.cascadeParams.parentId = val
+			const id = item?.options?.find((o) => o.value === val)?.raw.id
+			if (id) {
+				next.cascadeParams = {guid: id}
+			}
 		},
 	},
 	{
@@ -97,12 +95,19 @@ const options2 = ref([
 		type: 'select',
 		label: '远程联动3',
 		placeholder: '请选择上一级',
-		method: 'GET',
-		cascadeUrl: '/api/ledger-service/ledger-runway-manages/get-runway-List',
+
+		cascadeUrl: 'http://100.92.2.93:8081/api/platform/department/my-region-names',
 		cascadeParams: {},
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
 		beforeInitOptions: (val, next, item) => {
-			next.cascadeParams.systematicType = 2
-			next.cascadeParams.parentId = val
+			console.log(4444, val, next, item)
+
+			const id = item?.options?.find((o) => o.value === val)?.raw.id
+			if (id) {
+				next.cascadeParams = {guid: id}
+			}
 		},
 	},
 ])
@@ -176,7 +181,7 @@ const onClickClear = () => {
 	<div>
 		{{ cascadeOneSelect }}
 		<!-- 静态联动数据用 options -->
-		<Cascade
+		<!-- <Cascade
 			v-model="cascadeOneSelect"
 			:options="options"
 			:one-select="true"
@@ -184,12 +189,13 @@ const onClickClear = () => {
 			:show-all-levels="true"
 			max-level="-1"
 			placeholder="请选择紧凑型联动"
-		></Cascade>
+		></Cascade> -->
 
 		<br />
+		{{ abc }}
 		<Cascade v-model="abc" :options="options2" :vertical="true"></Cascade>
 		<br />
-		<Cascade v-model="cascade" :options="options3" :static="true"></Cascade>
+		<!-- <Cascade v-model="cascade" :options="options3" :static="true"></Cascade> -->
 		<el-button @click="onClickClear">清空</el-button>
 		{{ cascade }}
 	</div>
