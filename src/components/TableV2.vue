@@ -760,7 +760,7 @@ const setFnWidth = (again = false) => {
 
 		el.querySelectorAll('.el-table__body tbody tr').forEach((tr) => {
 			const buttons = tr.querySelector('td:last-child .cell')?.children
-			if (buttons?.length >= btns?.length) {
+			if (buttons?.length > btns?.length) {
 				btns = buttons
 			} else {
 				const totalWidth = (arr) =>
