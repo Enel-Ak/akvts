@@ -1,5 +1,5 @@
 <script setup name="index">
-import {onMounted, ref} from 'vue'
+import {onBeforeMount, onMounted, ref} from 'vue'
 
 const tableRef = ref()
 const loaidng = ref(false)
@@ -37,6 +37,15 @@ const onBeforeRowEdit = (row, column, event) => {
 const onBeforeCreate = (data) => {
 	data.uui = 10
 }
+
+onBeforeMount(() => {
+	tableButtons.def.push({
+		label: '新增按钮新增按钮',
+		type: 'primary',
+		show: 'row.uui == 3',
+	})
+})
+
 onMounted(() => {
 	// tableDefalutData.value = [
 	// 	{id: 'test1', uui: 0, def: 1},
@@ -141,6 +150,9 @@ const tabledata = ref([
 		def: 'dslkfjdslkfjlskdfjlkdsjflksdjflksdjfkljdslkfjdslkjfldksjflkdsjflksdjfkldsl',
 	},
 	{id: 'test2', uui: 1},
+	{id: 'test22', uui: 2},
+	{id: 'test222', uui: 3},
+	{id: 'test2222', uui: 4},
 ])
 
 const addfChange = () => {
@@ -185,7 +197,7 @@ const tableButtons = {
 			type: 'primary',
 		},
 		{
-			label: '拒绝接受',
+			label: `拒绝接受`,
 			code: 'refuse',
 			type: 'primary',
 			show: 'row.uui === 1',
@@ -484,7 +496,6 @@ const tableButtons = {
 				<TableV2
 					:auto-load="false"
 					ref="tableRef"
-					v-model:showForm="showForm"
 					v-model="tabledata"
 					:enableSelection="true"
 					:auto-height="false"
