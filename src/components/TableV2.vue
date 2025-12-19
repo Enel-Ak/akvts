@@ -757,17 +757,12 @@ const setFnWidth = (again = false) => {
 
 	if (el) {
 		let btns = el.querySelector('.table-component-btns')?.children
+		const totalWidth = (arr) => Array.from(arr || []).reduce((a, b) => a + b.offsetWidth, 0)
 
 		el.querySelectorAll('.el-table__body tbody tr').forEach((tr) => {
 			const buttons = tr.querySelector('td:last-child .cell')?.children
-			if (buttons?.length > btns?.length) {
+			if (buttons?.length > btns?.length || totalWidth(buttons) > totalWidth(btns)) {
 				btns = buttons
-			} else {
-				const totalWidth = (arr) =>
-					Array.from(arr || []).reduce((a, b) => a + b.offsetWidth, 0)
-				if (totalWidth(buttons) > totalWidth(btns)) {
-					btns = buttons
-				}
 			}
 		})
 
