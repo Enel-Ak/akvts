@@ -84,6 +84,8 @@ const bodyPadding = computed(() => {
 	return props.padding
 })
 
+const bodyPaddingAbs = computed(() => -Math.abs(parseFloat(bodyPadding.value)) + 'px')
+
 const containerRef = ref()
 const isExpand = ref(props.expand)
 const unLock = ref(0)
@@ -274,8 +276,8 @@ onUnmounted(() => {
 
 			height: 30px;
 			position: fixed;
-			top: calc(v-bind(offset) + 20px);
-			transform: translate(-20px, -20px);
+			top: calc(v-bind(offset) + v-bind(bodyPadding));
+			transform: translate(v-bind(bodyPaddingAbs), v-bind(bodyPaddingAbs));
 			width: inherit;
 			z-index: 4;
 		}
