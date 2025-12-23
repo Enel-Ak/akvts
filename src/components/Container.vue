@@ -28,6 +28,11 @@ const props = defineProps({
 		default: '56px',
 	},
 
+	padding: {
+		type: [Number, String],
+		default: '20px',
+	},
+
 	frame: {
 		type: Array,
 		default: () => ['header', 'aside', 'default', 'footer'],
@@ -68,6 +73,16 @@ const bodyHeight = computed(
 			props.enableFooter && props.frame.includes('footer') ? '70px' : '0px'
 		})`
 )
+
+const bodyPadding = computed(() => {
+	if (typeof props.padding === 'number') {
+		return `${props.padding}px`
+	}
+	if (typeof props.padding === 'string' && props.padding.indexOf('px') === -1) {
+		return `${props.padding}px`
+	}
+	return props.padding
+})
 
 const containerRef = ref()
 const isExpand = ref(props.expand)
@@ -123,6 +138,7 @@ onUnmounted(() => {
 				class="container-body"
 				v-show="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
+				:style="{padding: bodyPadding}"
 			>
 				<div class="container-body-sub" v-show="frame.includes('header')">
 					<slot name="top"></slot>
