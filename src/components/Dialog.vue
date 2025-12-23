@@ -20,7 +20,6 @@ const props = defineProps({
 	loading: {type: Boolean, default: false},
 	loadingText: {type: String, default: '正在获取数据源'},
 	delay: {type: Number, default: 0},
-	padding: {type: Number, default: 10},
 })
 
 const scrollRef = ref()
@@ -30,7 +29,6 @@ const height = ref(
 		? `${props.height}px`
 		: props.height
 )
-const bodyPadding = computed(() => props.padding + 'px')
 const unLock = ref(0)
 
 let observer = null
@@ -216,7 +214,7 @@ onMounted(() => {
 	.dialog-scrollbar {
 		> .el-scrollbar__wrap {
 			> .el-scrollbar__view {
-				padding: v-bind(bodyPadding);
+				padding: 10px;
 			}
 		}
 	}
@@ -313,10 +311,10 @@ onMounted(() => {
 
 	.el-form-item.btns {
 		bottom: 0;
-		margin: torem(20px) torem(-20px) torem(-30px) torem(-20px);
+		margin-left: -10px;
 		margin-bottom: 0 !important;
 		position: absolute !important;
-		padding: 10px 20px !important;
+		padding: 10px !important;
 		width: 100%;
 		&::after {
 			border: none !important;
