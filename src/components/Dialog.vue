@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import Lock from './Lock.vue'
 
 const emits = defineEmits(['clickClose', 'clickConfirm', 'update:modelValue', 'heightChanged'])
@@ -20,6 +20,7 @@ const props = defineProps({
 	loading: {type: Boolean, default: false},
 	loadingText: {type: String, default: '正在获取数据源'},
 	delay: {type: Number, default: 0},
+	padding: {type: Number, default: 10},
 })
 
 const scrollRef = ref()
@@ -29,6 +30,7 @@ const height = ref(
 		? `${props.height}px`
 		: props.height
 )
+const bodyPadding = computed(() => props.padding + 'px')
 const unLock = ref(0)
 
 let observer = null
@@ -145,7 +147,7 @@ onMounted(() => {
 			v-resize="onAutoHeight"
 			ref="scrollRef"
 			class="dialog-scrollbar"
-			:height="height"
+			:height="parseFloat(height)"
 			always
 		>
 			<slot name="default"></slot>
@@ -214,7 +216,7 @@ onMounted(() => {
 	.dialog-scrollbar {
 		> .el-scrollbar__wrap {
 			> .el-scrollbar__view {
-				padding: 20px;
+				padding: v-bind(bodyPadding);
 			}
 		}
 	}

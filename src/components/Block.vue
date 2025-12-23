@@ -181,8 +181,7 @@ const initObserver = () => {
 
 					const bodyHeight =
 						document.body.offsetHeight -
-						_offset.value[0] +
-						parseFloat(containerBody ?? 0) * 2 // Block title  and padding and header height
+						(_offset.value[0] + parseFloat(containerBody ?? 0) * 2) // Block title  and padding and header height
 
 					entries.forEach((entry) => {
 						let now = entry.borderBoxSize[0].blockSize
