@@ -46,7 +46,7 @@ const props = defineProps({
 	enableFullScreen: {type: Boolean, default: false}, // 全屏
 
 	delay: {type: Number, default: 16.7}, // 延迟执行高度计算
-	offset: {type: Array, default: () => [211, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
+	offset: {type: Array, default: () => [231, 40]}, // 高度计算偏移量 [顶部+底部+填充或者其他高度, Block标题自身高度]
 	fixedOffset: {type: Number, default: 0}, // 固定高度偏移量
 	inherit: {type: Boolean, default: false}, // 启用继承高度
 
