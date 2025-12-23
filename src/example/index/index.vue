@@ -140,7 +140,7 @@ const onButtonClick = () => {
 }
 const showDialog = ref(false)
 const showForm = ref(false)
-const show = ref(false)
+const show = ref(true)
 const showLoading = ref(false)
 
 const tabledata = ref([
@@ -489,7 +489,7 @@ const tableButtons = {
 
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
 
-		<!-- <Dialog v-model="show" :loading="showLoading"> -->
+		<Dialog v-model="show" :loading="showLoading" width="1024"></Dialog>
 
 		<el-tabs>
 			<el-tab-pane label="Tab 1">

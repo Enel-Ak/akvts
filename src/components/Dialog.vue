@@ -23,12 +23,21 @@ const props = defineProps({
 })
 
 const scrollRef = ref()
-const height = ref(
-	typeof props.height === 'number' ||
+const height = computed(() => {
+	const _height =
+		typeof props.height === 'number' ||
 		(typeof props.height === 'string' && !['px', '%', 'vh', 'em', 'rem'].includes(props.height))
-		? `${props.height}px`
-		: props.height
-)
+			? `${props.height}px`
+			: props.height
+
+	let h = parseFloat(_height)
+	const bh = document.body.offsetHeight
+	if (h > bh - 300) {
+		h = bh - 300 // 留一些边距
+	}
+
+	return h
+})
 const unLock = ref(0)
 
 let observer = null
