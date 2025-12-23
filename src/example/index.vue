@@ -109,6 +109,7 @@ const cancelItem = () => {
 		:model="containerModel"
 		:frame="['header', 'default', 'footer', 'aside']"
 		:asideWidth="asideWidth"
+		:padding="10"
 		@collapse="($event) => (containerExpand = $event)"
 	>
 		<template #header>

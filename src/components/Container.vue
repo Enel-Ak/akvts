@@ -173,6 +173,7 @@ onUnmounted(() => {
 				@scroll="onScroll"
 				v-show="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
+				:style="{padding: bodyPadding}"
 			>
 				<div class="container-body-sub" v-show="frame.includes('header')">
 					<slot name="top"></slot>
@@ -199,6 +200,7 @@ onUnmounted(() => {
 				@scroll="onScroll"
 				v-show="frame.includes('default')"
 				:class="{'no-aside': !frame.includes('aside')}"
+				:style="{padding: bodyPadding}"
 			>
 				<div class="container-body-sub" v-show="frame.includes('header')">
 					<slot name="top"></slot>
