@@ -214,7 +214,7 @@ onMounted(() => {
 	.dialog-scrollbar {
 		> .el-scrollbar__wrap {
 			> .el-scrollbar__view {
-				padding: 10px;
+				padding: 20px;
 			}
 		}
 	}
@@ -311,7 +311,7 @@ onMounted(() => {
 
 	.el-form-item.btns {
 		bottom: 0;
-		margin-left: -10px;
+		margin-left: -20px;
 		margin-bottom: 0 !important;
 		position: absolute !important;
 		padding: 10px !important;
