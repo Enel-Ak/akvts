@@ -494,7 +494,7 @@ const tableButtons = {
 			loadingText="高度"
 			:loading="showLoading"
 			width="1024"
-			height="1000"
+			height="1000px"
 		></Dialog>
 
 		<el-tabs>

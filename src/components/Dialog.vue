@@ -81,7 +81,7 @@ const onAutoHeight = () => {
 			? parseFloat(props.height)
 			: 0
 
-	if (props.height > 0) {
+	if (ph > 0) {
 		dialogHeight.value = ph > bh ? bh : ph
 		return
 	}
