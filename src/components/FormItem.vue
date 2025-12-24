@@ -177,11 +177,11 @@ const customSignleFormItemValidator = (item) => {
 	const fir = formItemRef.value[idx]
 	const msg = (type, error) => {
 		if (type === 'radio') {
-			return '请任选一项'
+			return error?.message || '请任选一项'
 		} else if (type === 'checkbox') {
-			return '请至少选一项'
+			return error?.message || '请至少选一项'
 		} else if (type === 'select') {
-			return '从下列选项中选择'
+			return error?.message || '请从选项中至少选择一项'
 		} else {
 			return error?.message || '验证失败'
 		}

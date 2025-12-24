@@ -446,7 +446,7 @@ const tableButtons = {
 					},
 				},
 			]"
-			:rules="[{required: true, message: '请输入测试', trigger: 'blur'}]"
+			:rules="[{required: true, message: '请输入测试3', trigger: 'blur'}]"
 		></FormItem>
 		<el-button @click="handValidate">手动校验</el-button>
 		<Pagination :total="100" />
