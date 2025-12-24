@@ -23,21 +23,7 @@ const props = defineProps({
 })
 
 const scrollRef = ref()
-const height = computed(() => {
-	const _height =
-		typeof props.height === 'number' ||
-		(typeof props.height === 'string' && !['px', '%', 'vh', 'em', 'rem'].includes(props.height))
-			? `${props.height}px`
-			: props.height
-
-	let h = parseFloat(_height)
-	const bh = document.body.offsetHeight
-	if (h > bh - 300) {
-		h = bh - 300 // 留一些边距
-	}
-
-	return h
-})
+const dialogHeight = ref(0)
 const unLock = ref(0)
 
 let observer = null
@@ -68,12 +54,12 @@ const initObserver = () => {
 						const now = entry.borderBoxSize[0].blockSize
 
 						if (now < h) {
-							height.value = now
+							dialogHeight.value = now
 						} else {
-							height.value = h
+							dialogHeight.value = h
 						}
 					})
-					emits('heightChanged', height.value)
+					emits('heightChanged', dialogHeight.value)
 				}, props.delay)
 			})
 
@@ -87,8 +73,21 @@ const initObserver = () => {
 const onAutoHeight = () => {
 	let scroll = null
 
+	const bh = document.body.offsetHeight / 2
+	const ph =
+		typeof props.height === 'number'
+			? props.height
+			: typeof props.height === 'string'
+			? parseFloat(props.height)
+			: 0
+
+	if (props.height > 0) {
+		dialogHeight.value = ph > bh ? bh : ph
+		return
+	}
+
 	if (props.fullScreen) {
-		height.value = document.body.offsetHeight - 47
+		dialogHeight.value = document.body.offsetHeight - 47
 		return
 	}
 
@@ -97,16 +96,14 @@ const onAutoHeight = () => {
 	}
 
 	if (props.autoHeight) {
-		let h = document.body.offsetHeight / 2
+		let h = bh
 
 		if (scroll && scroll.offsetHeight < h) {
 			h = scroll.offsetHeight
 		}
-		height.value = props.height > 0 ? props.height : h
 
-		if (props.height === 0) {
-			initObserver()
-		}
+		dialogHeight.value = h
+		initObserver()
 	}
 }
 
@@ -154,7 +151,7 @@ onMounted(() => {
 			v-resize="onAutoHeight"
 			ref="scrollRef"
 			class="dialog-scrollbar"
-			:height="parseFloat(height)"
+			:height="dialogHeight"
 			always
 		>
 			<slot name="default"></slot>

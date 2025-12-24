@@ -489,7 +489,13 @@ const tableButtons = {
 
 		<el-button @click="showForm = !showForm">Toggle Form</el-button>
 
-		<Dialog v-model="show" :loading="showLoading" width="1024"></Dialog>
+		<Dialog
+			v-model="show"
+			loadingText="高度"
+			:loading="showLoading"
+			width="1024"
+			height="1000"
+		></Dialog>
 
 		<el-tabs>
 			<el-tab-pane label="Tab 1">
