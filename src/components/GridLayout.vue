@@ -131,7 +131,11 @@ const changeGridStack = (event, items) => {
 }
 
 onMounted(() => {
-	grid.value = GridStack.init()
+	grid.value = GridStack.init({
+		draggable: {
+			cancel: '.table-component',
+		},
+	})
 	grid.value.on('change', changeGridStack)
 	previousProps.value = [...gridProps.value]
 })

@@ -185,12 +185,13 @@ const onClickItem = (chart, option) => {
 					:enableExpandContent="false"
 					:enable-close-button="false"
 				>
-					<Charts
+					<!-- <Charts
 						:ref="(el) => chartRefMap.set(chart.prop, toRaw(el))"
 						:loading="false"
 						:option="chart.option"
 						@click-item="onClickItem"
-					/>
+					/> -->
+					<TableV2 :height="250"></TableV2>
 				</Block>
 			</template>
 		</GridLayout>
