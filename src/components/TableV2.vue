@@ -142,6 +142,7 @@ const showStripe = ref(props.stripe ? 'var(--z-table-even-bg)' : 'transparent')
 const _loading = ref(props.loading)
 const unLock = ref(0)
 
+const propsHeight = ref(props.height)
 const __height = ref(0)
 const __fnWidth = ref(142)
 let __requestTimer = null
@@ -226,7 +227,8 @@ watch(
 
 watch(
 	() => props.height,
-	() => {
+	(newVal) => {
+		propsHeight.value = newVal
 		setTableHeight()
 	}
 )
@@ -746,7 +748,7 @@ const setTableHeight = () => {
 		height -= tableToolbar.offsetHeight
 	}
 
-	const finallyHeight = props.height > 0 ? props.height : height - 50
+	const finallyHeight = propsHeight.value > 0 ? propsHeight.value : height - 50
 	__height.value = finallyHeight < 200 ? 200 : finallyHeight
 }
 

@@ -1,5 +1,5 @@
 <script setup name="grid">
-import {ref, toRaw} from 'vue'
+import {onMounted, ref, toRaw} from 'vue'
 const achart = {
 	tooltip: {
 		trigger: 'axis',
@@ -98,81 +98,86 @@ const charts = ref([
 ])
 const gridLayoutRef = ref()
 const chartRefMap = new Map()
-setTimeout(() => {
-	charts.value.push({
-		prop: 'chart4',
-		x: 12,
-		y: 0,
-		w: 3,
-		h: 3,
-		title: '柱状图',
-		option: achart,
-		content: 'Item 1',
-	})
-	console.log(111, chartRefMap)
+// setTimeout(() => {
+// 	charts.value.push({
+// 		prop: 'chart4',
+// 		x: 12,
+// 		y: 0,
+// 		w: 3,
+// 		h: 3,
+// 		title: '柱状图',
+// 		option: achart,
+// 		content: 'Item 1',
+// 	})
+// 	console.log(111, chartRefMap)
 
-	chartRefMap.get('chart2').setOption({
-		tooltip: {
-			trigger: 'axis',
-			axisPointer: {
-				type: 'shadow',
-			},
-		},
-		grid: {
-			top: 10,
-			bottom: 20,
-			left: 35,
-			right: 10,
-		},
-		xAxis: {
-			type: 'category',
-			data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
-		},
-		yAxis: {
-			type: 'value',
-		},
-		series: [
-			{
-				data: [120, 5, 1504, 80, 54, 110, 130],
-				type: 'bar',
-			},
-		],
-	})
+// 	chartRefMap.get('chart2').setOption({
+// 		tooltip: {
+// 			trigger: 'axis',
+// 			axisPointer: {
+// 				type: 'shadow',
+// 			},
+// 		},
+// 		grid: {
+// 			top: 10,
+// 			bottom: 20,
+// 			left: 35,
+// 			right: 10,
+// 		},
+// 		xAxis: {
+// 			type: 'category',
+// 			data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
+// 		},
+// 		yAxis: {
+// 			type: 'value',
+// 		},
+// 		series: [
+// 			{
+// 				data: [120, 5, 1504, 80, 54, 110, 130],
+// 				type: 'bar',
+// 			},
+// 		],
+// 	})
 
-	// console.log(111, gridLayoutRef.value.getConfig())
-	// achart.value.series[0].itemStyle = {color: '#ff0000'}
-	// charts.value[0].obj.setOption({
-	// 	tooltip: {
-	// 		trigger: 'axis',
-	// 		axisPointer: {
-	// 			type: 'shadow',
-	// 		},
-	// 	},
-	// 	grid: {
-	// 		top: 10,
-	// 		bottom: 20,
-	// 		left: 35,
-	// 		right: 10,
-	// 	},
-	// 	xAxis: {
-	// 		type: 'category',
-	// 		data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
-	// 	},
-	// 	yAxis: {
-	// 		type: 'value',
-	// 	},
-	// 	series: [
-	// 		{
-	// 			data: [120, 5, 1504, 80, 54, 110, 130],
-	// 			type: 'bar',
-	// 		},
-	// 	],
-	// })
-}, 2000)
+// 	// console.log(111, gridLayoutRef.value.getConfig())
+// 	// achart.value.series[0].itemStyle = {color: '#ff0000'}
+// 	// charts.value[0].obj.setOption({
+// 	// 	tooltip: {
+// 	// 		trigger: 'axis',
+// 	// 		axisPointer: {
+// 	// 			type: 'shadow',
+// 	// 		},
+// 	// 	},
+// 	// 	grid: {
+// 	// 		top: 10,
+// 	// 		bottom: 20,
+// 	// 		left: 35,
+// 	// 		right: 10,
+// 	// 	},
+// 	// 	xAxis: {
+// 	// 		type: 'category',
+// 	// 		data: ['1', '2', '3', '4', '5', 'Sat', 'Sun'],
+// 	// 	},
+// 	// 	yAxis: {
+// 	// 		type: 'value',
+// 	// 	},
+// 	// 	series: [
+// 	// 		{
+// 	// 			data: [120, 5, 1504, 80, 54, 110, 130],
+// 	// 			type: 'bar',
+// 	// 		},
+// 	// 	],
+// 	// })
+// }, 2000)
 
 const onClickItem = (chart, option) => {
 	console.log(chart, option)
 }
+
+const tableHeight = ref(100)
+onMounted(() => {
+	tableHeight.value = 500
+})
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">
@@ -191,7 +196,38 @@ const onClickItem = (chart, option) => {
 						:option="chart.option"
 						@click-item="onClickItem"
 					/> -->
-					<TableV2 :height="250"></TableV2>
+					<TableV2
+						:height="tableHeight"
+						:columns="[
+							{label: 'a', prop: 'a'},
+							{label: 'b', prop: 'b'},
+							{label: 'c', prop: 'c'},
+							{label: 'd', prop: 'd'},
+						]"
+						:default-table-data="[
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+							{a: '1', b: '2', c: '3', d: '4'},
+							{a: '2', b: '3', c: '4', d: '5'},
+						]"
+						:disable="true"
+					></TableV2>
 				</Block>
 			</template>
 		</GridLayout>
