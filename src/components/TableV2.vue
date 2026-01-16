@@ -110,6 +110,9 @@ const props = defineProps({
 	stripe: {type: Boolean, default: true},
 	status: {type: String, default: 'none'},
 	loading: {type: Boolean, default: false},
+
+	operateAlign: {type: String, default: 'center'},
+	operateFixed: {type: String, default: 'right'},
 })
 
 const TableStatusEnum = {
@@ -1023,6 +1026,7 @@ defineExpose({
 			@selection-change="onSelectionChange"
 			@sort-change="onSortChange"
 		>
+			<!-- 复选 -->
 			<el-table-column
 				v-if="enableSelection && !disableTable"
 				:reserve-selection="true"
@@ -1033,6 +1037,7 @@ defineExpose({
 				fixed="left"
 			/>
 
+			<!-- 序号 -->
 			<el-table-column
 				v-if="enableIndex"
 				type="index"
@@ -1115,8 +1120,8 @@ defineExpose({
 					$slots.buttons
 				"
 				:label="operateText"
-				align="center"
-				fixed="right"
+				align="operateAlign"
+				fixed="operateFixed"
 				:width="__fnWidth"
 				class="table-component-btns"
 			>
