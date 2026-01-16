@@ -1120,8 +1120,8 @@ defineExpose({
 					$slots.buttons
 				"
 				:label="operateText"
-				align="operateAlign"
-				fixed="operateFixed"
+				:align="operateAlign"
+				:fixed="operateFixed"
 				:width="__fnWidth"
 				class="table-component-btns"
 			>
