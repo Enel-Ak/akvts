@@ -11,7 +11,9 @@ import {
 } from 'vue'
 import {init} from 'echarts'
 
-const emits = defineEmits(['clickItem', 'completed'])
+const emits = defineEmits(['clickItem', 'completed', 'legendselectchanged', 'legendscroll'])
+const chartEvents = ['legendselectchanged', 'legendscroll']
+
 const props = defineProps({
 	option: {
 		type: Object,
@@ -45,6 +47,7 @@ let observer = null
 let observerTimer = null
 
 const setConfig = () => {
+	console.log(2)
 	emits('clickItem', chart, props.option)
 }
 
@@ -66,6 +69,12 @@ const initChart = async () => {
 		chart = init(chartDom)
 		if (props.option && Object.keys(props.option).length > 0) {
 			chart.setOption(props.option, true)
+
+			chartEvents.forEach((event) => {
+				chart.on(event, () => {
+					emits(event, chart, props.option)
+				})
+			})
 		}
 		emits('completed', chart)
 	} catch (err) {
@@ -187,8 +196,9 @@ defineExpose({
 		text-transform: uppercase;
 		color: #0000;
 		-webkit-text-stroke: 1px var(--z-primary);
-		background: radial-gradient(1.13em at 50% 1.6em, var(--z-primary) 99%, #0000 101%)
-				calc(50% - 1.6em) 0/3.2em 100% text,
+		background:
+			radial-gradient(1.13em at 50% 1.6em, var(--z-primary) 99%, #0000 101%) calc(50% - 1.6em)
+				0/3.2em 100% text,
 			radial-gradient(1.13em at 50% -0.8em, #0000 99%, var(--z-primary) 101%) 50% 0.8em/3.2em
 				100% repeat-x text;
 		animation: l9 2s linear infinite;
@@ -199,7 +209,9 @@ defineExpose({
 	}
 	@keyframes l9 {
 		to {
-			background-position: calc(50% + 1.6em) 0, calc(50% + 3.2em) 0.8em;
+			background-position:
+				calc(50% + 1.6em) 0,
+				calc(50% + 3.2em) 0.8em;
 		}
 	}
 }

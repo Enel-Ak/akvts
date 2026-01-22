@@ -38,8 +38,23 @@ const bchart = {
 		trigger: 'item',
 	},
 	legend: {
-		orient: 'vertical',
-		left: 'left',
+		show: true,
+		type: 'scroll',
+		left: 'center',
+		itemWidth: 10,
+		itemHeight: 10,
+		textStyle: {
+			fontSize: 12,
+			color: '#666',
+		},
+		pageIconColor: '#2196F3', // 滚动按钮颜色
+		pageIconInactiveColor: '#aaa', // 滚动按钮禁用颜色
+		pageIconSize: 12, // 滚动按钮大小
+		pageTextStyle: {
+			color: '#666',
+		},
+		orient: 'horizontal',
+		bottom: 10,
 	},
 	series: [
 		{
@@ -175,6 +190,10 @@ const onClickItem = (chart, option) => {
 }
 
 const tableHeight = ref(100)
+
+const abc = () => {
+	console.log(333)
+}
 onMounted(() => {
 	tableHeight.value = 500
 })
@@ -190,13 +209,14 @@ onMounted(() => {
 					:enableExpandContent="false"
 					:enable-close-button="false"
 				>
-					<!-- <Charts
+					<Charts
 						:ref="(el) => chartRefMap.set(chart.prop, toRaw(el))"
 						:loading="false"
 						:option="chart.option"
 						@click-item="onClickItem"
-					/> -->
-					<TableV2
+						@legendselectchanged="abc"
+					/>
+					<!-- <TableV2
 						:height="tableHeight"
 						:columns="[
 							{label: 'a', prop: 'a'},
@@ -227,7 +247,7 @@ onMounted(() => {
 							{a: '2', b: '3', c: '4', d: '5'},
 						]"
 						:disable="true"
-					></TableV2>
+					></TableV2> -->
 				</Block>
 			</template>
 		</GridLayout>
