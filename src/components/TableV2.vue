@@ -113,6 +113,8 @@ const props = defineProps({
 
 	operateAlign: {type: String, default: 'center'},
 	operateFixed: {type: String, default: 'right'},
+
+	cache: {type: Boolean, default: false}, // 缓存表格数据
 })
 
 const TableStatusEnum = {
@@ -164,7 +166,7 @@ watch(
 
 watch(
 	() => [props.url, props.reqParams, props.reqData],
-	(newVal) => {
+	(newVal, oldVal) => {
 		if (!props.enableRequestParamsLoad) return
 		// if (__requestTimer) {
 
@@ -271,6 +273,7 @@ watch(
 	{deep: true, immediate: true}
 )
 
+const tableDataMap = new Map()
 const getList = () => {
 	clearTimeout(__requestTimer)
 	__requestTimer = setTimeout(() => {
@@ -285,9 +288,19 @@ const getList = () => {
 
 		let isEvent = false
 		let timer = null
+		const {page} = props.pagination
 
 		_loading.value = true
 		emits('loading', _loading.value)
+
+		if (props.cache && tableDataMap.get(page)) {
+			tableData.value = tableDataMap.get(page)
+			_loading.value = false
+			emits('update:modelValue', tableData.value)
+			emits('loading', _loading.value)
+			emits('completed', props.method)
+			return
+		}
 
 		tableData.value = []
 		axios
@@ -303,6 +316,9 @@ const getList = () => {
 				const totalCount = res.data.totalCount || items.length
 				const _next = (calldata) => {
 					tableData.value = calldata || items
+
+					tableDataMap.set(page, tableData.value)
+
 					total.value = totalCount
 					_loading.value = false
 					emits('update:modelValue', tableData.value)
@@ -963,6 +979,9 @@ defineExpose({
 	visibleFormDialog: (bool, data = null) => {
 		dialogVisible.value = bool
 		formData.value = data
+	},
+	clearCache: () => {
+		tableDataMap.clear()
 	},
 })
 </script>
