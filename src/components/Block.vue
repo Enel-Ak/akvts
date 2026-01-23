@@ -363,10 +363,10 @@ defineExpose({
 				height: !expandBlock
 					? 0
 					: _height
-					? _height
-					: enableFixedHeight || inherit
-					? `${contextHeight}px`
-					: '100%',
+						? _height
+						: enableFixedHeight || inherit
+							? `${contextHeight}px`
+							: '100%',
 			}"
 		>
 			<div
@@ -385,10 +385,10 @@ defineExpose({
 					height: _height
 						? _height
 						: enableFixedHeight
-						? `${contextHeight - expendContentHeight}px`
-						: inherit
-						? `${contextHeight}px`
-						: 'auto',
+							? `${contextHeight - expendContentHeight}px`
+							: inherit
+								? `${contextHeight}px`
+								: 'auto',
 				}"
 			>
 				<div class="content" :style="{height: inherit ? `${contextHeight - 15}px` : ''}">
@@ -501,7 +501,8 @@ defineExpose({
 			margin: 0 torem(5px);
 		}
 
-		.topLeft {
+		.topLeft,
+		.topRight {
 			align-items: center;
 			display: flex;
 		}
@@ -562,7 +563,9 @@ defineExpose({
 		height: 0;
 		opacity: 0;
 		overflow: hidden;
-		transition: height 0.15s linear, opacity 0.15s linear;
+		transition:
+			height 0.15s linear,
+			opacity 0.15s linear;
 
 		.block-component-body {
 			overflow-y: auto;
