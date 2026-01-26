@@ -24,14 +24,6 @@ const props = defineProps({
 		type: Array,
 		default: () => ['hidden', 'hidden'], // x, y
 	},
-	float: {
-		type: Boolean,
-		default: false,
-	},
-	disableOneColumnMode: {
-		type: Boolean,
-		default: false,
-	},
 	compact: {
 		type: Boolean,
 		default: true,
@@ -149,9 +141,6 @@ onMounted(async () => {
 	grid.value = GridStack.init({
 		draggable: {
 			cancel: '.table-component',
-			float: props.float, // 关键：启用浮动布局，不自动向上挤
-			disableOneColumnMode: props.gridProps, // 防止响应式自动重排
-			staticGrid: false,
 		},
 	})
 	grid.value.on('change', changeGridStack)
@@ -164,7 +153,7 @@ onUnmounted(() => {
 
 defineExpose({
 	getGrid: () => grid.value,
-	updateLayout: () => {
+	compact: () => {
 		if (grid.value) {
 			grid.value.compact()
 		}
