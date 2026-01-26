@@ -32,6 +32,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	compact: {
+		type: Boolean,
+		default: true,
+	},
 })
 
 const grid = ref()
@@ -105,7 +109,9 @@ const updateGridStack = (newProps, oldProps) => {
 		})
 
 		// 重新整理布局
-		grid.value.compact()
+		if (props.compact) {
+			grid.value.compact()
+		}
 	})
 }
 
@@ -138,7 +144,8 @@ const changeGridStack = (event, items) => {
 	)
 }
 
-onMounted(() => {
+onMounted(async () => {
+	await nextTick()
 	grid.value = GridStack.init({
 		draggable: {
 			cancel: '.table-component',
