@@ -186,20 +186,36 @@ const chartRefMap = new Map()
 // }, 2000)
 
 const onClickItem = (chart, option) => {
-	console.log(chart, option)
+	console.log(gridLayoutRef.value.getGrid())
 }
 
 const tableHeight = ref(100)
 
-const abc = () => {
-	console.log(333)
+const aaaa = () => {
+	charts.value.push({
+		prop: 'default' + Date.now(),
+		x: 0,
+		y: 0,
+		w: 3,
+		h: 3,
+		title: '柱状图',
+		option: achart,
+		content: 'Item 1',
+	})
 }
+
+const bbbb = () => {
+	console.log(111, charts.value)
+}
+
 onMounted(() => {
 	tableHeight.value = 500
 })
 </script>
 <template>
 	<div class="grid grid-cols-4 gap-4">
+		<el-button @click="aaaa">aaaa</el-button>
+		<el-button @click="bbbb">bbbb</el-button>
 		<GridLayout ref="gridLayoutRef" :props="charts" @click-item="(gridItem) => {}">
 			<template #[`grid-${chart.prop}`] v-for="(chart, index) of charts">
 				<Block
@@ -214,7 +230,7 @@ onMounted(() => {
 						:loading="false"
 						:option="chart.option"
 						@click-item="onClickItem"
-						@legendselectchanged="abc"
+						@legendselectchanged=""
 					/>
 					<!-- <TableV2
 						:height="tableHeight"
