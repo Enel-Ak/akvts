@@ -24,6 +24,14 @@ const props = defineProps({
 		type: Array,
 		default: () => ['hidden', 'hidden'], // x, y
 	},
+	float: {
+		type: Boolean,
+		default: false,
+	},
+	disableOneColumnMode: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 const grid = ref()
@@ -134,6 +142,8 @@ onMounted(() => {
 	grid.value = GridStack.init({
 		draggable: {
 			cancel: '.table-component',
+			float: props.float, // 关键：启用浮动布局，不自动向上挤
+			disableOneColumnMode: props.gridProps, // 防止响应式自动重排
 		},
 	})
 	grid.value.on('change', changeGridStack)

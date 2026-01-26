@@ -317,7 +317,9 @@ const getList = () => {
 				const _next = (calldata) => {
 					tableData.value = calldata || items
 
-					tableDataMap.set(page, tableData.value)
+					if (props.cache) {
+						tableDataMap.set(page, tableData.value)
+					}
 
 					total.value = totalCount
 					_loading.value = false
@@ -904,6 +906,7 @@ onDeactivated(() => {
 })
 
 onBeforeUnmount(() => {
+	tableDataMap.clear()
 	clearTimeout(__requestTimer)
 	window.removeEventListener('resize', setTableHeight)
 })
