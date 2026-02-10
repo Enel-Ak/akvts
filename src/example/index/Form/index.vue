@@ -9,7 +9,14 @@ const formProps = [
 </script>
 <template>
 	<div>
-		<Form :props="formProps" :column-count="3"></Form>
+		<Form :props="formProps" :column-count="3">
+			<template #form-c>123</template>
+			<template #form-c-right>
+				<div class="w-full">
+					<el-button>按钮</el-button>
+				</div>
+			</template>
+		</Form>
 	</div>
 </template>
 <style scoped lang="scss"></style>

@@ -554,8 +554,8 @@ const visibleCells = (row) => {
 		isFiltered.value && hasFilteredData.value && row.filteredR !== undefined
 			? row.filteredR
 			: isFiltered.value && hasFilteredData.value
-			? 0
-			: row.r
+				? 0
+				: row.r
 
 	// 获取行数据
 	const rowData = dataSource.get(dataRowIndex)

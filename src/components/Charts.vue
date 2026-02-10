@@ -47,7 +47,6 @@ let observer = null
 let observerTimer = null
 
 const setConfig = () => {
-	console.log(2)
 	emits('clickItem', chart, props.option)
 }
 

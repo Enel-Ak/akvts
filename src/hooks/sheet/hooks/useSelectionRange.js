@@ -466,6 +466,7 @@ export const useSelectionRange = () => {
 			'--z-highlight-color-rgb': hslToRgb(color),
 			'--z-permission-type': permissionType,
 		})
+
 		return highlightRanges.get(id)
 	}
 
