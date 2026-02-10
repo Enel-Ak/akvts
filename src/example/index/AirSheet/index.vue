@@ -14,11 +14,18 @@ const config = ref({
 		showHorizontalScreen: false,
 		auth: 2,
 
+		permissions: {
+			'3a0b4b62-d135-3903-0589-b7f520734872': {
+				type: 'column',
+				targets: [5, 7],
+				userName: 'admin',
+			},
+		},
 		superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
 		deepPermissions: {
 			'3a0b4b62-d135-3903-0589-b7f520734872': {
 				type: 'column',
-				targets: [4, 6],
+				targets: [1, 3],
 				timestamp: 1761708065001,
 				userName: 'admin',
 			},
