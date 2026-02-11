@@ -22,14 +22,6 @@ const config = ref({
 			},
 		},
 		superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
-		deepPermissions: {
-			'3a0b4b62-d135-3903-0589-b7f520734872': {
-				type: 'column',
-				targets: [1, 3],
-				timestamp: 1761708065001,
-				userName: 'admin',
-			},
-		},
 		showToolbar: false,
 		edit: true,
 		freezeCount: {
@@ -1704,6 +1696,17 @@ watch(
 	}
 )
 
+const onCellClick = (row) => {
+	config.value.config.deepPermissions = {
+		'3a0b4b62-d135-3903-0589-b7f520734872': {
+			type: 'column',
+			targets: [row.c],
+			timestamp: 1761708065001,
+			userName: 'admin',
+		},
+	}
+}
+
 onActivated(() => {
 	// 获取sheets
 
@@ -1781,6 +1784,7 @@ onDeactivated(() => {
 			:async-sheet="synergyData"
 			:allHistoryData="allHistoryData"
 			:cellHistoryData="cellHistoryData"
+			@cell-click="onCellClick"
 			@add-sheet="addSheet"
 			@asyncInputCell="asyncInputCell"
 			@asyncEventCell="onAsyncEventCell"

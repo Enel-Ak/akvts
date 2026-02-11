@@ -3078,6 +3078,11 @@ const getDeepPermissionStyle = (range, index) => {
 		'--permission-color': permissionColor,
 	}
 
+	// ✅ 修复 auth=2 时的高度
+	if (sheet.config.auth === 2) {
+		style.height = visibleRangeRef.value.metrics.totalHeight + 'px'
+	}
+
 	// ✅ 修复: 统一所有权限等级的样式（auth=1, 2, 3 都使用虚线边框）
 	// 所有权限类型：使用半透明背景色（10% 透明度），让 CSS 的伪元素虚线边框生效
 	style.backgroundColor = `${permissionColor}1A` // 1A = 10% 透明度

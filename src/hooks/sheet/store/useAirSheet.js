@@ -68,8 +68,8 @@ const defaultSheet = {
 		merged: {}, // 已合并单元格
 		locked: {}, // 锁定单元格
 		permissions: {}, // 权限
-		deepPermissions: {}, // 深度锁定
-		superPermissions: [], // 权限控制, 优先级别高于 permissions
+		deepPermissions: {}, // 深度锁定, 点击行/列时的锁定
+		superPermissions: [], // 权限, 优先级别高于 permissions
 		styled: {}, // 有样式的单元格
 		formulaed: {}, // 有公式的单元格
 		formulaMap: {}, // 被公式引用的单元格
