@@ -127,7 +127,7 @@ export const useEdit = () => {
 				? {
 						cellKey: originalFormulaState.cellKey,
 						cell: originalFormulaState.cell,
-				  }
+					}
 				: null,
 		})
 
@@ -279,6 +279,10 @@ export const useEdit = () => {
 		let beforeValue = cellEl?.innerText || ''
 		let isAutoSave = false
 		const focus = () => {
+			if (!sheet.config.synergy) {
+				return
+			}
+
 			let lastTime = 0
 			let fn = () => {
 				reqTimer = requestAnimationFrame((time) => {

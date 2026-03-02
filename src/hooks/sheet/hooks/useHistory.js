@@ -254,7 +254,8 @@ export const useHistory = () => {
 									)
 								} else {
 									sheet.hooks.selectionRangeHook.setRange(r, c, r, c, true)
-									sheet.hooks.permissionsHook.updatePermissions(r, c, r, c)
+									sheet.config.synergy &&
+										sheet.hooks.permissionsHook.updatePermissions(r, c, r, c)
 								}
 							}
 						)
@@ -548,6 +549,9 @@ export const useHistory = () => {
 					state.removeCol.size === 0
 				) {
 					sheet.hooks.toolsHook.asyncUpdateConfig(0, null, null)
+				} else {
+					sheet.state.loading = false
+					sheet.state.msg = ''
 				}
 
 				callback?.()

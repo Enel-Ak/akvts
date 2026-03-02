@@ -682,9 +682,9 @@ export const useSelectionRange = () => {
 	// 鼠标点击处理
 	let mouseDownTimer = null
 	const handleMouseDown = (e) => {
-		mouseDownCallCount++
-
 		if (e.button !== 0) return // 只处理左键点击
+
+		mouseDownCallCount++
 
 		mouseDownPos = {x: e.clientX, y: e.clientY}
 
@@ -719,14 +719,10 @@ export const useSelectionRange = () => {
 			}
 		}
 
-		// if (sheet.hooks.superPermissionsHook.checkSuperPermission(pos.r, pos.c, 1, 1).locked) {
-		// 	return
-		// }
-
 		// ✅ 问题二: 在选中前先检查权限,如果被锁定则直接提示并返回
-		if (sheet.config.synergy && sheet.config.auth > 0 && sheet.hooks.permissionsHook) {
+		if (sheet.config.auth > 0) {
+			// sheet.config.synergy &&
 			const permissionCheck = sheet.hooks.permissionsHook.checkPermission(pos.r, pos.c, 1, 1)
-
 			if (permissionCheck.locked) {
 				clearTimeout(mouseDownTimer)
 				mouseDownTimer = setTimeout(() => ElMessage.warning(permissionCheck.reason), 300)

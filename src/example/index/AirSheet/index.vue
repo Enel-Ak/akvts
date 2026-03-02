@@ -1697,14 +1697,14 @@ watch(
 )
 
 const onCellClick = (row) => {
-	config.value.config.deepPermissions = {
-		'3a0b4b62-d135-3903-0589-b7f520734872': {
-			type: 'column',
-			targets: [row.c],
-			timestamp: 1761708065001,
-			userName: 'admin',
-		},
-	}
+	// config.value.config.deepPermissions = {
+	// 	'3a0b4b62-d135-3903-0589-b7f520734872': {
+	// 		type: 'column',
+	// 		targets: [row.c],
+	// 		timestamp: 1761708065001,
+	// 		userName: 'admin',
+	// 	},
+	// }
 }
 
 onActivated(() => {

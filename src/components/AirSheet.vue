@@ -167,6 +167,7 @@ watch(
 	},
 	{deep: true, immediate: true}
 )
+
 const Tabs = [
 	{name: 'start', label: '开始'},
 	{name: 'formula', label: '公式'},
@@ -2568,6 +2569,30 @@ const onDeleteSheet = (sheetItem) => {
 	console.log('=== onDeleteSheet 结束 ===')
 }
 
+const clearSheetConfig = () => {
+	// ✅ 更新 sheet.config（从外部到内部的单向数据流）
+	// 预防切换sheet时配置错误, 并且保留原始基础配置
+	const clearConfigKeys = [
+		'merged',
+		'formulaed',
+		'formulaMap',
+		'styled',
+		'locked',
+		'rResize',
+		'cResize',
+		'filtered',
+		'permissions',
+		'deepPermissions',
+		'superPermissions',
+	]
+
+	clearConfigKeys.forEach((key) => {
+		if (sheet.config[key]) {
+			sheet.config[key] = {}
+		}
+	})
+}
+
 // 强制更新可视区域事件处理函数
 let forceUpdateHandler = null
 const hooksEvent = () => {
@@ -2601,23 +2626,6 @@ const destroy = () => {
 	// 	hook?.destroy?.()
 	// })
 }
-
-watch(
-	() => sheetStore.getSheet(sheetId.value),
-	(newVal) => {
-		if (sheet.hooks?.resizeHook?.isResizing || !newVal) return
-		Object.assign(sheet, newVal)
-		useDebounce(
-			() => {
-				console.log('updated AirSheet', newVal)
-				updateVisibleRange()
-			},
-			150,
-			'airSheetLogs'
-		)()
-	},
-	{deep: true}
-)
 
 // 监听当前 sheet 是否被删除，如果被删除则自动切换
 watch(
@@ -2754,30 +2762,10 @@ watch(
 		}
 
 		console.log('配置变化处理:', newVal)
-
-		// ✅ 更新 sheet.config（从外部到内部的单向数据流）
-		// 预防切换sheet时配置错误, 并且保留原始基础配置
-		const clearConfigKeys = [
-			'merged',
-			'formulaed',
-			'formulaMap',
-			'styled',
-			'locked',
-			'rResize',
-			'cResize',
-			'filtered',
-			'permissions',
-			'deepPermissions',
-			'superPermissions',
-		]
-		clearConfigKeys.forEach((key) => {
-			if (sheet.config[key]) {
-				sheet.config[key] = {}
-			}
-		})
+		clearSheetConfig()
 
 		// 更新配置
-		sheet.config = Object.assign(sheet.config, toRaw(newVal))
+		sheet.config = Object.assign(sheet.config, JSON.parse(JSON.stringify(newVal)))
 
 		// ✅ 处理副作用：应用 merged 和 formulaed
 		const mc = newVal.merged || {}
@@ -2855,6 +2843,24 @@ watch(
 	(newVal) => {
 		isExpandToolbar.value = newVal
 	}
+)
+
+watch(
+	() => sheetStore.getSheet(sheetId.value),
+	(newVal, oldVal) => {
+		if (sheet.hooks?.resizeHook?.isResizing || !newVal) return
+		Object.assign(sheet, newVal)
+
+		useDebounce(
+			() => {
+				console.log('updated AirSheet', newVal)
+				updateVisibleRange()
+			},
+			150,
+			'airSheetLogs'
+		)()
+	},
+	{deep: true}
 )
 
 onBeforeMount(() => {})
