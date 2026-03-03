@@ -4194,8 +4194,8 @@ const getSuperPermissionStyle = (range, index) => {
 							<div
 								v-if="
 									sheet.config.auth === 1 &&
-									range.r >= visibleRangeRef.visible.startRow &&
-									range.rr <= visibleRangeRef.visible.endRow
+									range.r >= visibleRangeRef?.visible?.startRow &&
+									range.rr <= visibleRangeRef?.visible?.endRow
 								"
 								class="highlight"
 								:data-permission-type="range.type"
@@ -4209,8 +4209,8 @@ const getSuperPermissionStyle = (range, index) => {
 							<div
 								v-else-if="
 									sheet.config.auth === 2 &&
-									range.c >= visibleRangeRef.visible.startCol &&
-									range.cc <= visibleRangeRef.visible.endCol
+									range.c >= visibleRangeRef?.visible?.startCol &&
+									range.cc <= visibleRangeRef?.visible?.endCol
 								"
 								class="highlight"
 								:data-permission-type="range.type"
@@ -4224,10 +4224,10 @@ const getSuperPermissionStyle = (range, index) => {
 							<div
 								v-else-if="
 									sheet.config.auth === 3 &&
-									range.c >= visibleRangeRef.visible.startCol &&
-									range.cc <= visibleRangeRef.visible.endCol &&
-									range.r >= visibleRangeRef.visible.startRow &&
-									range.rr <= visibleRangeRef.visible.endRow
+									range.c >= visibleRangeRef?.visible?.startCol &&
+									range.cc <= visibleRangeRef?.visible?.endCol &&
+									range.r >= visibleRangeRef?.visible?.startRow &&
+									range.rr <= visibleRangeRef?.visible?.endRow
 								"
 								class="highlight"
 								:data-permission-type="range.type"
@@ -4249,10 +4249,10 @@ const getSuperPermissionStyle = (range, index) => {
 						>
 							<div
 								v-if="
-									range.r >= visibleRangeRef.visible.startRow &&
-									range.rr <= visibleRangeRef.visible.endRow &&
-									range.c >= visibleRangeRef.visible.startCol &&
-									range.cc <= visibleRangeRef.visible.endCol
+									range.r >= visibleRangeRef?.visible?.startRow &&
+									range.rr <= visibleRangeRef?.visible?.endRow &&
+									range.c >= visibleRangeRef?.visible?.startCol &&
+									range.cc <= visibleRangeRef?.visible?.endCol
 								"
 								class="highlight super-permission"
 								:data-super-permission="true"
