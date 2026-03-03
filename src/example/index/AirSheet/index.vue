@@ -12,13 +12,21 @@ const config = ref({
 	config: {
 		synergy: false,
 		showHorizontalScreen: false,
-		auth: 2,
+		auth: 1,
 
 		permissions: {
 			'3a0b4b62-d135-3903-0589-b7f520734872': {
 				type: 'column',
 				targets: [5, 7],
 				userName: 'admin',
+			},
+		},
+		deepPermissions: {
+			'3a0b4b62-d135-3903-0589-b7f520734871': {
+				type: 'row',
+				targets: [7],
+				timestamp: 1761708065000,
+				userName: '行auth=1',
 			},
 		},
 		superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],

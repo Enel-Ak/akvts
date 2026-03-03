@@ -425,7 +425,7 @@ defineExpose({
 								{{
 									(item.modifiedTitle || item[keys[1]]).length > 10
 										? (item.modifiedTitle || item[keys[1]]).substring(0, 10) +
-										  '...'
+											'...'
 										: item.modifiedTitle || item[keys[1]]
 								}}
 								<span

@@ -133,6 +133,7 @@ watch(
 		() => sheet.rowMapping, // 监听筛选状态的变化
 		() => sheet.config?.filtered, // 监听筛选条件的变化
 		() => sheet.config?.rowCount, // 监听行数变化
+		() => sheet.config?.colCount, // 监听列数变化
 	],
 	() => {
 		permissionRanges.value = sheet.hooks?.permissionsHook?.getPermissionRanges() || []
@@ -156,6 +157,7 @@ watch(
 		() => sheet.rowMapping, // 监听筛选状态的变化
 		() => sheet.config?.filtered, // 监听筛选条件的变化
 		() => sheet.config?.rowCount, // 监听行数变化
+		() => sheet.config?.colCount, // 监听列数变化
 	],
 	() => {
 		deepPermissionRanges.value = sheet.hooks?.permissionsHook?.getDeepPermissionRanges() || []
