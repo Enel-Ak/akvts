@@ -344,7 +344,7 @@ const savedScrollPosition = ref({top: 0, left: 0})
 
 // 初始数据处理
 const initialData = (data = []) => {
-	if (!props.modelValue?.celldata || !sheet || !sheet.config) return
+	if (!props.modelValue?.celldata) return
 
 	if (props.modelValue?.celldata) {
 		sheet.config.rowCount = Math.max(props.modelValue.celldata.length, props.rowCount)

@@ -10,41 +10,41 @@ const route = useRoute()
 const sheetRef = ref()
 const config = ref({
 	config: {
-		synergy: false,
+		synergy: true,
 		showHorizontalScreen: false,
 		auth: 1,
 
-		permissions: {
-			'3a0b4b62-d135-3903-0589-b7f520734872': {
-				type: 'column',
-				targets: [5, 7],
-				userName: 'admin',
-			},
-		},
-		deepPermissions: {
-			'3a0b4b62-d135-3903-0589-b7f520734871': {
-				type: 'row',
-				targets: [7],
-				timestamp: 1761708065000,
-				userName: '行auth=1',
-			},
-		},
-		superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
-		showToolbar: false,
-		edit: true,
-		freezeCount: {
-			row: 1,
-			col: 1,
-		},
-		keys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
-		online: [
-			{id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
-			{id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
-			{id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
-			{id: 4, name: '测试4', r: 3, c: 3, rr: 3, cc: 3, value: '测试内容4', state: 1},
-			{id: 5, name: '测试5', r: 4, c: 4, rr: 4, cc: 4, value: '测试内容5', state: 1},
-			{id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
-		],
+		// permissions: {
+		// 	'3a0b4b62-d135-3903-0589-b7f520734872': {
+		// 		type: 'column',
+		// 		targets: [5, 7],
+		// 		userName: 'admin',
+		// 	},
+		// },
+		// deepPermissions: {
+		// 	'3a0b4b62-d135-3903-0589-b7f520734871': {
+		// 		type: 'row',
+		// 		targets: [7],
+		// 		timestamp: 1761708065000,
+		// 		userName: '行auth=1',
+		// 	},
+		// },
+		// superPermissions: [{r: 1, c: 1, rr: 3, cc: 3, v: '表头区域，不可编辑'}],
+		// showToolbar: false,
+		// edit: true,
+		// freezeCount: {
+		// 	row: 1,
+		// 	col: 1,
+		// },
+		// keys: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
+		// online: [
+		// 	{id: 1, name: '测试1', r: 6, c: 6, rr: 6, cc: 6, value: '测试内容1', state: 1},
+		// 	{id: 2, name: '测试2', r: 1, c: 1, rr: 1, cc: 1, value: '测试内容2', state: 1},
+		// 	{id: 3, name: '测试3', r: 2, c: 2, rr: 2, cc: 2, value: '测试内容3', state: 1},
+		// 	{id: 4, name: '测试4', r: 3, c: 3, rr: 3, cc: 3, value: '测试内容4', state: 1},
+		// 	{id: 5, name: '测试5', r: 4, c: 4, rr: 4, cc: 4, value: '测试内容5', state: 1},
+		// 	{id: 6, name: '测试6', r: 5, c: 5, rr: 5, cc: 5, value: '测试内容6', state: 1},
+		// ],
 	},
 	// celldata: Array.from({length: 51200}, (_, r) => {
 	// 	return Array.from({length: 20}, (_, c) => {
@@ -1191,12 +1191,12 @@ onActivated(() => {
 
 //21025
 const onClick = () => {}
-const api = ref('http://100.92.2.93:8081/signalr-hubs/onlinetable')
+const api = ref('http://23.99.9.226:8001/signalr-hubs/onlinetable')
 const token = route.query.abc
 	? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjIzMjM1MDMsImV4cCI6MTc2MjQ5NTUwMywiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWNhZjctZjVkMC00MDlmLWFiMGFkYzllMGRjMCIsImF1dGhfdGltZSI6MTc2MjMyMzUwMywiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzk5NjM3MTg4N0BpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MDkyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MzAwNjQ3OTExNDI0Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otMTM5OTYzNzE4ODciLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8IiwiZGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1kMzJkLWJhM2ItNjJjOGQ4Mjg4MzEzIiwiYmlnRGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1iZGUzLWU2NGUtNjFhMWYzYWVjOTkwIiwiaWF0IjoxNzYyMzIzNTAzLCJzY29wZSI6WyJhZGRyZXNzIiwiZW1haWwiLCJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciIsIm9wZW5pZCIsInBob25lIiwicHJvZmlsZSIsInJvbGUiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsiQXV0aENvZGUiXX0.NM-gjDWf3B8JZAaNz2bs3D-uJvv1sbutiBdW821Vd4ZSod_5RREK5Ib9DFQKrvLmQkcTQFRg5VZH8Y4Xu5VQ5ZMs27maycQ9f64sAkbN-sZM1bIIlY-VCwdZsgNYl9TXwffylPQZYAc3xUbrujBGtaQVJDR3qTae88JNKsqrHHEnFDVYZ2aGhWWWvGs7Ct3UvRAY28geS-r58gvuMUxdSt8l1SMTcBh605akYTJovXNtx2pKh1SPEG2sS530sZZ5QHYpLCYGkAU76eIbOhb6GCqeEZeYRafv7qhPCiMAFRUmWWSzK7ujeXJbx67dBwE8QZiVFxngs4LhZ_YhIjyFFg'
 	: route.query.def
 		? 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjI0MTg4NTAsImV4cCI6MTc2MjU5MDg1MCwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI1MDliLWMzMWEtNGM3Zi1lM2ViLTIxYmVkYjZkMTAwMSIsImF1dGhfdGltZSI6MTc2MjQxMjY3NiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei0xMzQzNjExNzA1NkBpbnNwdXIuY29tIiwieWt6LWlkIjoiMzU0MjAyIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8xNjM1MDg4MjcxODAzNjgyODE2Iiwicm9sZSI6WyLlj7DotKbkuIrkuIvnur8iLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5bel5L2c5Lq65ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5Y3N0amZnbGQiLCJidXNpbmVzc1JvbGUiOiLmlbDmja7pooblr7ws5pWw5o2u5a-85Ye6IiwiZGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1kMzJkLWJhM2ItNjJjOGQ4Mjg4MzEzIiwiYmlnRGVwYXJ0bWVudElkIjoiM2EwYjRiNTAtOTA2Mi1iZGUzLWU2NGUtNjFhMWYzYWVjOTkwIiwiaWF0IjoxNzYyNDE4ODUwLCJzY29wZSI6WyJhZGRyZXNzIiwiZW1haWwiLCJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciIsIm9wZW5pZCIsInBob25lIiwicHJvZmlsZSIsInJvbGUiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsiQXV0aENvZGUiXX0.LvqZ3NJObGeU2tinODbQFw5T_3s-Vy3ZPQSqn58_z1a0RxU86bP92zpmiKS5aNFkiE895SxEr2yX5097_nGdjhooEf6-Fq5IDyQrsed-fTEWAQ1R6x1cSWltF8mfSyxRMdKNAOn4NxAneZA9kbTQzHvrSgpxyQqQNNTk56nOJjdCsy_XFuMCMWKtoyA5RUYDhvKcTaaS4e8G18vGwA1kwMK8F-pb-JuimN9aKomeGqmn71Pjdzfi8goVoeCFt8dNgypwIDgi9mjworuF7DbyzLvGGVEbApV5PSTnNmeq4guDj2pA_59a5JXX9zofU818Bj15elfooP7XmUSctUsPlw'
-		: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjY4RDU4RkU5MDdBN0FFMjk3OEI0RjE5MkIyNzI2RjZCIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NjQ3MjU3NTEsImV4cCI6MTc2NDg5Nzc1MSwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMSIsImF1ZCI6WyJpbnNwdXItYWJwLWFwcGxpY2F0aW9uIiwiaW5zcHVyLWxlZGdlciJdLCJjbGllbnRfaWQiOiJ2dWUtYWRtaW4tZWxlbWVudCIsInN1YiI6IjNhMGI0YjYyLWQxMzUtMzkwMy0wNTg5LWI3ZjUyMDczNDg3MSIsImF1dGhfdGltZSI6MTc2NDY0MTA1NiwiaWRwIjoibG9jYWwiLCJlbWFpbCI6Inlrei1zZGFnX3pqYkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yNzY0Nzk4NzgyNjc3MzY1MzEiLCJ5a3otaWQiOiIyMjc4Iiwicm9sZSI6WyLku7vliqHnrqHnkIbov5vluqYiLCLliqDop6Plr4YiLCLlj7DotKbkuIrkuIvnur8iLCLlj7DotKbov5Dnu7TlkZgiLCLlnKjnur_loavmiqUiLCLlnLrmma_orr7orqEiLCLln7rnoYDlip_og70t5rid5b-r5pS_Iiwi5aSn5bGP5p-l55yLIiwi5biC5Yy66am-6am26IixIiwi566h55CG5ZGYIl0sInBob25lX251bWJlcl92ZXJpZmllZCI6IkZhbHNlIiwiZW1haWxfdmVyaWZpZWQiOiJGYWxzZSIsIm5hbWUiOiJ5a3otc2RhZ196amIiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtMzE4ZC1mZDk5LTRjNjFmOWViYjE3ZiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMGI0YjUwLThmNzUtNzU3Yi1iOWY4LTRiNzE5MjA4OGE0NiIsImlhdCI6MTc2NDcyNTc1MSwic2NvcGUiOlsiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1sZWRnZXIiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.PsoG0dc7vO5nYHfOn6U0za12-edoKVx_xL2XEozNVggbeXFqi2EvkI7kSCMc8DIjzkP66MqzBRuG-02fmoUEw9jlTvHGm_EBIswD5vcxXspuoJVR4sa8cmFbphep4k5ARGdaCJ8DgQAmv1Rtn1q-LRldM3PYA6Jv224nP5aMx8dmpALb8cuT1hAnHOU4AGp7orcFTcawYvosrAJ45uadDpQLQknZzF5dQwS0boXjXBYu_nEZ3hQwZMqSRv9Eb2EJIr4kJ1TowPU8fw-sOD6d_Sk_ao5q97jIFlzEcrprms6ZAstKfSz29sm5YCHIrWpsQHnN8N6uF8xKiqQxpqDGWQ'
+		: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjZGQTRGRjA0MDg5RjVGRDU0NkE5NTUzNzI1NUU1OTlBIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3NzI3MTYzNzMsImV4cCI6MTc3MjczMDc3MywiaXNzIjoiaHR0cDovLzE3Mi4zMS42LjEzOjgzIiwiYXVkIjpbImluc3B1ci1hYnAtYXBwbGljYXRpb24iLCJpbnNwdXItbGVkZ2VyIl0sImNsaWVudF9pZCI6InZ1ZS1hZG1pbi1lbGVtZW50Iiwic3ViIjoiM2ExZTViMGItM2YzMy0yNDY2LTZlYmItM2YxYjRkMjI2OTgzIiwiYXV0aF90aW1lIjoxNzcyNzE2MzY3LCJpZHAiOiJsb2NhbCIsImVtYWlsIjoiWUtaLVdBTkdIVUlMSU5HMDQ0NkBpbnNwdXIuY29tIiwieWt6LWVtcGxveWVlLWNvZGUiOiJHRV8yMDAzMjc1MTQ3NTYxOTk2Mjg4IiwieWt6LWlkIjoiMTI4ODAyOCIsInJvbGUiOlsi5Z-656GA5Yqf6IO9Lea4neW_q-aUvyIsImxlZGdlci1zdXBlci1hZG1pbiIsIuWkp-Wxj-afpeeciyIsIui_kOihjOS4reW_gyIsIuWPsOi0puS4iuS4i-e6vyIsIua1geeoi-iuvuiuoSIsIuWPsOi0pueuoeeQhiIsIumVh-ihl-mpvumptuiIsSIsIuWFuOWei-WcuuaZr-afpeeciyIsIuaMh-agh-euoeeQhue7hOS7tiIsIuWPsOi0pui_kOe7tOWRmCIsIuWKoOino-WvhiIsIuWFuOWei-WcuuaZr-iuvuiuoSIsIuWcqOe6v-Whq-aKpSIsIuW4gue6p-mihuWvvC3kuLTml7YiLCJBSeW6lOeUqCJdLCJwaG9uZV9udW1iZXIiOiIxNzc4MjA2MDQ0NiIsInBob25lX251bWJlcl92ZXJpZmllZCI6IlRydWUiLCJlbWFpbF92ZXJpZmllZCI6IkZhbHNlIiwibmFtZSI6IllLWi1XQU5HSFVJTElORzA0NDYiLCJidXNpbmVzc1JvbGUiOiLlt6XkvZzkurrlkZgs5pWw5o2u6aKG5a-8LOaVsOaNruWvvOWHuiIsImRlcGFydG1lbnRJZCI6IjNhMTI2ZDFlLTdjYzAtZDU5Yy0xNDcwLWI0OGVjMzZiNDZiYiIsImJpZ0RlcGFydG1lbnRJZCI6IjNhMTI2ZDFlLTA3ZDQtNTAyOC1jNmQxLTVmOWUwYTQ5NDZiMiIsImlhdCI6MTc3MjcxNjM3Mywic2NvcGUiOlsiYWRkcmVzcyIsImVtYWlsIiwiaW5zcHVyLWFicC1hcHBsaWNhdGlvbiIsImluc3B1ci1hYnAtZmlsbGluZyIsImluc3B1ci1sZWRnZXIiLCJvcGVuaWQiLCJwaG9uZSIsInByb2ZpbGUiLCJyb2xlIiwib2ZmbGluZV9hY2Nlc3MiXSwiYW1yIjpbIkF1dGhDb2RlIl19.CqbWDxlOrQv2S4i9qBhdfK7ENDfv4G8Ke9UjtZmX4Th9_H1IkpcGc4yDLM42K19il9Nbys31V8jx13gfCs88q9t3rId4hJs9sYVCgymcFtl9kXUowPgjI5Dplzuv2obzYxQuqdgufesvj25QZGwqoMVUZzkZDFeicUV2KKlkFYBD8XHa6GeMs-R_3c5j7047pnztAqUiRS40vCMJ92MwPzmoIuHvJYlTWhfT9TuYERsq0_3daxEGiudcOviA5GSvRVsGhAj7lAaPok7zAjBMikeqlYcC-tPTPfnZnlNGGM4N9l10S8XUzU60mFCkf3AH5OG6dZS-agS_3iWphE2Htg'
 
 const synergyData = ref([])
 const tableId = ref('')
@@ -1208,7 +1208,7 @@ let data = []
 const beatch = async () => {
 	const loop = async () => {
 		const res = await axios.request({
-			url: 'http://100.92.2.93:8081/api/online-table/table/cell-data',
+			url: 'http://23.99.9.226:8001/api/online-table/table/cell-data',
 			method: 'GET',
 			params: {
 				tableId: tableId.value,
@@ -1247,7 +1247,7 @@ const beatch = async () => {
 
 const getSheetConfig = async () => {
 	const res = await axios.request({
-		url: `http://100.92.2.93:8081/api/online-table/table/sheet-config/${sheetId.value}`,
+		url: `http://23.99.9.226:8001/api/online-table/table/sheet-config/${sheetId.value}`,
 		method: 'GET',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -1327,7 +1327,7 @@ const onAsyncEventCell = (range) => {
 
 const getSheetPermission = (tableId, sheetId) => {
 	return defHttp.request({
-		url: `http://100.92.2.93:8081/api/online-table/sheet-permissions/${tableId}/${sheetId}`,
+		url: `http://23.99.9.226:8001/api/online-table/sheet-permissions/${tableId}/${sheetId}`,
 		method: 'GET',
 	})
 }
@@ -1642,7 +1642,7 @@ const asyncCellHistory = async (ranged, callback) => {
 	}
 
 	const res = await axios.request({
-		url: `http://100.92.2.93:8081/api/online-table/log/cell-log/${tableId.value}/${sheetId.value}/${ranged.r}/${ranged.c}`,
+		url: `http://23.99.9.226:8001/api/online-table/log/cell-log/${tableId.value}/${sheetId.value}/${ranged.r}/${ranged.c}`,
 		method: 'GET',
 		params: {
 			skipCount: historyCount * 10,
@@ -1733,7 +1733,7 @@ onActivated(() => {
 
 	axios
 		.request({
-			url: 'http://100.92.2.93:8081/api/online-table/table/3a1d6a1c-c47b-02e3-65e3-54d4e5def775?autoCreate=true',
+			url: 'http://23.99.9.226:8001/api/online-table/table/3a1d6a1c-c47b-02e3-65e3-54d4e5def111?autoCreate=true',
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -1749,7 +1749,7 @@ onActivated(() => {
 				})
 			})
 
-			api.value = `http://100.92.2.93:8081/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
+			api.value = `http://23.99.9.226:8001/signalr-hubs/onlinetable?tableId=${arr[0]._raw.tableId}&isAuth=false`
 			synergyData.value = arr
 			tableId.value = arr[0]._raw.tableId
 			sheetId.value = arr[0]._raw.id
