@@ -2589,7 +2589,7 @@ const clearSheetConfig = () => {
 	]
 
 	clearConfigKeys.forEach((key) => {
-		if (sheet.config[key]) {
+		if (sheet.config?.[key]) {
 			sheet.config[key] = {}
 		}
 	})
@@ -2759,7 +2759,7 @@ watch(
 watch(
 	() => props.modelValue?.config,
 	(newVal) => {
-		if (!newVal || !sheet || sheet?.state?.formula) {
+		if (!newVal || !sheet || sheet?.state?.formula || !sheet.config) {
 			return
 		}
 
@@ -2767,6 +2767,7 @@ watch(
 		clearSheetConfig()
 
 		// 更新配置
+
 		sheet.config = Object.assign(sheet.config, JSON.parse(JSON.stringify(newVal)))
 
 		// ✅ 处理副作用：应用 merged 和 formulaed
@@ -2785,7 +2786,7 @@ watch(
 			sheet.hooks.editHook.setFormulaValue()
 		}
 	},
-	{deep: true}
+	{deep: true, immediate: true}
 )
 
 watch(
