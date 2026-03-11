@@ -18,9 +18,9 @@ const app = createApp(App)
 const pinia = createPinia()
 
 app.use(akvts)
+
 app.use(router)
 app.use(pinia)
-
 directives(app)
 
 app.use(ElementPlus, {

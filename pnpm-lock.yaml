@@ -65,6 +65,9 @@ importers:
       lodash-es:
         specifier: 4.17.21
         version: 4.17.21
+      pako:
+        specifier: 2.1.0
+        version: 2.1.0
       pinia:
         specifier: 2.2.6
         version: 2.2.6(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3))
@@ -93,9 +96,6 @@ importers:
       husky:
         specifier: 9.1.7
         version: 9.1.7
-      pako:
-        specifier: ^2.1.0
-        version: 2.1.0
       pinia-plugin-persistedstate:
         specifier: 4.4.1
         version: 4.4.1
