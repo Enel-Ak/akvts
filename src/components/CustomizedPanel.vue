@@ -58,6 +58,42 @@ const onDeleteItem = (childItem, index) => {
 	emits('update:modelValue', [...props.modelValue])
 }
 
+let dragIndex = null
+const dragOverIndex = ref(null)
+
+const onDragStart = (index) => {
+	dragIndex = index
+}
+
+const onDragOver = (index) => {
+	if (dragOverIndex.value === index) return // 🔥 避免重复赋值
+	if (index !== dragIndex) {
+		dragOverIndex.value = index
+	}
+}
+
+const onDragLeave = (index) => {
+	// if (dragOverIndex.value === index) {
+	// 	dragOverIndex.value = null
+	// }
+}
+
+const onDrop = (index) => {
+	if (dragIndex === null) return
+	const list = [...props.modelValue]
+	const [movedItem] = list.splice(dragIndex, 1)
+	list.splice(index, 0, movedItem)
+	emits('update:modelValue', list)
+
+	dragIndex = null
+	dragOverIndex.value = null
+}
+
+const onDropEnd = () => {
+	dragIndex = null
+	dragOverIndex.value = null
+}
+
 onMounted(() => {
 	useMasonryWall(customRef, props.options)
 })
@@ -79,7 +115,18 @@ defineExpose({
 	<div ref="customRef" class="customized-panel" :style="{height: panelHeight}">
 		<template v-if="enabledCustom">
 			<!-- 定制功能的内容 -->
-			<div v-for="(item, index) of modelValue" :key="item.index" class="item">
+			<div
+				v-for="(item, index) of modelValue"
+				:key="item.id"
+				:class="{'drag-over': dragOverIndex === index}"
+				class="item"
+				draggable="true"
+				@dragstart="onDragStart(index)"
+				@dragover.prevent="onDragOver(index)"
+				@dragleave="onDragLeave(index)"
+				@drop="onDrop(index)"
+				@dragend="onDropEnd()"
+			>
 				<div class="handle"></div>
 				<div class="panel-name">
 					<el-input v-model="item.name" placeholder="请输入面板名称"></el-input>
@@ -144,7 +191,7 @@ defineExpose({
 			</div>
 		</template>
 		<template v-else>
-			<div v-for="(item, index) in modelValue" :key="index" class="item">
+			<div v-for="(item, index) in modelValue" :key="item.id" class="item">
 				<slot :name="item.name">
 					<div class="panel-name">
 						<div>{{ item.name }}</div>
@@ -212,6 +259,17 @@ defineExpose({
 				border-top: 4px solid rgba(var(--z-main-rgb), 1);
 			}
 		}
+	}
+
+	.drag-over {
+		transition: background-color 0.1s ease; /* 快速淡入淡出，不闪 */
+		border: 2px dashed var(--z-main); /* 蓝色虚线 */
+		opacity: 0.5;
+		background-color: rgba(64, 158, 255, 0.1); /* 半透明高亮 */
+	}
+
+	.pointer-events {
+		pointer-events: none; /* 禁止所有交互 */
 	}
 }
 .panel-name {

@@ -4,12 +4,13 @@ import {ref} from 'vue'
 const panelRef = ref()
 const panels = ref([
 	{
+		id: '1',
 		name: 'Panel 1',
-		items: [{name: 'Item 1', value: 'Value 1'}],
-		panels: [{name: 'Sub Panel 1', items: [], panels: []}],
+		items: [{id: 'item-1-1', name: 'Item 1', value: 'Value 1'}],
+		panels: [{id: 'panel-1-1', name: 'Sub Panel 1', items: [], panels: []}],
 	},
-	{name: 'Panel 2', items: []},
-	{name: 'Panel 3', items: []},
+	{id: '2', name: 'Panel 2', items: []},
+	{id: '3', name: 'Panel 3', items: []},
 ])
 const buttons = ref([
 	{
@@ -36,7 +37,7 @@ const buttons = ref([
 	},
 ])
 setTimeout(() => {
-	panels.value.push({name: 'Panel 4'})
+	panels.value.push({id: '4', name: 'Panel 4'})
 }, 2000)
 const handleClickItem = (item) => {
 	console.log('Clicked item:', item)
@@ -50,7 +51,12 @@ const handleClickItem = (item) => {
 		<el-button
 			@click="
 				() => {
-					panels.unshift({name: 'New Panel', items: [], panels: []})
+					panels.unshift({
+						id: panels.length + 1,
+						name: 'New Panel',
+						items: [],
+						panels: [],
+					})
 					panelRef.refresh()
 				}
 			"

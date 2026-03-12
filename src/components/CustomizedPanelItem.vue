@@ -33,7 +33,7 @@ const onDeletelPanel = () => {
 		<div class="panel-items">
 			<div
 				v-for="(item, index) in panel?.items"
-				:key="index"
+				:key="item.id"
 				class="panel-item"
 				@click="emits('clickItem', item)"
 			>
@@ -82,7 +82,7 @@ const onDeletelPanel = () => {
 	<div v-else class="panel readonly">
 		<div class="panel-name">{{ panel.name || '未命名' }}</div>
 		<div class="panel-items">
-			<div v-for="(item, index) in panel?.items" :key="index" class="panel-item">
+			<div v-for="(item, index) in panel?.items" :key="item.id" class="panel-item">
 				<span>{{ item.name }}</span>
 				<span class="flx mg-right-10">
 					{{ item.value }}
