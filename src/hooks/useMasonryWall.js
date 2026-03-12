@@ -24,6 +24,7 @@ export default function useMasonryWall(containerArg, options = {}) {
 
 	// calculate and assign absolute positions to children
 	const layoutMasonry = (el, {columns, minColWidth, gap}) => {
+		if (!el) return
 		const w = el.clientWidth
 		let colCount = columns > 0 ? columns : Math.floor(w / minColWidth)
 		if (colCount < 1) colCount = 1
@@ -31,21 +32,29 @@ export default function useMasonryWall(containerArg, options = {}) {
 
 		// prepare container
 		el.style.position = 'relative'
+		// force reflow to ensure accurate offsetHeight measurements
+		const reflow = el.offsetHeight // trigger reflow
+
 		const heights = new Array(colCount).fill(0)
 
 		Array.from(el.children).forEach((child) => {
 			child.style.position = 'absolute'
-			child.style.width = colWidth + 'px'
+			child.style.width = colWidth - 10 + 'px'
+			// force reflow for this child
+			const childReflow = child.offsetHeight
 			// measure after width applied; use offsetHeight
 			const minCol = heights.indexOf(Math.min(...heights))
 			const top = heights[minCol]
-			const left = (colWidth + gap) * minCol
+			const left = (colWidth - 5 + gap) * minCol
 			child.style.transform = `translate(${left}px,${top}px)`
 			heights[minCol] += child.offsetHeight + gap
 		})
 
 		// adjust container height to contain all columns
-		// el.style.height = Math.max(...heights) + 'px'
+		// const maxHeight = Math.max(...heights)
+		// if (maxHeight > 0) {
+		// 	el.style.height = maxHeight + 'px'
+		// }
 	}
 
 	// alias for backward concept
@@ -59,7 +68,9 @@ export default function useMasonryWall(containerArg, options = {}) {
 		if (childRO) childRO.disconnect()
 
 		// watch for container resize
-		ro = new ResizeObserver(() => layoutMasonry(el, opts))
+		ro = new ResizeObserver(() => {
+			setTimeout(() => layoutMasonry(el, opts), 50)
+		})
 		ro.observe(el)
 
 		// watch for added/removed children
@@ -67,7 +78,10 @@ export default function useMasonryWall(containerArg, options = {}) {
 		mo.observe(el, {childList: true})
 
 		// watch for child height changes
-		childRO = new ResizeObserver(() => layoutMasonry(el, opts))
+		childRO = new ResizeObserver(() => {
+			// debounce to avoid excessive recalculations
+			setTimeout(() => layoutMasonry(el, opts), 50)
+		})
 		Array.from(el.children).forEach((child) => {
 			childRO.observe(child)
 		})

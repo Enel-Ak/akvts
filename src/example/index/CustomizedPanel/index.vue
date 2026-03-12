@@ -2,7 +2,15 @@
 import {ref} from 'vue'
 
 const panelRef = ref()
-const panels = ref([{name: 'Panel 1'}, {name: 'Panel 2'}, {name: 'Panel 3'}])
+const panels = ref([
+	{
+		name: 'Panel 1',
+		items: [{name: 'Item 1', value: 'Value 1'}],
+		panels: [{name: 'Sub Panel 1', items: [], panels: []}],
+	},
+	{name: 'Panel 2', items: []},
+	{name: 'Panel 3', items: []},
+])
 const buttons = ref([
 	{
 		name: '添加业务表',
@@ -11,8 +19,7 @@ const buttons = ref([
 			if (!panel.items) {
 				panel.items = []
 			}
-
-			panel.items.push({name: 'New Item'})
+			panel.items.push({name: '请选择业务表', value: '数据量：10000'})
 		},
 	},
 	{
@@ -22,25 +29,27 @@ const buttons = ref([
 			if (!panel.panels) {
 				panel.panels = []
 			}
-
-			panel.panels.unshift({name: 'Sub Panel'})
+			panel.panels.unshift({name: ''})
 		},
 	},
 ])
 setTimeout(() => {
 	panels.value.push({name: 'Panel 4'})
-	// panelRef.value.enabledCustom(false) // 禁用定制功能
 }, 2000)
-setTimeout(() => {
-	panels.value.push({name: 'Panel 5'})
-	// panelRef.value.enabledCustom(false) // 禁用定制功能
-}, 5000)
-setTimeout(() => {
-	panels.value.push({name: 'Panel 6'})
-	// panelRef.value.enabledCustom(false) // 禁用定制功能
-}, 10000)
 </script>
 <template>
-	<CustomizedPanel ref="panelRef" v-model="panels" :buttons="buttons"></CustomizedPanel>
+	<div class="h-full">
+		<el-button
+			@click="
+				() => {
+					panels.unshift({name: 'New Panel', items: [], panels: []})
+				}
+			"
+			>新增</el-button
+		>
+		<el-button @click="panelRef.enabledCustom(true)">编辑</el-button>
+		<el-button @click="panelRef.enabledCustom(false)">取消</el-button>
+		<CustomizedPanel ref="panelRef" v-model="panels" :buttons="buttons"> </CustomizedPanel>
+	</div>
 </template>
 <style scoped lang="scss"></style>
