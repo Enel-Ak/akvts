@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
 import CustomizedPanelItem from './CustomizedPanelItem.vue'
 import useMasonryWall from '@/hooks/useMasonryWall'
 
@@ -35,7 +35,7 @@ const props = defineProps({
 	},
 })
 
-const emits = defineEmits(['update:modelValue'])
+const emits = defineEmits(['update:modelValue', 'clickItem'])
 
 const customRef = ref(null)
 
@@ -62,8 +62,17 @@ onMounted(() => {
 	useMasonryWall(customRef, props.options)
 })
 
+onBeforeUnmount(() => {
+	if (customRef.value) {
+		customRef.value.destroy()
+	}
+})
+
 defineExpose({
 	enabledCustom: (bool) => (enabledCustom.value = bool),
+	refresh: () => {
+		useMasonryWall(customRef, props.options)
+	},
 })
 </script>
 <template>
@@ -71,6 +80,7 @@ defineExpose({
 		<template v-if="enabledCustom">
 			<!-- 定制功能的内容 -->
 			<div v-for="(item, index) of modelValue" :key="item.index" class="item">
+				<div class="handle"></div>
 				<div class="panel-name">
 					<el-input v-model="item.name" placeholder="请输入面板名称"></el-input>
 					<Icons
@@ -86,12 +96,18 @@ defineExpose({
 						v-for="(childItem, index) in item?.items"
 						:key="item.name"
 						class="panel-item"
-						@click="onDeleteItem(item?.items, index)"
+						@click="emits('clickItem', childItem)"
 					>
 						<span>{{ childItem.name }}</span>
-						<span class="flx mg-right-10">{{ childItem.value }}</span>
+						<span class="flx mg-right-10">
+							{{ childItem.value || '-' }}
+						</span>
 						<span class="delete-icon">
-							<Icons name="Clear2" color="var(--z-danger)" />
+							<Icons
+								name="Clear2"
+								color="var(--z-danger)"
+								@click="onDeleteItem(item?.items, index)"
+							/>
 						</span>
 					</div>
 				</div>
@@ -106,6 +122,7 @@ defineExpose({
 								item.panels.splice(index, 1)
 							}
 						"
+						@clickItem="(subItem) => emits('clickItem', subItem)"
 					/>
 				</slot>
 
@@ -139,7 +156,10 @@ defineExpose({
 							class="panel-item"
 						>
 							<span>{{ childItem.name }}</span>
-							<span class="flx mg-right-10">{{ childItem.value }}</span>
+							<span class="flx mg-right-10">
+								{{ childItem.value }}
+								<LoadingTransition v-if="!childItem.value" :static="true" text="" />
+							</span>
 						</div>
 					</div>
 					<slot :name="`${item.name}`" :item="item">
@@ -174,9 +194,23 @@ defineExpose({
 		margin-bottom: 10px;
 		padding: 10px;
 		transition: box-shadow 0.3s ease;
+		overflow: hidden;
+		position: relative;
 
 		&:hover {
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+		}
+
+		.handle {
+			cursor: move;
+			height: 10px;
+			left: 0;
+			position: absolute;
+			top: 0;
+			width: 100%;
+			&:hover {
+				border-top: 4px solid rgba(var(--z-main-rgb), 1);
+			}
 		}
 	}
 }
@@ -196,8 +230,11 @@ defineExpose({
 	padding: 10px;
 
 	span:nth-child(2) {
+		align-items: center;
 		color: var(--z-main);
+		display: flex;
 		font-weight: 500;
+		justify-content: flex-end;
 		text-align: right;
 	}
 }

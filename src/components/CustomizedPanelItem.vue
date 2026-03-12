@@ -13,7 +13,7 @@ const props = defineProps({
 		default: false,
 	},
 })
-const emits = defineEmits(['onDeletelPanel', 'onDeleteItem'])
+const emits = defineEmits(['onDeletelPanel', 'clickItem'])
 
 const onDeletelPanel = () => {
 	emits('onDeletelPanel', props.panel)
@@ -31,7 +31,12 @@ const onDeletelPanel = () => {
 			/>
 		</div>
 		<div class="panel-items">
-			<div v-for="(item, index) in panel?.items" :key="index" class="panel-item">
+			<div
+				v-for="(item, index) in panel?.items"
+				:key="index"
+				class="panel-item"
+				@click="emits('clickItem', item)"
+			>
 				<span>{{ item.name }}</span>
 				<span class="flx mg-right-10">{{ item.value }}</span>
 				<span class="delete-icon">
@@ -75,11 +80,14 @@ const onDeletelPanel = () => {
 		/>
 	</div>
 	<div v-else class="panel readonly">
-		<div class="panel-name">{{ panel.name }}</div>
+		<div class="panel-name">{{ panel.name || '未命名' }}</div>
 		<div class="panel-items">
 			<div v-for="(item, index) in panel?.items" :key="index" class="panel-item">
 				<span>{{ item.name }}</span>
-				<span class="flx mg-right-10">{{ item.value }}</span>
+				<span class="flx mg-right-10">
+					{{ item.value }}
+					<LoadingTransition v-if="!childItem.value" :static="true" text="" />
+				</span>
 			</div>
 		</div>
 		<CustomizedPanelItem
@@ -96,6 +104,7 @@ const onDeletelPanel = () => {
 	border: 1px solid var(--z-line);
 	margin-top: 10px;
 	padding: 10px;
+	position: relative;
 
 	&.readonly {
 		border-left: 4px solid var(--z-main);
@@ -116,8 +125,11 @@ const onDeletelPanel = () => {
 	padding: 10px;
 
 	span:nth-child(2) {
+		align-items: center;
 		color: var(--z-main);
+		display: flex;
 		font-weight: 500;
+		justify-content: flex-end;
 		text-align: right;
 	}
 }

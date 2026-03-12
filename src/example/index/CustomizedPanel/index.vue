@@ -19,7 +19,8 @@ const buttons = ref([
 			if (!panel.items) {
 				panel.items = []
 			}
-			panel.items.push({name: '请选择业务表', value: '数据量：10000'})
+			panel.items.push({name: '请选择业务表', value: ''})
+			panelRef.value.refresh()
 		},
 	},
 	{
@@ -30,12 +31,19 @@ const buttons = ref([
 				panel.panels = []
 			}
 			panel.panels.unshift({name: ''})
+			panelRef.value.refresh()
 		},
 	},
 ])
 setTimeout(() => {
 	panels.value.push({name: 'Panel 4'})
 }, 2000)
+const handleClickItem = (item) => {
+	console.log('Clicked item:', item)
+	setTimeout(() => {
+		item.name = 'changed after click'
+	}, 1000)
+}
 </script>
 <template>
 	<div class="h-full">
@@ -43,13 +51,20 @@ setTimeout(() => {
 			@click="
 				() => {
 					panels.unshift({name: 'New Panel', items: [], panels: []})
+					panelRef.refresh()
 				}
 			"
 			>新增</el-button
 		>
 		<el-button @click="panelRef.enabledCustom(true)">编辑</el-button>
 		<el-button @click="panelRef.enabledCustom(false)">取消</el-button>
-		<CustomizedPanel ref="panelRef" v-model="panels" :buttons="buttons"> </CustomizedPanel>
+		<CustomizedPanel
+			ref="panelRef"
+			v-model="panels"
+			:buttons="buttons"
+			@clickItem="handleClickItem"
+		>
+		</CustomizedPanel>
 	</div>
 </template>
 <style scoped lang="scss"></style>

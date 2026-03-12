@@ -18,6 +18,10 @@ const props = defineProps({
 		type: String,
 		default: '14px',
 	},
+	static: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 const jc = computed(() => {
@@ -60,7 +64,7 @@ watch(
 			<slot name="text">
 				{{ text }}
 			</slot>
-			<small></small>
+			<small v-if="!props.static"></small>
 		</span>
 	</div>
 </template>

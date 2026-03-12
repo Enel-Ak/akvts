@@ -102,8 +102,4 @@ export default function useMasonryWall(containerArg, options = {}) {
 		}
 		onInvalidate(destroy)
 	})
-
-	onBeforeUnmount(() => {
-		destroy()
-	})
 }
