@@ -141,13 +141,13 @@ defineExpose({
 				<div class="panel-items">
 					<div
 						v-for="(childItem, index) in item?.items"
-						:key="item.name"
+						:key="index"
 						class="panel-item"
 						@click="emits('clickItem', childItem)"
 					>
-						<span>{{ childItem.name }}</span>
+						<span>{{ childItem?.name }}</span>
 						<span class="flx mg-right-10">
-							{{ childItem.value || '-' }}
+							{{ childItem?.value || '-' }}
 						</span>
 						<span class="delete-icon">
 							<Icons
@@ -199,13 +199,17 @@ defineExpose({
 					<div class="panel-items">
 						<div
 							v-for="(childItem, index) in item?.items"
-							:key="item.name"
+							:key="index"
 							class="panel-item"
 						>
-							<span>{{ childItem.name }}</span>
+							<span>{{ childItem?.name }}</span>
 							<span class="flx mg-right-10">
-								{{ childItem.value }}
-								<LoadingTransition v-if="!childItem.value" :static="true" text="" />
+								{{ childItem?.value }}
+								<LoadingTransition
+									v-if="!childItem?.value"
+									:static="true"
+									text=""
+								/>
 							</span>
 						</div>
 					</div>

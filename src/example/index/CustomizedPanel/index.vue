@@ -3,14 +3,14 @@ import {ref} from 'vue'
 
 const panelRef = ref()
 const panels = ref([
-	{
-		id: '1',
-		name: 'Panel 1',
-		items: [{id: 'item-1-1', name: 'Item 1', value: 'Value 1'}],
-		panels: [{id: 'panel-1-1', name: 'Sub Panel 1', items: [], panels: []}],
-	},
-	{id: '2', name: 'Panel 2', items: []},
-	{id: '3', name: 'Panel 3', items: []},
+	// {
+	// 	id: '1',
+	// 	name: 'Panel 1',
+	// 	items: [{id: 'item-1-1', name: 'Item 1', value: 'Value 1'}],
+	// 	panels: [{id: 'panel-1-1', name: 'Sub Panel 1', items: [], panels: []}],
+	// },
+	// {id: '2', name: 'Panel 2', items: []},
+	// {id: '3', name: 'Panel 3', items: []},
 ])
 const buttons = ref([
 	{
@@ -36,9 +36,7 @@ const buttons = ref([
 		},
 	},
 ])
-setTimeout(() => {
-	panels.value.push({id: '4', name: 'Panel 4'})
-}, 2000)
+
 const handleClickItem = (item) => {
 	console.log('Clicked item:', item)
 	setTimeout(() => {

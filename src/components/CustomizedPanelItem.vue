@@ -38,7 +38,7 @@ const onDeletelPanel = () => {
 				@click="emits('clickItem', item)"
 			>
 				<span>{{ item.name }}</span>
-				<span class="flx mg-right-10">{{ item.value }}</span>
+				<span class="flx mg-right-10">{{ item.value || '-' }}</span>
 				<span class="delete-icon">
 					<Icons
 						name="Clear2"
@@ -83,10 +83,10 @@ const onDeletelPanel = () => {
 		<div class="panel-name">{{ panel.name || '未命名' }}</div>
 		<div class="panel-items">
 			<div v-for="(item, index) in panel?.items" :key="item.id" class="panel-item">
-				<span>{{ item.name }}</span>
+				<span>{{ item?.name || '-' }}</span>
 				<span class="flx mg-right-10">
-					{{ item.value }}
-					<LoadingTransition v-if="!childItem.value" :static="true" text="" />
+					{{ item?.value }}
+					<LoadingTransition v-if="!item?.value" :static="true" text="" />
 				</span>
 			</div>
 		</div>
