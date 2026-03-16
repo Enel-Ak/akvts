@@ -42,7 +42,7 @@ const props = defineProps({
 		type: [String, Number],
 		default: '100px',
 	},
-	addEmpty: {
+	addEmptyOption: {
 		type: Boolean,
 		default: false,
 	},
@@ -220,8 +220,8 @@ const initOptions = async (item, level = 0) => {
 						raw: JSON.parse(JSON.stringify(dataitem)),
 					}))
 
-					if (props.addEmpty) {
-						item.options.unshift({label: '为空', value: ''})
+					if (props.addEmptyOption) {
+						item.options.unshift({label: '为空', value: 'empty'})
 					}
 				}
 				resolve()
