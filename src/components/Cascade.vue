@@ -1,69 +1,58 @@
 <script setup>
-import {ref, watch, toRaw, onMounted} from 'vue'
+import {ref, watch, onMounted} from 'vue'
 import axios from 'axios'
 
 const emits = defineEmits(['change', 'elChange', 'update:modelValue', 'focus', 'blur'])
+
 const props = defineProps({
-	modelValue: {type: Object, default: () => ({})}, // v-model
+	modelValue: {type: Object, default: () => ({})},
 	grid: {type: Boolean, default: false},
-	options: {
-		type: Array,
-		default: () => [],
-	},
-	keys: {
-		type: Array,
-		default: () => ['name', 'id'],
-	},
-	maxLevel: {
-		type: [Number, String],
-		default: 1, // 必须选择的级别
-	},
-	isClear: {
-		type: Boolean,
-		default: false,
-	},
-	vertical: {
-		type: Boolean,
-		default: false,
-	},
-	static: {
-		type: Boolean,
-		default: false,
-	},
-	oneSelect: {
-		type: Boolean,
-		default: false,
-	},
-	oneSelectProps: {
-		type: Object,
-		default: () => ({}),
-	},
-	labelWidth: {
-		type: [String, Number],
-		default: '100px',
-	},
-	addEmptyOption: {
-		type: Boolean,
-		default: false,
-	},
+	options: {type: Array, default: () => []},
+	keys: {type: Array, default: () => ['name', 'id']},
+	maxLevel: {type: [Number, String], default: 1},
+	isClear: {type: Boolean, default: false},
+	vertical: {type: Boolean, default: false},
+	static: {type: Boolean, default: false},
+	oneSelect: {type: Boolean, default: false},
+	oneSelectProps: {type: Object, default: () => ({})},
+	labelWidth: {type: [String, Number], default: '100px'},
+	addEmptyOption: {type: Boolean, default: false},
 })
 
-const form = ref(props.modelValue)
+/* ------------------ state ------------------ */
+
+const form = ref({...props.modelValue})
 const cascade = ref(props.modelValue)
 const cascadeRef = ref()
 const cascadeProps = ref(props.oneSelectProps)
 
-const _options = ref(props.options)
+const _options = ref([])
+
+/* ------------------ emit helper ------------------ */
+
+const updateModel = (val) => {
+	emits('update:modelValue', val)
+}
+
+/* ------------------ axios helper ------------------ */
+
+const request = async (config) => {
+	const res = await axios.request(config)
+	const data = res?.data?.items || res?.data || []
+	return Array.isArray(data) ? data : []
+}
+
+/* ------------------ change handler ------------------ */
 
 const onFormItemChange = async (val, item, index, init = true, isDefault = false) => {
 	const nextIndex = index + 1
-	const next = props.options[nextIndex]
+	const next = _options.value[nextIndex]
 
 	if (next) {
 		if (!isDefault) {
-			for (let i = nextIndex; i < props.options.length; i++) {
-				props.options[i].options = []
-				form.value[props.options[i].prop] = ''
+			for (let i = nextIndex; i < _options.value.length; i++) {
+				_options.value[i].options = []
+				form.value[_options.value[i].prop] = ''
 			}
 		}
 
@@ -72,7 +61,8 @@ const onFormItemChange = async (val, item, index, init = true, isDefault = false
 		}
 
 		if (props.static) {
-			next.options = item.options.find((i) => i.value === val)?.children ?? []
+			const children = item.options?.find((i) => i.value === val)?.children ?? []
+			next.options = children
 		} else if (form.value[item.prop] && init && item.cascadeUrl) {
 			await initOptions(next, nextIndex)
 		}
@@ -80,17 +70,22 @@ const onFormItemChange = async (val, item, index, init = true, isDefault = false
 
 	if (index >= props.maxLevel - 1) {
 		emits('change', form.value)
-		emits('update:modelValue', form.value)
+		updateModel(form.value)
 	}
 }
 
+/* ------------------ cascader change ------------------ */
+
 const onElCascaderChange = (val) => {
-	emits('elChange', val, cascadeRef.value.getCheckedNodes())
-	emits('update:modelValue', val || [])
+	emits('elChange', val, cascadeRef.value?.getCheckedNodes?.())
+	updateModel(val || [])
 }
+
+/* ------------------ default data ------------------ */
 
 const setDefaultData = async (val) => {
 	const isAllEmpty = val.every((item) => !item.value)
+
 	for (let i = 0; i < val.length; i++) {
 		const item = val[i]
 
@@ -98,14 +93,12 @@ const setDefaultData = async (val) => {
 
 		if (!props.grid) {
 			if (item.hasOwnProperty('cascadeUrl')) {
-				// val[i].options = []
-
 				if (
-					(isAllEmpty && i === 0 && !val[i].options.length) ||
+					(isAllEmpty && i === 0 && !item.options?.length) ||
 					item.value ||
 					val[i - 1]?.value
 				) {
-					await initOptions(val[i], i)
+					await initOptions(item, i)
 				}
 			}
 
@@ -122,8 +115,10 @@ const setDefaultData = async (val) => {
 	}
 }
 
-const oneSelectLazyLoad = (node, resolve) => {
-	const {level, children} = node
+/* ------------------ lazy load ------------------ */
+
+const oneSelectLazyLoad = async (node, resolve) => {
+	const {level} = node
 
 	let {url, method, data, query, beforeCompleted} = props.oneSelectProps
 
@@ -131,7 +126,7 @@ const oneSelectLazyLoad = (node, resolve) => {
 	let requestQuery = {...query}
 
 	if (beforeCompleted) {
-		const result = beforeCompleted(node, data, query, url)
+		const result = beforeCompleted(node, data, query, url) || {}
 
 		if (result.data) requestData = {...requestData, ...result.data}
 		if (result.query) requestQuery = {...requestQuery, ...result.query}
@@ -139,115 +134,82 @@ const oneSelectLazyLoad = (node, resolve) => {
 	}
 
 	if (!url) {
+		resolve([])
 		return
 	}
 
-	axios
-		.request({
+	try {
+		const data = await request({
 			url,
 			method: method || 'GET',
 			params: requestQuery,
 			data: requestData,
 		})
-		.then((res) => {
-			setTimeout(() => {
-				// 根据后端数据修改
-				const data = res.data.items || res.data || []
 
-				if (!Array.isArray(data)) {
-					resolve([])
-					return
-				}
+		const nodes = data.map((d) => ({
+			label: d[props.keys[0]],
+			value: d[props.keys[1]],
+			leaf: level >= props.maxLevel ? true : d.isLeaf || d.leaf || false,
+			raw: JSON.parse(JSON.stringify(d)),
+		}))
 
-				const nodes = data?.map((dataitem) => ({
-					label: dataitem[props.keys[0]],
-					value: dataitem[props.keys[1]],
-					leaf:
-						level >= props.maxLevel ? true : dataitem.isLeaf || dataitem.leaf || false,
-					raw: JSON.parse(JSON.stringify(dataitem)),
-				}))
-
-				resolve(nodes)
-			}, 0)
-		})
-		.catch((err) => {
-			resolve([])
-		})
-		.finally(() => resolve([]))
+		resolve(nodes)
+	} catch {
+		resolve([])
+	}
 }
 
-const onFocus = () => {
-	emits('focus')
-}
+/* ------------------ focus blur ------------------ */
 
-const onBlur = () => {
-	emits('blur')
-}
+const onFocus = () => emits('focus')
+const onBlur = () => emits('blur')
+
+/* ------------------ init options ------------------ */
 
 const initOptions = async (item, level = 0) => {
-	if (!item.cascadeUrl) {
-		return
-	}
+	if (!item.cascadeUrl) return
 
-	return new Promise((resolve, reject) => {
-		axios
-			.request({
-				url: item.cascadeUrl,
-				method: item.method || 'post',
-				params: item.cascadeParams || {},
-				data: item.cascadeData || {},
-				headers: {
-					...item?.headers,
-				},
-			})
-			.then((res) => {
-				// TODO: 这里需要根据实际情况处理返回数据
-				// props.keys[0] 为 label,
-				// props.keys[1] 为 value
-				const data = res.data.items || res.data || []
-
-				if (!Array.isArray(data)) {
-					item.options = []
-					resolve()
-				} else {
-					item.options = data?.map((dataitem) => ({
-						label: dataitem[props.keys[0]],
-						value: dataitem[props.keys[1]],
-						level:
-							level >= props.maxLevel
-								? true
-								: dataitem.isLeaf || dataitem.leaf || false,
-						raw: JSON.parse(JSON.stringify(dataitem)),
-					}))
-
-					if (props.addEmptyOption) {
-						item.options.unshift({label: '为空', value: 'empty'})
-					}
-				}
-				resolve()
-			})
-			.catch((err) => {
-				reject(err)
-			})
-			.finally(() => {
-				resolve()
-			})
+	const data = await request({
+		url: item.cascadeUrl,
+		method: item.method || 'post',
+		params: item.cascadeParams || {},
+		data: item.cascadeData || {},
+		headers: {...item?.headers},
 	})
+
+	item.options = data.map((d) => ({
+		label: d[props.keys[0]],
+		value: d[props.keys[1]],
+		level: level >= props.maxLevel ? true : d.isLeaf || d.leaf || false,
+		raw: JSON.parse(JSON.stringify(d)),
+	}))
+
+	if (props.addEmptyOption) {
+		item.options.unshift({
+			label: '为空',
+			value: 'empty',
+			level: true,
+			raw: {},
+		})
+	}
 }
+
+/* ------------------ clear ------------------ */
 
 const onClear = () => {
 	if (!props.oneSelect) {
-		props.options.forEach((item, index) => {
+		_options.value.forEach((item, index) => {
 			form.value[item.prop] = ''
-			if (index) {
-				item.options = []
-			}
+			if (index) item.options = []
 		})
 	} else {
 		cascade.value = []
 	}
-	emits('update:modelValue', props.oneSelect ? cascade.value : form.value)
+
+	updateModel(props.oneSelect ? cascade.value : form.value)
 }
+
+/* ------------------ lifecycle ------------------ */
 
 onMounted(() => {
 	if (props.oneSelect) {
@@ -255,14 +217,17 @@ onMounted(() => {
 	}
 })
 
+/* ------------------ watch ------------------ */
+
 watch(
 	() => props.modelValue,
-	(val) => {
+	(val = {}) => {
 		if (!props.oneSelect) {
-			form.value = val
+			form.value = {...val}
+
 			if (Object.keys(val).length === 0) {
-				for (let i = 1; i < props.options.length; i++) {
-					props.options[i].options = []
+				for (let i = 1; i < _options.value.length; i++) {
+					_options.value[i].options = []
 				}
 			}
 		} else {
@@ -276,8 +241,8 @@ watch(
 	() => props.options,
 	(val) => {
 		if (!props.oneSelect) {
-			_options.value = val
-			setDefaultData(val)
+			_options.value = JSON.parse(JSON.stringify(val || []))
+			setDefaultData(_options.value)
 		}
 	},
 	{immediate: true}
@@ -286,17 +251,18 @@ watch(
 watch(
 	() => props.isClear,
 	(val) => {
-		if (val) {
-			onClear()
-		}
+		if (val) onClear()
 	}
 )
+
+/* ------------------ expose ------------------ */
 
 defineExpose({
 	clear: () => onClear(),
 	setValue: (key, value) => (form.value[key] = value),
 })
 </script>
+
 <template>
 	<div class="cascade-component" :class="{vertical}">
 		<template v-if="grid">
@@ -306,6 +272,7 @@ defineExpose({
 					.join('-')
 			}}
 		</template>
+
 		<el-cascader
 			v-else-if="oneSelect"
 			ref="cascadeRef"
@@ -325,17 +292,20 @@ defineExpose({
 				</slot>
 			</template>
 		</el-cascader>
+
 		<FormItem
 			v-else
-			v-for="(item, index) of options"
+			v-for="(item, index) of _options"
+			:key="index"
 			v-model="form[item.prop]"
 			:items="[{...item, labelWidth: labelWidth}]"
 			@change="(val, item) => onFormItemChange(val, item, index)"
 			@focus="onFocus"
 			@blur="onBlur"
-		></FormItem>
+		/>
 	</div>
 </template>
+
 <style scoped lang="scss">
 .cascade-component {
 	display: flex;
@@ -343,9 +313,11 @@ defineExpose({
 
 	&.vertical {
 		flex-direction: column;
+
 		:deep(> div) {
 			margin-right: 0 !important;
 			margin-bottom: 10px;
+
 			&:last-child {
 				margin-bottom: 0;
 			}
@@ -366,6 +338,7 @@ defineExpose({
 	}
 }
 </style>
+
 <style lang="scss">
 .el-cascader-panel {
 	.in-active-path,
