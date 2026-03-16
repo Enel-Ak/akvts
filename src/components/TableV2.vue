@@ -8,7 +8,6 @@ import {
 	watch,
 	onDeactivated,
 	onBeforeUnmount,
-	computed,
 } from 'vue'
 
 import axios from 'axios'
@@ -298,7 +297,7 @@ const getList = () => {
 			_loading.value = false
 			emits('update:modelValue', tableData.value)
 			emits('loading', _loading.value)
-			emits('completed', props.method)
+			emits('completed', props.method, tableData.value, total.value)
 			return
 		}
 
