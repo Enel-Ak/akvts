@@ -42,6 +42,10 @@ const props = defineProps({
 		type: [String, Number],
 		default: '100px',
 	},
+	addEmpty: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 const form = ref(props.modelValue)
@@ -215,6 +219,10 @@ const initOptions = async (item, level = 0) => {
 								: dataitem.isLeaf || dataitem.leaf || false,
 						raw: JSON.parse(JSON.stringify(dataitem)),
 					}))
+
+					if (props.addEmpty) {
+						item.options.unshift({label: '为空', value: ''})
+					}
 				}
 				resolve()
 			})
