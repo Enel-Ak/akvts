@@ -325,7 +325,7 @@ const getList = () => {
 					_loading.value = false
 					emits('update:modelValue', tableData.value)
 					emits('loading', _loading.value)
-					emits('completed', props.method)
+					emits('completed', props.method, tableData.value, total.value)
 					nextTick(() => {
 						props.status === 'edit' && setTableStatus(props.status)
 						setTimeout(() => setFnWidth(true), 16.7)
