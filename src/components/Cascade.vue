@@ -59,6 +59,19 @@ const onFormItemChange = async (val, item, index, init = true, isDefault = false
 	const nextIndex = index + 1
 	const next = props.options[nextIndex]
 
+	if (val === 'empty') {
+		// 如果选择了“为空”，则清空后续级别的选项和数据
+		if (next) {
+			for (let i = nextIndex; i < props.options.length; i++) {
+				props.options[i].options = []
+				form.value[props.options[i].prop] = ''
+			}
+		}
+		emits('change', form.value)
+		emits('update:modelValue', form.value)
+		return
+	}
+
 	if (next) {
 		if (!isDefault) {
 			for (let i = nextIndex; i < props.options.length; i++) {
