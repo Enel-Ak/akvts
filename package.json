@@ -1,6 +1,6 @@
 {
 	"name": "akvts",
-	"version": "0.0.1075",
+	"version": "0.0.1076",
 	"main": "dist/index.es.js",
 	"module": "dist/index.es.js",
 	"exports": {
