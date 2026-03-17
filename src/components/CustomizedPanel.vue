@@ -203,10 +203,10 @@ defineExpose({
 							class="panel-item"
 						>
 							<span>{{ childItem?.name }}</span>
-							<span class="flx mg-right-10">
+							<span class="flx">
 								{{ childItem?.value }}
 								<LoadingTransition
-									v-if="!childItem?.value === null || childItem?.value === ''"
+									v-if="childItem?.value === null || childItem?.value === ''"
 									:static="true"
 									text=""
 								/>
