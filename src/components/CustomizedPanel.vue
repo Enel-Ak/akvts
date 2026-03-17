@@ -280,6 +280,8 @@ defineExpose({
 	align-items: center;
 	cursor: pointer;
 	display: flex;
+	font-size: 14px;
+	font-weight: 500;
 }
 .panel-item {
 	align-items: center;
