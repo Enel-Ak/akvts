@@ -77,6 +77,7 @@ const onDeletelPanel = () => {
 					panel?.panels.splice(index, 1)
 				}
 			"
+			@clickItem="(subItem) => emits('clickItem', subItem)"
 		/>
 	</div>
 	<div v-else class="panel readonly">
@@ -99,7 +100,6 @@ const onDeletelPanel = () => {
 			:key="subPanel.name"
 			:panel="subPanel"
 			:disabled="true"
-			@clickItem="(subItem) => emits('clickItem', subItem)"
 		/>
 	</div>
 </template>
