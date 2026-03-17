@@ -45,7 +45,7 @@ const panelHeight = computed(() => {
 	}
 	return props.height
 })
-const enabledCustom = ref(true) // 启用定制功能的状态
+const enabledCustom = ref(false) // 启用定制功能的状态
 
 const onDeletePanel = (item, index) => {
 	const newValue = [...props.modelValue]
@@ -206,7 +206,7 @@ defineExpose({
 							<span class="flx mg-right-10">
 								{{ childItem?.value }}
 								<LoadingTransition
-									v-if="!childItem?.value"
+									v-if="!childItem?.value === null || childItem?.value === ''"
 									:static="true"
 									text=""
 								/>
@@ -287,9 +287,14 @@ defineExpose({
 	border: 1px solid var(--z-line);
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.5);
 	display: flex;
+	line-height: 1.5;
 	justify-content: space-between;
 	margin-top: 10px;
 	padding: 10px;
+
+	span:nth-child(1) {
+		padding-right: 10px;
+	}
 
 	span:nth-child(2) {
 		align-items: center;

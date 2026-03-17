@@ -86,7 +86,11 @@ const onDeletelPanel = () => {
 				<span>{{ item?.name || '-' }}</span>
 				<span class="flx mg-right-10">
 					{{ item?.value }}
-					<LoadingTransition v-if="!item?.value" :static="true" text="" />
+					<LoadingTransition
+						v-if="item?.value === null || item?.value === ''"
+						:static="true"
+						text=""
+					/>
 				</span>
 			</div>
 		</div>
@@ -120,9 +124,14 @@ const onDeletelPanel = () => {
 	border: 1px solid var(--z-line);
 	background-color: rgba(var(--z-bg-secondary-rgb), 0.5);
 	display: flex;
+	line-height: 1.5;
 	justify-content: space-between;
 	margin-top: 10px;
 	padding: 10px;
+
+	span:nth-child(1) {
+		padding-right: 10px;
+	}
 
 	span:nth-child(2) {
 		align-items: center;
