@@ -134,7 +134,7 @@ defineExpose({
 						name="Clear2"
 						color="var(--z-danger)"
 						class="delete-icon mg-left-5"
-						@click="onDeletePanel(item, index)"
+						@click.stop="onDeletePanel(item, index)"
 					/>
 				</div>
 
@@ -153,7 +153,7 @@ defineExpose({
 							<Icons
 								name="Clear2"
 								color="var(--z-danger)"
-								@click="onDeleteItem(item?.items, index)"
+								@click.stop="onDeleteItem(item?.items, index)"
 							/>
 						</span>
 					</div>

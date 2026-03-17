@@ -27,7 +27,7 @@ const onDeletelPanel = () => {
 				name="Clear2"
 				color="var(--z-danger)"
 				class="delete-icon mg-left-5"
-				@click="onDeletelPanel"
+				@click.stop="onDeletelPanel"
 			/>
 		</div>
 		<div class="panel-items">
@@ -43,7 +43,7 @@ const onDeletelPanel = () => {
 					<Icons
 						name="Clear2"
 						color="var(--z-danger)"
-						@click="
+						@click.stop="
 							() => {
 								panel.items.splice(index, 1)
 							}
