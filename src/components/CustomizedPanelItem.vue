@@ -99,6 +99,7 @@ const onDeletelPanel = () => {
 			:key="subPanel.name"
 			:panel="subPanel"
 			:disabled="true"
+			@clickItem="(subItem) => emits('clickItem', subItem)"
 		/>
 	</div>
 </template>
