@@ -166,8 +166,8 @@ defineExpose({
 							v-if="item.icon"
 							:src="icons.find((icon) => icon.name === item.icon)?.path"
 							:alt="item.alt"
-							width="24"
-							height="24"
+							width="18"
+							height="18"
 						/>
 						<span v-else class="placeholder-icon">图标</span>
 					</div>
@@ -241,8 +241,8 @@ defineExpose({
 								v-if="item.icon"
 								:src="icons.find((icon) => icon.name === item.icon)?.path"
 								:alt="item.alt"
-								width="24"
-								height="24"
+								width="18"
+								height="18"
 							/>
 						</div>
 						<div>
@@ -293,7 +293,7 @@ defineExpose({
 				:title="icon.name"
 				@click="onSelectIcon(icon)"
 			>
-				<img :src="icon.path" :alt="icon.name" width="24" height="24" />
+				<img :src="icon.path" :alt="icon.name" width="18" height="18" />
 			</div>
 		</div>
 	</Teleport>
