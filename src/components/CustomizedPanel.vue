@@ -194,7 +194,9 @@ defineExpose({
 			<div v-for="(item, index) in modelValue" :key="item.id" class="item">
 				<slot :name="item.name">
 					<div class="panel-name">
-						<div>{{ item.name }}</div>
+						<div>
+							{{ item.name }} <span>{{ item.count ? ` (${item.count})` : '' }}</span>
+						</div>
 					</div>
 					<div class="panel-items">
 						<div
@@ -283,6 +285,10 @@ defineExpose({
 	display: flex;
 	font-size: 14px;
 	font-weight: 500;
+
+	span {
+		color: var(--z-main);
+	}
 }
 .panel-item {
 	align-items: center;

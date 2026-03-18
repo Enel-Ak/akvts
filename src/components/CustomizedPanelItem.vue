@@ -81,7 +81,12 @@ const onDeletelPanel = () => {
 		/>
 	</div>
 	<div v-else class="panel readonly">
-		<div class="panel-name">{{ panel.name || '未命名' }}</div>
+		<div class="panel-name">
+			{{ panel.name || '未命名' }}
+			<span>
+				{{ panel.count ? ` (${panel.count})` : '' }}
+			</span>
+		</div>
 		<div class="panel-items">
 			<div v-for="(item, index) in panel?.items" :key="item.id" class="panel-item">
 				<span>{{ item?.name || '-' }}</span>
@@ -121,6 +126,10 @@ const onDeletelPanel = () => {
 	display: flex;
 	font-size: 14px;
 	font-weight: 500;
+
+	span {
+		color: var(--z-main);
+	}
 }
 .panel-item {
 	align-items: center;
