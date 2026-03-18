@@ -209,6 +209,7 @@ defineExpose({
 									v-if="childItem?.value === null || childItem?.value === ''"
 									:static="true"
 									text=""
+									style="transform: translate(7px, 0)"
 								/>
 							</span>
 						</div>

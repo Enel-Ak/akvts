@@ -20,7 +20,12 @@ const buttons = ref([
 			if (!panel.items) {
 				panel.items = []
 			}
-			panel.items.push({name: '请选择业务表', value: 0})
+			panel.items.push(
+				...[
+					{name: '请选择业务表', value: null},
+					{name: '请选择业务表', value: 1},
+				]
+			)
 			panelRef.value.refresh()
 		},
 	},

@@ -85,12 +85,13 @@ const onDeletelPanel = () => {
 		<div class="panel-items">
 			<div v-for="(item, index) in panel?.items" :key="item.id" class="panel-item">
 				<span>{{ item?.name || '-' }}</span>
-				<span class="flx mg-right-10">
+				<span class="flx">
 					{{ item?.value }}
 					<LoadingTransition
 						v-if="item?.value === null || item?.value === ''"
 						:static="true"
 						text=""
+						style="transform: translate(7px, 0)"
 					/>
 				</span>
 			</div>
