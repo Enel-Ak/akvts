@@ -33,6 +33,10 @@ const props = defineProps({
 		type: Object,
 		default: () => ({minColWidth: 310, gap: 10}), // 其他配置项
 	},
+	icons: {
+		type: Array,
+		default: () => [], // { name: 'IconName', path: 'icon-path', svg:'' }
+	},
 })
 
 const emits = defineEmits(['update:modelValue', 'clickItem'])
@@ -94,14 +98,46 @@ const onDropEnd = () => {
 	dragOverIndex.value = null
 }
 
+const getImage = (src) => {
+	return new URL(`../assets/${src}`, import.meta.url).href
+}
+
+const iconPickerVisible = ref(false)
+const iconPickerPosition = ref({top: 0, left: 0})
+const currentEditingItem = ref(null)
+
+const onChooseIcon = (event, item) => {
+	event.stopPropagation()
+	const rect = event.currentTarget.getBoundingClientRect()
+	iconPickerPosition.value = {
+		top: rect.bottom + 8,
+		left: rect.left,
+	}
+	currentEditingItem.value = item
+	iconPickerVisible.value = !iconPickerVisible.value
+}
+
+const onSelectIcon = (iconItem) => {
+	if (currentEditingItem.value) {
+		currentEditingItem.value.icon = iconItem.name
+	}
+	iconPickerVisible.value = false
+}
+
+const closeIconPicker = () => {
+	iconPickerVisible.value = false
+}
+
 onMounted(() => {
 	useMasonryWall(customRef, props.options)
+	document.addEventListener('click', closeIconPicker)
 })
 
 onBeforeUnmount(() => {
 	if (customRef.value) {
 		customRef.value.destroy()
 	}
+	document.removeEventListener('click', closeIconPicker)
 })
 
 defineExpose({
@@ -129,6 +165,16 @@ defineExpose({
 			>
 				<div class="handle"></div>
 				<div class="panel-name">
+					<div class="icon" @click="onChooseIcon($event, item)">
+						<img
+							v-if="item.icon"
+							:src="getImage(icons.find((icon) => icon.name === item.icon)?.path)"
+							:alt="item.alt"
+							width="24"
+							height="24"
+						/>
+						<span v-else class="placeholder-icon">图标</span>
+					</div>
 					<el-input v-model="item.name" placeholder="请输入面板名称"></el-input>
 					<Icons
 						name="Clear2"
@@ -194,6 +240,15 @@ defineExpose({
 			<div v-for="(item, index) in modelValue" :key="item.id" class="item">
 				<slot :name="item.name">
 					<div class="panel-name">
+						<div class="icon">
+							<img
+								v-if="item.icon"
+								:src="getImage(icons.find((icon) => icon.name === item.icon)?.path)"
+								:alt="item.alt"
+								width="24"
+								height="24"
+							/>
+						</div>
 						<div>
 							{{ item.name }} <span>{{ item.count ? ` (${item.count})` : '' }}</span>
 						</div>
@@ -228,6 +283,24 @@ defineExpose({
 		</template>
 		<slot name="default"></slot>
 	</div>
+	<Teleport to="body">
+		<div
+			class="icons"
+			v-show="iconPickerVisible"
+			:style="{top: iconPickerPosition.top + 'px', left: iconPickerPosition.left + 'px'}"
+			@click.stop
+		>
+			<div
+				v-for="icon in icons"
+				:key="icon.name"
+				class="icon-item"
+				:title="icon.name"
+				@click="onSelectIcon(icon)"
+			>
+				<img :src="getImage(icon.path)" :alt="icon.name" width="24" height="24" />
+			</div>
+		</div>
+	</Teleport>
 </template>
 <style scoped lang="scss">
 .customized-panel {
@@ -238,6 +311,7 @@ defineExpose({
 	overflow: hidden;
 	overflow-y: auto;
 	padding: 10px;
+	position: relative;
 	width: 100%;
 	user-select: none;
 
@@ -289,6 +363,16 @@ defineExpose({
 	span {
 		color: var(--z-main);
 	}
+
+	.placeholder-icon {
+		border-radius: 4px;
+		border: 1px dashed var(--z-main);
+		background-color: rgba(var(--z-main-rgb), 0.1);
+		font-size: 8px;
+		height: 24px;
+		line-height: 24px;
+		width: 24px;
+	}
 }
 .panel-item {
 	align-items: center;
@@ -314,7 +398,6 @@ defineExpose({
 		text-align: right;
 	}
 }
-
 .btns {
 	align-items: center;
 	display: flex;
@@ -323,6 +406,37 @@ defineExpose({
 	transition: opacity 0.3s ease;
 	> * {
 		flex: 1;
+	}
+}
+</style>
+<style lang="scss">
+.icons {
+	background-color: var(--z-theme);
+	border-radius: 8px;
+	border: 1px solid var(--z-line);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+	padding: 8px;
+	position: fixed;
+	width: 220px;
+	z-index: 9999;
+
+	.icon-item {
+		align-items: center;
+		border-radius: 6px;
+		cursor: pointer;
+		display: flex;
+		justify-content: center;
+		padding: 4px;
+		transition: background-color 0.2s;
+
+		&:hover {
+			background-color: rgba(var(--z-main-rgb), 0.15);
+		}
 	}
 }
 </style>

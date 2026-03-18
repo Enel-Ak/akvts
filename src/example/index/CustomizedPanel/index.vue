@@ -9,8 +9,8 @@ const panels = ref([
 	// 	items: [{id: 'item-1-1', name: 'Item 1', value: 'Value 1'}],
 	// 	panels: [{id: 'panel-1-1', name: 'Sub Panel 1', items: [], panels: []}],
 	// },
-	{id: '2', name: 'Panel 2', items: [], count: 20},
-	// {id: '3', name: 'Panel 3', items: []},
+	{id: '2', name: 'Panel 2', items: [], count: 20, icon: 'test1'},
+	{id: '3', name: 'Panel 3', items: []},
 ])
 const buttons = ref([
 	{
@@ -71,6 +71,10 @@ const handleClickItem = (item) => {
 			ref="panelRef"
 			v-model="panels"
 			:buttons="buttons"
+			:icons="[
+				{name: 'test1', path: 'sheet/time.png'},
+				{name: 'test2', path: 'sheet/yuan.png'},
+			]"
 			@clickItem="handleClickItem"
 		>
 		</CustomizedPanel>
