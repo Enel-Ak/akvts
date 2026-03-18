@@ -98,10 +98,6 @@ const onDropEnd = () => {
 	dragOverIndex.value = null
 }
 
-const getImage = (src) => {
-	return new URL(`../assets/${src}`, import.meta.url).href
-}
-
 const iconPickerVisible = ref(false)
 const iconPickerPosition = ref({top: 0, left: 0})
 const currentEditingItem = ref(null)
@@ -168,7 +164,7 @@ defineExpose({
 					<div class="icon" @click="onChooseIcon($event, item)">
 						<img
 							v-if="item.icon"
-							:src="getImage(icons.find((icon) => icon.name === item.icon)?.path)"
+							:src="icons.find((icon) => icon.name === item.icon)?.path"
 							:alt="item.alt"
 							width="24"
 							height="24"
@@ -243,7 +239,7 @@ defineExpose({
 						<div class="icon">
 							<img
 								v-if="item.icon"
-								:src="getImage(icons.find((icon) => icon.name === item.icon)?.path)"
+								:src="icons.find((icon) => icon.name === item.icon)?.path"
 								:alt="item.alt"
 								width="24"
 								height="24"
@@ -297,7 +293,7 @@ defineExpose({
 				:title="icon.name"
 				@click="onSelectIcon(icon)"
 			>
-				<img :src="getImage(icon.path)" :alt="icon.name" width="24" height="24" />
+				<img :src="icon.path" :alt="icon.name" width="24" height="24" />
 			</div>
 		</div>
 	</Teleport>
