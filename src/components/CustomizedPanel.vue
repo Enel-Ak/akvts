@@ -418,7 +418,7 @@ defineExpose({
 	overflow-y: auto;
 	padding: 8px;
 	position: fixed;
-	width: 220px;
+	width: 240px;
 	z-index: 9999;
 
 	.icon-item {
