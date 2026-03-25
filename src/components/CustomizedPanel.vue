@@ -185,7 +185,7 @@ defineExpose({
 						v-for="(childItem, index) in item?.items"
 						:key="index"
 						class="panel-item"
-						@click="emits('clickItem', childItem, enabledCustom.value)"
+						@click="emits('clickItem', childItem, enabledCustom)"
 					>
 						<span>{{ childItem?.name }}</span>
 						<span class="flx mg-right-10">
@@ -206,12 +206,13 @@ defineExpose({
 						v-for="(panel, index) in item?.panels"
 						:panel="panel"
 						:buttons="buttons"
+						:enabledCustom="enabledCustom"
 						@onDeletelPanel="
 							() => {
 								item.panels.splice(index, 1)
 							}
 						"
-						@clickItem="(subItem) => emits('clickItem', subItem, enabledCustom.value)"
+						@clickItem="(subItem) => emits('clickItem', subItem, enabledCustom)"
 					/>
 				</slot>
 
@@ -254,7 +255,7 @@ defineExpose({
 							v-for="(childItem, index) in item?.items"
 							:key="index"
 							class="panel-item"
-							@click="emits('clickItem', childItem, enabledCustom.value)"
+							@click="emits('clickItem', childItem, enabledCustom)"
 						>
 							<span>{{ childItem?.name }}</span>
 							<span class="flx">
@@ -273,6 +274,8 @@ defineExpose({
 							v-for="(panel, index) in item?.panels"
 							:panel="panel"
 							:disabled="true"
+							:enabledCustom="enabledCustom"
+							@clickItem="(subItem) => emits('clickItem', subItem, enabledCustom)"
 						/>
 					</slot>
 				</slot>

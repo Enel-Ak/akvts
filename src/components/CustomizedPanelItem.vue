@@ -12,6 +12,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	enabledCustom: {
+		type: Boolean,
+		default: false,
+	},
 })
 const emits = defineEmits(['onDeletelPanel', 'clickItem'])
 
@@ -35,7 +39,7 @@ const onDeletelPanel = () => {
 				v-for="(item, index) in panel?.items"
 				:key="item.id"
 				class="panel-item"
-				@click="emits('clickItem', item)"
+				@click="emits('clickItem', item, enabledCustom)"
 			>
 				<span>{{ item.name }}</span>
 				<span class="flx mg-right-10">{{ item.value || '-' }}</span>
@@ -77,7 +81,7 @@ const onDeletelPanel = () => {
 					panel?.panels.splice(index, 1)
 				}
 			"
-			@clickItem="(subItem) => emits('clickItem', subItem)"
+			@clickItem="(subItem) => emits('clickItem', subItem, enabledCustom)"
 		/>
 	</div>
 	<div v-else class="panel readonly">
@@ -106,6 +110,7 @@ const onDeletelPanel = () => {
 			:key="subPanel.name"
 			:panel="subPanel"
 			:disabled="true"
+			:enabledCustom="enabledCustom"
 		/>
 	</div>
 </template>
