@@ -922,7 +922,10 @@ defineExpose({
 			disableTable.value = bool
 		})
 	},
-	reload: () => getList(),
+	reload: () => {
+		tableDataMap.clear()
+		getList()
+	},
 	isCreate: () => isCreate, // 弃用
 	create: (data) => onCreate(data),
 	update: (data) => onUpdate(data),
