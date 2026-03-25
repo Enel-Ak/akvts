@@ -171,6 +171,7 @@ watch(
 
 		// 	clearTimeout(__requestTimer)
 		// }
+		tableDataMap.clear()
 		getList()
 	},
 	{deep: true}
