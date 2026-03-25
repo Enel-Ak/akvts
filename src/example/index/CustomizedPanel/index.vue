@@ -42,8 +42,8 @@ const buttons = ref([
 	},
 ])
 
-const handleClickItem = (item) => {
-	console.log('Clicked item:', item)
+const handleClickItem = (item, isEnabledCustom) => {
+	console.log('Clicked item:', item, isEnabledCustom)
 	setTimeout(() => {
 		item.name = 'changed after click'
 	}, 1000)
