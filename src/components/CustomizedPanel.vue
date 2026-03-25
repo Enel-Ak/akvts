@@ -185,7 +185,7 @@ defineExpose({
 						v-for="(childItem, index) in item?.items"
 						:key="index"
 						class="panel-item"
-						@click="emits('clickItem', childItem)"
+						@click="emits('clickItem', childItem, enabledCustom.value)"
 					>
 						<span>{{ childItem?.name }}</span>
 						<span class="flx mg-right-10">
@@ -211,7 +211,7 @@ defineExpose({
 								item.panels.splice(index, 1)
 							}
 						"
-						@clickItem="(subItem) => emits('clickItem', subItem)"
+						@clickItem="(subItem) => emits('clickItem', subItem, enabledCustom.value)"
 					/>
 				</slot>
 
@@ -254,6 +254,7 @@ defineExpose({
 							v-for="(childItem, index) in item?.items"
 							:key="index"
 							class="panel-item"
+							@click="emits('clickItem', childItem, enabledCustom.value)"
 						>
 							<span>{{ childItem?.name }}</span>
 							<span class="flx">
