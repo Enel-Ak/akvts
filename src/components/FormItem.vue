@@ -841,7 +841,7 @@ defineExpose({
 							<el-checkbox-group
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
-								@change="onChange($event, item), nextTick(() => onBlur(item))"
+								@change="(onChange($event, item), nextTick(() => onBlur(item)))"
 							>
 								<el-checkbox
 									v-for="option of item.options"
@@ -881,7 +881,7 @@ defineExpose({
 							<el-radio-group
 								v-model="_form[item.prop]"
 								v-bind="item.attrs"
-								@change="onChange($event, item), nextTick(() => onBlur(item))"
+								@change="(onChange($event, item), nextTick(() => onBlur(item)))"
 							>
 								<el-radio
 									v-for="(option, index) of item.options"
@@ -922,7 +922,7 @@ defineExpose({
 								v-bind="item.attrs"
 								type="textarea"
 								resize="none"
-								:rows="6"
+								:rows="item?.attrs?.rows || 6"
 								:readonly="item.attrs?.readonly || item.readonly"
 								:disabled="item.attrs?.disabled || item.disabled"
 								:placeholder="item.placeholder || `请输入${item?.label}`"
